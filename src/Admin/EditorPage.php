@@ -1,0 +1,280 @@
+<?php
+/**
+ * Экран визуального редактора.
+ *
+ * @package WpMlp
+ */
+
+declare(strict_types=1);
+
+namespace WpMlp\Admin;
+
+use WpMlp\Rendering\EditorContext;
+use WpMlp\Rest\BlocksController;
+use WpMlp\Rest\TranslationsController;
+use WpMlp\Routing\LanguageResolver;
+use WpMlp\Routing\UrlConverter;
+use WpMlp\Settings\Settings;
+use WpMlp\Storage\TranslationStatus;
+use WpMlp\Support\Hookable;
+use WpMlp\Support\Locale;
+
+/**
+ * Панель перевода слева и предпросмотр сайта справа (ТЗ 10.1).
+ *
+ * Предпросмотр показывается в iframe того же домена и общается с панелью через
+ * postMessage. Так скрипт внутри страницы сайта не получает ни nonce, ни права
+ * на запись: все запросы к REST уходят отсюда, из админки.
+ */
+final class EditorPage implements Hookable {
+
+	public const MENU_SLUG  = 'wp-mlp-editor';
+	public const CAPABILITY = 'manage_options';
+
+	/**
+	 * @param Settings     $settings Настройки плагина.
+	 * @param UrlConverter $urls     Построение языковых адресов.
+	 */
+	public function __construct(
+		private readonly Settings $settings,
+		private readonly UrlConverter $urls
+	) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function register(): void {
+		add_action( 'admin_menu', array( $this, 'addMenu' ), 12 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_action( 'admin_bar_menu', array( $this, 'addAdminBarLink' ), 90 );
+	}
+
+	/**
+	 * Добавляет пункт подменю.
+	 */
+	public function addMenu(): void {
+		add_submenu_page(
+			SettingsPage::MENU_SLUG,
+			__( 'Визуальный редактор', 'wp-mlp' ),
+			__( 'Визуальный редактор', 'wp-mlp' ),
+			self::CAPABILITY,
+			self::MENU_SLUG,
+			array( $this, 'render' )
+		);
+	}
+
+	/**
+	 * Кнопка «Перевести страницу» в админ-баре на фронтенде.
+	 *
+	 * @param \WP_Admin_Bar $bar Админ-бар.
+	 */
+	public function addAdminBarLink( $bar ): void {
+		if ( is_admin() || ! current_user_can( self::CAPABILITY ) || array() === $this->settings->secondary() ) {
+			return;
+		}
+
+		$bar->add_node(
+			array(
+				'id'    => 'wp-mlp-editor',
+				'title' => __( 'Перевести страницу', 'wp-mlp' ),
+				'href'  => $this->editorUrl( $this->currentRelativePath() ),
+			)
+		);
+	}
+
+	/**
+	 * Подключает скрипты редактора.
+	 *
+	 * @param string $hook Идентификатор текущего экрана.
+	 */
+	public function enqueue( $hook ): void {
+		if ( ! is_string( $hook ) || ! str_contains( $hook, self::MENU_SLUG ) ) {
+			return;
+		}
+
+		wp_enqueue_style( 'wp-mlp-editor', WP_MLP_URL . 'assets/editor.css', array(), WP_MLP_VERSION );
+		wp_enqueue_script( 'wp-mlp-editor', WP_MLP_URL . 'assets/editor.js', array(), WP_MLP_VERSION, true );
+
+		wp_localize_script(
+			'wp-mlp-editor',
+			'wpMlpEditor',
+			array(
+				'sources'  => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/sources/' ) ),
+				'saveRoot' => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
+				'blocks'   => esc_url_raw( rest_url( BlocksController::NAMESPACE . '/blocks' ) ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'statuses' => $this->statusLabels(),
+				'i18n'     => array(
+					'pick'          => __( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ),
+					'saving'        => __( 'Сохраняю…', 'wp-mlp' ),
+					'saved'         => __( 'Сохранено', 'wp-mlp' ),
+					'failed'        => __( 'Не удалось сохранить', 'wp-mlp' ),
+					'loading'       => __( 'Загружаю…', 'wp-mlp' ),
+					'confirmDelete' => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
+					'confirmBlock'  => __( 'Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться.', 'wp-mlp' ),
+					'blockCreated'  => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
+					'attribute'     => __( 'Атрибут', 'wp-mlp' ),
+					'text'          => __( 'Текст', 'wp-mlp' ),
+					'htmlBlock'     => __( 'Блок с разметкой', 'wp-mlp' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Выводит экран редактора.
+	 */
+	public function render(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return;
+		}
+
+		$secondary = $this->settings->secondary();
+
+		if ( array() === $secondary ) {
+			printf(
+				'<div class="wrap"><h1>%s</h1><div class="notice notice-warning"><p>%s</p></div></div>',
+				esc_html__( 'Визуальный редактор', 'wp-mlp' ),
+				esc_html__( 'Сначала добавьте хотя бы один дополнительный язык на странице «Языки».', 'wp-mlp' )
+			);
+
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
+		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
+		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( ! isset( $secondary[ $locale ] ) ) {
+			$locale = (string) array_key_first( $secondary );
+		}
+
+		$path      = '/' . ltrim( $path, '/' );
+		$previewer = EditorContext::previewUrl( $this->urls->absolute( $path, $secondary[ $locale ] ) );
+
+		?>
+		<div class="wrap wp-mlp-editor-wrap">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Визуальный редактор', 'wp-mlp' ); ?></h1>
+
+			<form method="get" class="wp-mlp-editor-toolbar">
+				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
+
+				<label for="mlp-editor-locale"><?php esc_html_e( 'Язык:', 'wp-mlp' ); ?></label>
+				<select name="mlp_locale" id="mlp-editor-locale">
+					<?php foreach ( $secondary as $language ) : ?>
+						<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $locale ); ?>>
+							<?php echo esc_html( sprintf( '%s (%s)', $language->label, $language->locale ) ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+
+				<label for="mlp-editor-path"><?php esc_html_e( 'Страница:', 'wp-mlp' ); ?></label>
+				<input type="text" name="mlp_path" id="mlp-editor-path" class="regular-text"
+					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/">
+
+				<?php submit_button( __( 'Открыть', 'wp-mlp' ), 'secondary', '', false ); ?>
+			</form>
+
+			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>">
+				<div class="wp-mlp-editor__panel">
+					<p class="wp-mlp-editor__hint">
+						<?php esc_html_e( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ); ?>
+					</p>
+
+					<div class="wp-mlp-editor__form" hidden>
+						<p class="wp-mlp-editor__kind"></p>
+
+						<label for="mlp-editor-source"><?php esc_html_e( 'Оригинал', 'wp-mlp' ); ?></label>
+						<textarea id="mlp-editor-source" rows="3" readonly></textarea>
+
+						<label for="mlp-editor-target">
+							<?php esc_html_e( 'Перевод', 'wp-mlp' ); ?>
+						</label>
+						<textarea id="mlp-editor-target" rows="5"></textarea>
+
+						<label for="mlp-editor-status"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></label>
+						<select id="mlp-editor-status">
+							<?php foreach ( TranslationStatus::all() as $status ) : ?>
+								<option value="<?php echo esc_attr( $status ); ?>">
+									<?php echo esc_html( TranslationStatus::label( $status ) ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+
+						<div class="wp-mlp-editor__actions">
+							<button type="button" class="button button-primary" id="mlp-editor-save">
+								<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
+							</button>
+							<button type="button" class="button" id="mlp-editor-delete">
+								<?php esc_html_e( 'Удалить перевод', 'wp-mlp' ); ?>
+							</button>
+						</div>
+
+						<div class="wp-mlp-editor__block" hidden>
+							<hr>
+							<p class="description">
+								<?php esc_html_e( 'Абзац разбит на части инлайновыми тегами. Его можно перевести целиком, вместе с разметкой.', 'wp-mlp' ); ?>
+							</p>
+							<button type="button" class="button" id="mlp-editor-make-block">
+								<?php esc_html_e( 'Перевести абзац целиком', 'wp-mlp' ); ?>
+							</button>
+						</div>
+
+						<p class="wp-mlp-editor__status" role="status"></p>
+					</div>
+				</div>
+
+				<iframe class="wp-mlp-editor__preview" id="mlp-editor-preview"
+					src="<?php echo esc_url( $previewer ); ?>"
+					title="<?php esc_attr_e( 'Предпросмотр страницы', 'wp-mlp' ); ?>"></iframe>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Названия статусов для панели.
+	 *
+	 * @return array<string, string>
+	 */
+	private function statusLabels(): array {
+		$labels = array();
+
+		foreach ( TranslationStatus::all() as $status ) {
+			$labels[ $status ] = TranslationStatus::label( $status );
+		}
+
+		return $labels;
+	}
+
+	/**
+	 * Адрес экрана редактора для конкретной страницы.
+	 *
+	 * @param string $path Путь без языкового префикса.
+	 */
+	private function editorUrl( string $path ): string {
+		$secondary = $this->settings->secondary();
+
+		return add_query_arg(
+			array(
+				'page'       => self::MENU_SLUG,
+				'mlp_locale' => (string) array_key_first( $secondary ),
+				'mlp_path'   => $path,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * Путь текущей страницы фронтенда без языкового префикса.
+	 */
+	private function currentRelativePath(): string {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение экранируется в add_query_arg/esc_url.
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+		$path = (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '/' );
+
+		return $this->urls->stripPrefix( LanguageResolver::relativePath( $path, LanguageResolver::basePath() ) );
+	}
+}

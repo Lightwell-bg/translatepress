@@ -41,6 +41,8 @@ final class Translator {
 	 * @param OccurrenceRepository $occurrences Места использования.
 	 * @param TranslationCache     $cache       Объектный кэш переводов.
 	 * @param Settings             $settings    Настройки плагина.
+	 * @param EditorContext        $editor      Режим визуального редактора.
+	 * @param EditorMarkers        $markers     Маркеры узлов для редактора.
 	 * @param list<DocumentFilter> $filters     Пост-обработчики готового DOM.
 	 */
 	public function __construct(
@@ -49,6 +51,8 @@ final class Translator {
 		private readonly OccurrenceRepository $occurrences,
 		private readonly TranslationCache $cache,
 		private readonly Settings $settings,
+		private readonly EditorContext $editor,
+		private readonly EditorMarkers $markers,
 		private readonly array $filters = array()
 	) {
 	}
@@ -67,7 +71,13 @@ final class Translator {
 		}
 
 		$sourceLocale = $this->settings->defaultLanguage()->locale;
-		$segments     = $this->extractor->extract( $document, $sourceLocale );
+		$editorMode   = $this->editor->isActive();
+		$segments     = $this->extractor->extract(
+			$document,
+			$sourceLocale,
+			$this->sources->blockHashes(),
+			$editorMode
+		);
 
 		if ( array() === $segments ) {
 			$this->runFilters( $document, $target );
@@ -82,20 +92,94 @@ final class Translator {
 			$unique[ $segment->uniqHash ] ??= $segment;
 		}
 
-		$found = $this->lookup( array_keys( $unique ), $target->locale );
+		$found = $editorMode
+			? $this->sources->lookup( array_keys( $unique ), $target->locale )
+			: $this->lookup( array_keys( $unique ), $target->locale );
+
+		if ( $editorMode ) {
+			// В редакторе у каждой строки должен быть идентификатор прямо
+			// сейчас: без него не на что вешать маркер и нечего сохранять.
+			$found += $this->registerNow( array_diff_key( $unique, $found ), $sourceLocale );
+		}
 
 		foreach ( $segments as $segment ) {
 			$translation = $found[ $segment->uniqHash ]['text'] ?? null;
 
 			if ( is_string( $translation ) && '' !== $translation ) {
-				$segment->apply( $translation );
+				$segment->apply( $translation, $document );
 			}
 		}
 
 		$this->runFilters( $document, $target );
-		$this->scheduleDiscovery( $unique, $found, $sourceLocale );
+
+		if ( $editorMode ) {
+			$ids = array();
+
+			foreach ( $found as $hash => $row ) {
+				$ids[ $hash ] = $row['id'];
+			}
+
+			$this->markers->mark( $segments, $ids, $document );
+		} else {
+			$this->scheduleDiscovery( $unique, $found, $sourceLocale );
+		}
 
 		return $document->html();
+	}
+
+	/**
+	 * Записывает новые строки немедленно и возвращает их идентификаторы.
+	 *
+	 * Обычный показ страницы откладывает запись на `shutdown`, но редактору
+	 * идентификаторы нужны до сериализации ответа.
+	 *
+	 * @param array<string, Segment> $missing Новые строки.
+	 * @param string                 $locale  Исходный язык.
+	 * @return array<string, array{id: int, text: ?string, status: ?string}>
+	 */
+	private function registerNow( array $missing, string $locale ): array {
+		if ( array() === $missing ) {
+			return array();
+		}
+
+		$this->sources->insertMissing( $this->sourceRows( $missing, $locale ) );
+
+		$rows = array();
+
+		foreach ( $this->sources->idsByHashes( array_keys( $missing ) ) as $hash => $id ) {
+			$rows[ $hash ] = array(
+				'id'     => $id,
+				'text'   => null,
+				'status' => null,
+			);
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Готовит строки для вставки в таблицу источников.
+	 *
+	 * @param array<string, Segment> $missing Новые строки.
+	 * @param string                 $locale  Исходный язык.
+	 * @return list<array{locale: string, kind: string, text: string, source_hash: string, context_hash: string, uniq_hash: string}>
+	 */
+	private function sourceRows( array $missing, string $locale ): array {
+		$contextHash = Hash::of( '' );
+		$rows        = array();
+
+		foreach ( $missing as $hash => $segment ) {
+			$rows[] = array(
+				'locale'       => $locale,
+				'kind'         => $segment->kind,
+				'text'         => $segment->text,
+				'source_hash'  => $segment->sourceHash,
+				'context_hash' => $contextHash,
+				'uniq_hash'    => $hash,
+			);
+		}
+
+		return $rows;
 	}
 
 	/**
@@ -176,21 +260,7 @@ final class Translator {
 		$urlHash = Hash::of( $this->currentUrlKey() );
 
 		if ( array() !== $missing ) {
-			$rows        = array();
-			$contextHash = Hash::of( '' );
-
-			foreach ( $missing as $hash => $segment ) {
-				$rows[] = array(
-					'locale'       => $locale,
-					'kind'         => $segment->kind,
-					'text'         => $segment->text,
-					'source_hash'  => $segment->sourceHash,
-					'context_hash' => $contextHash,
-					'uniq_hash'    => $hash,
-				);
-			}
-
-			$this->sources->insertMissing( $rows );
+			$this->sources->insertMissing( $this->sourceRows( $missing, $locale ) );
 
 			// Идентификаторы известны только после вставки — они нужны occurrences.
 			$ids            = $this->sources->idsByHashes( array_keys( $missing ) );

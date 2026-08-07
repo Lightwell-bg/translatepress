@@ -61,6 +61,27 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_kses' ) ) {
+	/**
+	 * Грубое приближение wp_kses: оставляет разрешённые теги, режет остальные.
+	 *
+	 * Настоящая фильтрация атрибутов — забота WordPress, и подменять её здесь
+	 * бессмысленно: тесты проверяют логику плагина вокруг неё, а не саму kses.
+	 *
+	 * @param string                            $html    Разметка.
+	 * @param array<string, array<string, bool>> $allowed Разрешённые теги.
+	 */
+	function wp_kses( string $html, array $allowed ): string {
+		$tags = '';
+
+		foreach ( array_keys( $allowed ) as $tag ) {
+			$tags .= '<' . $tag . '>';
+		}
+
+		return strip_tags( $html, $tags );
+	}
+}
+
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	/**
 	 * @param string $url       Адрес.

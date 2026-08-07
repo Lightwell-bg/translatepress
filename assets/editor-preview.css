@@ -1,0 +1,33 @@
+/**
+ * Подсветка переводимых узлов внутри предпросмотра редактора.
+ *
+ * Только контуры и курсор: макет темы сдвигаться не должен, иначе владелец
+ * сайта будет править перевод, глядя на непохожую страницу.
+ */
+
+[data-mlp-source-id],
+[class*="data-mlp-source-id-"] {
+	cursor: pointer;
+}
+
+.mlp-hover {
+	outline: 2px dashed #2271b1 !important;
+	outline-offset: 1px;
+}
+
+.mlp-selected {
+	outline: 2px solid #2271b1 !important;
+	outline-offset: 1px;
+	background-color: rgba( 34, 113, 177, 0.08 ) !important;
+}
+
+/* Обёртка вокруг текстового узла не должна менять поток документа. */
+span.mlp-marker {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	color: inherit;
+	background: none;
+}

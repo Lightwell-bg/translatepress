@@ -29,6 +29,15 @@ final class SourceRepository {
 	private const CHUNK = 200;
 
 	/**
+	 * Опция со списком хешей translation blocks.
+	 *
+	 * Именно опция, а не транзиент: транзиент с временем жизни не попадает в
+	 * автозагрузку и стоил бы двух лишних запросов на каждой странице, даже
+	 * когда блоков нет вовсе.
+	 */
+	public const BLOCKS_OPTION = 'mlp_block_hashes';
+
+	/**
 	 * Ищет строки и их переводы одним запросом.
 	 *
 	 * @param list<string> $uniqHashes   Hex-хеши строк, найденных на странице.
@@ -205,6 +214,68 @@ final class SourceRepository {
 			);
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		}
+	}
+
+	/**
+	 * Хеши всех блоков — множество вида `hex => true`.
+	 *
+	 * Список нужен на каждой странице, чтобы понять, какие элементы переводятся
+	 * целиком. Блоков обычно единицы, поэтому набор кэшируется, а пока их нет,
+	 * разбор страницы вообще не тратит на них время.
+	 *
+	 * @return array<string, true>
+	 */
+	public function blockHashes(): array {
+		$cached = get_option( self::BLOCKS_OPTION, null );
+
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		global $wpdb;
+
+		$table = Schema::table( 'sources' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_col(
+			$wpdb->prepare( "SELECT LOWER(HEX(source_hash)) FROM {$table} WHERE kind = %s", 'html_block' )
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		$hashes = array_fill_keys( is_array( $rows ) ? $rows : array(), true );
+
+		update_option( self::BLOCKS_OPTION, $hashes, true );
+
+		return $hashes;
+	}
+
+	/**
+	 * Сбрасывает список блоков — он пересоберётся при следующем показе страницы.
+	 */
+	public function flushBlockHashes(): void {
+		delete_option( self::BLOCKS_OPTION );
+	}
+
+	/**
+	 * Удаляет строку вместе с переводами и местами использования.
+	 *
+	 * Применяется только к блокам: обычные строки живут, пока живёт текст
+	 * на сайте, и удалять их вручную не требуется.
+	 *
+	 * @param int $id Идентификатор строки.
+	 */
+	public function deleteWithTranslations( int $id ): void {
+		global $wpdb;
+
+		if ( $id <= 0 ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( Schema::table( 'translations' ), array( 'source_id' => $id ), array( '%d' ) );
+		$wpdb->delete( Schema::table( 'occurrences' ), array( 'source_id' => $id ), array( '%d' ) );
+		$wpdb->delete( Schema::table( 'sources' ), array( 'id' => $id ), array( '%d' ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

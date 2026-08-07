@@ -67,13 +67,48 @@ final class Extractor {
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
 
 	/**
+	 * Инлайновые теги: их присутствие внутри абзаца не мешает перевести его
+	 * целиком одним блоком.
+	 */
+	private const INLINE_TAGS = array(
+		'a',
+		'abbr',
+		'b',
+		'br',
+		'cite',
+		'del',
+		'em',
+		'i',
+		'img',
+		'ins',
+		'mark',
+		'q',
+		's',
+		'small',
+		'span',
+		'strong',
+		'sub',
+		'sup',
+		'u',
+		'wbr',
+	);
+
+	/**
 	 * Собирает переводимые единицы документа.
 	 *
-	 * @param HtmlDocument $document Разобранный документ.
-	 * @param string       $locale   Исходный язык сайта.
+	 * @param HtmlDocument        $document    Разобранный документ.
+	 * @param string              $locale      Исходный язык сайта.
+	 * @param array<string, true> $blockHashes Хеши известных translation blocks.
+	 * @param bool                $markBlockCandidates Помечать ли кандидатов в блоки
+	 *                                                 (только для предпросмотра).
 	 * @return list<Segment>
 	 */
-	public function extract( HtmlDocument $document, string $locale ): array {
+	public function extract(
+		HtmlDocument $document,
+		string $locale,
+		array $blockHashes = array(),
+		bool $markBlockCandidates = false
+	): array {
 		$root = $document->root();
 
 		if ( null === $root ) {
@@ -113,12 +148,100 @@ final class Extractor {
 				continue;
 			}
 
+			if ( $this->isBlockCandidate( $node ) ) {
+				$block = $this->blockSegment( $node, $document, $locale, $contextHash, $blockHashes );
+
+				if ( null !== $block ) {
+					// Внутрь блока не спускаемся: он переводится целиком.
+					$segments[] = $block;
+
+					continue;
+				}
+
+				if ( $markBlockCandidates ) {
+					$node->setAttribute( 'data-mlp-block', '1' );
+				}
+			}
+
 			foreach ( $node->childNodes as $child ) {
 				$stack[] = $child;
 			}
 		}
 
 		return $segments;
+	}
+
+	/**
+	 * Может ли элемент стать translation block.
+	 *
+	 * Кандидат — элемент, чей текст разорван инлайновыми тегами: в нём есть
+	 * непустой текст и хотя бы один дочерний элемент, но нет блочной вёрстки
+	 * внутри. Такой абзац бессмысленно переводить по кускам.
+	 *
+	 * @param object $element Элемент DOM.
+	 */
+	private function isBlockCandidate( object $element ): bool {
+		$hasText    = false;
+		$hasInline  = false;
+
+		foreach ( $element->childNodes as $child ) {
+			if ( self::NODE_TEXT === $child->nodeType ) {
+				$hasText = $hasText || '' !== trim( (string) $child->nodeValue );
+
+				continue;
+			}
+
+			if ( self::NODE_ELEMENT !== $child->nodeType ) {
+				continue;
+			}
+
+			if ( ! in_array( strtolower( (string) $child->nodeName ), self::INLINE_TAGS, true ) ) {
+				return false;
+			}
+
+			$hasInline = true;
+		}
+
+		return $hasText && $hasInline;
+	}
+
+	/**
+	 * Строит сегмент блока, если такой блок заведён.
+	 *
+	 * @param object              $element     Элемент DOM.
+	 * @param HtmlDocument        $document    Разобранный документ.
+	 * @param string              $locale      Исходный язык.
+	 * @param string              $contextHash Хеш контекста.
+	 * @param array<string, true> $blockHashes Хеши известных блоков.
+	 */
+	private function blockSegment(
+		object $element,
+		HtmlDocument $document,
+		string $locale,
+		string $contextHash,
+		array $blockHashes
+	): ?Segment {
+		if ( array() === $blockHashes ) {
+			return null;
+		}
+
+		$html = BlockSanitizer::sanitize( $document->innerHtml( $element ) );
+		$hash = Hash::of( $html );
+
+		if ( ! isset( $blockHashes[ $hash ] ) ) {
+			return null;
+		}
+
+		return $this->makeSegment(
+			$element,
+			Segment::KIND_HTML_BLOCK,
+			null,
+			$html,
+			'',
+			'',
+			$locale,
+			$contextHash
+		);
 	}
 
 	/**

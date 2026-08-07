@@ -24,6 +24,14 @@ final class Segment {
 	public const KIND_ATTRIBUTE = 'attribute';
 
 	/**
+	 * Целый элемент, переводимый вместе с разметкой внутри.
+	 *
+	 * Нужен, когда абзац разорван инлайновыми тегами и переводить его по
+	 * кусочкам бессмысленно: «Читайте <b>наш</b> блог» (ТЗ 4.4).
+	 */
+	public const KIND_HTML_BLOCK = 'html_block';
+
+	/**
 	 * @param object      $node      Текстовый узел или элемент-владелец атрибута.
 	 * @param string      $kind      KIND_TEXT или KIND_ATTRIBUTE.
 	 * @param string|null $attribute Имя атрибута для KIND_ATTRIBUTE.
@@ -52,15 +60,25 @@ final class Segment {
 	 * и setAttribute() экранируют значение сами при сериализации. Вызов
 	 * esc_html() перед ними дал бы на выходе `&amp;amp;` вместо `&`.
 	 *
-	 * @param string $translation Готовый перевод.
+	 * @param string            $translation Готовый перевод.
+	 * @param HtmlDocument|null $document    Нужен только блокам: их перевод —
+	 *                                       разметка, а не текст.
 	 */
-	public function apply( string $translation ): void {
+	public function apply( string $translation, ?HtmlDocument $document = null ): void {
 		if ( '' === $translation ) {
 			return;
 		}
 
 		if ( self::KIND_ATTRIBUTE === $this->kind && null !== $this->attribute ) {
 			$this->node->setAttribute( $this->attribute, $translation );
+
+			return;
+		}
+
+		if ( self::KIND_HTML_BLOCK === $this->kind ) {
+			if ( null !== $document ) {
+				$document->setInnerHtml( $this->node, $translation );
+			}
 
 			return;
 		}

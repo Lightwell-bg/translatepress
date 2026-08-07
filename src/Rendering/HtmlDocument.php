@@ -98,6 +98,80 @@ final class HtmlDocument {
 	}
 
 	/**
+	 * Возвращает разметку внутри элемента.
+	 *
+	 * @param object $element Элемент DOM.
+	 */
+	public function innerHtml( object $element ): string {
+		$html = '';
+
+		foreach ( $element->childNodes as $child ) {
+			$html .= $this->legacy
+				? $this->document->saveHTML( $child )
+				: $this->document->saveHtml( $child );
+		}
+
+		return $this->legacy
+			? mb_decode_numericentity( $html, self::NON_ASCII, 'UTF-8' )
+			: $html;
+	}
+
+	/**
+	 * Заменяет содержимое элемента разметкой.
+	 *
+	 * Вызывающий код обязан очистить разметку через wp_kses ДО вызова: здесь
+	 * она разбирается как есть.
+	 *
+	 * @param object $element Элемент DOM.
+	 * @param string $html    Готовая разметка.
+	 */
+	public function setInnerHtml( object $element, string $html ): void {
+		$fragment = $this->parseFragment( $html );
+
+		if ( array() === $fragment ) {
+			return;
+		}
+
+		while ( null !== $element->firstChild ) {
+			$element->removeChild( $element->firstChild );
+		}
+
+		foreach ( $fragment as $node ) {
+			$element->appendChild( $node );
+		}
+	}
+
+	/**
+	 * Разбирает фрагмент разметки в узлы текущего документа.
+	 *
+	 * @param string $html Разметка.
+	 * @return list<object>
+	 */
+	private function parseFragment( string $html ): array {
+		$source = self::parse( '<!DOCTYPE html><html><body>' . $html . '</body></html>', $this->legacy );
+
+		if ( null === $source ) {
+			return array();
+		}
+
+		// Оба парсера складывают содержимое в body — на него и опираемся,
+		// вместо служебной обёртки с id, которую пришлось бы искать.
+		$body = $source->document()->getElementsByTagName( 'body' )->item( 0 );
+
+		if ( null === $body ) {
+			return array();
+		}
+
+		$nodes = array();
+
+		foreach ( $body->childNodes as $child ) {
+			$nodes[] = $this->document->importNode( $child, true );
+		}
+
+		return $nodes;
+	}
+
+	/**
 	 * Разбор встроенным HTML5-парсером PHP 8.4+.
 	 *
 	 * @param string $html Готовый ответ страницы.

@@ -9,13 +9,17 @@ declare(strict_types=1);
 
 namespace WpMlp;
 
+use WpMlp\Admin\EditorPage;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\SeoTags;
+use WpMlp\Rendering\EditorContext;
+use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\Translator;
+use WpMlp\Rest\BlocksController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\CanonicalRedirect;
 use WpMlp\Routing\LanguageResolver;
@@ -160,6 +164,13 @@ final class Plugin {
 			)
 		);
 
+		$c->set( EditorMarkers::class, static fn(): EditorMarkers => new EditorMarkers() );
+
+		$c->set(
+			EditorContext::class,
+			static fn( Container $c ): EditorContext => new EditorContext( $c->get( LanguageResolver::class ) )
+		);
+
 		$c->set(
 			Translator::class,
 			static fn( Container $c ): Translator => new Translator(
@@ -168,6 +179,8 @@ final class Plugin {
 				$c->get( OccurrenceRepository::class ),
 				$c->get( TranslationCache::class ),
 				$c->get( Settings::class ),
+				$c->get( EditorContext::class ),
+				$c->get( EditorMarkers::class ),
 				array( $c->get( SeoTags::class ) )
 			)
 		);
@@ -231,6 +244,23 @@ final class Plugin {
 		);
 
 		$c->set(
+			EditorPage::class,
+			static fn( Container $c ): EditorPage => new EditorPage(
+				$c->get( Settings::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
+			BlocksController::class,
+			static fn( Container $c ): BlocksController => new BlocksController(
+				$c->get( SourceRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( Settings::class )
+			)
+		);
+
+		$c->set(
 			TranslationsController::class,
 			static fn( Container $c ): TranslationsController => new TranslationsController(
 				$c->get( SourceRepository::class ),
@@ -255,6 +285,9 @@ final class Plugin {
 			UrlConverter::class,
 			// rest_api_init не сработает, если маршрут не зарегистрирован заранее.
 			TranslationsController::class,
+			BlocksController::class,
+			// Ссылка «Перевести страницу» живёт в админ-баре на фронтенде.
+			EditorPage::class,
 			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
 			LanguageSwitcher::class,
 		);
@@ -266,6 +299,7 @@ final class Plugin {
 		} else {
 			$services[] = CanonicalRedirect::class;
 			$services[] = SeoTags::class;
+			$services[] = EditorContext::class;
 			$services[] = OutputBuffer::class;
 		}
 
