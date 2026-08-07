@@ -28,6 +28,8 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
 use WpMlp\Support\Hookable;
+use WpMlp\Translation\ManualProvider;
+use WpMlp\Translation\ProviderInterface;
 
 /**
  * Композиционный корень.
@@ -130,6 +132,15 @@ final class Plugin {
 		$c->set( OccurrenceRepository::class, static fn(): OccurrenceRepository => new OccurrenceRepository() );
 		$c->set( TranslationCache::class, static fn(): TranslationCache => new TranslationCache() );
 		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
+
+		/*
+		 * Провайдер перевода. На Этапе 1 это заглушка; OpenAI-адаптер
+		 * подключится подменой этой одной строки.
+		 */
+		$c->set(
+			ProviderInterface::class,
+			static fn(): ProviderInterface => apply_filters( 'mlp_translation_provider', new ManualProvider() )
+		);
 
 		$c->set(
 			SeoTags::class,
