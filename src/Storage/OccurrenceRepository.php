@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\Storage;
 
 use WpMlp\Support\Hash;
+use WpMlp\Support\Locale;
 
 /**
  * Чтение и запись `wp_mlp_occurrences` (ТЗ 6.3).
@@ -105,6 +106,46 @@ final class OccurrenceRepository {
 				 ORDER BY object_id DESC
 				 LIMIT %d",
 				$limit
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return array_map( 'intval', is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
+	 * Записи, у которых есть хотя бы один перевод на указанный язык.
+	 *
+	 * Отдельного признака «запись переведена» в модели нет и быть не может:
+	 * перевод хранится по строкам, а не по записям. Признак выводится из
+	 * данных — запись считается переведённой, если хоть одна её строка имеет
+	 * непустой перевод на нужный язык.
+	 *
+	 * @param string $locale Целевой язык.
+	 * @return list<int>
+	 */
+	public function translatedObjectIds( string $locale ): array {
+		global $wpdb;
+
+		if ( ! Locale::isValid( $locale ) ) {
+			return array();
+		}
+
+		$occurrences  = Schema::table( 'occurrences' );
+		$translations = Schema::table( 'translations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT o.object_id
+				 FROM {$occurrences} o
+				 INNER JOIN {$translations} t
+					ON t.source_id = o.source_id AND t.target_locale = %s
+				 WHERE o.object_id IS NOT NULL
+					AND o.object_id > 0
+					AND t.translated_text IS NOT NULL
+					AND t.translated_text <> ''",
+				$locale
 			)
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery

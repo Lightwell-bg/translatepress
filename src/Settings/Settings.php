@@ -60,6 +60,7 @@ final class Settings {
 			'discover_strings'         => true,
 			'delete_data_on_uninstall' => false,
 			'openai_daily_char_limit'  => 100000,
+			'hide_untranslated_posts'  => true,
 		);
 	}
 
@@ -226,6 +227,13 @@ final class Settings {
 	}
 
 	/**
+	 * Прятать ли непереведённые записи из списков на дополнительных языках.
+	 */
+	public function hidesUntranslatedPosts(): bool {
+		return (bool) ( $this->raw()['hide_untranslated_posts'] ?? true );
+	}
+
+	/**
 	 * Дневной лимит символов на машинный перевод (ТЗ 9.3).
 	 *
 	 * Защищает от неожиданного счёта от OpenAI: повторные клики по «Перевести
@@ -339,6 +347,7 @@ final class Settings {
 				'languages'                => $languages,
 				'discover_strings'         => ! empty( $input['discover_strings'] ),
 				'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
+				'hide_untranslated_posts'  => ! empty( $input['hide_untranslated_posts'] ),
 				'openai_daily_char_limit'  => max( 0, min( 10000000, $dailyLimit ) ),
 			),
 			'errors'   => $errors,

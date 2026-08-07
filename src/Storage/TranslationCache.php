@@ -127,6 +127,17 @@ final class TranslationCache {
 
 	/**
 	 * Номер версии кэша.
+	 *
+	 * Публичный, потому что на него опираются и другие кэши плагина: версия
+	 * растёт при каждом сохранении перевода, и включение её в ключ избавляет
+	 * их от собственной инвалидации.
+	 */
+	public function version(): int {
+		return $this->currentVersion();
+	}
+
+	/**
+	 * Номер версии кэша.
 	 */
 	private function currentVersion(): int {
 		if ( null === $this->version ) {

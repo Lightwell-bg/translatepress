@@ -13,7 +13,9 @@ use WpMlp\Admin\EditorPage;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\LanguageSwitcher;
+use WpMlp\Frontend\NavMenu;
 use WpMlp\Frontend\SeoTags;
+use WpMlp\Frontend\UntranslatedFilter;
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
@@ -247,6 +249,25 @@ final class Plugin {
 		);
 
 		$c->set(
+			NavMenu::class,
+			static fn( Container $c ): NavMenu => new NavMenu(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
+			UntranslatedFilter::class,
+			static fn( Container $c ): UntranslatedFilter => new UntranslatedFilter(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class ),
+				$c->get( OccurrenceRepository::class ),
+				$c->get( TranslationCache::class )
+			)
+		);
+
+		$c->set(
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
 		);
@@ -313,6 +334,8 @@ final class Plugin {
 			EditorPage::class,
 			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
 			LanguageSwitcher::class,
+			// Метабокс живёт в админке, подстановка адресов — на фронтенде.
+			NavMenu::class,
 		);
 
 		if ( is_admin() ) {
@@ -323,6 +346,7 @@ final class Plugin {
 			$services[] = CanonicalRedirect::class;
 			$services[] = SeoTags::class;
 			$services[] = EditorContext::class;
+			$services[] = UntranslatedFilter::class;
 			$services[] = OutputBuffer::class;
 		}
 

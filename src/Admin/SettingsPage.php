@@ -187,6 +187,21 @@ final class SettingsPage implements Hookable {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Непереведённые записи', 'wp-mlp' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="hide_untranslated_posts" value="1" <?php checked( $this->settings->hidesUntranslatedPosts() ); ?>>
+								<?php esc_html_e( 'Не показывать их в списках на дополнительных языках', 'wp-mlp' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Блог, рубрики, метки и поиск на /en/ покажут только записи, у которых есть хотя бы один перевод. Отдельная запись остаётся доступной по прямой ссылке — иначе посетитель из поисковика получил бы 404.', 'wp-mlp' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Запись попадает в список после того, как вы хотя бы раз откроете её на дополнительном языке: только тогда плагин узнаёт, какие строки ей принадлежат.', 'wp-mlp' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Удаление плагина', 'wp-mlp' ); ?></th>
 						<td>
 							<label>

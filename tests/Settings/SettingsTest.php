@@ -62,6 +62,51 @@ final class SettingsTest extends TestCase {
 		$this->assertSame( array( 'ru' ), array_keys( $settings->published() ) );
 	}
 
+	public function testHidingUntranslatedPostsIsOnByDefault(): void {
+		$this->assertTrue( ( new Settings() )->hidesUntranslatedPosts() );
+	}
+
+	/**
+	 * Снятая галочка приходит из формы как отсутствующее поле, а не как
+	 * пустое значение — иначе выключить настройку было бы невозможно.
+	 */
+	public function testUncheckedBoxTurnsHidingOff(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array(
+						'locale' => 'ru',
+						'slug'   => 'ru',
+					),
+				),
+			)
+		);
+
+		$this->assertFalse( $result['settings']['hide_untranslated_posts'] );
+	}
+
+	public function testCheckedBoxTurnsHidingOn(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale'          => 'ru',
+				'hide_untranslated_posts' => '1',
+				'languages'               => array(
+					array(
+						'locale' => 'ru',
+						'slug'   => 'ru',
+					),
+				),
+			)
+		);
+
+		$this->assertTrue( $result['settings']['hide_untranslated_posts'] );
+	}
+
 	public function testSanitizeRejectsInvalidLocale(): void {
 		$settings = new Settings();
 
