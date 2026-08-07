@@ -9,14 +9,13 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Settings;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 
-/**
- * @covers \WpMlp\Settings\Settings
- * @covers \WpMlp\Settings\Language
- */
+#[CoversClass( Settings::class )]
+#[CoversClass( Language::class )]
 final class SettingsTest extends TestCase {
 
 	protected function setUp(): void {

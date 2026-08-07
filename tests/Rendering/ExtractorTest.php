@@ -9,16 +9,15 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Rendering;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\HtmlDocument;
 use WpMlp\Rendering\Segment;
 
-/**
- * @covers \WpMlp\Rendering\Extractor
- * @covers \WpMlp\Rendering\HtmlDocument
- * @covers \WpMlp\Rendering\Segment
- */
+#[CoversClass( Extractor::class )]
+#[CoversClass( HtmlDocument::class )]
+#[CoversClass( Segment::class )]
 final class ExtractorTest extends TestCase {
 
 	/**
@@ -199,6 +198,41 @@ final class ExtractorTest extends TestCase {
 		}
 
 		$this->assertStringContainsString( '<p> Tea <b>', $document->html() );
+	}
+
+	/**
+	 * Фолбэк на libxml включается на PHP 8.1–8.3. Он должен не портить
+	 * кириллицу и находить те же строки, что и встроенный HTML5-парсер.
+	 */
+	public function testLegacyParserKeepsCyrillicAndFindsSameStrings(): void {
+		$html     = '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Тест</title></head>'
+			. '<body><p>Привет, мир</p><img src="a.png" alt="Кот"></body></html>';
+		$document = HtmlDocument::parse( $html, true );
+
+		$this->assertNotNull( $document );
+
+		$texts = array_map(
+			static fn( Segment $segment ): string => $segment->text,
+			( new Extractor() )->extract( $document, 'ru' )
+		);
+
+		$this->assertContains( 'Привет, мир', $texts );
+		$this->assertContains( 'Кот', $texts );
+		$this->assertStringContainsString( 'Привет, мир', $document->html() );
+	}
+
+	public function testLegacyParserAppliesTranslation(): void {
+		$document = HtmlDocument::parse( '<!DOCTYPE html><html><body><p>Чай</p></body></html>', true );
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$segments[0]->apply( 'Tea & coffee' );
+
+		$html = $document->html();
+
+		$this->assertStringContainsString( 'Tea &amp; coffee', $html );
+		$this->assertStringNotContainsString( '&amp;amp;', $html );
 	}
 
 	public function testBrokenHtmlStillParses(): void {

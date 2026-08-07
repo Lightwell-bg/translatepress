@@ -9,16 +9,15 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Routing;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
 
-/**
- * @covers \WpMlp\Routing\LanguageResolver
- * @covers \WpMlp\Routing\UrlConverter
- * @covers \WpMlp\Routing\Rewrites
- */
+#[CoversClass( LanguageResolver::class )]
+#[CoversClass( UrlConverter::class )]
+#[CoversClass( Rewrites::class )]
 final class RoutingTest extends TestCase {
 
 	public function testRelativePathStripsInstallSubdirectory(): void {
@@ -71,6 +70,44 @@ final class RoutingTest extends TestCase {
 		$this->assertSame( '/wp-json/wp/v2/posts', UrlConverter::addPrefixToPath( '/wp-json/wp/v2/posts', '', 'en' ) );
 		$this->assertSame( '/wp-admin/', UrlConverter::addPrefixToPath( '/wp-admin/', '', 'en' ) );
 		$this->assertSame( '/wp-content/uploads/a.png', UrlConverter::addPrefixToPath( '/wp-content/uploads/a.png', '', 'en' ) );
+	}
+
+	/**
+	 * Подменять путь поиском по строке нельзя: в `https://site.ru/` первый
+	 * найденный слеш принадлежит схеме, а не пути.
+	 */
+	public function testWithLanguagePrefixRebuildsUrlCorrectly(): void {
+		$this->assertSame(
+			'https://site.ru/en/',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/', '', 'en' )
+		);
+		$this->assertSame(
+			'https://site.ru/en/about/',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/about/', '', 'en' )
+		);
+		$this->assertSame(
+			'https://site.ru:8080/en/about/?x=1#top',
+			UrlConverter::withLanguagePrefix( 'https://site.ru:8080/about/?x=1#top', '', 'en' )
+		);
+		$this->assertSame(
+			'//cdn.site.ru/en/about/',
+			UrlConverter::withLanguagePrefix( '//cdn.site.ru/about/', '', 'en' )
+		);
+		$this->assertSame(
+			'https://site.ru/blog/en/about/',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/blog/about/', '/blog', 'en' )
+		);
+	}
+
+	public function testWithLanguagePrefixLeavesServiceUrlsAlone(): void {
+		$this->assertSame(
+			'https://site.ru/wp-json/wp/v2/posts',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/wp-json/wp/v2/posts', '', 'en' )
+		);
+		$this->assertSame(
+			'https://site.ru/en/about/',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/en/about/', '', 'en' )
+		);
 	}
 
 	public function testBuildRulesPrefixesEveryRuleAndKeepsMatchNumbering(): void {

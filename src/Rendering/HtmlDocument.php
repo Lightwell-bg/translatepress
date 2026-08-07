@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
-use Dom\HTMLDocument;
+// Псевдоним обязателен: имена классов в PHP регистронезависимы, и импорт
+// Dom\HTMLDocument столкнулся бы с именем этого класса.
+use Dom\HTMLDocument as NativeHtml5Document;
 use DOMDocument;
 use Throwable;
 
@@ -32,8 +34,8 @@ final class HtmlDocument {
 	private const NON_ASCII = array( 0x80, 0x10FFFF, 0, 0x1FFFFF );
 
 	/**
-	 * @param DOMDocument|HTMLDocument $document Разобранный документ.
-	 * @param bool                     $legacy   Используется ли libxml-парсер.
+	 * @param DOMDocument|NativeHtml5Document $document Разобранный документ.
+	 * @param bool                            $legacy   Используется ли libxml-парсер.
 	 */
 	private function __construct(
 		private readonly object $document,
@@ -45,20 +47,22 @@ final class HtmlDocument {
 	 * Доступен ли на этом PHP настоящий HTML5-парсер.
 	 */
 	public static function hasNativeHtml5Parser(): bool {
-		return class_exists( HTMLDocument::class );
+		return class_exists( NativeHtml5Document::class );
 	}
 
 	/**
 	 * Разбирает HTML. Возвращает null, если разобрать не удалось.
 	 *
-	 * @param string $html Готовый ответ страницы.
+	 * @param string $html        Готовый ответ страницы.
+	 * @param bool   $forceLegacy Принудительно использовать libxml — нужно тестам,
+	 *                            чтобы фолбэк не оставался непроверенным.
 	 */
-	public static function parse( string $html ): ?self {
+	public static function parse( string $html, bool $forceLegacy = false ): ?self {
 		if ( '' === trim( $html ) ) {
 			return null;
 		}
 
-		if ( self::hasNativeHtml5Parser() ) {
+		if ( ! $forceLegacy && self::hasNativeHtml5Parser() ) {
 			return self::parseNative( $html );
 		}
 
@@ -102,7 +106,7 @@ final class HtmlDocument {
 		try {
 			// Только подавление ошибок: doctype и структура документа должны
 			// дойти до посетителя ровно такими, какими их отдала тема.
-			$document = HTMLDocument::createFromString( $html, LIBXML_NOERROR, 'UTF-8' );
+			$document = NativeHtml5Document::createFromString( $html, LIBXML_NOERROR, 'UTF-8' );
 		} catch ( Throwable $error ) {
 			unset( $error );
 

@@ -9,12 +9,11 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Support;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Support\Hash;
 
-/**
- * @covers \WpMlp\Support\Hash
- */
+#[CoversClass( Hash::class )]
 final class HashTest extends TestCase {
 
 	public function testProducesLowercaseHexOf64Chars(): void {

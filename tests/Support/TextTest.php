@@ -9,12 +9,12 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Support;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Support\Text;
 
-/**
- * @covers \WpMlp\Support\Text
- */
+#[CoversClass( Text::class )]
 final class TextTest extends TestCase {
 
 	public function testNormalizeCollapsesWhitespaceAndTrims(): void {
@@ -35,9 +35,7 @@ final class TextTest extends TestCase {
 		$this->assertSame( array( '', 'Привет', '' ), Text::splitEdges( 'Привет' ) );
 	}
 
-	/**
-	 * @dataProvider translatable
-	 */
+	#[DataProvider( 'translatable' )]
 	public function testAcceptsRealPhrases( string $text ): void {
 		$this->assertTrue( Text::isTranslatable( $text ), $text );
 	}
@@ -55,9 +53,7 @@ final class TextTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider notTranslatable
-	 */
+	#[DataProvider( 'notTranslatable' )]
 	public function testRejectsNonPhrases( string $text ): void {
 		$this->assertFalse( Text::isTranslatable( $text ), $text );
 	}

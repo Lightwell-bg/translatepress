@@ -9,12 +9,12 @@ declare(strict_types=1);
 
 namespace WpMlp\Tests\Support;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WpMlp\Support\Locale;
 
-/**
- * @covers \WpMlp\Support\Locale
- */
+#[CoversClass( Locale::class )]
 final class LocaleTest extends TestCase {
 
 	public function testNormalizeLowercasesAndReplacesUnderscore(): void {
@@ -22,9 +22,7 @@ final class LocaleTest extends TestCase {
 		$this->assertSame( 'ru', Locale::normalize( 'RU' ) );
 	}
 
-	/**
-	 * @dataProvider validLocales
-	 */
+	#[DataProvider( 'validLocales' )]
 	public function testAcceptsValidLocales( string $locale ): void {
 		$this->assertTrue( Locale::isValid( $locale ) );
 	}
@@ -42,9 +40,7 @@ final class LocaleTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider invalidLocales
-	 */
+	#[DataProvider( 'invalidLocales' )]
 	public function testRejectsInvalidLocales( string $locale ): void {
 		$this->assertFalse( Locale::isValid( $locale ) );
 	}

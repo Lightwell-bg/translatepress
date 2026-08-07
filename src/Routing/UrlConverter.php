@@ -153,15 +153,25 @@ final class UrlConverter implements Hookable {
 	 * @param string $slug Слаг языка.
 	 */
 	private function addPrefixToUrl( string $url, string $slug ): string {
+		return self::withLanguagePrefix( $url, LanguageResolver::basePath(), $slug );
+	}
+
+	/**
+	 * Добавляет языковой префикс к адресу. Чистая функция.
+	 *
+	 * @param string $url      Абсолютный, относительный или схемо-независимый адрес.
+	 * @param string $basePath Базовый путь установки WordPress.
+	 * @param string $slug     Слаг языка.
+	 */
+	public static function withLanguagePrefix( string $url, string $basePath, string $slug ): string {
 		$parts = wp_parse_url( $url );
 
 		if ( ! is_array( $parts ) ) {
 			return $url;
 		}
 
-		$path     = (string) ( $parts['path'] ?? '/' );
-		$basePath = LanguageResolver::basePath();
-		$newPath  = self::addPrefixToPath( $path, $basePath, $slug );
+		$path    = (string) ( $parts['path'] ?? '/' );
+		$newPath = self::addPrefixToPath( $path, $basePath, $slug );
 
 		if ( $newPath === $path ) {
 			return $url;

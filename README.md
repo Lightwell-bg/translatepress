@@ -151,15 +151,21 @@ composer install
 composer test          # или vendor/bin/phpunit
 ```
 
-Тесты (`tests/`) проверяют чистую логику без загрузки WordPress: нормализацию строк, хеши, валидацию языковых кодов, разбор URL, сборку rewrite-правил, извлечение строк из DOM и подстановку перевода. Функции WordPress подменены заглушками в `tests/stubs.php`.
+Composer не обязателен — тесты запускаются и phar-архивом PHPUnit:
+
+```bash
+curl -sSLO https://phar.phpunit.de/phpunit-12.phar
+php phpunit-12.phar
+```
+
+Тесты (`tests/`) проверяют чистую логику без загрузки WordPress: нормализацию строк, хеши, валидацию языковых кодов, разбор URL, сборку rewrite-правил, извлечение строк из DOM и подстановку перевода — в том числе на запасном libxml-парсере. Функции WordPress подменены заглушками в `tests/stubs.php`.
 
 Всё, что зависит от `$wpdb` и хуков, проверяется вручную на реальном сайте — сценарий приёмки описан в `PROMPTS.md`, раздел 9.
 
-Если PHP или Composer локально не установлены:
+Если PHP локально не установлен:
 
 ```powershell
 winget install PHP.PHP.8.4
-winget install Composer.Composer
 ```
 
 ## Лицензия

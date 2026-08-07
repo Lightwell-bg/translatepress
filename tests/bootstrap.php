@@ -11,7 +11,30 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+if ( is_readable( __DIR__ . '/../vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/../vendor/autoload.php';
+} else {
+	// Composer не обязателен: рантайм-зависимостей у плагина нет, а PHPUnit
+	// можно запускать и phar-архивом.
+	spl_autoload_register(
+		static function ( string $class ): void {
+			foreach ( array( 'WpMlp\\Tests\\' => __DIR__, 'WpMlp\\' => __DIR__ . '/../src' ) as $prefix => $base ) {
+				if ( ! str_starts_with( $class, $prefix ) ) {
+					continue;
+				}
+
+				$path = $base . '/' . str_replace( '\\', '/', substr( $class, strlen( $prefix ) ) ) . '.php';
+
+				if ( is_readable( $path ) ) {
+					require_once $path;
+				}
+
+				return;
+			}
+		}
+	);
+}
+
 require_once __DIR__ . '/stubs.php';
 
 if ( ! defined( 'WP_MLP_DIR' ) ) {
