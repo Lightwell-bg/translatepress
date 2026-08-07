@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\SettingsPage;
+use WpMlp\Admin\StringTranslationPage;
+use WpMlp\Rest\TranslationsController;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\Translator;
@@ -176,6 +178,24 @@ final class Plugin {
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
 		);
+
+		$c->set(
+			StringTranslationPage::class,
+			static fn( Container $c ): StringTranslationPage => new StringTranslationPage(
+				$c->get( Settings::class ),
+				$c->get( SourceRepository::class )
+			)
+		);
+
+		$c->set(
+			TranslationsController::class,
+			static fn( Container $c ): TranslationsController => new TranslationsController(
+				$c->get( SourceRepository::class ),
+				$c->get( TranslationRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( Settings::class )
+			)
+		);
 	}
 
 	/**
@@ -190,11 +210,14 @@ final class Plugin {
 			// Rewrites нужен и в админке: правила пересобираются при flush.
 			Rewrites::class,
 			UrlConverter::class,
+			// rest_api_init не сработает, если маршрут не зарегистрирован заранее.
+			TranslationsController::class,
 		);
 
 		if ( is_admin() ) {
 			// Админские сервисы не нужны фронтенду: не создаём их лишний раз.
 			$services[] = SettingsPage::class;
+			$services[] = StringTranslationPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;
 			$services[] = OutputBuffer::class;

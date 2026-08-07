@@ -1,0 +1,74 @@
+/**
+ * Оформление страницы «Перевод строк».
+ */
+
+.wp-mlp-filters {
+	margin: 1em 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.wp-mlp-filters .wp-mlp-total {
+	margin-left: auto;
+	color: #646970;
+}
+
+.wp-mlp-table .wp-mlp-col-source {
+	width: 34%;
+	word-break: break-word;
+}
+
+.wp-mlp-table .wp-mlp-col-kind {
+	width: 8%;
+}
+
+.wp-mlp-table .wp-mlp-col-translation {
+	width: 44%;
+}
+
+.wp-mlp-table .wp-mlp-col-status {
+	width: 14%;
+}
+
+.wp-mlp-input {
+	width: 100%;
+	margin-bottom: 4px;
+}
+
+.wp-mlp-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 9px;
+	font-size: 12px;
+	line-height: 1.6;
+	background: #f0f0f1;
+	color: #3c434a;
+}
+
+.wp-mlp-status--approved {
+	background: #edfaef;
+	color: #00650f;
+}
+
+.wp-mlp-status--missing {
+	background: #fcf0f1;
+	color: #8a2424;
+}
+
+.wp-mlp-status--machine,
+.wp-mlp-status--review {
+	background: #fcf9e8;
+	color: #614b00;
+}
+
+.wp-mlp-status--stale {
+	background: #fcf0f1;
+	color: #8a2424;
+}
+
+.wp-mlp-status--failed {
+	background: #d63638;
+	color: #fff;
+}
