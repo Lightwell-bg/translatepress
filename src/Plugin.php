@@ -15,6 +15,10 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\Schema;
+use WpMlp\Storage\SourceRepository;
+use WpMlp\Storage\TranslationRepository;
 use WpMlp\Support\Hookable;
 
 /**
@@ -41,6 +45,11 @@ final class Plugin {
 		self::$container = self::buildContainer();
 
 		add_action( 'init', array( self::class, 'loadTextdomain' ), 0 );
+
+		// Схема могла отстать, если плагин обновили копированием файлов.
+		if ( is_admin() ) {
+			add_action( 'admin_init', array( Schema::class, 'maybeUpgrade' ) );
+		}
 
 		foreach ( self::hookableServices() as $id ) {
 			$service = self::$container->get( $id );
@@ -78,7 +87,7 @@ final class Plugin {
 			add_option( Settings::OPTION, Settings::defaults() );
 		}
 
-		// Схема БД появится здесь на следующем шаге.
+		Schema::install();
 		flush_rewrite_rules();
 	}
 
@@ -107,6 +116,10 @@ final class Plugin {
 	 */
 	private static function defineServices( Container $c ): void {
 		$c->set( Settings::class, static fn(): Settings => new Settings() );
+
+		$c->set( SourceRepository::class, static fn(): SourceRepository => new SourceRepository() );
+		$c->set( TranslationRepository::class, static fn(): TranslationRepository => new TranslationRepository() );
+		$c->set( OccurrenceRepository::class, static fn(): OccurrenceRepository => new OccurrenceRepository() );
 
 		$c->set(
 			LanguageResolver::class,
