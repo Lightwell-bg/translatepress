@@ -12,6 +12,7 @@ namespace WpMlp;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Rest\TranslationsController;
+use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\Translator;
@@ -175,6 +176,15 @@ final class Plugin {
 		);
 
 		$c->set(
+			LanguageSwitcher::class,
+			static fn( Container $c ): LanguageSwitcher => new LanguageSwitcher(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
 		);
@@ -212,6 +222,8 @@ final class Plugin {
 			UrlConverter::class,
 			// rest_api_init не сработает, если маршрут не зарегистрирован заранее.
 			TranslationsController::class,
+			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
+			LanguageSwitcher::class,
 		);
 
 		if ( is_admin() ) {
