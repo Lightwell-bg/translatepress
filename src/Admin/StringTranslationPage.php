@@ -185,6 +185,7 @@ final class StringTranslationPage implements Hookable {
 			</p>
 
 			<?php $this->renderPurgeNotice(); ?>
+			<?php $this->renderAiNotice(); ?>
 			<?php $this->renderFilters( $secondary, $filters, $result['total'] ); ?>
 
 			<table class="widefat striped wp-mlp-table">
@@ -351,6 +352,31 @@ final class StringTranslationPage implements Hookable {
 			__( 'Удалить ВСЕ переводы языка «%1$s» (%2$s)? Это действие нельзя отменить.', 'wp-mlp' ),
 			$label,
 			$locale
+		);
+	}
+
+	/**
+	 * Объясняет, почему кнопки «Перевести с ИИ» нет.
+	 *
+	 * Без этого отсутствие кнопки выглядит как поломка: ключ вроде прописан,
+	 * а кнопки нет и никаких сообщений тоже.
+	 */
+	private function renderAiNotice(): void {
+		if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, '' ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-info"><p>%s</p></div>',
+			wp_kses(
+				sprintf(
+					/* translators: 1: .env file name, 2: path to the plugin folder */
+					__( 'Кнопки «Перевести с ИИ» нет, потому что ключ OpenAI не прочитан. Проверьте, что файл %1$s лежит в папке %2$s и содержит непустые OPENAI_API_KEY и OPENAI_MODEL.', 'wp-mlp' ),
+					'<code>.env</code>',
+					'<code>' . esc_html( WP_MLP_DIR ) . '</code>'
+				),
+				array( 'code' => array() )
+			)
 		);
 	}
 

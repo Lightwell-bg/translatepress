@@ -11,6 +11,10 @@
 	var root = document.querySelector( '.wp-mlp-editor' );
 
 	if ( ! settings || ! root ) {
+		if ( window.console ) {
+			window.console.error( '[wp-mlp] Редактор: данные wpMlpEditor или разметка панели не найдены.' );
+		}
+
 		return;
 	}
 
@@ -288,16 +292,28 @@
 		load( event.data.strings[ 0 ] );
 	} );
 
-	document.getElementById( 'mlp-editor-save' ).addEventListener( 'click', save );
-	document.getElementById( 'mlp-editor-delete' ).addEventListener( 'click', remove );
-	document.getElementById( 'mlp-editor-make-block' ).addEventListener( 'click', makeBlock );
+	/**
+	 * Вешает обработчик, если элемент есть в разметке.
+	 *
+	 * Раньше три кнопки подключались напрямую через getElementById().
+	 * Отсутствие любой из них (её может не быть по условию рендера) роняло
+	 * весь скрипт на TypeError — вместе со всеми остальными кнопками.
+	 *
+	 * @param {string}   id      Идентификатор элемента.
+	 * @param {Function} handler Обработчик клика.
+	 */
+	function onClick( id, handler ) {
+		var element = document.getElementById( id );
 
-	// Кнопки нет в разметке, если провайдер перевода не настроен.
-	var translateButton = document.getElementById( 'mlp-editor-translate' );
-
-	if ( translateButton ) {
-		translateButton.addEventListener( 'click', translateWithAi );
+		if ( element ) {
+			element.addEventListener( 'click', handler );
+		}
 	}
+
+	onClick( 'mlp-editor-save', save );
+	onClick( 'mlp-editor-delete', remove );
+	onClick( 'mlp-editor-make-block', makeBlock );
+	onClick( 'mlp-editor-translate', translateWithAi );
 
 	targetField.addEventListener( 'keydown', function ( event ) {
 		if ( event.ctrlKey && 'Enter' === event.key ) {

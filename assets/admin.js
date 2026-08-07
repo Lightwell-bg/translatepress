@@ -9,8 +9,24 @@
 
 	var settings = window.wpMlpAdmin;
 
+	/*
+	 * Раньше здесь был молчаливый return. Если данные не долетели до скрипта
+	 * (не сработал wp_localize_script, конфликт имён, скрипт подключён мимо
+	 * WordPress), страница выглядела рабочей, а кнопки не делали ничего и
+	 * не оставляли следов — ни в Console, ни в Network. Теперь причина видна.
+	 */
 	if ( ! settings || ! settings.root ) {
+		if ( window.console ) {
+			window.console.error(
+				'[wp-mlp] Скрипт загружен, но данные wpMlpAdmin отсутствуют — кнопки работать не будут.'
+			);
+		}
+
 		return;
+	}
+
+	if ( window.console ) {
+		window.console.info( '[wp-mlp] admin.js готов, REST: ' + settings.root );
 	}
 
 	/**
@@ -170,6 +186,12 @@
 	}
 
 	document.addEventListener( 'click', function ( event ) {
+		// Цель клика не всегда элемент (текстовый узел, сам документ) —
+		// без этой проверки closest() бросил бы исключение.
+		if ( ! ( event.target instanceof Element ) ) {
+			return;
+		}
+
 		var save_button = event.target.closest( '.wp-mlp-save' );
 
 		if ( save_button ) {
