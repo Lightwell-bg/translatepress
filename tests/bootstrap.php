@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/stubs.php';
 
 if ( ! defined( 'WP_MLP_DIR' ) ) {
 	define( 'WP_MLP_DIR', dirname( __DIR__ ) . '/' );

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp;
 
+use WpMlp\Admin\SettingsPage;
+use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
 /**
@@ -68,7 +70,11 @@ final class Plugin {
 	 * Активация плагина.
 	 */
 	public static function activate(): void {
-		// Схема БД и настройки по умолчанию появятся здесь на следующих шагах.
+		if ( false === get_option( Settings::OPTION, false ) ) {
+			add_option( Settings::OPTION, Settings::defaults() );
+		}
+
+		// Схема БД появится здесь на следующем шаге.
 		flush_rewrite_rules();
 	}
 
@@ -96,8 +102,12 @@ final class Plugin {
 	 * @param Container $c Контейнер.
 	 */
 	private static function defineServices( Container $c ): void {
-		unset( $c );
-		// Сервисы регистрируются на последующих шагах.
+		$c->set( Settings::class, static fn(): Settings => new Settings() );
+
+		$c->set(
+			SettingsPage::class,
+			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
+		);
 	}
 
 	/**
@@ -108,6 +118,13 @@ final class Plugin {
 	 * @return list<string>
 	 */
 	private static function hookableServices(): array {
-		return array();
+		$services = array();
+
+		// Админские сервисы не нужны фронтенду: не создаём их на каждый показ страницы.
+		if ( is_admin() ) {
+			$services[] = SettingsPage::class;
+		}
+
+		return $services;
 	}
 }
