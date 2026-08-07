@@ -32,6 +32,12 @@ final class OpenAiProvider implements ProviderInterface {
 	private const MAX_ATTEMPTS = 2;
 
 	/**
+	 * Причина последней неудачи. Без ключа и прочих секретов — этот текст
+	 * уходит прямо в ответ REST и виден в админке (ТЗ 13: ключ туда не попадает).
+	 */
+	private ?string $lastError = null;
+
+	/**
 	 * @param string $apiKey  Ключ из OPENAI_API_KEY. Пустая строка — провайдер выключен.
 	 * @param string $model   Идентификатор модели из OPENAI_MODEL.
 	 * @param string $baseUrl Адрес API из OPENAI_BASE_URL, без хвостового слеша.
@@ -41,6 +47,16 @@ final class OpenAiProvider implements ProviderInterface {
 		private readonly string $model,
 		private readonly string $baseUrl
 	) {
+	}
+
+	/**
+	 * Причина, по которой последний вызов `translateBatch()` не вернул перевод.
+	 *
+	 * Не входит в `ProviderInterface`: это диагностика конкретно для OpenAI,
+	 * а не часть контракта, обязательного для любого провайдера.
+	 */
+	public function lastError(): ?string {
+		return $this->lastError;
 	}
 
 	/**
@@ -61,6 +77,8 @@ final class OpenAiProvider implements ProviderInterface {
 		string $targetLocale,
 		TranslationContext $context
 	): array {
+		$this->lastError = null;
+
 		if ( array() === $items || '' === $this->apiKey ) {
 			return array();
 		}
@@ -77,10 +95,20 @@ final class OpenAiProvider implements ProviderInterface {
 		$body = $this->send( $payload, array_keys( $items ) );
 
 		if ( null === $body ) {
+			// $this->lastError уже заполнен внутри send().
 			return array();
 		}
 
-		return OpenAiRequestBuilder::parseResponse( $body, array_keys( $items ) );
+		$result = OpenAiRequestBuilder::parseResponse( $body, array_keys( $items ) );
+
+		if ( array() === $result ) {
+			// HTTP 200, но модель не вернула то, что было запрошено: либо
+			// ответила текстом вместо JSON, либо не тем набором ключей.
+			$this->lastError = 'модель ответила, но её ответ не удалось разобрать';
+			$this->log( $this->lastError . ': ' . substr( $body, 0, 500 ) );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -113,7 +141,8 @@ final class OpenAiProvider implements ProviderInterface {
 			);
 
 			if ( is_wp_error( $response ) ) {
-				$this->log( 'network error: ' . $response->get_error_message() );
+				$this->lastError = 'сетевая ошибка: ' . $response->get_error_message();
+				$this->log( $this->lastError );
 
 				continue;
 			}
@@ -125,7 +154,9 @@ final class OpenAiProvider implements ProviderInterface {
 			}
 
 			$message = OpenAiRequestBuilder::errorMessage( (string) wp_remote_retrieve_body( $response ) );
-			$this->log( sprintf( 'HTTP %d%s', $code, null !== $message ? ': ' . $message : '' ) );
+
+			$this->lastError = sprintf( 'HTTP %d%s', $code, null !== $message ? ': ' . $message : '' );
+			$this->log( $this->lastError );
 
 			// 4xx — ошибка запроса (неверная модель, лимит и т.п.), повтор не поможет.
 			if ( $code < 500 ) {

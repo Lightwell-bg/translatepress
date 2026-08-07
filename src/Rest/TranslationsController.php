@@ -23,6 +23,7 @@ use WpMlp\Storage\UsageTracker;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
+use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
@@ -289,9 +290,14 @@ final class TranslationsController implements Hookable {
 		$text   = $result[ $hash ] ?? null;
 
 		if ( ! is_string( $text ) || '' === trim( $text ) ) {
+			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->lastError() : null;
+
 			return new WP_Error(
 				'mlp_suggest_failed',
-				__( 'Не удалось получить перевод от OpenAI. Проверьте настройки в .env и debug.log.', 'wp-mlp' ),
+				null !== $detail
+					/* translators: %s: причина, которую вернул провайдер */
+					? sprintf( __( 'Не удалось получить перевод от OpenAI: %s', 'wp-mlp' ), $detail )
+					: __( 'Не удалось получить перевод от OpenAI.', 'wp-mlp' ),
 				array( 'status' => 502 )
 			);
 		}
