@@ -67,4 +67,38 @@ final class EnvTest extends TestCase {
 
 		$this->assertSame( array( 'A' => '1', 'B' => '2' ), $values );
 	}
+
+	/**
+	 * Значение должно читаться, даже если хостинг запретил putenv().
+	 *
+	 * Раньше get() опирался только на getenv(): при отключённом putenv ключ
+	 * из полностью корректного .env считался ненастроенным, и кнопка перевода
+	 * молча не появлялась в админке.
+	 */
+	public function testValueSurvivesWithoutProcessEnvironment(): void {
+		$path = tempnam( sys_get_temp_dir(), 'mlp' );
+
+		file_put_contents( $path, "MLP_TEST_KEY=secret-value\n" );
+
+		Env::reset();
+		Env::load( $path );
+
+		// Имитируем хостинг без putenv: убираем значение из окружения процесса.
+		putenv( 'MLP_TEST_KEY' );
+
+		$this->assertFalse( getenv( 'MLP_TEST_KEY' ) );
+		$this->assertSame( 'secret-value', Env::get( 'MLP_TEST_KEY' ) );
+
+		Env::reset();
+		unlink( $path );
+	}
+
+	public function testMissingFileLeavesDefaults(): void {
+		Env::reset();
+		Env::load( sys_get_temp_dir() . '/definitely-not-here-' . uniqid() . '.env' );
+
+		$this->assertSame( 'fallback', Env::get( 'MLP_ABSENT_KEY', 'fallback' ) );
+
+		Env::reset();
+	}
 }

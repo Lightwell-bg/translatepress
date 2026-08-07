@@ -16,6 +16,7 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\TranslationStatus;
+use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\ProviderInterface;
@@ -96,8 +97,8 @@ final class EditorPage implements Hookable {
 			return;
 		}
 
-		wp_enqueue_style( 'wp-mlp-editor', WP_MLP_URL . 'assets/editor.css', array(), WP_MLP_VERSION );
-		wp_enqueue_script( 'wp-mlp-editor', WP_MLP_URL . 'assets/editor.js', array(), WP_MLP_VERSION, true );
+		wp_enqueue_style( 'wp-mlp-editor', Assets::url( 'assets/editor.css' ), array(), Assets::version( 'assets/editor.css' ) );
+		wp_enqueue_script( 'wp-mlp-editor', Assets::url( 'assets/editor.js' ), array(), Assets::version( 'assets/editor.js' ), true );
 
 		wp_localize_script(
 			'wp-mlp-editor',

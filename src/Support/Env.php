@@ -25,7 +25,19 @@ final class Env {
 	private static bool $loaded = false;
 
 	/**
-	 * Читает файл и раскладывает значения по `putenv()`/`$_ENV`.
+	 * Значения, прочитанные из файла.
+	 *
+	 * Собственное хранилище, а не только `putenv()`: на многих shared-хостингах
+	 * `putenv` отключён через `disable_functions`, и тогда `getenv()` вернул бы
+	 * пустоту даже при полностью корректном `.env`. Из-за этого ключ считался
+	 * бы ненастроенным, а кнопка перевода молча не появлялась.
+	 *
+	 * @var array<string, string>
+	 */
+	private static array $values = array();
+
+	/**
+	 * Читает файл и запоминает значения.
 	 *
 	 * Значения, уже заданные на уровне сервера (реальный environment
 	 * хостинга), не перезаписываются: серверная переменная приоритетнее файла.
@@ -54,9 +66,13 @@ final class Env {
 				continue;
 			}
 
-			putenv( $key . '=' . $value );
-			$_ENV[ $key ]    = $value;
-			$_SERVER[ $key ] = $value;
+			self::$values[ $key ] = $value;
+
+			// Дублируем в окружение процесса, если хостинг это позволяет:
+			// так значение увидит и сторонний код, читающий getenv() напрямую.
+			if ( function_exists( 'putenv' ) ) {
+				putenv( $key . '=' . $value );
+			}
 		}
 	}
 
@@ -67,9 +83,24 @@ final class Env {
 	 * @param string $default Значение по умолчанию.
 	 */
 	public static function get( string $key, string $default = '' ): string {
-		$value = getenv( $key );
+		// Реальное окружение сервера приоритетнее файла.
+		$fromEnv = getenv( $key );
 
-		return false !== $value && '' !== $value ? $value : $default;
+		if ( is_string( $fromEnv ) && '' !== $fromEnv ) {
+			return $fromEnv;
+		}
+
+		$fromFile = self::$values[ $key ] ?? '';
+
+		return '' !== $fromFile ? $fromFile : $default;
+	}
+
+	/**
+	 * Сбрасывает состояние. Нужен только тестам.
+	 */
+	public static function reset(): void {
+		self::$loaded = false;
+		self::$values = array();
 	}
 
 	/**

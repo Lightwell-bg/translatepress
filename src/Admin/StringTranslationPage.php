@@ -17,6 +17,7 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
 use WpMlp\Storage\TranslationStatus;
+use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\ProviderInterface;
@@ -121,8 +122,8 @@ final class StringTranslationPage implements Hookable {
 			return;
 		}
 
-		wp_enqueue_style( 'wp-mlp-admin', WP_MLP_URL . 'assets/admin.css', array(), WP_MLP_VERSION );
-		wp_enqueue_script( 'wp-mlp-admin', WP_MLP_URL . 'assets/admin.js', array(), WP_MLP_VERSION, true );
+		wp_enqueue_style( 'wp-mlp-admin', Assets::url( 'assets/admin.css' ), array(), Assets::version( 'assets/admin.css' ) );
+		wp_enqueue_script( 'wp-mlp-admin', Assets::url( 'assets/admin.js' ), array(), Assets::version( 'assets/admin.js' ), true );
 
 		wp_localize_script(
 			'wp-mlp-admin',

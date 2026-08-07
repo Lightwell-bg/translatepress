@@ -45,6 +45,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/' );
 }
 
+if ( ! defined( 'WP_MLP_URL' ) ) {
+	define( 'WP_MLP_URL', 'https://example.test/wp-content/plugins/wp-mlp/' );
+}
+
+if ( ! defined( 'WP_MLP_VERSION' ) ) {
+	define( 'WP_MLP_VERSION', '0.3.0' );
+}
+
 // Константы времени, на которые ссылаются константы классов.
 if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
 	define( 'MINUTE_IN_SECONDS', 60 );

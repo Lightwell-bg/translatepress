@@ -3,7 +3,7 @@
  * Plugin Name:       WP Multilang Press
  * Plugin URI:        https://example.com/wp-mlp
  * Description:       Мультиязычность по модели TranslatePress: одна запись WordPress, N языковых URL, переводы строк в собственных таблицах. Без дублирования постов.
- * Version:           0.1.0
+ * Version:           0.3.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            —
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const WP_MLP_VERSION = '0.1.0';
+const WP_MLP_VERSION = '0.3.0';
 const WP_MLP_MIN_PHP = '8.1';
 
 define( 'WP_MLP_FILE', __FILE__ );

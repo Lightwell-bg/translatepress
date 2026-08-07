@@ -11,6 +11,7 @@ namespace WpMlp\Rendering;
 
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Settings\Language;
+use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 
 /**
@@ -94,8 +95,8 @@ final class EditorContext implements Hookable {
 	 * Подключает скрипт предпросмотра.
 	 */
 	public function enqueue(): void {
-		wp_enqueue_style( 'wp-mlp-editor-preview', WP_MLP_URL . 'assets/editor-preview.css', array(), WP_MLP_VERSION );
-		wp_enqueue_script( 'wp-mlp-editor-preview', WP_MLP_URL . 'assets/editor-preview.js', array(), WP_MLP_VERSION, true );
+		wp_enqueue_style( 'wp-mlp-editor-preview', Assets::url( 'assets/editor-preview.css' ), array(), Assets::version( 'assets/editor-preview.css' ) );
+		wp_enqueue_script( 'wp-mlp-editor-preview', Assets::url( 'assets/editor-preview.js' ), array(), Assets::version( 'assets/editor-preview.js' ), true );
 
 		wp_localize_script(
 			'wp-mlp-editor-preview',
