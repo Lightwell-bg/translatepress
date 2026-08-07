@@ -10,6 +10,9 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\SettingsPage;
+use WpMlp\Rendering\Extractor;
+use WpMlp\Rendering\OutputBuffer;
+use WpMlp\Rendering\Translator;
 use WpMlp\Routing\CanonicalRedirect;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
@@ -18,6 +21,7 @@ use WpMlp\Settings\Settings;
 use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\Schema;
 use WpMlp\Storage\SourceRepository;
+use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
 use WpMlp\Support\Hookable;
 
@@ -120,6 +124,27 @@ final class Plugin {
 		$c->set( SourceRepository::class, static fn(): SourceRepository => new SourceRepository() );
 		$c->set( TranslationRepository::class, static fn(): TranslationRepository => new TranslationRepository() );
 		$c->set( OccurrenceRepository::class, static fn(): OccurrenceRepository => new OccurrenceRepository() );
+		$c->set( TranslationCache::class, static fn(): TranslationCache => new TranslationCache() );
+		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
+
+		$c->set(
+			Translator::class,
+			static fn( Container $c ): Translator => new Translator(
+				$c->get( Extractor::class ),
+				$c->get( SourceRepository::class ),
+				$c->get( OccurrenceRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( Settings::class )
+			)
+		);
+
+		$c->set(
+			OutputBuffer::class,
+			static fn( Container $c ): OutputBuffer => new OutputBuffer(
+				$c->get( LanguageResolver::class ),
+				$c->get( Translator::class )
+			)
+		);
 
 		$c->set(
 			LanguageResolver::class,
@@ -172,6 +197,7 @@ final class Plugin {
 			$services[] = SettingsPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;
+			$services[] = OutputBuffer::class;
 		}
 
 		return $services;

@@ -1,0 +1,245 @@
+<?php
+/**
+ * Перевод готового HTML.
+ *
+ * @package WpMlp
+ */
+
+declare(strict_types=1);
+
+namespace WpMlp\Rendering;
+
+use WpMlp\Settings\Language;
+use WpMlp\Settings\Settings;
+use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\SourceRepository;
+use WpMlp\Storage\TranslationCache;
+use WpMlp\Support\Hash;
+
+/**
+ * Разбирает ответ страницы, подставляет переводы и собирает HTML обратно.
+ *
+ * Порядок работы повторяет ТЗ 7.2: разбор → извлечение → пакетный поиск
+ * переводов → подстановка → сериализация. Запись новых строк в БД отложена
+ * на `shutdown`, чтобы не удлинять время ответа посетителю.
+ */
+final class Translator {
+
+	/**
+	 * Объект, к которому привязываются места использования строк.
+	 */
+	private const OBJECT_TYPE_URL = 'url';
+
+	/**
+	 * Как часто обновлять «строка ещё встречается» для одной и той же страницы.
+	 */
+	private const TOUCH_INTERVAL = HOUR_IN_SECONDS;
+
+	/**
+	 * @param Extractor            $extractor   Извлечение строк из DOM.
+	 * @param SourceRepository     $sources     Исходные строки.
+	 * @param OccurrenceRepository $occurrences Места использования.
+	 * @param TranslationCache     $cache       Объектный кэш переводов.
+	 * @param Settings             $settings    Настройки плагина.
+	 */
+	public function __construct(
+		private readonly Extractor $extractor,
+		private readonly SourceRepository $sources,
+		private readonly OccurrenceRepository $occurrences,
+		private readonly TranslationCache $cache,
+		private readonly Settings $settings
+	) {
+	}
+
+	/**
+	 * Переводит готовый HTML. Возвращает null, если разобрать не удалось.
+	 *
+	 * @param string   $html   Ответ страницы на исходном языке.
+	 * @param Language $target Язык, на который переводим.
+	 */
+	public function translateHtml( string $html, Language $target ): ?string {
+		$document = HtmlDocument::parse( $html );
+
+		if ( null === $document ) {
+			return null;
+		}
+
+		$sourceLocale = $this->settings->defaultLanguage()->locale;
+		$segments     = $this->extractor->extract( $document, $sourceLocale );
+
+		if ( array() === $segments ) {
+			return $document->html();
+		}
+
+		// Одинаковые строки на странице ищем один раз (ТЗ 4.5).
+		$unique = array();
+
+		foreach ( $segments as $segment ) {
+			$unique[ $segment->uniqHash ] ??= $segment;
+		}
+
+		$found = $this->lookup( array_keys( $unique ), $target->locale );
+
+		foreach ( $segments as $segment ) {
+			$translation = $found[ $segment->uniqHash ]['text'] ?? null;
+
+			if ( is_string( $translation ) && '' !== $translation ) {
+				$segment->apply( $translation );
+			}
+		}
+
+		$this->scheduleDiscovery( $unique, $found, $sourceLocale );
+
+		return $document->html();
+	}
+
+	/**
+	 * Пакетный поиск переводов: сначала объектный кэш, затем один SQL-запрос.
+	 *
+	 * @param list<string> $hashes Hex-хеши строк страницы.
+	 * @param string       $locale Целевой язык.
+	 * @return array<string, array{id: int, text: ?string, status: ?string}>
+	 */
+	private function lookup( array $hashes, string $locale ): array {
+		$cached = $this->cache->getMany( $hashes, $locale );
+
+		$found = array_filter( $cached['hits'], static fn( $row ): bool => null !== $row );
+
+		if ( array() === $cached['misses'] ) {
+			return $found;
+		}
+
+		$fresh = $this->sources->lookup( $cached['misses'], $locale );
+
+		$this->cache->setMany( $fresh, $cached['misses'], $locale );
+
+		return $found + $fresh;
+	}
+
+	/**
+	 * Откладывает запись новых строк на конец запроса (ТЗ 4.6).
+	 *
+	 * @param array<string, Segment>                                        $unique Уникальные строки страницы.
+	 * @param array<string, array{id: int, text: ?string, status: ?string}> $found  Уже известные строки.
+	 * @param string                                                        $locale Исходный язык.
+	 */
+	private function scheduleDiscovery( array $unique, array $found, string $locale ): void {
+		if ( ! $this->settings->isDiscoveryEnabled() || $this->isCrawler() ) {
+			return;
+		}
+
+		$missing = array_diff_key( $unique, $found );
+		$knownIds = array();
+
+		foreach ( $found as $row ) {
+			$knownIds[] = $row['id'];
+		}
+
+		if ( array() === $missing && array() === $knownIds ) {
+			return;
+		}
+
+		add_action(
+			'shutdown',
+			function () use ( $missing, $knownIds, $locale ): void {
+				$this->persist( $missing, $knownIds, $locale );
+			},
+			100
+		);
+	}
+
+	/**
+	 * Пишет найденное в БД. Выполняется уже после отправки ответа.
+	 *
+	 * @param array<string, Segment> $missing  Новые строки.
+	 * @param list<int>              $knownIds Идентификаторы уже известных строк.
+	 * @param string                 $locale   Исходный язык.
+	 */
+	private function persist( array $missing, array $knownIds, string $locale ): void {
+		$urlHash = Hash::of( $this->currentUrlKey() );
+
+		if ( array() !== $missing ) {
+			$rows        = array();
+			$contextHash = Hash::of( '' );
+
+			foreach ( $missing as $hash => $segment ) {
+				$rows[] = array(
+					'locale'       => $locale,
+					'kind'         => $segment->kind,
+					'text'         => $segment->text,
+					'source_hash'  => $segment->sourceHash,
+					'context_hash' => $contextHash,
+					'uniq_hash'    => $hash,
+				);
+			}
+
+			$this->sources->insertMissing( $rows );
+
+			// Идентификаторы известны только после вставки — они нужны occurrences.
+			$ids            = $this->sources->idsByHashes( array_keys( $missing ) );
+			$occurrenceRows = array();
+
+			foreach ( $missing as $hash => $segment ) {
+				if ( ! isset( $ids[ $hash ] ) ) {
+					continue;
+				}
+
+				$occurrenceRows[] = array(
+					'source_id'      => $ids[ $hash ],
+					'object_type'    => self::OBJECT_TYPE_URL,
+					'object_id'      => $this->currentObjectId(),
+					'url_hash'       => $urlHash,
+					'attribute_name' => $segment->attribute,
+					'uniq_hash'      => Hash::ofParts(
+						array( $ids[ $hash ], self::OBJECT_TYPE_URL, $urlHash, (string) $segment->attribute )
+					),
+				);
+			}
+
+			$this->occurrences->insertMany( $occurrenceRows );
+		}
+
+		// Отметку «строка жива» достаточно обновлять раз в час на страницу:
+		// иначе каждый просмотр давал бы UPDATE на сотни идентификаторов.
+		if ( array() !== $knownIds && false === get_transient( 'mlp_touched_' . $urlHash ) ) {
+			$this->sources->touch( $knownIds );
+			set_transient( 'mlp_touched_' . $urlHash, 1, self::TOUCH_INTERVAL );
+		}
+	}
+
+	/**
+	 * Идентификатор текущей записи, если страница — запись WordPress.
+	 */
+	private function currentObjectId(): ?int {
+		$id = get_queried_object_id();
+
+		return $id > 0 ? (int) $id : null;
+	}
+
+	/**
+	 * Путь текущей страницы — им помечаются места использования строк.
+	 */
+	private function currentUrlKey(): string {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение только хешируется.
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+
+		return (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '/' );
+	}
+
+	/**
+	 * Похож ли посетитель на поискового робота.
+	 *
+	 * Роботы обходят весь сайт: если разрешить им пополнять словарь, таблицы
+	 * вырастут на строках, которых живой человек никогда не увидит (ТЗ 4.6).
+	 */
+	private function isCrawler(): bool {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение только сопоставляется с шаблоном.
+		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? strtolower( wp_unslash( (string) $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+
+		if ( '' === $agent ) {
+			return false;
+		}
+
+		return 1 === preg_match( '/(bot|crawler|crawling|spider|slurp|facebookexternalhit|preview)/', $agent );
+	}
+}
