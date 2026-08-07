@@ -250,6 +250,11 @@ final class SettingsPage implements Hookable {
 						<td>
 							<input type="text" name="openai_model" id="mlp-openai-model" class="regular-text"
 								value="<?php echo esc_attr( $this->settings->openAiModel() ); ?>" placeholder="gpt-4o-mini">
+							<?php if ( '' === trim( $this->settings->openAiModel() ) ) : ?>
+								<p class="description" style="color:#b32d2e;">
+									<?php esc_html_e( 'Поле пустое — без него кнопка «Перевести с ИИ» не появится, даже если ключ сохранён.', 'wp-mlp' ); ?>
+								</p>
+							<?php endif; ?>
 							<p class="description"><?php esc_html_e( 'Точный идентификатор модели — сверьте с личным кабинетом OpenAI.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>

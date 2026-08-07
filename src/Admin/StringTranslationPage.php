@@ -21,7 +21,7 @@ use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
-use WpMlp\Translation\ProviderInterface;
+use WpMlp\Translation\ProviderFactory;
 
 /**
  * Таблица найденных строк с полем ручного перевода.
@@ -42,7 +42,7 @@ final class StringTranslationPage implements Hookable {
 	 * @param SourceRepository      $sources      Исходные строки.
 	 * @param TranslationRepository $translations Переводы.
 	 * @param TranslationCache      $cache        Кэш переводов.
-	 * @param ProviderInterface     $provider     Провайдер машинного перевода.
+	 * @param ProviderFactory       $providers    Доступы к провайдеру перевода.
 	 * @param OccurrenceRepository  $occurrences  Места использования строк.
 	 */
 	public function __construct(
@@ -50,7 +50,7 @@ final class StringTranslationPage implements Hookable {
 		private readonly SourceRepository $sources,
 		private readonly TranslationRepository $translations,
 		private readonly TranslationCache $cache,
-		private readonly ProviderInterface $provider,
+		private readonly ProviderFactory $providers,
 		private readonly OccurrenceRepository $occurrences
 	) {
 	}
@@ -252,7 +252,7 @@ final class StringTranslationPage implements Hookable {
 				<button type="button" class="button button-secondary wp-mlp-save">
 					<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
 				</button>
-				<?php if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, $locale ) ) : ?>
+				<?php if ( $this->providers->isReady() ) : ?>
 					<button type="button" class="button-link wp-mlp-translate"
 						title="<?php esc_attr_e( 'Заполнить поле переводом от ИИ — не сохраняет автоматически', 'wp-mlp' ); ?>">
 						<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
@@ -380,23 +380,41 @@ final class StringTranslationPage implements Hookable {
 	/**
 	 * Объясняет, почему кнопки «Перевести с ИИ» нет.
 	 *
-	 * Без этого отсутствие кнопки выглядит как поломка: ключ вроде прописан,
-	 * а кнопки нет и никаких сообщений тоже.
+	 * Сообщение обязано называть недостающее поле поимённо. Общая фраза
+	 * «ключ не настроен» уже один раз отправила владельца сайта проверять
+	 * ключ, который на самом деле был сохранён, — не хватало модели.
 	 */
 	private function renderAiNotice(): void {
-		if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, '' ) ) {
+		$missing = $this->providers->missing();
+
+		if ( array() === $missing ) {
 			return;
+		}
+
+		$names = array(
+			ProviderFactory::FIELD_KEY   => __( 'ключ OpenAI', 'wp-mlp' ),
+			ProviderFactory::FIELD_MODEL => __( 'модель OpenAI', 'wp-mlp' ),
+		);
+
+		$labels = array();
+
+		foreach ( $missing as $field ) {
+			$labels[] = $names[ $field ] ?? $field;
 		}
 
 		printf(
 			'<div class="notice notice-info"><p>%s</p></div>',
 			wp_kses(
 				sprintf(
-					/* translators: %s: link to the settings page */
-					__( 'Кнопки «Перевести с ИИ» нет, потому что ключ OpenAI не настроен. Впишите его на странице %s.', 'wp-mlp' ),
+					/* translators: 1: comma-separated list of missing fields, 2: link to the settings page */
+					__( 'Кнопки «Перевести с ИИ» нет: не заполнено — %1$s. Впишите на странице %2$s.', 'wp-mlp' ),
+					'<strong>' . esc_html( implode( ', ', $labels ) ) . '</strong>',
 					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Мультиязычность → Языки', 'wp-mlp' ) . '</a>'
 				),
-				array( 'a' => array( 'href' => array() ) )
+				array(
+					'a'      => array( 'href' => array() ),
+					'strong' => array(),
+				)
 			)
 		);
 	}

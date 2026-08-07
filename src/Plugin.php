@@ -34,10 +34,8 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
 use WpMlp\Storage\UsageTracker;
-use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
-use WpMlp\Translation\ManualProvider;
-use WpMlp\Translation\OpenAiProvider;
+use WpMlp\Translation\ProviderFactory;
 use WpMlp\Translation\ProviderInterface;
 
 /**
@@ -163,26 +161,13 @@ final class Plugin {
 		 * вручную, кнопкой.
 		 */
 		$c->set(
+			ProviderFactory::class,
+			static fn( Container $c ): ProviderFactory => new ProviderFactory( $c->get( Settings::class ) )
+		);
+
+		$c->set(
 			ProviderInterface::class,
-			static function ( Container $c ): ProviderInterface {
-				$settings = $c->get( Settings::class );
-
-				$apiKey  = $settings->openAiApiKey();
-				$model   = $settings->openAiModel();
-				$baseUrl = $settings->openAiBaseUrl();
-
-				if ( '' === $apiKey ) {
-					$apiKey  = Env::get( 'OPENAI_API_KEY' );
-					$model   = '' !== $model ? $model : Env::get( 'OPENAI_MODEL' );
-					$baseUrl = Env::get( 'OPENAI_BASE_URL', $baseUrl );
-				}
-
-				$provider = '' !== $apiKey
-					? new OpenAiProvider( $apiKey, $model, rtrim( $baseUrl, '/' ) )
-					: new ManualProvider();
-
-				return apply_filters( 'mlp_translation_provider', $provider );
-			}
+			static fn( Container $c ): ProviderInterface => $c->get( ProviderFactory::class )->create()
 		);
 
 		$c->set(
@@ -289,7 +274,7 @@ final class Plugin {
 				$c->get( SourceRepository::class ),
 				$c->get( TranslationRepository::class ),
 				$c->get( TranslationCache::class ),
-				$c->get( ProviderInterface::class ),
+				$c->get( ProviderFactory::class ),
 				$c->get( OccurrenceRepository::class )
 			)
 		);
@@ -299,7 +284,7 @@ final class Plugin {
 			static fn( Container $c ): EditorPage => new EditorPage(
 				$c->get( Settings::class ),
 				$c->get( UrlConverter::class ),
-				$c->get( ProviderInterface::class )
+				$c->get( ProviderFactory::class )
 			)
 		);
 

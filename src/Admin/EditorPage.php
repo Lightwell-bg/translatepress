@@ -19,7 +19,7 @@ use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
-use WpMlp\Translation\ProviderInterface;
+use WpMlp\Translation\ProviderFactory;
 
 /**
  * Панель перевода слева и предпросмотр сайта справа (ТЗ 10.1).
@@ -36,12 +36,12 @@ final class EditorPage implements Hookable {
 	/**
 	 * @param Settings          $settings Настройки плагина.
 	 * @param UrlConverter      $urls     Построение языковых адресов.
-	 * @param ProviderInterface $provider Провайдер машинного перевода.
+	 * @param ProviderFactory   $providers Доступы к провайдеру перевода.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly UrlConverter $urls,
-		private readonly ProviderInterface $provider
+		private readonly ProviderFactory $providers
 	) {
 	}
 
@@ -201,7 +201,7 @@ final class EditorPage implements Hookable {
 						</label>
 						<textarea id="mlp-editor-target" rows="5"></textarea>
 
-						<?php if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, $locale ) ) : ?>
+						<?php if ( $this->providers->isReady() ) : ?>
 							<button type="button" class="button" id="mlp-editor-translate">
 								<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
 							</button>

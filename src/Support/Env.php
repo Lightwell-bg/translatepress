@@ -97,8 +97,17 @@ final class Env {
 
 	/**
 	 * Сбрасывает состояние. Нужен только тестам.
+	 *
+	 * Убирает и то, что было записано в окружение процесса: иначе значения
+	 * пережили бы «сброс» и протекли в следующий тест через getenv().
 	 */
 	public static function reset(): void {
+		if ( function_exists( 'putenv' ) ) {
+			foreach ( array_keys( self::$values ) as $key ) {
+				putenv( (string) $key );
+			}
+		}
+
 		self::$loaded = false;
 		self::$values = array();
 	}
