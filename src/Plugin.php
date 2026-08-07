@@ -13,6 +13,7 @@ use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Frontend\LanguageSwitcher;
+use WpMlp\Frontend\SeoTags;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\Translator;
@@ -131,13 +132,23 @@ final class Plugin {
 		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
 
 		$c->set(
+			SeoTags::class,
+			static fn( Container $c ): SeoTags => new SeoTags(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
 			Translator::class,
 			static fn( Container $c ): Translator => new Translator(
 				$c->get( Extractor::class ),
 				$c->get( SourceRepository::class ),
 				$c->get( OccurrenceRepository::class ),
 				$c->get( TranslationCache::class ),
-				$c->get( Settings::class )
+				$c->get( Settings::class ),
+				array( $c->get( SeoTags::class ) )
 			)
 		);
 
@@ -232,6 +243,7 @@ final class Plugin {
 			$services[] = StringTranslationPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;
+			$services[] = SeoTags::class;
 			$services[] = OutputBuffer::class;
 		}
 

@@ -41,13 +41,15 @@ final class Translator {
 	 * @param OccurrenceRepository $occurrences Места использования.
 	 * @param TranslationCache     $cache       Объектный кэш переводов.
 	 * @param Settings             $settings    Настройки плагина.
+	 * @param list<DocumentFilter> $filters     Пост-обработчики готового DOM.
 	 */
 	public function __construct(
 		private readonly Extractor $extractor,
 		private readonly SourceRepository $sources,
 		private readonly OccurrenceRepository $occurrences,
 		private readonly TranslationCache $cache,
-		private readonly Settings $settings
+		private readonly Settings $settings,
+		private readonly array $filters = array()
 	) {
 	}
 
@@ -68,6 +70,8 @@ final class Translator {
 		$segments     = $this->extractor->extract( $document, $sourceLocale );
 
 		if ( array() === $segments ) {
+			$this->runFilters( $document, $target );
+
 			return $document->html();
 		}
 
@@ -88,9 +92,22 @@ final class Translator {
 			}
 		}
 
+		$this->runFilters( $document, $target );
 		$this->scheduleDiscovery( $unique, $found, $sourceLocale );
 
 		return $document->html();
+	}
+
+	/**
+	 * Даёт пост-обработчикам доработать готовый DOM.
+	 *
+	 * @param HtmlDocument $document Разобранный документ.
+	 * @param Language     $target   Язык страницы.
+	 */
+	private function runFilters( HtmlDocument $document, Language $target ): void {
+		foreach ( $this->filters as $filter ) {
+			$filter->apply( $document, $target );
+		}
 	}
 
 	/**
