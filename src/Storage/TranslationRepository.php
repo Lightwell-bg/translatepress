@@ -118,6 +118,33 @@ final class TranslationRepository {
 	}
 
 	/**
+	 * Удаляет все переводы на указанный язык.
+	 *
+	 * Исходные строки остаются: удаляются только переводы, поэтому список
+	 * в админке не опустеет и переводить заново можно с того же места.
+	 *
+	 * @param string $locale Целевой язык.
+	 * @return int Сколько переводов удалено.
+	 */
+	public function deleteAllForLocale( string $locale ): int {
+		global $wpdb;
+
+		if ( ! Locale::isValid( $locale ) ) {
+			return 0;
+		}
+
+		$table = Schema::table( 'translations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$deleted = $wpdb->query(
+			$wpdb->prepare( "DELETE FROM {$table} WHERE target_locale = %s", $locale )
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return max( 0, (int) $deleted );
+	}
+
+	/**
 	 * Удаляет перевод строки на язык.
 	 *
 	 * @param int    $sourceId Исходная строка.

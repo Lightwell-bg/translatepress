@@ -78,12 +78,72 @@
 			} );
 	}
 
-	document.addEventListener( 'click', function ( event ) {
-		var button = event.target.closest( '.wp-mlp-save' );
+	/**
+	 * Удаляет перевод строки.
+	 *
+	 * @param {HTMLButtonElement} button Нажатая кнопка.
+	 */
+	function remove( button ) {
+		var row = button.closest( 'tr' );
+		var input = row ? row.querySelector( '.wp-mlp-input' ) : null;
 
-		if ( button ) {
+		if ( ! row || ! input || ! window.confirm( settings.i18n.confirmDelete ) ) {
+			return;
+		}
+
+		var sourceId = input.getAttribute( 'data-source-id' );
+		var locale = input.getAttribute( 'data-locale' );
+
+		button.disabled = true;
+		setStatus( row, settings.i18n.deleting, 'saving' );
+
+		fetch( settings.root + encodeURIComponent( sourceId ) + '/' + encodeURIComponent( locale ), {
+			method: 'DELETE',
+			credentials: 'same-origin',
+			headers: { 'X-WP-Nonce': settings.nonce }
+		} )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					throw new Error( 'HTTP ' + response.status );
+				}
+
+				return response.json();
+			} )
+			.then( function ( data ) {
+				input.value = '';
+				setStatus( row, data.status_label, data.status );
+				button.remove();
+			} )
+			.catch( function () {
+				setStatus( row, settings.i18n.failed, 'failed' );
+				button.disabled = false;
+			} );
+	}
+
+	document.addEventListener( 'click', function ( event ) {
+		var save_button = event.target.closest( '.wp-mlp-save' );
+
+		if ( save_button ) {
 			event.preventDefault();
-			save( button );
+			save( save_button );
+
+			return;
+		}
+
+		var delete_button = event.target.closest( '.wp-mlp-delete' );
+
+		if ( delete_button ) {
+			event.preventDefault();
+			remove( delete_button );
+
+			return;
+		}
+
+		// Массовое удаление необратимо, поэтому спрашиваем до отправки формы.
+		var confirm_button = event.target.closest( '[data-mlp-confirm]' );
+
+		if ( confirm_button && ! window.confirm( confirm_button.getAttribute( 'data-mlp-confirm' ) ) ) {
+			event.preventDefault();
 		}
 	} );
 

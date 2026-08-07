@@ -224,7 +224,9 @@ final class Plugin {
 			StringTranslationPage::class,
 			static fn( Container $c ): StringTranslationPage => new StringTranslationPage(
 				$c->get( Settings::class ),
-				$c->get( SourceRepository::class )
+				$c->get( SourceRepository::class ),
+				$c->get( TranslationRepository::class ),
+				$c->get( TranslationCache::class )
 			)
 		);
 

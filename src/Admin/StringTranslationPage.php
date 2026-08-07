@@ -14,6 +14,8 @@ use WpMlp\Rest\TranslationsController;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\SourceRepository;
+use WpMlp\Storage\TranslationCache;
+use WpMlp\Storage\TranslationRepository;
 use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
@@ -26,18 +28,23 @@ use WpMlp\Support\Locale;
  */
 final class StringTranslationPage implements Hookable {
 
-	public const MENU_SLUG  = 'wp-mlp-strings';
-	public const CAPABILITY = 'manage_options';
+	public const MENU_SLUG   = 'wp-mlp-strings';
+	public const CAPABILITY  = 'manage_options';
+	public const ACTION_PURGE = 'mlp_purge_translations';
 
 	private const PER_PAGE = 20;
 
 	/**
-	 * @param Settings         $settings Настройки плагина.
-	 * @param SourceRepository $sources  Исходные строки.
+	 * @param Settings              $settings     Настройки плагина.
+	 * @param SourceRepository      $sources      Исходные строки.
+	 * @param TranslationRepository $translations Переводы.
+	 * @param TranslationCache      $cache        Кэш переводов.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
-		private readonly SourceRepository $sources
+		private readonly SourceRepository $sources,
+		private readonly TranslationRepository $translations,
+		private readonly TranslationCache $cache
 	) {
 	}
 
@@ -47,6 +54,44 @@ final class StringTranslationPage implements Hookable {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'addMenu' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_action( 'admin_post_' . self::ACTION_PURGE, array( $this, 'handlePurge' ) );
+	}
+
+	/**
+	 * Удаляет все переводы выбранного языка.
+	 *
+	 * Операция необратимая, поэтому кроме capability и nonce на кнопке висит
+	 * подтверждение в браузере, а язык берётся из формы, а не из GET-параметра.
+	 */
+	public function handlePurge(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'Недостаточно прав для удаления переводов.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::ACTION_PURGE );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		$locale   = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
+		$language = $this->settings->get( $locale );
+
+		if ( null === $language || $language->isDefault ) {
+			wp_die( esc_html__( 'Такого дополнительного языка нет в настройках.', 'wp-mlp' ), '', array( 'response' => 400 ) );
+		}
+
+		$deleted = $this->translations->deleteAllForLocale( $language->locale );
+		$this->cache->flush();
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => self::MENU_SLUG,
+					'mlp_locale'  => $language->locale,
+					'mlp-purged'  => (string) $deleted,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -83,9 +128,11 @@ final class StringTranslationPage implements Hookable {
 				'root'  => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'  => array(
-					'saving' => __( 'Сохраняю…', 'wp-mlp' ),
-					'saved'  => __( 'Сохранено', 'wp-mlp' ),
-					'failed' => __( 'Ошибка сохранения', 'wp-mlp' ),
+					'saving'        => __( 'Сохраняю…', 'wp-mlp' ),
+					'saved'         => __( 'Сохранено', 'wp-mlp' ),
+					'failed'        => __( 'Ошибка сохранения', 'wp-mlp' ),
+					'deleting'      => __( 'Удаляю…', 'wp-mlp' ),
+					'confirmDelete' => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
 				),
 			)
 		);
@@ -130,6 +177,7 @@ final class StringTranslationPage implements Hookable {
 				<?php esc_html_e( 'Строки появляются здесь после того, как вы откроете страницу на дополнительном языке: плагин запоминает всё, что реально показала тема — тексты, пункты меню, подписи к картинкам и кнопки.', 'wp-mlp' ); ?>
 			</p>
 
+			<?php $this->renderPurgeNotice(); ?>
 			<?php $this->renderFilters( $secondary, $filters, $result['total'] ); ?>
 
 			<table class="widefat striped wp-mlp-table">
@@ -190,6 +238,12 @@ final class StringTranslationPage implements Hookable {
 				<button type="button" class="button button-secondary wp-mlp-save">
 					<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
 				</button>
+				<?php if ( '' !== $text ) : ?>
+					<button type="button" class="button-link wp-mlp-delete"
+						title="<?php esc_attr_e( 'Удалить перевод', 'wp-mlp' ); ?>">
+						<?php esc_html_e( 'Удалить', 'wp-mlp' ); ?>
+					</button>
+				<?php endif; ?>
 			</td>
 			<td class="wp-mlp-col-status">
 				<span class="wp-mlp-status wp-mlp-status--<?php echo esc_attr( $status ); ?>">
@@ -247,7 +301,68 @@ final class StringTranslationPage implements Hookable {
 				?>
 			</span>
 		</form>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_PURGE ); ?>">
+			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $filters['locale'] ); ?>">
+			<?php wp_nonce_field( self::ACTION_PURGE ); ?>
+
+			<button type="submit" class="button button-link-delete"
+				data-mlp-confirm="<?php echo esc_attr( $this->purgeConfirmation( $secondary, $filters['locale'] ) ); ?>">
+				<?php
+				printf(
+					/* translators: %s: language code */
+					esc_html__( 'Удалить все переводы языка «%s»', 'wp-mlp' ),
+					esc_html( $filters['locale'] )
+				);
+				?>
+			</button>
+			<span class="description">
+				<?php esc_html_e( 'Исходные строки останутся — удалятся только переводы на этот язык.', 'wp-mlp' ); ?>
+			</span>
+		</form>
 		<?php
+	}
+
+	/**
+	 * Текст подтверждения для массового удаления.
+	 *
+	 * @param array<string, Language> $secondary Дополнительные языки.
+	 * @param string                  $locale    Выбранный язык.
+	 */
+	private function purgeConfirmation( array $secondary, string $locale ): string {
+		$label = $secondary[ $locale ]->label ?? $locale;
+
+		return sprintf(
+			/* translators: 1: language label, 2: language code */
+			__( 'Удалить ВСЕ переводы языка «%1$s» (%2$s)? Это действие нельзя отменить.', 'wp-mlp' ),
+			$label,
+			$locale
+		);
+	}
+
+	/**
+	 * Сообщение о результате массового удаления.
+	 */
+	private function renderPurgeNotice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение счётчика из URL.
+		if ( ! isset( $_GET['mlp-purged'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение приводится к целому.
+		$deleted = absint( $_GET['mlp-purged'] );
+
+		printf(
+			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: number of deleted translations */
+					__( 'Удалено переводов: %s.', 'wp-mlp' ),
+					number_format_i18n( $deleted )
+				)
+			)
+		);
 	}
 
 	/**
