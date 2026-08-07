@@ -22,6 +22,11 @@ final class Settings {
 	public const OPTION = 'mlp_settings';
 
 	/**
+	 * Адрес API по умолчанию, если владелец сайта не указал свой.
+	 */
+	public const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
+
+	/**
 	 * Разобранные языки, ключ — код языка.
 	 *
 	 * @var array<string, Language>|null
@@ -61,6 +66,9 @@ final class Settings {
 			'delete_data_on_uninstall' => false,
 			'openai_daily_char_limit'  => 100000,
 			'hide_untranslated_posts'  => true,
+			'openai_api_key'           => '',
+			'openai_model'             => '',
+			'openai_base_url'          => self::DEFAULT_OPENAI_BASE_URL,
 		);
 	}
 
@@ -244,6 +252,34 @@ final class Settings {
 	}
 
 	/**
+	 * Ключ OpenAI, сохранённый в настройках плагина.
+	 *
+	 * Хранится в БД по явному запросу владельца сайта, а не в `.env` — так
+	 * ключ вводится один раз через админку, без доступа к файлам хостинга.
+	 * Плагин по-прежнему никогда не выводит его ни в HTML, ни в REST-ответ,
+	 * ни в лог (ТЗ 13) — только последние 4 символа для подтверждения в форме.
+	 */
+	public function openAiApiKey(): string {
+		return (string) ( $this->raw()['openai_api_key'] ?? '' );
+	}
+
+	/**
+	 * Идентификатор модели OpenAI.
+	 */
+	public function openAiModel(): string {
+		return (string) ( $this->raw()['openai_model'] ?? '' );
+	}
+
+	/**
+	 * Адрес API OpenAI или совместимого шлюза.
+	 */
+	public function openAiBaseUrl(): string {
+		$url = trim( (string) ( $this->raw()['openai_base_url'] ?? '' ) );
+
+		return '' !== $url ? $url : self::DEFAULT_OPENAI_BASE_URL;
+	}
+
+	/**
 	 * Сохраняет уже очищенные настройки.
 	 *
 	 * @param array<string, mixed> $settings Результат sanitize().
@@ -319,6 +355,7 @@ final class Settings {
 				'locale' => $locale,
 				'slug'   => $slug,
 				'label'  => sanitize_text_field( (string) ( $row['label'] ?? $locale ) ),
+				'flag'   => Language::sanitizeFlag( (string) ( $row['flag'] ?? '' ) ),
 				'status' => ( $row['status'] ?? '' ) === Language::STATUS_DRAFT
 					? Language::STATUS_DRAFT
 					: Language::STATUS_PUBLISHED,
@@ -349,8 +386,49 @@ final class Settings {
 				'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 				'hide_untranslated_posts'  => ! empty( $input['hide_untranslated_posts'] ),
 				'openai_daily_char_limit'  => max( 0, min( 10000000, $dailyLimit ) ),
+				'openai_api_key'           => $this->sanitizeApiKey( $input ),
+				'openai_model'             => sanitize_text_field( (string) ( $input['openai_model'] ?? $this->openAiModel() ) ),
+				'openai_base_url'          => $this->sanitizeBaseUrl( $input ),
 			),
 			'errors'   => $errors,
 		);
+	}
+
+	/**
+	 * Решает новое значение ключа OpenAI по данным формы.
+	 *
+	 * Поле ключа в форме — `type="password"` и никогда не приходит заполненным
+	 * значением текущего ключа (мы его туда не выводим). Поэтому пустое поле
+	 * означает «оставить как есть», а не «стереть», иначе ключ слетал бы при
+	 * каждом сохранении любых других настроек. Стереть можно только явной
+	 * галочкой.
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 */
+	private function sanitizeApiKey( array $input ): string {
+		if ( ! empty( $input['openai_api_key_clear'] ) ) {
+			return '';
+		}
+
+		$submitted = isset( $input['openai_api_key'] ) ? trim( (string) $input['openai_api_key'] ) : '';
+
+		return '' !== $submitted ? $submitted : $this->openAiApiKey();
+	}
+
+	/**
+	 * Адрес API из формы, с проверкой на правдоподобность.
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 */
+	private function sanitizeBaseUrl( array $input ): string {
+		$url = isset( $input['openai_base_url'] ) ? trim( (string) $input['openai_base_url'] ) : '';
+
+		if ( '' === $url ) {
+			return self::DEFAULT_OPENAI_BASE_URL;
+		}
+
+		$sanitized = esc_url_raw( $url );
+
+		return '' !== $sanitized ? untrailingslashit( $sanitized ) : self::DEFAULT_OPENAI_BASE_URL;
 	}
 }

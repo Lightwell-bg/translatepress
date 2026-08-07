@@ -392,12 +392,11 @@ final class StringTranslationPage implements Hookable {
 			'<div class="notice notice-info"><p>%s</p></div>',
 			wp_kses(
 				sprintf(
-					/* translators: 1: .env file name, 2: path to the plugin folder */
-					__( 'Кнопки «Перевести с ИИ» нет, потому что ключ OpenAI не прочитан. Проверьте, что файл %1$s лежит в папке %2$s и содержит непустые OPENAI_API_KEY и OPENAI_MODEL.', 'wp-mlp' ),
-					'<code>.env</code>',
-					'<code>' . esc_html( WP_MLP_DIR ) . '</code>'
+					/* translators: %s: link to the settings page */
+					__( 'Кнопки «Перевести с ИИ» нет, потому что ключ OpenAI не настроен. Впишите его на странице %s.', 'wp-mlp' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Мультиязычность → Языки', 'wp-mlp' ) . '</a>'
 				),
-				array( 'code' => array() )
+				array( 'a' => array( 'href' => array() ) )
 			)
 		);
 	}

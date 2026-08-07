@@ -148,6 +148,7 @@ final class SettingsPage implements Hookable {
 							<th scope="col"><?php esc_html_e( 'Код языка', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'URL-слаг', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Название', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Флаг', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Удалить', 'wp-mlp' ); ?></th>
 						</tr>
@@ -212,9 +213,52 @@ final class SettingsPage implements Hookable {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Перевод с ИИ (OpenAI)', 'wp-mlp' ); ?></th>
+						<th scope="row"><label for="mlp-openai-key"><?php esc_html_e( 'Ключ OpenAI', 'wp-mlp' ); ?></label></th>
 						<td>
-							<?php $this->renderOpenAiStatus(); ?>
+							<?php $this->renderOpenAiKeyStatus(); ?>
+							<input type="password" name="openai_api_key" id="mlp-openai-key"
+								class="regular-text" autocomplete="off"
+								placeholder="<?php echo esc_attr( $this->settings->openAiApiKey() !== '' ? '••••••••  (оставьте пустым, чтобы не менять)' : 'sk-...' ); ?>">
+							<?php if ( $this->settings->openAiApiKey() !== '' ) : ?>
+								<label>
+									<input type="checkbox" name="openai_api_key_clear" value="1">
+									<?php esc_html_e( 'Удалить сохранённый ключ', 'wp-mlp' ); ?>
+								</label>
+							<?php endif; ?>
+							<p class="description">
+								<?php
+								echo wp_kses(
+									sprintf(
+										/* translators: %s: link to OpenAI API keys page */
+										__( 'Хранится в базе данных сайта, не в файлах. Взять ключ: %s.', 'wp-mlp' ),
+										'<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>'
+									),
+									array(
+										'a' => array(
+											'href'   => array(),
+											'target' => array(),
+											'rel'    => array(),
+										),
+									)
+								);
+								?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mlp-openai-model"><?php esc_html_e( 'Модель OpenAI', 'wp-mlp' ); ?></label></th>
+						<td>
+							<input type="text" name="openai_model" id="mlp-openai-model" class="regular-text"
+								value="<?php echo esc_attr( $this->settings->openAiModel() ); ?>" placeholder="gpt-4o-mini">
+							<p class="description"><?php esc_html_e( 'Точный идентификатор модели — сверьте с личным кабинетом OpenAI.', 'wp-mlp' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mlp-openai-base"><?php esc_html_e( 'Адрес API', 'wp-mlp' ); ?></label></th>
+						<td>
+							<input type="text" name="openai_base_url" id="mlp-openai-base" class="regular-text"
+								value="<?php echo esc_attr( $this->settings->openAiBaseUrl() ); ?>">
+							<p class="description"><?php esc_html_e( 'Меняйте только для своего прокси или совместимого шлюза вместо api.openai.com.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -235,35 +279,39 @@ final class SettingsPage implements Hookable {
 	}
 
 	/**
-	 * Показывает, настроен ли ключ OpenAI — без единого символа самого ключа.
+	 * Показывает, сохранён ли ключ — без единого лишнего символа самого ключа.
 	 *
-	 * Ключ хранится только в `.env` и в интерфейс никогда не выводится:
-	 * ни в это поле, ни в HTML, ни в REST-ответ (раздел 13 ТЗ).
+	 * В HTML попадают только последние 4 символа для подтверждения «это тот
+	 * ключ, что я вводил» — этого недостаточно, чтобы восстановить ключ
+	 * целиком, но достаточно, чтобы отличить его от чужого (ТЗ 13).
 	 */
-	private function renderOpenAiStatus(): void {
-		if ( Env::get( 'OPENAI_API_KEY' ) === '' ) {
-			printf(
-				'<p>%s</p>',
-				wp_kses(
-					sprintf(
-						/* translators: %s: path to the .env file */
-						__( 'Ключ не найден. Скопируйте %s в .env и укажите OPENAI_API_KEY — кнопка «Перевести с ИИ» появится сама, без изменений в коде.', 'wp-mlp' ),
-						'<code>.env.example</code>'
-					),
-					array( 'code' => array() )
-				)
-			);
+	private function renderOpenAiKeyStatus(): void {
+		$key = $this->settings->openAiApiKey();
+
+		if ( '' === $key ) {
+			// Ключ мог остаться настроенным через .env — это резервный способ
+			// для тех, кто предпочитает его файлам БД. Приоритет всегда у БД.
+			if ( '' !== Env::get( 'OPENAI_API_KEY' ) ) {
+				printf(
+					'<p class="description">%s</p>',
+					esc_html__( 'Ключ сейчас берётся из .env — заполните поле ниже, чтобы хранить его в базе данных вместо файла.', 'wp-mlp' )
+				);
+
+				return;
+			}
+
+			printf( '<p class="description">%s</p>', esc_html__( 'Ключ не сохранён.', 'wp-mlp' ) );
 
 			return;
 		}
 
 		printf(
-			'<p>%s</p>',
+			'<p class="description">%s</p>',
 			esc_html(
 				sprintf(
-					/* translators: %s: model name from .env */
-					__( 'Ключ найден. Модель: %s.', 'wp-mlp' ),
-					Env::get( 'OPENAI_MODEL', '—' )
+					/* translators: %s: last 4 characters of the saved key */
+					__( 'Ключ сохранён, заканчивается на «%s».', 'wp-mlp' ),
+					substr( $key, -4 )
 				)
 			)
 		);
@@ -294,6 +342,12 @@ final class SettingsPage implements Hookable {
 				<input type="text" name="<?php echo esc_attr( $name . '[label]' ); ?>"
 					value="<?php echo esc_attr( $language->label ?? '' ); ?>"
 					placeholder="English">
+			</td>
+			<td>
+				<input type="text" name="<?php echo esc_attr( $name . '[flag]' ); ?>"
+					value="<?php echo esc_attr( $language->flag ?? '' ); ?>"
+					placeholder="🇬🇧" size="4" maxlength="16"
+					title="<?php esc_attr_e( 'Emoji-флаг для переключателя языков, необязательно', 'wp-mlp' ); ?>">
 			</td>
 			<td>
 				<?php if ( null !== $language && $language->isDefault ) : ?>

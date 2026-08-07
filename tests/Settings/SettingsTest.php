@@ -107,6 +107,141 @@ final class SettingsTest extends TestCase {
 		$this->assertTrue( $result['settings']['hide_untranslated_posts'] );
 	}
 
+	public function testFlagSurvivesRoundTrip(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array(
+						'locale' => 'ru',
+						'slug'   => 'ru',
+						'flag'   => '🇷🇺',
+					),
+				),
+			)
+		);
+
+		$this->assertSame( '🇷🇺', $result['settings']['languages']['ru']['flag'] );
+	}
+
+	public function testFlagFieldStripsTagsAndTrimsLength(): void {
+		// Теги вырезаются (защита от HTML-инъекции), но текст между ними
+		// остаётся — так же ведёт себя strip_tags() в остальном плагине.
+		$this->assertSame( 'alert(1)', Language::sanitizeFlag( '<script>alert(1)</script>' ) );
+		$this->assertStringNotContainsString( '<', Language::sanitizeFlag( '<b>🇷🇺</b>' ) );
+		$this->assertSame(
+			str_repeat( 'a', 16 ),
+			Language::sanitizeFlag( str_repeat( 'a', 40 ) )
+		);
+	}
+
+	public function testLabelWithFlagPrependsFlagWhenPresent(): void {
+		$withFlag = new Language( 'en', 'en', 'English', Language::STATUS_PUBLISHED, false, '🇬🇧' );
+		$noFlag   = new Language( 'en', 'en', 'English', Language::STATUS_PUBLISHED, false );
+
+		$this->assertSame( '🇬🇧 English', $withFlag->labelWithFlag() );
+		$this->assertSame( 'English', $noFlag->labelWithFlag() );
+	}
+
+	/**
+	 * Поле ключа — `type="password"` и никогда не приходит предзаполненным
+	 * текущим значением. Пустое поле должно означать «не менять», иначе ключ
+	 * стирался бы при каждом сохранении любых других настроек формы.
+	 */
+	public function testBlankApiKeyFieldKeepsExistingKey(): void {
+		$stored                     = Settings::defaults();
+		$stored['openai_api_key']   = 'sk-existing';
+		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale'  => 'ru',
+				'openai_api_key'  => '',
+				'languages'       => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( 'sk-existing', $result['settings']['openai_api_key'] );
+	}
+
+	public function testNonEmptyApiKeyFieldReplacesExistingKey(): void {
+		$stored                   = Settings::defaults();
+		$stored['openai_api_key'] = 'sk-old';
+		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'openai_api_key' => 'sk-new',
+				'languages'      => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( 'sk-new', $result['settings']['openai_api_key'] );
+	}
+
+	public function testExplicitClearCheckboxWipesTheKeyEvenIfFieldIsBlank(): void {
+		$stored                   = Settings::defaults();
+		$stored['openai_api_key'] = 'sk-existing';
+		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale'        => 'ru',
+				'openai_api_key'        => '',
+				'openai_api_key_clear'  => '1',
+				'languages'             => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( '', $result['settings']['openai_api_key'] );
+	}
+
+	public function testBaseUrlFallsBackToDefaultWhenBlankOrInvalid(): void {
+		$settings = new Settings();
+
+		$blank = $settings->sanitize(
+			array(
+				'default_locale'  => 'ru',
+				'openai_base_url' => '',
+				'languages'       => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$invalid = $settings->sanitize(
+			array(
+				'default_locale'  => 'ru',
+				'openai_base_url' => 'javascript:alert(1)',
+				'languages'       => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( Settings::DEFAULT_OPENAI_BASE_URL, $blank['settings']['openai_base_url'] );
+		$this->assertSame( Settings::DEFAULT_OPENAI_BASE_URL, $invalid['settings']['openai_base_url'] );
+	}
+
+	public function testBaseUrlTrailingSlashIsRemoved(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale'  => 'ru',
+				'openai_base_url' => 'https://example.com/v1/',
+				'languages'       => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( 'https://example.com/v1', $result['settings']['openai_base_url'] );
+	}
+
 	public function testSanitizeRejectsInvalidLocale(): void {
 		$settings = new Settings();
 

@@ -98,7 +98,7 @@ final class LanguageSwitcher implements Hookable {
 
 			$items[] = array(
 				'url'     => $this->urls->switchUrlFor( $language ),
-				'label'   => $language->label,
+				'label'   => $language->labelWithFlag(),
 				'lang'    => $language->bcp47(),
 				'current' => $isCurrent,
 			);

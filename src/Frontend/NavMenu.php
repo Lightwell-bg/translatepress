@@ -1,6 +1,6 @@
 <?php
 /**
- * Языки как пункты меню WordPress.
+ * Переключатель языков как один пункт меню WordPress.
  *
  * @package WpMlp
  */
@@ -11,27 +11,44 @@ namespace WpMlp\Frontend;
 
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
+use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
 /**
  * Блок «Языки» во «Внешний вид → Меню».
  *
- * Пункт меню — самый надёжный способ поставить переключатель в шапку: он
- * наследует вёрстку и стили темы, встаёт горизонтально рядом с остальными
- * пунктами, а вложенный в родительский пункт превращается в выпадающий список
- * средствами самой темы. Никаких правок шаблонов и своей вёрстки не нужно.
+ * Владелец сайта добавляет РОВНО ОДИН пункт — «Выпадающий список» или
+ * «В ряд» — и ничего не переносит и не вкладывает друг в друга вручную.
+ * Список языков плагин достраивает сам на каждом показе меню: под этим
+ * единственным пунктом появляются реальные дочерние пункты (для выпадающего
+ * списка) или он сам и соседние с ним пункты подряд (для варианта «в ряд»).
+ * Так тема обрабатывает результат своими штатными стилями подменю — ничего
+ * вручную собирать не нужно, в отличие от обычных пунктов меню.
  *
- * В базе пункт хранится как обычная «произвольная ссылка» с адресом-маркером
- * `#mlp-lang-en`. Настоящий адрес подставляется при выводе: он зависит от
- * страницы, на которой посетитель находится сейчас, и в БД его держать нельзя.
+ * В базе хранится один пункт-маркер — обычная «произвольная ссылка» с
+ * адресом `#mlp-language-switcher-dropdown` или `-row`. Настоящие пункты
+ * языков в БД не сохраняются: список языков может поменяться в любой
+ * момент, а адрес каждого языка зависит от текущей страницы.
  */
 final class NavMenu implements Hookable {
 
 	/**
-	 * Начало адреса-маркера языкового пункта.
+	 * Адрес-маркер пункта «выпадающий список».
 	 */
-	private const URL_PREFIX = '#mlp-lang-';
+	private const MARKER_DROPDOWN = '#mlp-language-switcher-dropdown';
+
+	/**
+	 * Адрес-маркер пункта «в ряд».
+	 */
+	private const MARKER_ROW = '#mlp-language-switcher-row';
+
+	/**
+	 * Начиная с какого числа генерировать идентификаторы для пунктов, которых
+	 * нет в базе. Дальше реальных ID меню WordPress не имеет физической
+	 * возможности дорасти.
+	 */
+	private const SYNTHETIC_ID_BASE = 900000000;
 
 	/**
 	 * @param Settings         $settings Настройки плагина.
@@ -50,7 +67,7 @@ final class NavMenu implements Hookable {
 	 */
 	public function register(): void {
 		add_action( 'admin_head-nav-menus.php', array( $this, 'addMetaBox' ) );
-		add_filter( 'wp_nav_menu_objects', array( $this, 'resolveItems' ) );
+		add_filter( 'wp_nav_menu_objects', array( $this, 'injectLanguages' ), 10, 1 );
 	}
 
 	/**
@@ -70,40 +87,56 @@ final class NavMenu implements Hookable {
 	/**
 	 * Выводит содержимое блока.
 	 *
-	 * Разметка повторяет структуру стандартных блоков экрана меню — иначе
-	 * кнопка «Добавить в меню» ядра не найдёт поля и ничего не добавит.
+	 * Разметка (`posttypediv` / `categorychecklist` / `submit-add-to-menu`)
+	 * намеренно повторяет структуру стандартных блоков экрана меню: именно на
+	 * эти классы завязан общий JS ядра WordPress (`nav-menu.js`), который уже
+	 * умеет добавлять отмеченные пункты в меню по кнопке. Свой JS не нужен.
 	 */
 	public function renderMetaBox(): void {
-		$languages = $this->settings->all();
-
-		if ( array() === $languages ) {
+		if ( array() === $this->settings->all() ) {
 			printf( '<p>%s</p>', esc_html__( 'Сначала добавьте языки на странице «Языки».', 'wp-mlp' ) );
 
 			return;
 		}
 
+		$rows = array(
+			array(
+				'key'         => -1,
+				'title'       => __( 'Язык', 'wp-mlp' ),
+				'url'         => self::MARKER_DROPDOWN,
+				'label'       => __( 'Выпадающий список', 'wp-mlp' ),
+				'description' => __( 'Один пункт, языки открываются по наведению/клику — так же, как обычное подменю темы.', 'wp-mlp' ),
+			),
+			array(
+				'key'         => -2,
+				'title'       => __( 'Переключатель языков', 'wp-mlp' ),
+				'url'         => self::MARKER_ROW,
+				'label'       => __( 'В ряд', 'wp-mlp' ),
+				'description' => __( 'Языки видны сразу, отдельными пунктами подряд, без раскрытия.', 'wp-mlp' ),
+			),
+		);
+
 		?>
 		<div id="mlp-languages" class="posttypediv">
 			<div class="tabs-panel tabs-panel-active">
 				<ul class="categorychecklist form-no-clear">
-					<?php $index = 0; ?>
-					<?php foreach ( $languages as $language ) : ?>
-						<?php $key = -1 - $index++; ?>
+					<?php foreach ( $rows as $row ) : ?>
 						<li>
 							<label class="menu-item-title">
 								<input type="checkbox" class="menu-item-checkbox"
-									name="menu-item[<?php echo esc_attr( (string) $key ); ?>][menu-item-object-id]"
-									value="<?php echo esc_attr( (string) $key ); ?>">
-								<?php echo esc_html( sprintf( '%s (%s)', $language->label, $language->locale ) ); ?>
+									name="menu-item[<?php echo esc_attr( (string) $row['key'] ); ?>][menu-item-object-id]"
+									value="<?php echo esc_attr( (string) $row['key'] ); ?>">
+								<?php echo esc_html( $row['label'] ); ?>
 							</label>
+							<p class="description"><?php echo esc_html( $row['description'] ); ?></p>
 							<input type="hidden" class="menu-item-type"
-								name="menu-item[<?php echo esc_attr( (string) $key ); ?>][menu-item-type]" value="custom">
+								name="menu-item[<?php echo esc_attr( (string) $row['key'] ); ?>][menu-item-type]" value="custom">
 							<input type="hidden" class="menu-item-title"
-								name="menu-item[<?php echo esc_attr( (string) $key ); ?>][menu-item-title]"
-								value="<?php echo esc_attr( $language->label ); ?>">
+								name="menu-item[<?php echo esc_attr( (string) $row['key'] ); ?>][menu-item-title]"
+								value="<?php echo esc_attr( $row['title'] ); ?>">
 							<input type="hidden" class="menu-item-url"
-								name="menu-item[<?php echo esc_attr( (string) $key ); ?>][menu-item-url]"
-								value="<?php echo esc_attr( self::URL_PREFIX . $language->locale ); ?>">
+								name="menu-item[<?php echo esc_attr( (string) $row['key'] ); ?>][menu-item-url]"
+								value="<?php echo esc_attr( $row['url'] ); ?>">
 						</li>
 					<?php endforeach; ?>
 				</ul>
@@ -117,79 +150,178 @@ final class NavMenu implements Hookable {
 					<span class="spinner"></span>
 				</span>
 			</p>
-
-			<p class="description">
-				<?php esc_html_e( 'Чтобы получить выпадающий список, перетащите языки под общий пункт меню — тема покажет их подменю сама.', 'wp-mlp' ); ?>
-			</p>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Подставляет настоящие адреса в языковые пункты меню.
+	 * Достраивает языки под пунктами-маркерами.
 	 *
-	 * @param array<int, object> $items Пункты меню.
+	 * @param array<int, object> $items Пункты меню, уже готовые к выводу.
 	 * @return array<int, object>
 	 */
-	public function resolveItems( $items ): array {
+	public function injectLanguages( $items ): array {
 		if ( ! is_array( $items ) ) {
 			return $items;
 		}
 
-		$current  = $this->resolver->current();
-		$resolved = array();
+		$languages = array_values( $this->settings->published() );
 
-		foreach ( $items as $key => $item ) {
-			$locale = $this->localeFromItem( $item );
-
-			if ( null === $locale ) {
-				$resolved[ $key ] = $item;
-
-				continue;
-			}
-
-			$language = $this->settings->get( $locale );
-
-			// Черновой язык и удалённый из настроек в меню не показываем:
-			// доступного адреса у них нет.
-			if ( null === $language || ! $language->isPublished() ) {
-				continue;
-			}
-
-			$item->url = $this->urls->switchUrlFor( $language );
-
-			$classes = is_array( $item->classes ) ? $item->classes : array();
-
-			$classes[] = 'mlp-language-item';
-			$classes[] = 'mlp-language-item-' . $language->locale;
-
-			if ( $language->locale === $current->locale ) {
-				$classes[] = 'current-lang';
-				$classes[] = 'current-menu-item';
-			}
-
-			$item->classes = $classes;
-
-			$resolved[ $key ] = $item;
+		if ( count( $languages ) < 2 ) {
+			// Переключаться не на что — маркеры без языков были бы пустой ссылкой.
+			return array_values( array_filter( $items, array( $this, 'isNotMarker' ) ) );
 		}
 
-		return $resolved;
+		$current = $this->resolver->current();
+		$result  = array();
+
+		foreach ( $items as $item ) {
+			$marker = $this->markerType( $item );
+
+			if ( null === $marker ) {
+				$result[] = $item;
+
+				continue;
+			}
+
+			if ( 'dropdown' === $marker ) {
+				$result[] = $this->prepareDropdownTrigger( $item );
+
+				foreach ( $languages as $index => $language ) {
+					$result[] = $this->buildItem( $item, $language, $current, (int) $item->db_id, $index );
+				}
+
+				continue;
+			}
+
+			// «В ряд»: сам маркер становится первым языком, остальные — соседи.
+			$this->applyLanguageToItem( $item, $languages[0], $current );
+			$result[] = $item;
+
+			for ( $index = 1, $count = count( $languages ); $index < $count; $index++ ) {
+				$result[] = $this->buildItem( $item, $languages[ $index ], $current, 0, $index );
+			}
+		}
+
+		return $result;
 	}
 
 	/**
-	 * Код языка, если пункт меню — языковой.
+	 * Не является ли пункт нашим маркером.
 	 *
 	 * @param object $item Пункт меню.
 	 */
-	private function localeFromItem( object $item ): ?string {
+	private function isNotMarker( object $item ): bool {
+		return null === $this->markerType( $item );
+	}
+
+	/**
+	 * Тип маркера, если пункт им является.
+	 *
+	 * @param object $item Пункт меню.
+	 */
+	private function markerType( object $item ): ?string {
 		$url = isset( $item->url ) ? (string) $item->url : '';
 
-		if ( ! str_starts_with( $url, self::URL_PREFIX ) ) {
-			return null;
+		if ( self::MARKER_DROPDOWN === $url ) {
+			return 'dropdown';
 		}
 
-		$locale = substr( $url, strlen( self::URL_PREFIX ) );
+		return self::MARKER_ROW === $url ? 'row' : null;
+	}
 
-		return '' !== $locale ? $locale : null;
+	/**
+	 * Готовит пункт-триггер выпадающего списка: сам он никуда не ведёт,
+	 * а помечается как имеющий дочерние пункты — так тема покажет подменю
+	 * своими же стилями, ничего кроме класса ей для этого не нужно.
+	 *
+	 * @param object $item Пункт-маркер.
+	 */
+	private function prepareDropdownTrigger( object $item ): object {
+		$item->url = '#';
+
+		/**
+		 * Классы триггера выпадающего списка.
+		 *
+		 * `menu-item-has-children` понимает подавляющее большинство тем —
+		 * это тот же класс, что WordPress сам добавляет обычным пунктам
+		 * с дочерними. Мега-меню и кастомные JS-переключатели темы иногда
+		 * ждут свой класс или data-атрибут — фильтр позволяет его добавить,
+		 * не трогая код плагина.
+		 *
+		 * @param list<string> $classes Классы пункта-триггера.
+		 * @param object       $item    Сам пункт меню.
+		 */
+		$item->classes = array_values(
+			array_unique(
+				apply_filters(
+					'mlp_nav_menu_dropdown_classes',
+					array_merge(
+						is_array( $item->classes ) ? $item->classes : array(),
+						array( 'mlp-language-switcher-trigger', 'menu-item-has-children' )
+					),
+					$item
+				)
+			)
+		);
+
+		return $item;
+	}
+
+	/**
+	 * Синтезирует пункт меню для одного языка на основе маркера.
+	 *
+	 * Клонирование маркера, а не сборка объекта с нуля: маркер — уже
+	 * настоящий объект пункта меню WordPress со всеми полями, которые
+	 * ожидает Walker и тема. Переопределяются только те, что должны
+	 * отличаться для конкретного языка.
+	 *
+	 * @param object   $marker         Пункт-маркер, с которого клонируем.
+	 * @param Language $language       Язык, для которого собирается пункт.
+	 * @param Language $current        Язык текущего запроса.
+	 * @param int      $parentDbId     0 для «в ряд», db_id маркера для выпадающего списка.
+	 * @param int      $index          Порядковый номер языка — часть уникального ID.
+	 */
+	private function buildItem( object $marker, Language $language, Language $current, int $parentDbId, int $index ): object {
+		$item = clone $marker;
+
+		$id             = self::SYNTHETIC_ID_BASE + ( (int) $marker->db_id ) * 1000 + $index;
+		$item->ID       = $id;
+		$item->db_id    = $id;
+		$item->object   = 'custom';
+		$item->object_id = 0;
+		$item->type     = 'custom';
+		$item->type_label = __( 'Произвольная ссылка', 'wp-mlp' );
+		$item->menu_item_parent = $parentDbId;
+		$item->menu_order = (int) $marker->menu_order + $index + 1;
+		$item->description = '';
+		$item->attr_title  = '';
+		$item->target      = '';
+		$item->xfn         = '';
+
+		$this->applyLanguageToItem( $item, $language, $current );
+
+		return $item;
+	}
+
+	/**
+	 * Подставляет адрес, подпись и классы конкретного языка в пункт меню.
+	 *
+	 * @param object   $item     Пункт меню (маркер или его клон).
+	 * @param Language $language Язык.
+	 * @param Language $current  Язык текущего запроса.
+	 */
+	private function applyLanguageToItem( object $item, Language $language, Language $current ): void {
+		$item->url   = $this->urls->switchUrlFor( $language );
+		$item->title = $language->labelWithFlag();
+
+		$classes = array( 'mlp-language-item', 'mlp-language-item-' . $language->locale );
+
+		if ( $language->locale === $current->locale ) {
+			$classes[] = 'current-lang';
+			$classes[] = 'current-menu-item';
+		}
+
+		$item->classes = $classes;
 	}
 }

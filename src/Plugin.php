@@ -154,21 +154,31 @@ final class Plugin {
 		$c->set( UsageTracker::class, static fn(): UsageTracker => new UsageTracker() );
 
 		/*
-		 * Провайдер перевода. Ключ есть в .env — используем OpenAI, иначе
-		 * заглушка: без ключа кнопка «Перевести с ИИ» просто не подключится.
-		 * Перевод по-прежнему запускается только вручную, кнопкой.
+		 * Провайдер перевода. Ключ вводится в «Мультиязычность → Языки» и
+		 * хранится в БД — так владельцу сайта не нужен доступ к файлам
+		 * хостинга. `.env` остаётся резервным способом (для тех, кто всё же
+		 * предпочитает хранить ключ вне базы) и используется, только если
+		 * поле в настройках пустое. Без ключа — заглушка: кнопка «Перевести
+		 * с ИИ» просто не появится. Перевод по-прежнему запускается только
+		 * вручную, кнопкой.
 		 */
 		$c->set(
 			ProviderInterface::class,
-			static function (): ProviderInterface {
-				$apiKey = Env::get( 'OPENAI_API_KEY' );
+			static function ( Container $c ): ProviderInterface {
+				$settings = $c->get( Settings::class );
+
+				$apiKey  = $settings->openAiApiKey();
+				$model   = $settings->openAiModel();
+				$baseUrl = $settings->openAiBaseUrl();
+
+				if ( '' === $apiKey ) {
+					$apiKey  = Env::get( 'OPENAI_API_KEY' );
+					$model   = '' !== $model ? $model : Env::get( 'OPENAI_MODEL' );
+					$baseUrl = Env::get( 'OPENAI_BASE_URL', $baseUrl );
+				}
 
 				$provider = '' !== $apiKey
-					? new OpenAiProvider(
-						$apiKey,
-						Env::get( 'OPENAI_MODEL' ),
-						rtrim( Env::get( 'OPENAI_BASE_URL', 'https://api.openai.com/v1' ), '/' )
-					)
+					? new OpenAiProvider( $apiKey, $model, rtrim( $baseUrl, '/' ) )
 					: new ManualProvider();
 
 				return apply_filters( 'mlp_translation_provider', $provider );

@@ -101,6 +101,42 @@ if ( ! function_exists( 'wp_kses' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_url_raw' ) ) {
+	/**
+	 * @param string $url Адрес.
+	 */
+	function esc_url_raw( string $url ): string {
+		$url = trim( $url );
+
+		return 1 === preg_match( '#^https?://#i', $url ) ? $url : '';
+	}
+}
+
+if ( ! function_exists( 'apply_filters' ) ) {
+	/**
+	 * Без реальной системы хуков: тесты не регистрируют фильтры, поэтому
+	 * значение просто возвращается без изменений.
+	 *
+	 * @param string $tag   Имя фильтра.
+	 * @param mixed  $value Значение.
+	 * @param mixed  ...$args Остальные аргументы фильтра.
+	 */
+	function apply_filters( string $tag, $value, ...$args ) {
+		unset( $tag, $args );
+
+		return $value;
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	/**
+	 * @param mixed $value Значение.
+	 */
+	function wp_unslash( $value ) {
+		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}
+
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	/**
 	 * @param string $url       Адрес.
