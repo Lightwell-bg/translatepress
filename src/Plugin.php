@@ -258,7 +258,8 @@ final class Plugin {
 				$c->get( SourceRepository::class ),
 				$c->get( TranslationRepository::class ),
 				$c->get( TranslationCache::class ),
-				$c->get( ProviderInterface::class )
+				$c->get( ProviderInterface::class ),
+				$c->get( OccurrenceRepository::class )
 			)
 		);
 

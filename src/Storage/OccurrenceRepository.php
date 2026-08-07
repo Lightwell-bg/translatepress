@@ -83,6 +83,36 @@ final class OccurrenceRepository {
 	}
 
 	/**
+	 * Записи и страницы, на которых вообще находились строки.
+	 *
+	 * Нужен фильтру в админке: показывать в выпадающем списке только то,
+	 * что плагин реально видел, а не весь каталог записей сайта.
+	 *
+	 * @param int $limit Сколько объектов вернуть.
+	 * @return list<int>
+	 */
+	public function objectIds( int $limit = 300 ): array {
+		global $wpdb;
+
+		$table = Schema::table( 'occurrences' );
+		$limit = max( 1, min( 1000, $limit ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT object_id FROM {$table}
+				 WHERE object_id IS NOT NULL AND object_id > 0
+				 ORDER BY object_id DESC
+				 LIMIT %d",
+				$limit
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return array_map( 'intval', is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
 	 * Где встречалась строка — для подсказки в админке.
 	 *
 	 * @param int $sourceId Исходная строка.

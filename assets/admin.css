@@ -97,6 +97,31 @@
 	text-decoration: underline;
 }
 
+/* Поле «страница N из M» — это форма, но выглядеть должна как в списках ядра. */
+.wp-mlp-paging-form {
+	display: inline;
+}
+
+.wp-mlp-paging-form .current-page {
+	width: 4em;
+	text-align: center;
+}
+
+.wp-mlp-strings .tablenav {
+	height: auto;
+	margin: 8px 0;
+}
+
+.wp-mlp-strings .tablenav-pages {
+	float: none;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 6px;
+	margin: 0;
+}
+
 .wp-mlp-purge {
 	margin: 1em 0;
 	display: flex;

@@ -300,9 +300,29 @@ final class SourceRepository {
 	}
 
 	/**
+	 * Область поиска: все строки сайта.
+	 */
+	public const SCOPE_ALL = '';
+
+	/**
+	 * Область поиска: общие элементы интерфейса.
+	 *
+	 * Меню, шапка, подвал, виджеты — то, что встречается больше чем на одной
+	 * записи. Отдельного признака в БД для них нет и не нужно: «общий элемент»
+	 * — это то, что найдено на нескольких страницах, и данные об этом уже
+	 * лежат в таблице occurrences.
+	 */
+	public const SCOPE_GLOBAL = 'global';
+
+	/**
+	 * Область поиска: строки одной записи.
+	 */
+	public const SCOPE_OBJECT = 'object';
+
+	/**
 	 * Постраничный список строк с переводом на выбранный язык — для админки.
 	 *
-	 * @param array{locale: string, status?: string, search?: string, page?: int, per_page?: int} $args Фильтры.
+	 * @param array{locale: string, status?: string, search?: string, scope?: string, object_id?: int, page?: int, per_page?: int} $args Фильтры.
 	 * @return array{items: list<array<string, mixed>>, total: int}
 	 */
 	public function paginate( array $args ): array {
@@ -335,6 +355,27 @@ final class SourceRepository {
 		} elseif ( TranslationStatus::isValid( $status ) ) {
 			$where[]  = 't.status = %s';
 			$params[] = $status;
+		}
+
+		$occurrences = Schema::table( 'occurrences' );
+		$scope       = (string) ( $args['scope'] ?? self::SCOPE_ALL );
+		$objectId    = (int) ( $args['object_id'] ?? 0 );
+
+		/*
+		 * COUNT(DISTINCT object_id) не считает NULL: строки, найденные там,
+		 * где записи нет вовсе (архивы, поиск, 404), дают 0 и попадают
+		 * в общие элементы — это и есть верное для них место.
+		 */
+		$distinctObjects = "(SELECT COUNT(DISTINCT o.object_id) FROM {$occurrences} o WHERE o.source_id = s.id)";
+
+		if ( self::SCOPE_GLOBAL === $scope ) {
+			$where[] = $distinctObjects . ' <> 1';
+		} elseif ( self::SCOPE_OBJECT === $scope && $objectId > 0 ) {
+			// Только то, что принадлежит именно этой записи: общие элементы
+			// сайта показываются в своей вкладке и здесь только мешали бы.
+			$where[]  = "EXISTS (SELECT 1 FROM {$occurrences} o2 WHERE o2.source_id = s.id AND o2.object_id = %d)";
+			$params[] = $objectId;
+			$where[]  = $distinctObjects . ' = 1';
 		}
 
 		if ( '' !== $search ) {

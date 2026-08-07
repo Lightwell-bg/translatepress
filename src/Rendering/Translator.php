@@ -229,21 +229,14 @@ final class Translator {
 			return;
 		}
 
-		$missing = array_diff_key( $unique, $found );
-		$knownIds = array();
-
-		foreach ( $found as $row ) {
-			$knownIds[] = $row['id'];
-		}
-
-		if ( array() === $missing && array() === $knownIds ) {
+		if ( array() === $unique ) {
 			return;
 		}
 
 		add_action(
 			'shutdown',
-			function () use ( $missing, $knownIds, $locale ): void {
-				$this->persist( $missing, $knownIds, $locale );
+			function () use ( $unique, $found, $locale ): void {
+				$this->persist( $unique, $found, $locale );
 			},
 			100
 		);
@@ -252,46 +245,77 @@ final class Translator {
 	/**
 	 * Пишет найденное в БД. Выполняется уже после отправки ответа.
 	 *
-	 * @param array<string, Segment> $missing  Новые строки.
-	 * @param list<int>              $knownIds Идентификаторы уже известных строк.
-	 * @param string                 $locale   Исходный язык.
+	 * @param array<string, Segment>                                        $unique Все уникальные строки страницы.
+	 * @param array<string, array{id: int, text: ?string, status: ?string}> $found  Уже известные строки.
+	 * @param string                                                        $locale Исходный язык.
 	 */
-	private function persist( array $missing, array $knownIds, string $locale ): void {
+	private function persist( array $unique, array $found, string $locale ): void {
 		$urlHash = Hash::of( $this->currentUrlKey() );
+		$missing = array_diff_key( $unique, $found );
+
+		$ids = array();
+
+		foreach ( $found as $hash => $row ) {
+			$ids[ $hash ] = $row['id'];
+		}
 
 		if ( array() !== $missing ) {
 			$this->sources->insertMissing( $this->sourceRows( $missing, $locale ) );
 
 			// Идентификаторы известны только после вставки — они нужны occurrences.
-			$ids            = $this->sources->idsByHashes( array_keys( $missing ) );
-			$occurrenceRows = array();
-
-			foreach ( $missing as $hash => $segment ) {
-				if ( ! isset( $ids[ $hash ] ) ) {
-					continue;
-				}
-
-				$occurrenceRows[] = array(
-					'source_id'      => $ids[ $hash ],
-					'object_type'    => self::OBJECT_TYPE_URL,
-					'object_id'      => $this->currentObjectId(),
-					'url_hash'       => $urlHash,
-					'attribute_name' => $segment->attribute,
-					'uniq_hash'      => Hash::ofParts(
-						array( $ids[ $hash ], self::OBJECT_TYPE_URL, $urlHash, (string) $segment->attribute )
-					),
-				);
-			}
-
-			$this->occurrences->insertMany( $occurrenceRows );
+			$ids += $this->sources->idsByHashes( array_keys( $missing ) );
 		}
 
-		// Отметку «строка жива» достаточно обновлять раз в час на страницу:
-		// иначе каждый просмотр давал бы UPDATE на сотни идентификаторов.
-		if ( array() !== $knownIds && false === get_transient( 'mlp_touched_' . $urlHash ) ) {
-			$this->sources->touch( $knownIds );
+		/*
+		 * Раз в час на страницу переписываем места использования всех её строк,
+		 * а не только новых. Иначе строка меню, впервые найденная на одной
+		 * записи, навсегда осталась бы «строкой этой записи»: второй записи
+		 * о ней просто не появилось бы, и отличить общий элемент сайта от
+		 * содержимого конкретной страницы было бы нечем.
+		 */
+		$refresh = false === get_transient( 'mlp_touched_' . $urlHash );
+		$record  = $refresh ? $unique : $missing;
+
+		if ( array() !== $record ) {
+			$this->occurrences->insertMany( $this->occurrenceRows( $record, $ids, $urlHash ) );
+		}
+
+		if ( $refresh ) {
+			$this->sources->touch( array_values( $ids ) );
 			set_transient( 'mlp_touched_' . $urlHash, 1, self::TOUCH_INTERVAL );
 		}
+	}
+
+	/**
+	 * Готовит записи о местах использования строк.
+	 *
+	 * @param array<string, Segment> $segments Строки, которые нужно отметить.
+	 * @param array<string, int>     $ids      Идентификаторы строк по hex uniq_hash.
+	 * @param string                 $urlHash  Хеш адреса страницы.
+	 * @return list<array{source_id: int, object_type: string, object_id: ?int, url_hash: ?string, attribute_name: ?string, uniq_hash: string}>
+	 */
+	private function occurrenceRows( array $segments, array $ids, string $urlHash ): array {
+		$objectId = $this->currentObjectId();
+		$rows     = array();
+
+		foreach ( $segments as $hash => $segment ) {
+			if ( ! isset( $ids[ $hash ] ) ) {
+				continue;
+			}
+
+			$rows[] = array(
+				'source_id'      => $ids[ $hash ],
+				'object_type'    => self::OBJECT_TYPE_URL,
+				'object_id'      => $objectId,
+				'url_hash'       => $urlHash,
+				'attribute_name' => $segment->attribute,
+				'uniq_hash'      => Hash::ofParts(
+					array( $ids[ $hash ], self::OBJECT_TYPE_URL, $urlHash, (string) $segment->attribute )
+				),
+			);
+		}
+
+		return $rows;
 	}
 
 	/**

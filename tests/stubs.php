@@ -61,6 +61,15 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 	}
 }
 
+if ( ! function_exists( 'absint' ) ) {
+	/**
+	 * @param mixed $value Значение.
+	 */
+	function absint( $value ): int {
+		return abs( (int) $value );
+	}
+}
+
 if ( ! function_exists( 'wp_json_encode' ) ) {
 	/**
 	 * @param mixed $data  Значение.

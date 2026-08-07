@@ -13,6 +13,7 @@ use WpMlp\Rendering\Segment;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
@@ -42,13 +43,15 @@ final class StringTranslationPage implements Hookable {
 	 * @param TranslationRepository $translations Переводы.
 	 * @param TranslationCache      $cache        Кэш переводов.
 	 * @param ProviderInterface     $provider     Провайдер машинного перевода.
+	 * @param OccurrenceRepository  $occurrences  Места использования строк.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly SourceRepository $sources,
 		private readonly TranslationRepository $translations,
 		private readonly TranslationCache $cache,
-		private readonly ProviderInterface $provider
+		private readonly ProviderInterface $provider,
+		private readonly OccurrenceRepository $occurrences
 	) {
 	}
 
@@ -168,11 +171,13 @@ final class StringTranslationPage implements Hookable {
 		$filters = $this->readFilters( $secondary );
 		$result  = $this->sources->paginate(
 			array(
-				'locale'   => $filters['locale'],
-				'status'   => $filters['status'],
-				'search'   => $filters['search'],
-				'page'     => $filters['page'],
-				'per_page' => self::PER_PAGE,
+				'locale'    => $filters['locale'],
+				'status'    => $filters['status'],
+				'search'    => $filters['search'],
+				'scope'     => $filters['scope'],
+				'object_id' => $filters['object_id'],
+				'page'      => $filters['page'],
+				'per_page'  => self::PER_PAGE,
 			)
 		);
 
@@ -187,6 +192,7 @@ final class StringTranslationPage implements Hookable {
 			<?php $this->renderPurgeNotice(); ?>
 			<?php $this->renderAiNotice(); ?>
 			<?php $this->renderFilters( $secondary, $filters, $result['total'] ); ?>
+			<?php $this->renderTableNav( $result['total'], $filters, 'top' ); ?>
 
 			<table class="widefat striped wp-mlp-table">
 				<thead>
@@ -210,7 +216,7 @@ final class StringTranslationPage implements Hookable {
 				</tbody>
 			</table>
 
-			<?php $this->renderPagination( $result['total'], $filters ); ?>
+			<?php $this->renderTableNav( $result['total'], $filters, 'bottom' ); ?>
 		</div>
 		<?php
 	}
@@ -297,6 +303,22 @@ final class StringTranslationPage implements Hookable {
 						<?php echo esc_html( TranslationStatus::label( $status ) ); ?>
 					</option>
 				<?php endforeach; ?>
+			</select>
+
+			<label for="mlp-scope" class="screen-reader-text"><?php esc_html_e( 'Где встречается', 'wp-mlp' ); ?></label>
+			<select name="mlp_scope" id="mlp-scope">
+				<option value=""><?php esc_html_e( 'Весь сайт', 'wp-mlp' ); ?></option>
+				<option value="<?php echo esc_attr( SourceRepository::SCOPE_GLOBAL ); ?>" <?php selected( SourceRepository::SCOPE_GLOBAL, $filters['scope'] ); ?>>
+					<?php esc_html_e( 'Общие элементы (меню, шапка, подвал)', 'wp-mlp' ); ?>
+				</option>
+				<optgroup label="<?php esc_attr_e( 'Отдельная запись', 'wp-mlp' ); ?>">
+					<?php foreach ( $this->translatedObjects() as $id => $title ) : ?>
+						<option value="<?php echo esc_attr( SourceRepository::SCOPE_OBJECT . ':' . $id ); ?>"
+							<?php selected( SourceRepository::SCOPE_OBJECT === $filters['scope'] && $id === $filters['object_id'] ); ?>>
+							<?php echo esc_html( $title ); ?>
+						</option>
+					<?php endforeach; ?>
+				</optgroup>
 			</select>
 
 			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Поиск', 'wp-mlp' ); ?></label>
@@ -405,63 +427,189 @@ final class StringTranslationPage implements Hookable {
 	}
 
 	/**
-	 * Постраничная навигация.
+	 * Постраничная навигация в оформлении списков WordPress.
 	 *
-	 * @param int                                                             $total   Всего строк.
-	 * @param array{locale: string, status: string, search: string, page: int} $filters Текущие фильтры.
+	 * Раньше здесь был голый `paginate_links()`: ссылки шли слитно, без
+	 * отступов и без указания текущей страницы, и попасть по нужной цифре
+	 * было тяжело. Разметка ниже повторяет структуру `WP_List_Table`, поэтому
+	 * подхватывает стили ядра и даёт кнопки перехода плюс поле с номером.
+	 *
+	 * @param int                                                                                          $total    Всего строк.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters  Текущие фильтры.
+	 * @param string                                                                                       $position `top` или `bottom`.
 	 */
-	private function renderPagination( int $total, array $filters ): void {
-		$pages = (int) ceil( $total / self::PER_PAGE );
+	private function renderTableNav( int $total, array $filters, string $position ): void {
+		$pages   = max( 1, (int) ceil( $total / self::PER_PAGE ) );
+		$current = min( max( 1, $filters['page'] ), $pages );
 
-		if ( $pages < 2 ) {
+		?>
+		<div class="tablenav <?php echo esc_attr( $position ); ?>">
+			<div class="tablenav-pages<?php echo $pages < 2 ? ' one-page' : ''; ?>">
+				<span class="displaying-num">
+					<?php
+					printf(
+						/* translators: %s: number of strings */
+						esc_html( _n( '%s строка', '%s строк', $total, 'wp-mlp' ) ),
+						esc_html( number_format_i18n( $total ) )
+					);
+					?>
+				</span>
+
+				<?php if ( $pages > 1 ) : ?>
+					<span class="pagination-links">
+						<?php
+						$this->renderPageLink( '&laquo;', 1, $filters, $current > 1, 'first-page' );
+						$this->renderPageLink( '&lsaquo;', $current - 1, $filters, $current > 1, 'prev-page' );
+						?>
+
+						<span class="paging-input">
+							<form method="get" class="wp-mlp-paging-form">
+								<?php $this->renderHiddenFilters( $filters ); ?>
+								<label class="screen-reader-text" for="mlp-page-<?php echo esc_attr( $position ); ?>">
+									<?php esc_html_e( 'Текущая страница', 'wp-mlp' ); ?>
+								</label>
+								<input class="current-page" id="mlp-page-<?php echo esc_attr( $position ); ?>"
+									type="number" name="paged" min="1" max="<?php echo esc_attr( (string) $pages ); ?>"
+									value="<?php echo esc_attr( (string) $current ); ?>" size="2">
+								<span class="tablenav-paging-text">
+									<?php esc_html_e( 'из', 'wp-mlp' ); ?>
+									<span class="total-pages"><?php echo esc_html( number_format_i18n( $pages ) ); ?></span>
+								</span>
+							</form>
+						</span>
+
+						<?php
+						$this->renderPageLink( '&rsaquo;', $current + 1, $filters, $current < $pages, 'next-page' );
+						$this->renderPageLink( '&raquo;', $pages, $filters, $current < $pages, 'last-page' );
+						?>
+					</span>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Кнопка перехода на страницу списка.
+	 *
+	 * @param string                                                                                       $label   Символ на кнопке.
+	 * @param int                                                                                          $page    Целевая страница.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
+	 * @param bool                                                                                         $enabled Активна ли кнопка.
+	 * @param string                                                                                       $class   Класс кнопки из ядра.
+	 */
+	private function renderPageLink( string $label, int $page, array $filters, bool $enabled, string $class ): void {
+		if ( ! $enabled ) {
+			printf(
+				'<span class="tablenav-pages-navspan button disabled" aria-hidden="true">%s</span>',
+				esc_html( html_entity_decode( $label, ENT_QUOTES, 'UTF-8' ) )
+			);
+
 			return;
 		}
 
-		$links = paginate_links(
+		printf(
+			'<a class="%1$s button" href="%2$s">%3$s</a>',
+			esc_attr( $class ),
+			esc_url( $this->filteredUrl( $filters, $page ) ),
+			esc_html( html_entity_decode( $label, ENT_QUOTES, 'UTF-8' ) )
+		);
+	}
+
+	/**
+	 * Адрес страницы списка с сохранением всех фильтров.
+	 *
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
+	 * @param int                                                                                          $page    Целевая страница.
+	 */
+	private function filteredUrl( array $filters, int $page ): string {
+		return add_query_arg(
 			array(
-				'base'      => add_query_arg( 'paged', '%#%' ),
-				'format'    => '',
-				'total'     => $pages,
-				'current'   => $filters['page'],
-				'type'      => 'array',
-				'prev_text' => '&laquo;',
-				'next_text' => '&raquo;',
-			)
+				'page'       => self::MENU_SLUG,
+				'mlp_locale' => $filters['locale'],
+				'mlp_status' => $filters['status'],
+				'mlp_scope'  => self::scopeValue( $filters ),
+				's'          => $filters['search'],
+				'paged'      => (string) max( 1, $page ),
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * Значение фильтра области в том же виде, в каком его отдаёт `<select>`.
+	 *
+	 * Один формат и для формы, и для ссылок пагинации: иначе при переходе
+	 * на вторую страницу выбранная запись потерялась бы.
+	 *
+	 * @param array{scope: string, object_id: int} $filters Текущие фильтры.
+	 */
+	private static function scopeValue( array $filters ): string {
+		if ( SourceRepository::SCOPE_OBJECT === $filters['scope'] && $filters['object_id'] > 0 ) {
+			return SourceRepository::SCOPE_OBJECT . ':' . $filters['object_id'];
+		}
+
+		return SourceRepository::SCOPE_GLOBAL === $filters['scope'] ? SourceRepository::SCOPE_GLOBAL : '';
+	}
+
+	/**
+	 * Записи и страницы, на которых плагин находил строки.
+	 *
+	 * @return array<int, string> Идентификатор записи => заголовок для списка.
+	 */
+	private function translatedObjects(): array {
+		$titles = array();
+
+		foreach ( $this->occurrences->objectIds() as $id ) {
+			$title = get_the_title( $id );
+
+			if ( '' === trim( (string) $title ) ) {
+				continue;
+			}
+
+			$titles[ $id ] = (string) $title;
+		}
+
+		asort( $titles, SORT_NATURAL | SORT_FLAG_CASE );
+
+		return $titles;
+	}
+
+	/**
+	 * Скрытые поля, сохраняющие фильтры при переходе по страницам.
+	 *
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
+	 */
+	private function renderHiddenFilters( array $filters ): void {
+		$fields = array(
+			'page'       => self::MENU_SLUG,
+			'mlp_locale' => $filters['locale'],
+			'mlp_status' => $filters['status'],
+			'mlp_scope'  => self::scopeValue( $filters ),
+			's'          => $filters['search'],
 		);
 
-		if ( ! is_array( $links ) ) {
-			return;
-		}
-
-		echo '<div class="tablenav"><div class="tablenav-pages">';
-
-		foreach ( $links as $link ) {
-			echo wp_kses(
-				$link,
-				array(
-					'a'    => array(
-						'href'  => array(),
-						'class' => array(),
-					),
-					'span' => array( 'class' => array() ),
-				)
+		foreach ( $fields as $name => $value ) {
+			printf(
+				'<input type="hidden" name="%s" value="%s">',
+				esc_attr( $name ),
+				esc_attr( (string) $value )
 			);
 		}
-
-		echo '</div></div>';
 	}
 
 	/**
 	 * Читает фильтры из адресной строки.
 	 *
 	 * @param array<string, Language> $secondary Дополнительные языки.
-	 * @return array{locale: string, status: string, search: string, page: int}
+	 * @return array{locale: string, status: string, search: string, scope: string, object_id: int, page: int}
 	 */
 	private function readFilters( array $secondary ): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- фильтры только читают данные.
 		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
 		$status = isset( $_GET['mlp_status'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_status'] ) ) : '';
 		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['s'] ) ) : '';
+		$scope  = isset( $_GET['mlp_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_scope'] ) ) : '';
 		$page   = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -469,12 +617,50 @@ final class StringTranslationPage implements Hookable {
 			$locale = (string) array_key_first( $secondary );
 		}
 
+		list( $scopeName, $objectId ) = self::parseScope( $scope );
+
 		return array(
-			'locale' => $locale,
-			'status' => TranslationStatus::isValid( $status ) ? $status : '',
-			'search' => $search,
-			'page'   => max( 1, $page ),
+			'locale'    => $locale,
+			'status'    => TranslationStatus::isValid( $status ) ? $status : '',
+			'search'    => $search,
+			'scope'     => $scopeName,
+			'object_id' => $objectId,
+			'page'      => max( 1, $page ),
 		);
+	}
+
+	/**
+	 * Разбирает значение фильтра области. Чистая функция.
+	 *
+	 * Принимает `` (весь сайт), `global` (общие элементы) и `object:123`
+	 * (конкретная запись). Всё остальное трактуется как «весь сайт»:
+	 * значение приходит из адресной строки и доверять ему нельзя.
+	 *
+	 * @param string $value Сырое значение параметра.
+	 * @return array{0: string, 1: int} Название области и идентификатор записи.
+	 */
+	public static function parseScope( string $value ): array {
+		if ( SourceRepository::SCOPE_GLOBAL === $value ) {
+			return array( SourceRepository::SCOPE_GLOBAL, 0 );
+		}
+
+		$prefix = SourceRepository::SCOPE_OBJECT . ':';
+
+		if ( str_starts_with( $value, $prefix ) ) {
+			$id = substr( $value, strlen( $prefix ) );
+
+			/*
+			 * Только цифры целиком. absint() взял бы ведущее число и превратил
+			 * `object:-5` в запись 5, а `object:1 OR 1=1` — в запись 1: до SQL
+			 * это не дошло бы (значение уходит через %d), но фильтр молча
+			 * показывал бы не то, что просили.
+			 */
+			if ( '' !== $id && ctype_digit( $id ) && (int) $id > 0 ) {
+				return array( SourceRepository::SCOPE_OBJECT, (int) $id );
+			}
+		}
+
+		return array( SourceRepository::SCOPE_ALL, 0 );
 	}
 
 	/**
