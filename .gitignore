@@ -1,0 +1,30 @@
+# Секреты
+.env
+
+# Composer
+/vendor/
+composer.lock
+
+# PHP / инструменты
+.phpunit.result.cache
+.php-cs-fixer.cache
+/build/
+/coverage/
+
+# Логи и дампы
+*.log
+debug.log
+*.sql
+*.sql.gz
+
+# IDE и ОС
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Артефакты сборки релиза
+/dist/
+*.zip
