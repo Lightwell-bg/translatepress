@@ -167,14 +167,36 @@ final class UrlConverter implements Hookable {
 			return $url;
 		}
 
-		// Заменяем только путь, оставляя схему, хост, порт, query и фрагмент.
-		$position = strpos( $url, $path );
+		$parts['path'] = $newPath;
 
-		if ( false === $position ) {
-			return $url;
+		return self::buildUrl( $parts, str_starts_with( $url, '//' ) );
+	}
+
+	/**
+	 * Собирает адрес обратно из разобранных частей.
+	 *
+	 * Подменять путь поиском по строке нельзя: в `https://site.ru/` первый
+	 * найденный `/` принадлежит схеме, а не пути.
+	 *
+	 * @param array<string, mixed> $parts           Результат wp_parse_url().
+	 * @param bool                 $schemeRelative  Исходный адрес начинался с `//`.
+	 */
+	private static function buildUrl( array $parts, bool $schemeRelative ): string {
+		$scheme = isset( $parts['scheme'] ) ? $parts['scheme'] . '://' : ( $schemeRelative ? '//' : '' );
+
+		$auth = '';
+
+		if ( isset( $parts['user'] ) ) {
+			$auth = $parts['user'] . ( isset( $parts['pass'] ) ? ':' . $parts['pass'] : '' ) . '@';
 		}
 
-		return substr_replace( $url, $newPath, $position, strlen( $path ) );
+		return $scheme
+			. $auth
+			. ( $parts['host'] ?? '' )
+			. ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' )
+			. ( $parts['path'] ?? '' )
+			. ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' )
+			. ( isset( $parts['fragment'] ) ? '#' . $parts['fragment'] : '' );
 	}
 
 	/**

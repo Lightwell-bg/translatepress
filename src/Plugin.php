@@ -11,12 +11,12 @@ namespace WpMlp;
 
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
-use WpMlp\Rest\TranslationsController;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\Translator;
+use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\CanonicalRedirect;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
@@ -98,6 +98,15 @@ final class Plugin {
 		}
 
 		Schema::install();
+
+		/*
+		 * К моменту активации `plugins_loaded` уже прошёл, значит boot() не
+		 * выполнялся и фильтр rewrite-правил не навешан. Без этой строки
+		 * flush собрал бы правила без языковых префиксов, и /en/ отдавал бы 404
+		 * до первого сохранения настроек.
+		 */
+		self::container()->get( Rewrites::class )->register();
+
 		flush_rewrite_rules();
 	}
 

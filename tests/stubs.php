@@ -90,6 +90,50 @@ if ( ! function_exists( 'trailingslashit' ) ) {
 	}
 }
 
+/**
+ * Хранилище опций в памяти — на время одного теста.
+ *
+ * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
+ * @return array<string, mixed>
+ */
+function wp_mlp_test_options( ?array $reset = null ): array {
+	static $options = array();
+
+	if ( null !== $reset ) {
+		$options = $reset;
+	}
+
+	return $options;
+}
+
+if ( ! function_exists( 'get_option' ) ) {
+	/**
+	 * @param string $name    Ключ.
+	 * @param mixed  $default Значение по умолчанию.
+	 * @return mixed
+	 */
+	function get_option( string $name, $default = false ) {
+		$options = wp_mlp_test_options();
+
+		return array_key_exists( $name, $options ) ? $options[ $name ] : $default;
+	}
+}
+
+if ( ! function_exists( 'update_option' ) ) {
+	/**
+	 * @param string $name  Ключ.
+	 * @param mixed  $value Значение.
+	 */
+	function update_option( string $name, $value ): bool {
+		$options          = wp_mlp_test_options();
+		$options[ $name ] = $value;
+
+		wp_mlp_test_options( $options );
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'user_trailingslashit' ) ) {
 	/**
 	 * @param string $value Строка.

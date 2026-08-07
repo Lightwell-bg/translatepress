@@ -228,6 +228,10 @@ final class Translator {
 	 * Идентификатор текущей записи, если страница — запись WordPress.
 	 */
 	private function currentObjectId(): ?int {
+		if ( ! did_action( 'wp' ) ) {
+			return null;
+		}
+
 		$id = get_queried_object_id();
 
 		return $id > 0 ? (int) $id : null;

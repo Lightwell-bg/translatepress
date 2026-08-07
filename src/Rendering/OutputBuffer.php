@@ -121,7 +121,9 @@ final class OutputBuffer implements Hookable {
 			return false;
 		}
 
-		if ( function_exists( 'is_feed' ) && ( is_feed() || is_robots() ) ) {
+		// Условные теги трогаем только после `wp`: раньше $wp_query ещё нет,
+		// и обращение к нему подняло бы _doing_it_wrong в debug.log.
+		if ( did_action( 'wp' ) && ( is_feed() || is_robots() ) ) {
 			return false;
 		}
 

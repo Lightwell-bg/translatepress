@@ -21,9 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const WP_MLP_VERSION  = '0.1.0';
-const WP_MLP_MIN_PHP  = '8.1';
-const WP_MLP_DB_GROUP = 'mlp';
+const WP_MLP_VERSION = '0.1.0';
+const WP_MLP_MIN_PHP = '8.1';
 
 define( 'WP_MLP_FILE', __FILE__ );
 define( 'WP_MLP_DIR', plugin_dir_path( __FILE__ ) );

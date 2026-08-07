@@ -175,7 +175,8 @@ final class SeoTags implements Hookable, DocumentFilter {
 	 * У страницы ошибки и результатов поиска канонического адреса нет.
 	 */
 	private function isIndexable(): bool {
-		if ( ! function_exists( 'is_404' ) ) {
+		// До хука `wp` главного запроса ещё нет, и условные теги вызывать нельзя.
+		if ( ! did_action( 'wp' ) ) {
 			return false;
 		}
 
