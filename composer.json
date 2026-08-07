@@ -1,0 +1,28 @@
+{
+    "name": "wp-mlp/wp-multilang-press",
+    "description": "WordPress-плагин мультиязычности: одна запись, N языковых URL, переводы строк в собственных таблицах",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "WpMlp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WpMlp\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
