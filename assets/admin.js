@@ -120,12 +120,70 @@
 			} );
 	}
 
+	/**
+	 * Просит ИИ перевести строку и подставляет результат в поле.
+	 *
+	 * Не сохраняет: перевод нужно проверить и нажать «Сохранить» самому,
+	 * ничего не отправляется в базу автоматически.
+	 *
+	 * @param {HTMLButtonElement} button Нажатая кнопка.
+	 */
+	function translate( button ) {
+		var row = button.closest( 'tr' );
+		var input = row ? row.querySelector( '.wp-mlp-input' ) : null;
+
+		if ( ! row || ! input ) {
+			return;
+		}
+
+		var sourceId = input.getAttribute( 'data-source-id' );
+		var locale = input.getAttribute( 'data-locale' );
+
+		button.disabled = true;
+		setStatus( row, settings.i18n.translating, 'saving' );
+
+		fetch( settings.root + encodeURIComponent( sourceId ) + '/' + encodeURIComponent( locale ) + '/suggest', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'X-WP-Nonce': settings.nonce }
+		} )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					return response.json().then( function ( data ) {
+						throw new Error( data.message || 'HTTP ' + response.status );
+					} );
+				}
+
+				return response.json();
+			} )
+			.then( function ( data ) {
+				input.value = data.suggested_text;
+				setStatus( row, settings.i18n.aiSuggested, 'machine' );
+				input.focus();
+			} )
+			.catch( function ( error ) {
+				setStatus( row, error.message || settings.i18n.aiFailed, 'failed' );
+			} )
+			.finally( function () {
+				button.disabled = false;
+			} );
+	}
+
 	document.addEventListener( 'click', function ( event ) {
 		var save_button = event.target.closest( '.wp-mlp-save' );
 
 		if ( save_button ) {
 			event.preventDefault();
 			save( save_button );
+
+			return;
+		}
+
+		var translate_button = event.target.closest( '.wp-mlp-translate' );
+
+		if ( translate_button ) {
+			event.preventDefault();
+			translate( translate_button );
 
 			return;
 		}

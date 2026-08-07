@@ -31,8 +31,11 @@ use WpMlp\Storage\Schema;
 use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Storage\TranslationRepository;
+use WpMlp\Storage\UsageTracker;
+use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
 use WpMlp\Translation\ManualProvider;
+use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\ProviderInterface;
 
 /**
@@ -146,13 +149,28 @@ final class Plugin {
 		$c->set( TranslationCache::class, static fn(): TranslationCache => new TranslationCache() );
 		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
 
+		$c->set( UsageTracker::class, static fn(): UsageTracker => new UsageTracker() );
+
 		/*
-		 * Провайдер перевода. На Этапе 1 это заглушка; OpenAI-адаптер
-		 * подключится подменой этой одной строки.
+		 * Провайдер перевода. Ключ есть в .env — используем OpenAI, иначе
+		 * заглушка: без ключа кнопка «Перевести с ИИ» просто не подключится.
+		 * Перевод по-прежнему запускается только вручную, кнопкой.
 		 */
 		$c->set(
 			ProviderInterface::class,
-			static fn(): ProviderInterface => apply_filters( 'mlp_translation_provider', new ManualProvider() )
+			static function (): ProviderInterface {
+				$apiKey = Env::get( 'OPENAI_API_KEY' );
+
+				$provider = '' !== $apiKey
+					? new OpenAiProvider(
+						$apiKey,
+						Env::get( 'OPENAI_MODEL' ),
+						rtrim( Env::get( 'OPENAI_BASE_URL', 'https://api.openai.com/v1' ), '/' )
+					)
+					: new ManualProvider();
+
+				return apply_filters( 'mlp_translation_provider', $provider );
+			}
 		);
 
 		$c->set(
@@ -239,7 +257,8 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( SourceRepository::class ),
 				$c->get( TranslationRepository::class ),
-				$c->get( TranslationCache::class )
+				$c->get( TranslationCache::class ),
+				$c->get( ProviderInterface::class )
 			)
 		);
 
@@ -247,7 +266,8 @@ final class Plugin {
 			EditorPage::class,
 			static fn( Container $c ): EditorPage => new EditorPage(
 				$c->get( Settings::class ),
-				$c->get( UrlConverter::class )
+				$c->get( UrlConverter::class ),
+				$c->get( ProviderInterface::class )
 			)
 		);
 
@@ -266,7 +286,9 @@ final class Plugin {
 				$c->get( SourceRepository::class ),
 				$c->get( TranslationRepository::class ),
 				$c->get( TranslationCache::class ),
-				$c->get( Settings::class )
+				$c->get( Settings::class ),
+				$c->get( ProviderInterface::class ),
+				$c->get( UsageTracker::class )
 			)
 		);
 	}

@@ -19,6 +19,7 @@ use WpMlp\Storage\TranslationRepository;
 use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
+use WpMlp\Translation\ProviderInterface;
 
 /**
  * Таблица найденных строк с полем ручного перевода.
@@ -39,12 +40,14 @@ final class StringTranslationPage implements Hookable {
 	 * @param SourceRepository      $sources      Исходные строки.
 	 * @param TranslationRepository $translations Переводы.
 	 * @param TranslationCache      $cache        Кэш переводов.
+	 * @param ProviderInterface     $provider     Провайдер машинного перевода.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly SourceRepository $sources,
 		private readonly TranslationRepository $translations,
-		private readonly TranslationCache $cache
+		private readonly TranslationCache $cache,
+		private readonly ProviderInterface $provider
 	) {
 	}
 
@@ -133,6 +136,9 @@ final class StringTranslationPage implements Hookable {
 					'failed'        => __( 'Ошибка сохранения', 'wp-mlp' ),
 					'deleting'      => __( 'Удаляю…', 'wp-mlp' ),
 					'confirmDelete' => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
+					'translating'   => __( 'Перевожу с ИИ…', 'wp-mlp' ),
+					'aiSuggested'   => __( 'Предложено ИИ — проверьте и сохраните', 'wp-mlp' ),
+					'aiFailed'      => __( 'ИИ не смог перевести', 'wp-mlp' ),
 				),
 			)
 		);
@@ -238,6 +244,12 @@ final class StringTranslationPage implements Hookable {
 				<button type="button" class="button button-secondary wp-mlp-save">
 					<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
 				</button>
+				<?php if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, $locale ) ) : ?>
+					<button type="button" class="button-link wp-mlp-translate"
+						title="<?php esc_attr_e( 'Заполнить поле переводом от ИИ — не сохраняет автоматически', 'wp-mlp' ); ?>">
+						<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
+					</button>
+				<?php endif; ?>
 				<?php if ( '' !== $text ) : ?>
 					<button type="button" class="button-link wp-mlp-delete"
 						title="<?php esc_attr_e( 'Удалить перевод', 'wp-mlp' ); ?>">

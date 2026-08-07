@@ -80,6 +80,9 @@ if ( version_compare( PHP_VERSION, WP_MLP_MIN_PHP, '<' ) ) {
 	return;
 }
 
+// Ключ OpenAI живёт только в .env — не в БД, не в настройках, не в логах.
+\WpMlp\Support\Env::load( WP_MLP_DIR . '.env' );
+
 register_activation_hook( __FILE__, array( \WpMlp\Plugin::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \WpMlp\Plugin::class, 'deactivate' ) );
 

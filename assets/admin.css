@@ -73,14 +73,27 @@
 	color: #fff;
 }
 
-.wp-mlp-delete {
+.wp-mlp-delete,
+.wp-mlp-translate {
 	margin-left: 8px;
-	color: #b32d2e;
 	text-decoration: none;
+}
+
+.wp-mlp-delete {
+	color: #b32d2e;
 }
 
 .wp-mlp-delete:hover {
 	color: #8a2424;
+	text-decoration: underline;
+}
+
+.wp-mlp-translate {
+	color: #2271b1;
+}
+
+.wp-mlp-translate:hover {
+	color: #135e96;
 	text-decoration: underline;
 }
 

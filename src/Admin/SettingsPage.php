@@ -11,6 +11,7 @@ namespace WpMlp\Admin;
 
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
 
 /**
@@ -195,12 +196,62 @@ final class SettingsPage implements Hookable {
 							<p class="description"><?php esc_html_e( 'По умолчанию выключено: после удаления плагина переводы остаются в базе и восстанавливаются при повторной установке.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Перевод с ИИ (OpenAI)', 'wp-mlp' ); ?></th>
+						<td>
+							<?php $this->renderOpenAiStatus(); ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mlp-openai-limit"><?php esc_html_e( 'Дневной лимит символов', 'wp-mlp' ); ?></label></th>
+						<td>
+							<input type="number" name="openai_daily_char_limit" id="mlp-openai-limit"
+								min="0" max="10000000" step="1000"
+								value="<?php echo esc_attr( (string) $this->settings->openAiDailyCharLimit() ); ?>">
+							<p class="description"><?php esc_html_e( 'Сколько символов в сумме можно отправить в OpenAI за день, нажимая «Перевести с ИИ». Защита от случайных расходов, не автоматизация — плагин ничего не переводит сам.', 'wp-mlp' ); ?></p>
+						</td>
+					</tr>
 				</table>
 
 				<?php submit_button( __( 'Сохранить', 'wp-mlp' ) ); ?>
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Показывает, настроен ли ключ OpenAI — без единого символа самого ключа.
+	 *
+	 * Ключ хранится только в `.env` и в интерфейс никогда не выводится:
+	 * ни в это поле, ни в HTML, ни в REST-ответ (раздел 13 ТЗ).
+	 */
+	private function renderOpenAiStatus(): void {
+		if ( Env::get( 'OPENAI_API_KEY' ) === '' ) {
+			printf(
+				'<p>%s</p>',
+				wp_kses(
+					sprintf(
+						/* translators: %s: path to the .env file */
+						__( 'Ключ не найден. Скопируйте %s в .env и укажите OPENAI_API_KEY — кнопка «Перевести с ИИ» появится сама, без изменений в коде.', 'wp-mlp' ),
+						'<code>.env.example</code>'
+					),
+					array( 'code' => array() )
+				)
+			);
+
+			return;
+		}
+
+		printf(
+			'<p>%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: %s: model name from .env */
+					__( 'Ключ найден. Модель: %s.', 'wp-mlp' ),
+					Env::get( 'OPENAI_MODEL', '—' )
+				)
+			)
+		);
 	}
 
 	/**

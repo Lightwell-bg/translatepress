@@ -18,6 +18,7 @@ use WpMlp\Settings\Settings;
 use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
+use WpMlp\Translation\ProviderInterface;
 
 /**
  * Панель перевода слева и предпросмотр сайта справа (ТЗ 10.1).
@@ -32,12 +33,14 @@ final class EditorPage implements Hookable {
 	public const CAPABILITY = 'manage_options';
 
 	/**
-	 * @param Settings     $settings Настройки плагина.
-	 * @param UrlConverter $urls     Построение языковых адресов.
+	 * @param Settings          $settings Настройки плагина.
+	 * @param UrlConverter      $urls     Построение языковых адресов.
+	 * @param ProviderInterface $provider Провайдер машинного перевода.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
-		private readonly UrlConverter $urls
+		private readonly UrlConverter $urls,
+		private readonly ProviderInterface $provider
 	) {
 	}
 
@@ -117,6 +120,9 @@ final class EditorPage implements Hookable {
 					'attribute'     => __( 'Атрибут', 'wp-mlp' ),
 					'text'          => __( 'Текст', 'wp-mlp' ),
 					'htmlBlock'     => __( 'Блок с разметкой', 'wp-mlp' ),
+					'translating'   => __( 'Перевожу с ИИ…', 'wp-mlp' ),
+					'aiSuggested'   => __( 'Предложено ИИ — проверьте перед сохранением', 'wp-mlp' ),
+					'aiFailed'      => __( 'ИИ не смог перевести', 'wp-mlp' ),
 				),
 			)
 		);
@@ -193,6 +199,12 @@ final class EditorPage implements Hookable {
 							<?php esc_html_e( 'Перевод', 'wp-mlp' ); ?>
 						</label>
 						<textarea id="mlp-editor-target" rows="5"></textarea>
+
+						<?php if ( $this->provider->supports( $this->settings->defaultLanguage()->locale, $locale ) ) : ?>
+							<button type="button" class="button" id="mlp-editor-translate">
+								<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
+							</button>
+						<?php endif; ?>
 
 						<label for="mlp-editor-status"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></label>
 						<select id="mlp-editor-status">

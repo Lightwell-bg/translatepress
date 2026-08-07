@@ -155,6 +155,43 @@
 	}
 
 	/**
+	 * Просит ИИ перевести выбранную строку и подставляет результат в поле.
+	 *
+	 * Не сохраняет: перевод остаётся черновиком, пока не нажать «Сохранить».
+	 */
+	function translateWithAi() {
+		if ( ! current ) {
+			return;
+		}
+
+		say( settings.i18n.translating );
+
+		fetch( settings.saveRoot + encodeURIComponent( current.id ) + '/' + encodeURIComponent( locale ) + '/suggest', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'X-WP-Nonce': settings.nonce }
+		} )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					return response.json().then( function ( data ) {
+						throw new Error( data.message || 'HTTP ' + response.status );
+					} );
+				}
+
+				return response.json();
+			} )
+			.then( function ( data ) {
+				targetField.value = data.suggested_text;
+				statusField.value = data.status;
+				say( settings.i18n.aiSuggested, 'ok' );
+				targetField.focus();
+			} )
+			.catch( function ( error ) {
+				say( error.message || settings.i18n.aiFailed, 'error' );
+			} );
+	}
+
+	/**
 	 * Удаляет перевод выбранной строки.
 	 */
 	function remove() {
@@ -254,6 +291,13 @@
 	document.getElementById( 'mlp-editor-save' ).addEventListener( 'click', save );
 	document.getElementById( 'mlp-editor-delete' ).addEventListener( 'click', remove );
 	document.getElementById( 'mlp-editor-make-block' ).addEventListener( 'click', makeBlock );
+
+	// Кнопки нет в разметке, если провайдер перевода не настроен.
+	var translateButton = document.getElementById( 'mlp-editor-translate' );
+
+	if ( translateButton ) {
+		translateButton.addEventListener( 'click', translateWithAi );
+	}
 
 	targetField.addEventListener( 'keydown', function ( event ) {
 		if ( event.ctrlKey && 'Enter' === event.key ) {

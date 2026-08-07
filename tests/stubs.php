@@ -61,6 +61,16 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_json_encode' ) ) {
+	/**
+	 * @param mixed $data  Значение.
+	 * @param int   $flags Флаги json_encode().
+	 */
+	function wp_json_encode( $data, int $flags = 0 ) {
+		return json_encode( $data, $flags );
+	}
+}
+
 if ( ! function_exists( 'wp_kses' ) ) {
 	/**
 	 * Грубое приближение wp_kses: оставляет разрешённые теги, режет остальные.

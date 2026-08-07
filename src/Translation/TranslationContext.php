@@ -20,18 +20,20 @@ namespace WpMlp\Translation;
 final class TranslationContext {
 
 	/**
-	 * @param string               $kind       Вид строк: text, attribute, html_block.
-	 * @param string|null          $objectType Тип объекта WordPress: post, term, url.
-	 * @param int|null             $objectId   Идентификатор объекта.
-	 * @param string|null          $url        Адрес страницы, где встретились строки.
-	 * @param array<string,string> $glossary   Термины с фиксированным переводом.
+	 * @param string               $kind                Вид строк: text, attribute, html_block.
+	 * @param string|null          $objectType          Тип объекта WordPress: post, term, url.
+	 * @param int|null             $objectId            Идентификатор объекта.
+	 * @param string|null          $url                 Адрес страницы, где встретились строки.
+	 * @param array<string,string> $glossary            Термины с фиксированным переводом.
+	 * @param string|null          $targetLanguageLabel Название целевого языка для человека, например «English».
 	 */
 	public function __construct(
 		public readonly string $kind = 'text',
 		public readonly ?string $objectType = null,
 		public readonly ?int $objectId = null,
 		public readonly ?string $url = null,
-		public readonly array $glossary = array()
+		public readonly array $glossary = array(),
+		public readonly ?string $targetLanguageLabel = null
 	) {
 	}
 }
