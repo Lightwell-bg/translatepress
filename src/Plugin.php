@@ -10,6 +10,10 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\SettingsPage;
+use WpMlp\Routing\CanonicalRedirect;
+use WpMlp\Routing\LanguageResolver;
+use WpMlp\Routing\Rewrites;
+use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
@@ -105,6 +109,32 @@ final class Plugin {
 		$c->set( Settings::class, static fn(): Settings => new Settings() );
 
 		$c->set(
+			LanguageResolver::class,
+			static fn( Container $c ): LanguageResolver => new LanguageResolver( $c->get( Settings::class ) )
+		);
+
+		$c->set(
+			UrlConverter::class,
+			static fn( Container $c ): UrlConverter => new UrlConverter(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class )
+			)
+		);
+
+		$c->set(
+			Rewrites::class,
+			static fn( Container $c ): Rewrites => new Rewrites( $c->get( Settings::class ) )
+		);
+
+		$c->set(
+			CanonicalRedirect::class,
+			static fn( Container $c ): CanonicalRedirect => new CanonicalRedirect(
+				$c->get( LanguageResolver::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
 		);
@@ -118,11 +148,17 @@ final class Plugin {
 	 * @return list<string>
 	 */
 	private static function hookableServices(): array {
-		$services = array();
+		$services = array(
+			// Rewrites нужен и в админке: правила пересобираются при flush.
+			Rewrites::class,
+			UrlConverter::class,
+		);
 
-		// Админские сервисы не нужны фронтенду: не создаём их на каждый показ страницы.
 		if ( is_admin() ) {
+			// Админские сервисы не нужны фронтенду: не создаём их лишний раз.
 			$services[] = SettingsPage::class;
+		} else {
+			$services[] = CanonicalRedirect::class;
 		}
 
 		return $services;
