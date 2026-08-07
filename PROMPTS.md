@@ -5,7 +5,7 @@
 | Этап | Состояние | Что вошло |
 |---|---|---|
 | 1. Core MVP | выполнен | языки, роутинг, серверный перевод HTML, ручной перевод строк, переключатель, базовый SEO |
-| 2. Visual Editor | не начат | preview с DOM-маркерами, выбор элемента, translation blocks |
+| 2. Visual Editor | выполнен частично | preview с DOM-маркерами, выбор элемента, сохранение, translation blocks, удаление переводов. **Не сделаны**: история правок с откатом, замена картинок и ссылок, `GET /search`, режим logged-out |
 | 3. Automatic Translation | не начат | OpenAI-адаптер `ProviderInterface`, очередь, лимиты, glossary |
 | 4. Полное SEO | не начат | перевод slug, sitemap-адаптеры, OG/Twitter, JSON-LD |
 | 5. Dynamic и WooCommerce | не начат | MutationObserver, gettext, WooCommerce |
