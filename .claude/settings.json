@@ -17,7 +17,8 @@
       "Bash(/c/php/php.exe -l src/Rendering/JsonLdRules.php)",
       "Bash(/c/php/php.exe -l src/Rendering/Segment.php)",
       "Bash(grep -n 'array\\( $c->get\\( SeoTags::class \\) \\)' src/Plugin.php)",
-      "Bash(/c/php/php.exe \"C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --no-coverage --filter JsonLdTest)"
+      "Bash(/c/php/php.exe \"C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --no-coverage --filter JsonLdTest)",
+      "Bash(/c/php/php.exe -l tests/Rendering/SocialMetaTest.php)"
     ]
   }
 }

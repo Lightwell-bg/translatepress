@@ -88,6 +88,23 @@ final class SocialMetaTest extends TestCase {
 		$this->assertContains( 'Обычное описание', $texts );
 	}
 
+	/**
+	 * Белый список twitter-полей точный, без маски `twitter:*`: card, site
+	 * и creator — служебные значения (тип карточки, @имя аккаунта), а не
+	 * текст для читателя. Их не переводят и не подменяют — просто не трогают.
+	 */
+	public function testIgnoresTwitterFieldsOutsideTheAllowlist(): void {
+		$texts = $this->texts(
+			'<meta name="twitter:card" content="summary_large_image">'
+			. '<meta name="twitter:site" content="@centerai">'
+			. '<meta name="twitter:creator" content="@centerai">'
+			. '<meta name="twitter:image" content="https://site.ru/img.png">'
+			. '<meta name="twitter:title" content="Только это">'
+		);
+
+		$this->assertSame( array( 'Только это' ), $texts );
+	}
+
 	public function testIgnoresUnrelatedMeta(): void {
 		$texts = $this->texts(
 			'<meta name="viewport" content="width=device-width">'

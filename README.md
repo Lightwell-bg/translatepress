@@ -148,7 +148,7 @@ WordPress-плагин мультиязычности, построенный п
 
 ### SEO-разметка и совместимость с Yoast / Rank Math
 
-Переводятся `<title>`, meta description, `og:title`, `og:description`, `og:image:alt`, `og:site_name`, `twitter:*` — то есть то, что видно в выдаче и в превью ссылки в мессенджерах. Эти строки попадают в общий список «Перевод строк» наравне с текстом страницы.
+Переводится точный список полей — белый список, без wildcard-совпадений: `<title>`, meta description, `og:title`, `og:description`, `og:image:alt`, `og:site_name`, `twitter:title`, `twitter:description`, `twitter:image:alt`. Остальные twitter-поля (`twitter:card`, `twitter:site`, `twitter:creator` и т. п.) не трогаются вообще — их нет в списке, и они остаются такими, как их вывел SEO-плагин. Переводимые строки попадают в общий список «Перевод строк» наравне с текстом страницы.
 
 Отдельно правится то, что переводить нельзя, а нужно подменить: `og:url` и `twitter:url` указывают на языковой адрес, `og:locale` — на текущий язык, `og:locale:alternate` пересобирается по остальным языкам.
 
