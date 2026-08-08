@@ -76,13 +76,58 @@ final class JsonLdRulesTest extends TestCase {
 		$this->assertFalse( JsonLdRules::isTranslatable( '@id', 'Article' ) );
 	}
 
-	public function testAtIdIsAStableId(): void {
-		$this->assertTrue( JsonLdRules::isStableId( '@id' ) );
+	/**
+	 * @param string $type Тип сущности реального мира — @id одинаков на всех языках.
+	 */
+	#[DataProvider( 'stableEntityTypes' )]
+	public function testAtIdIsAStableIdOnRealWorldEntities( string $type ): void {
+		$this->assertTrue( JsonLdRules::isStableId( '@id', $type ) );
+		$this->assertFalse( JsonLdRules::isPageScopedId( '@id', $type ) );
 	}
 
-	public function testOnlyAtIdIsAStableId(): void {
-		$this->assertFalse( JsonLdRules::isStableId( 'url' ) );
-		$this->assertFalse( JsonLdRules::isStableId( 'id' ) );
-		$this->assertFalse( JsonLdRules::isStableId( 'mainEntityOfPage' ) );
+	/**
+	 * @return list<array{string}>
+	 */
+	public static function stableEntityTypes(): array {
+		return array(
+			array( 'Organization' ),
+			array( 'organization' ),
+			array( 'Person' ),
+			array( 'WebSite' ),
+		);
+	}
+
+	/**
+	 * @param string $type Тип конкретной языковой версии страницы — @id локализуется как url.
+	 */
+	#[DataProvider( 'pageScopedTypes' )]
+	public function testAtIdIsPageScopedOnPageEntities( string $type ): void {
+		$this->assertTrue( JsonLdRules::isPageScopedId( '@id', $type ) );
+		$this->assertFalse( JsonLdRules::isStableId( '@id', $type ) );
+	}
+
+	/**
+	 * @return list<array{string}>
+	 */
+	public static function pageScopedTypes(): array {
+		return array(
+			array( 'WebPage' ),
+			array( 'Article' ),
+			array( 'BlogPosting' ),
+			array( 'NewsArticle' ),
+			array( 'BreadcrumbList' ),
+		);
+	}
+
+	public function testAtIdOnUnknownTypeIsNeitherStableNorPageScoped(): void {
+		$this->assertFalse( JsonLdRules::isStableId( '@id', 'ImageObject' ) );
+		$this->assertFalse( JsonLdRules::isPageScopedId( '@id', 'ImageObject' ) );
+	}
+
+	public function testOnlyAtIdKeyMatches(): void {
+		$this->assertFalse( JsonLdRules::isStableId( 'url', 'Organization' ) );
+		$this->assertFalse( JsonLdRules::isStableId( 'id', 'Organization' ) );
+		$this->assertFalse( JsonLdRules::isPageScopedId( 'url', 'WebPage' ) );
+		$this->assertFalse( JsonLdRules::isPageScopedId( 'mainEntityOfPage', 'WebPage' ) );
 	}
 }

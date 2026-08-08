@@ -15,7 +15,9 @@ use WpMlp\Frontend\InternalLinks;
 use WpMlp\Frontend\SeoMeta;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Rendering\DocumentFilter;
+use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\HtmlDocument;
+use WpMlp\Rendering\Segment;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
@@ -27,10 +29,9 @@ use WpMlp\Settings\Settings;
  * InternalLinks, ровно тот порядок, что в Plugin.php) на одной и той же
  * странице, показанной на всех трёх языках сайта: русский (по умолчанию,
  * без префикса), болгарский (`/bg/`) и английский (`/en/`) — установка
- * живёт в подкаталоге `/blog`, как в жалобе. Это ловит именно то, что не
- * ловят изолированные тесты: регрессии на стыке фильтров (переключатель
- * языков, собранный NavMenu/LanguageSwitcher, сломанный вторым проходом
- * InternalLinks) и баги, которые проявляются только при ненулевом basePath.
+ * живёт в подкаталоге `/blog`. Фикстура специально воспроизводит жёстко
+ * закодированные ссылки вида `/ru/...`, оставшиеся в пунктах меню ещё до
+ * этого плагина, — именно они дали `/blog/en/ru/...` в жалобе.
  */
 #[CoversNothing]
 final class RenderedHtmlTest extends TestCase {
@@ -90,10 +91,9 @@ final class RenderedHtmlTest extends TestCase {
 	}
 
 	/**
-	 * Переключатель языков — три ссылки, ровно как их строит NavMenu/
-	 * LanguageSwitcher: класс-маркер прямо на `<a>`, адрес — абсолютный,
-	 * посчитанный для ТЕКУЩЕГО запроса (значит одинаковый на всех трёх
-	 * проходах, поскольку switchUrlFor() сперва снимает язык с пути).
+	 * Переключатель языков, как его строят NavMenu/LanguageSwitcher: класс-
+	 * маркер прямо на `<a>`, адрес — абсолютный, посчитанный для ТЕКУЩЕГО
+	 * запроса.
 	 *
 	 * @param UrlConverter $urls Построение языковых адресов для текущего запроса.
 	 */
@@ -112,8 +112,10 @@ final class RenderedHtmlTest extends TestCase {
 	}
 
 	/**
-	 * Полная страница: голова с SEO/JSON-LD, переключатель и футер темы
-	 * с ссылкой, написанной буквальным `<a href>` — источник исходной жалобы.
+	 * Полная страница: голова с SEO/JSON-LD, переключатель, футер с
+	 * жёстко закодированными легаси-ссылками `/ru/...` (ровно тот случай из
+	 * жалобы — пункты меню, сохранённые буквальным текстом до появления
+	 * плагина) и русский текст, который должен попасть в «Перевод строк».
 	 *
 	 * @param array{settings: Settings, resolver: LanguageResolver, urls: UrlConverter, target: Language} $request
 	 */
@@ -121,22 +123,17 @@ final class RenderedHtmlTest extends TestCase {
 		$urls   = $request['urls'];
 		$target = $request['target'];
 
-		// Как если бы SEO-плагин собрал `@id` через home_url() ИМЕННО на
+		// Как если бы SEO-плагин собрал эти `@id` через home_url() ИМЕННО на
 		// этом запросе — с уже вклеенным префиксом текущего языка.
 		$organizationId = $urls->absolute( '/#organization', $target );
+		$personId       = $urls->absolute( '/#/schema/person/abc123', $target );
+		$websiteId      = $urls->absolute( '/#website', $target );
 
-		// А это адрес страницы в WebPage.url — исходное, ещё не локализованное
-		// значение, как в существующем юнит-тесте SeoMeta.
+		// А эти — исходные, ещё не локализованные значения (как WebPage.url
+		// в уже существующем юнит-тесте SeoMeta): у страничных сущностей
+		// @id обязан получить префикс текущего языка точно так же, как url.
 		$webPageUrl = self::HOME . '/about/';
 
-		/*
-		 * JSON_UNESCAPED_SLASHES здесь намеренно, а не через wp_json_encode():
-		 * если ни один фильтр ничего не поменяет (например `@id` уже без
-		 * префикса на языке по умолчанию), JsonLdDocument::flush() ни разу не
-		 * вызовется, и в ответе останется этот, исходный JSON как есть —
-		 * сравнивать его с ожиданиями нужно в том же виде, в каком его
-		 * пересобирает flush() (см. её собственный JSON_UNESCAPED_SLASHES).
-		 */
 		$jsonLd = json_encode(
 			array(
 				'@context' => 'https://schema.org',
@@ -146,8 +143,27 @@ final class RenderedHtmlTest extends TestCase {
 						'@id'   => $organizationId,
 					),
 					array(
+						'@type' => 'Person',
+						'@id'   => $personId,
+						'name'  => 'Иван Петров',
+					),
+					array(
+						'@type' => 'WebSite',
+						'@id'   => $websiteId,
+					),
+					array(
 						'@type' => 'WebPage',
+						'@id'   => self::HOME . '/about/#webpage',
 						'url'   => $webPageUrl,
+					),
+					array(
+						'@type'    => 'Article',
+						'@id'      => self::HOME . '/about/#article',
+						'headline' => 'Заголовок статьи',
+					),
+					array(
+						'@type' => 'BreadcrumbList',
+						'@id'   => self::HOME . '/about/#breadcrumb',
 					),
 				),
 			),
@@ -161,7 +177,12 @@ final class RenderedHtmlTest extends TestCase {
 			. '<script type="application/ld+json">' . $jsonLd . '</script>'
 			. '</head><body>'
 			. '<nav>' . $this->switcherMarkup( $urls, $request['settings'] ) . '</nav>'
-			. '<footer><a href="/blog/kontakty/">Контакты</a></footer>'
+			. '<main><p>Добро пожаловать</p></main>'
+			. '<footer>'
+			. '<a href="/blog/ru/">Home</a>'
+			. '<a href="/ru/discuss-the-task/">Discuss the task</a>'
+			. '<p>© 2026 Пример. Все права защищены.</p>'
+			. '</footer>'
 			. '</body></html>';
 	}
 
@@ -191,27 +212,73 @@ final class RenderedHtmlTest extends TestCase {
 		$html = $this->render( '' )['html'];
 
 		$this->assertStringContainsString( 'href="https://site.example/blog/about/"', $html );
-		$this->assertStringContainsString( 'href="/blog/kontakty/"', $html );
 	}
 
 	public function testBulgarianRoutesUnderBgPrefix(): void {
 		$html = $this->render( 'bg' )['html'];
 
 		$this->assertStringContainsString( 'href="https://site.example/blog/bg/about/"', $html );
-		$this->assertStringContainsString( 'href="/blog/bg/kontakty/"', $html );
 	}
 
 	public function testEnglishRoutesUnderEnPrefix(): void {
 		$html = $this->render( 'en' )['html'];
 
 		$this->assertStringContainsString( 'href="https://site.example/blog/en/about/"', $html );
-		$this->assertStringContainsString( 'href="/blog/en/kontakty/"', $html );
 	}
 
 	/**
-	 * Ключевая регрессия из жалобы: на английской странице переключатель
-	 * должен по-прежнему предлагать русский БЕЗ префикса и болгарский с
-	 * `/bg/`, а не превращаться в три ссылки на английский.
+	 * Пункт 1 жалобы: `og:locale` — полный код `xx_XX`, не голое `en`/`bg`/`ru`.
+	 */
+	public function testOgLocaleUsesFullFormat(): void {
+		$this->assertStringContainsString( 'og:locale" content="ru_RU"', $this->render( '' )['html'] );
+		$this->assertStringContainsString( 'og:locale" content="bg_BG"', $this->render( 'bg' )['html'] );
+		$this->assertStringContainsString( 'og:locale" content="en_US"', $this->render( 'en' )['html'] );
+	}
+
+	/**
+	 * Пункт 2 жалобы, воспроизведён буквально: легаси-ссылка `Home`
+	 * (`/blog/ru/`, с базовым путём в самой ссылке) на английской странице
+	 * должна вести на `/blog/en/`, а не на `/blog/en/ru/`.
+	 */
+	public function testHomeLinkIsNotDoublyLocalized(): void {
+		$html = $this->render( 'en' )['html'];
+
+		$this->assertStringContainsString( '>Home</a>', $html );
+		$this->assertStringNotContainsString( '/blog/en/ru/', $html );
+
+		if ( 1 !== preg_match( '#href="([^"]*)">Home</a>#', $html, $match ) ) {
+			$this->fail( 'Ссылка Home не найдена в итоговом HTML.' );
+		}
+
+		$this->assertSame( 'https://site.example/blog/en/', $this->absoluteHref( $match[1] ) );
+	}
+
+	/**
+	 * Тот же случай, но ссылка изначально была написана БЕЗ базового пути
+	 * установки (`/ru/discuss-the-task/`) — второй реальный вариант того,
+	 * как легаси-ссылка могла попасть в шаблон.
+	 */
+	public function testDiscussTheTaskLinkIsNotDoublyLocalized(): void {
+		$html = $this->render( 'en' )['html'];
+
+		$this->assertStringContainsString( '>Discuss the task</a>', $html );
+		$this->assertStringNotContainsString( '/en/ru/discuss-the-task/', $html );
+		$this->assertStringContainsString( 'href="/blog/en/discuss-the-task/"', $html );
+	}
+
+	/**
+	 * То же на болгарской странице — не только английской.
+	 */
+	public function testLegacyLinksAreFixedOnBulgarianToo(): void {
+		$html = $this->render( 'bg' )['html'];
+
+		$this->assertStringNotContainsString( '/bg/ru/', $html );
+		$this->assertStringContainsString( 'href="/blog/bg/discuss-the-task/"', $html );
+	}
+
+	/**
+	 * Ключевая регрессия из прошлого раунда: переключатель по-прежнему
+	 * должен предлагать все три языка с их собственными адресами.
 	 */
 	public function testLanguageSwitcherOffersAllThreeLanguagesFromEveryPage(): void {
 		foreach ( array( '', 'bg', 'en' ) as $slug ) {
@@ -223,35 +290,88 @@ final class RenderedHtmlTest extends TestCase {
 		}
 	}
 
-	public function testOgLocaleMatchesEachLanguage(): void {
-		$this->assertStringContainsString( 'og:locale" content="ru"', $this->render( '' )['html'] );
-		$this->assertStringContainsString( 'og:locale" content="bg"', $this->render( 'bg' )['html'] );
-		$this->assertStringContainsString( 'og:locale" content="en"', $this->render( 'en' )['html'] );
-	}
-
 	/**
-	 * `@id` уже пришёл в HTML с чужим префиксом (см. page()) — на всех трёх
-	 * языках он обязан свестись к одному и тому же адресу без префикса.
+	 * Пункт 3 жалобы: только Organization/Person/WebSite остаются без
+	 * префикса на любом языке.
 	 */
-	public function testStableOrganizationIdIsIdenticalOnEveryLanguage(): void {
-		$expected = 'https://site.example/blog/#organization';
-
+	public function testStableEntityIdsAreIdenticalOnEveryLanguage(): void {
 		foreach ( array( '', 'bg', 'en' ) as $slug ) {
 			$html = $this->render( $slug )['html'];
 
-			$this->assertStringContainsString( '"@id":"' . $expected . '"', $html, "wrong @id on '$slug'" );
+			$this->assertStringContainsString( '"@id":"https://site.example/blog/#organization"', $html, "wrong Organization @id on '$slug'" );
+			$this->assertStringContainsString( '"@id":"https://site.example/blog/#/schema/person/abc123"', $html, "wrong Person @id on '$slug'" );
+			$this->assertStringContainsString( '"@id":"https://site.example/blog/#website"', $html, "wrong WebSite @id on '$slug'" );
 		}
 	}
 
-	public function testWebPageUrlIsLocalizedOnSecondaryLanguagesOnly(): void {
-		$this->assertStringContainsString( '"url":"https://site.example/blog/about/"', $this->render( '' )['html'] );
-		$this->assertStringContainsString( '"url":"https://site.example/blog/bg/about/"', $this->render( 'bg' )['html'] );
-		$this->assertStringContainsString( '"url":"https://site.example/blog/en/about/"', $this->render( 'en' )['html'] );
+	/**
+	 * Пункт 3 жалобы, вторая половина: WebPage/Article/BreadcrumbList,
+	 * наоборот, ДОЛЖНЫ получать префикс текущего языка.
+	 */
+	public function testPageScopedIdsGetTheLanguagePrefix(): void {
+		$ru = $this->render( '' )['html'];
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/about/#webpage"', $ru );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/about/#article"', $ru );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/about/#breadcrumb"', $ru );
+
+		$bg = $this->render( 'bg' )['html'];
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/bg/about/#webpage"', $bg );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/bg/about/#article"', $bg );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/bg/about/#breadcrumb"', $bg );
+
+		$en = $this->render( 'en' )['html'];
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/en/about/#webpage"', $en );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/en/about/#article"', $en );
+		$this->assertStringContainsString( '"@id":"https://site.example/blog/en/about/#breadcrumb"', $en );
 	}
 
 	public function testCanonicalMatchesEachLanguage(): void {
 		$this->assertStringContainsString( 'rel="canonical" href="https://site.example/blog/about/"', $this->render( '' )['html'] );
 		$this->assertStringContainsString( 'rel="canonical" href="https://site.example/blog/bg/about/"', $this->render( 'bg' )['html'] );
 		$this->assertStringContainsString( 'rel="canonical" href="https://site.example/blog/en/about/"', $this->render( 'en' )['html'] );
+	}
+
+	/**
+	 * Пункт 4 жалобы, доказательство а не утверждение: русский текст футера
+	 * (а) реально извлекается Extractor'ом — то же самое, что кладёт строку
+	 * в таблицу `sources` и делает её видимой в «Переводе строк» — и (б)
+	 * после подстановки перевода реально заменяется в итоговом HTML, а не
+	 * "поддерживается кодом" абстрактно.
+	 */
+	public function testFooterCopyrightTextIsExtractedAndActuallyReplaced(): void {
+		$request  = $this->requestFor( 'en' );
+		$source   = $this->page( $request );
+		$document = HtmlDocument::parse( $source );
+
+		$this->assertNotNull( $document );
+		$this->assertStringContainsString( '© 2026 Пример. Все права защищены.', $source );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+
+		$footerSegment = null;
+
+		foreach ( $segments as $segment ) {
+			if ( Segment::KIND_TEXT === $segment->kind && str_contains( $segment->text, 'Все права защищены' ) ) {
+				$footerSegment = $segment;
+			}
+		}
+
+		$this->assertNotNull( $footerSegment, 'Extractor не нашёл текст футера — он не попал бы в "Перевод строк".' );
+
+		// Ровно то, что делает Translator, когда для строки уже есть перевод.
+		$footerSegment->apply( '© 2026 Example. All rights reserved.', $document );
+
+		$translated = $document->html();
+
+		$this->assertStringContainsString( '© 2026 Example. All rights reserved.', $translated );
+		$this->assertStringNotContainsString( 'Все права защищены', $translated );
+	}
+
+	/**
+	 * Достаёт `href`, даже если он относительный, дописывая происхождение —
+	 * так проще сравнивать с абсолютным ожидаемым значением.
+	 */
+	private function absoluteHref( string $href ): string {
+		return str_starts_with( $href, 'http' ) ? $href : 'https://site.example' . $href;
 	}
 }

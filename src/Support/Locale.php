@@ -82,6 +82,57 @@ final class Locale {
 	}
 
 	/**
+	 * Регион по умолчанию для языков, где он не совпадает с удвоенным кодом
+	 * языка. Facebook требует полный вид `xx_XX` (документированный список
+	 * допустимых значений og:locale) — большинство однобуквенных совпадений
+	 * («de» → «DE», «ru» → «RU») угадываются простым удвоением, но не все:
+	 * английский, китайский, японский и ещё несколько языков называют регион
+	 * иначе, чем сам язык.
+	 *
+	 * @var array<string, string>
+	 */
+	private const OG_LOCALE_REGIONS = array(
+		'en' => 'US',
+		'zh' => 'CN',
+		'ja' => 'JP',
+		'ko' => 'KR',
+		'sv' => 'SE',
+		'da' => 'DK',
+		'nb' => 'NO',
+		'no' => 'NO',
+		'el' => 'GR',
+		'he' => 'IL',
+		'hi' => 'IN',
+		'vi' => 'VN',
+		'cs' => 'CZ',
+		'uk' => 'UA',
+	);
+
+	/**
+	 * Код в форме `xx_XX` для og:locale (Open Graph требует полный, а не
+	 * двухбуквенный код).
+	 *
+	 * Если в исходном коде уже есть регион (`pt-br` → `pt_BR`), используется
+	 * он. Иначе — таблица известных исключений выше, а для всего, что в неё
+	 * не попало, — язык, удвоенный как регион (`ru` → `ru_RU`, `de` → `de_DE`):
+	 * для большинства языков Евросоюза это и есть настоящий код страны.
+	 *
+	 * @param string $locale Нормализованный или сырой код.
+	 */
+	public static function toOgLocale( string $locale ): string {
+		$parts    = explode( '-', self::normalize( $locale ) );
+		$language = $parts[0];
+
+		if ( isset( $parts[1] ) && '' !== $parts[1] ) {
+			return $language . '_' . strtoupper( $parts[1] );
+		}
+
+		$region = self::OG_LOCALE_REGIONS[ $language ] ?? strtoupper( $language );
+
+		return $language . '_' . $region;
+	}
+
+	/**
 	 * Код в форме BCP-47 для атрибутов `lang` и `hreflang`.
 	 *
 	 * `pt-br` → `pt-BR`, `zh-hans-cn` → `zh-Hans-CN`. Регистр не влияет на

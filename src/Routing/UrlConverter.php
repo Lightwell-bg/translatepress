@@ -81,6 +81,29 @@ final class UrlConverter implements Hookable {
 	}
 
 	/**
+	 * Слаги всех языков сайта, включая черновики, в нижнем регистре.
+	 *
+	 * Нужны, чтобы отличить сегмент пути, уже занятый ДРУГИМ языком (например
+	 * `/ru/...` в ссылке пункта меню, сохранённой ещё до того, как на сайте
+	 * появился этот плагин, или до того, как русский стал языком по
+	 * умолчанию), от обычного сегмента вроде `/kontakty/`. Первый нужно
+	 * ЗАМЕНИТЬ на префикс целевого языка, а не нарастить префикс поверх —
+	 * иначе получается `/en/ru/...` (см. addPrefixToPath()).
+	 *
+	 * @return list<string>
+	 */
+	public function knownSlugs(): array {
+		return array_values(
+			array_unique(
+				array_map(
+					static fn( Language $language ): string => strtolower( $language->slug ),
+					array_values( $this->settings->all() )
+				)
+			)
+		);
+	}
+
+	/**
 	 * Абсолютный адрес текущей страницы на указанном языке — без строки запроса.
 	 *
 	 * Используется для canonical и hreflang: параметры запроса (utm, фильтры)
@@ -153,17 +176,18 @@ final class UrlConverter implements Hookable {
 	 * @param string $slug Слаг языка.
 	 */
 	private function addPrefixToUrl( string $url, string $slug ): string {
-		return self::withLanguagePrefix( $url, LanguageResolver::basePath(), $slug );
+		return self::withLanguagePrefix( $url, LanguageResolver::basePath(), $slug, $this->knownSlugs() );
 	}
 
 	/**
 	 * Добавляет языковой префикс к адресу. Чистая функция.
 	 *
-	 * @param string $url      Абсолютный, относительный или схемо-независимый адрес.
-	 * @param string $basePath Базовый путь установки WordPress.
-	 * @param string $slug     Слаг языка.
+	 * @param string       $url        Абсолютный, относительный или схемо-независимый адрес.
+	 * @param string       $basePath   Базовый путь установки WordPress.
+	 * @param string       $slug       Слаг целевого языка.
+	 * @param list<string> $knownSlugs Слаги всех языков сайта — см. addPrefixToPath().
 	 */
-	public static function withLanguagePrefix( string $url, string $basePath, string $slug ): string {
+	public static function withLanguagePrefix( string $url, string $basePath, string $slug, array $knownSlugs = array() ): string {
 		$parts = wp_parse_url( $url );
 
 		if ( ! is_array( $parts ) ) {
@@ -171,7 +195,7 @@ final class UrlConverter implements Hookable {
 		}
 
 		$path    = (string) ( $parts['path'] ?? '/' );
-		$newPath = self::addPrefixToPath( $path, $basePath, $slug );
+		$newPath = self::addPrefixToPath( $path, $basePath, $slug, $knownSlugs );
 
 		if ( $newPath === $path ) {
 			return $url;
@@ -263,23 +287,32 @@ final class UrlConverter implements Hookable {
 	 * Добавляет слаг языка сразу после базового пути установки. Чистая функция.
 	 *
 	 * Возвращает путь без изменений, если префикс уже стоит или сегмент
-	 * зарезервирован ядром WordPress.
+	 * зарезервирован ядром WordPress. Если первый сегмент — слаг ДРУГОГО
+	 * известного языка (например `/ru/...` в ссылке, сохранённой раньше, чем
+	 * появился этот плагин), он ЗАМЕНЯЕТСЯ на целевой, а не остаётся перед
+	 * новым префиксом — без этой проверки получалось бы `/en/ru/...`.
 	 *
-	 * @param string $path     Полный путь из адреса, например `/blog/sample-page/`.
-	 * @param string $basePath Базовый путь установки, например `/blog`.
-	 * @param string $slug     Слаг языка, например `en`.
+	 * @param string       $path       Полный путь из адреса, например `/blog/sample-page/`.
+	 * @param string       $basePath   Базовый путь установки, например `/blog`.
+	 * @param string       $slug       Слаг целевого языка, например `en`.
+	 * @param list<string> $knownSlugs Слаги всех языков сайта, в нижнем регистре.
 	 */
-	public static function addPrefixToPath( string $path, string $basePath, string $slug ): string {
+	public static function addPrefixToPath( string $path, string $basePath, string $slug, array $knownSlugs = array() ): string {
 		$relative = LanguageResolver::relativePath( $path, $basePath );
 
-		list( $segment ) = LanguageResolver::splitFirstSegment( $relative );
+		list( $segment, $rest ) = LanguageResolver::splitFirstSegment( $relative );
+		$normalizedSegment      = strtolower( $segment );
 
-		if ( strtolower( $segment ) === $slug ) {
+		if ( $normalizedSegment === $slug ) {
 			return $path;
 		}
 
-		if ( in_array( strtolower( $segment ), self::RESERVED_SEGMENTS, true ) ) {
+		if ( in_array( $normalizedSegment, self::RESERVED_SEGMENTS, true ) ) {
 			return $path;
+		}
+
+		if ( in_array( $normalizedSegment, $knownSlugs, true ) ) {
+			return $basePath . '/' . $slug . $rest;
 		}
 
 		return $basePath . '/' . $slug . $relative;

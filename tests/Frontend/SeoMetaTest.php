@@ -78,7 +78,9 @@ final class SeoMetaTest extends TestCase {
 
 		$this->seoMeta()->apply( $document, $this->target() );
 
-		$this->assertStringContainsString( 'og:locale" content="en"', $document->html() );
+		// Полный код Open Graph (xx_XX), не голое "en" — иначе значение
+		// невалидно по документации Facebook.
+		$this->assertStringContainsString( 'og:locale" content="en_US"', $document->html() );
 	}
 
 	public function testAlternateLocalesAreRebuiltForRemainingLanguages(): void {
@@ -96,7 +98,7 @@ final class SeoMetaTest extends TestCase {
 		$html = $document->html();
 
 		$this->assertStringNotContainsString( 'stale_value', $html );
-		$this->assertStringContainsString( 'og:locale:alternate" content="ru"', $html );
+		$this->assertStringContainsString( 'og:locale:alternate" content="ru_RU"', $html );
 	}
 
 	/**

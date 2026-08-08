@@ -196,7 +196,12 @@ final class JsonLdTest extends TestCase {
 		$this->assertSame( array( 'url' => 'https://site.ru/a/' ), $json->urls() );
 	}
 
-	public function testCollectsStableIdsRegardlessOfType(): void {
+	/**
+	 * stableIdFields() собирает `@id` только у Organization/Person/WebSite —
+	 * ImageObject внутри того же графа не попадает в выборку, у него нет
+	 * общего правила для `@id` (плагин его не трогает вовсе).
+	 */
+	public function testCollectsStableIdsOnlyForRealWorldEntities(): void {
 		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
 			. '{"@type":"Organization","@id":"https://site.ru/en/#organization","url":"https://site.ru/en/",'
 			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/en/#logo","url":"https://site.ru/logo.png"}}'
@@ -210,11 +215,30 @@ final class JsonLdTest extends TestCase {
 
 		$this->assertNotNull( $json );
 		$this->assertSame(
-			array(
-				'@id'          => 'https://site.ru/en/#organization',
-				"logo\x1F@id" => 'https://site.ru/en/#logo',
-			),
+			array( '@id' => 'https://site.ru/en/#organization' ),
 			$json->stableIdFields()
+		);
+	}
+
+	/**
+	 * pageScopedIdFields() — ровно наоборот: WebPage да, Organization нет.
+	 */
+	public function testCollectsPageScopedIdsOnlyForPageEntities(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"WebPage","@id":"https://site.ru/en/about/#webpage",'
+			. '"about":{"@type":"Organization","@id":"https://site.ru/en/#organization"}}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame(
+			array( '@id' => 'https://site.ru/en/about/#webpage' ),
+			$json->pageScopedIdFields()
 		);
 	}
 

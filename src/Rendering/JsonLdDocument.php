@@ -81,12 +81,23 @@ final class JsonLdDocument {
 	}
 
 	/**
-	 * Поля `@id`: путь (закодированный) => текущее значение.
+	 * Поля `@id` стабильных сущностей (Organization/Person/WebSite): путь
+	 * (закодированный) => текущее значение.
 	 *
 	 * @return array<string, string>
 	 */
 	public function stableIdFields(): array {
-		return $this->collect( static fn( string $key, string $type ): bool => JsonLdRules::isStableId( $key ) );
+		return $this->collect( array( JsonLdRules::class, 'isStableId' ) );
+	}
+
+	/**
+	 * Поля `@id` страничных сущностей (WebPage/Article/BreadcrumbList): путь
+	 * (закодированный) => текущее значение.
+	 *
+	 * @return array<string, string>
+	 */
+	public function pageScopedIdFields(): array {
+		return $this->collect( array( JsonLdRules::class, 'isPageScopedId' ) );
 	}
 
 	/**

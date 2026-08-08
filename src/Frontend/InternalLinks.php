@@ -58,6 +58,7 @@ final class InternalLinks implements DocumentFilter {
 
 		$basePath = LanguageResolver::basePath();
 		$homeHost = (string) ( wp_parse_url( (string) get_option( 'home' ), PHP_URL_HOST ) ?? '' );
+		$slugs    = $this->urls->knownSlugs();
 
 		foreach ( $document->document()->getElementsByTagName( 'a' ) as $link ) {
 			if ( ! $link->hasAttribute( 'href' ) ) {
@@ -81,7 +82,7 @@ final class InternalLinks implements DocumentFilter {
 				continue;
 			}
 
-			$localized = UrlConverter::withLanguagePrefix( $href, $basePath, $target->slug );
+			$localized = UrlConverter::withLanguagePrefix( $href, $basePath, $target->slug, $slugs );
 
 			if ( $localized !== $href ) {
 				$link->setAttribute( 'href', $localized );

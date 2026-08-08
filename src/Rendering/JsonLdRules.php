@@ -58,19 +58,36 @@ final class JsonLdRules {
 
 	/**
 	 * Поля с постоянным идентификатором сущности.
+	 */
+	private const ID = array( '@id' );
+
+	/**
+	 * Типы, у которых `@id` — это якорь на РЕАЛЬНЫЙ объект (организацию,
+	 * автора, сайт целиком), а не на конкретную языковую версию страницы.
 	 *
-	 * `@id` — это якорь вида `https://site.ru/#organization`, а не адрес
-	 * страницы: он должен быть одинаковым на всех языках сайта, иначе
-	 * поисковик решит, что это разные сущности. Полю не помогает даже то,
-	 * что плагин никогда не переводит и не подставляет в него URL напрямую:
-	 * WordPress сам вызывает `home_url()` при генерации разметки, а этот
-	 * вызов уже проходит через наш собственный фильтр языкового префикса
-	 * (см. UrlConverter::filterHomeUrl()) — значит SEO-плагин получает
-	 * готовый `@id` вида `.../en/#organization` ещё ДО того, как страница
-	 * дойдёт до разбора DOM. Поэтому `@id`, в отличие от `url`, не просто
+	 * `@id` вида `https://site.ru/#organization` должен быть одинаковым на
+	 * всех языках сайта, иначе поисковик решит, что это разные сущности.
+	 * Полю не помогает даже то, что плагин никогда не переводит и не
+	 * подставляет в него URL напрямую: WordPress сам вызывает `home_url()`
+	 * при генерации разметки, а этот вызов уже проходит через наш
+	 * собственный фильтр языкового префикса (см.
+	 * UrlConverter::filterHomeUrl()) — значит SEO-плагин получает готовый
+	 * `@id` вида `.../en/#organization` ещё ДО того, как страница дойдёт до
+	 * разбора DOM. Поэтому у этих типов `@id`, в отличие от `url`, не просто
 	 * оставляют без изменений, а активно возвращают к виду без префикса.
 	 */
-	private const STABLE_ID = array( '@id' );
+	private const STABLE_ID_TYPES = array( 'organization', 'person', 'website' );
+
+	/**
+	 * Типы, у которых `@id` — это якорь на КОНКРЕТНУЮ языковую версию
+	 * страницы, а не на сущность реального мира.
+	 *
+	 * Английская и русская версии одной записи — это два разных узла графа
+	 * (`WebPage`/`Article`/`BreadcrumbList`), и их `@id` обязан различаться
+	 * так же, как различается сам адрес страницы: он получает языковой
+	 * префикс совершенно так же, как обычное поле `url` (см. isUrl()).
+	 */
+	private const PAGE_SCOPED_ID_TYPES = array( 'webpage', 'article', 'blogposting', 'newsarticle', 'breadcrumblist' );
 
 	/**
 	 * Типы, у которых `url` — адрес файла, а не страницы.
@@ -133,12 +150,33 @@ final class JsonLdRules {
 	}
 
 	/**
-	 * Является ли поле постоянным идентификатором сущности (`@id`).
+	 * Является ли поле постоянным `@id` СТАБИЛЬНОЙ сущности (Organization,
+	 * Person, WebSite) — его нужно вернуть к виду без языкового префикса.
 	 *
-	 * @param string $key Имя поля.
+	 * @param string $key        Имя поля.
+	 * @param string $parentType Значение `@type` ближайшего объекта, в нижнем регистре.
 	 */
-	public static function isStableId( string $key ): bool {
-		return in_array( $key, self::STABLE_ID, true );
+	public static function isStableId( string $key, string $parentType ): bool {
+		if ( ! in_array( $key, self::ID, true ) ) {
+			return false;
+		}
+
+		return in_array( strtolower( $parentType ), self::STABLE_ID_TYPES, true );
+	}
+
+	/**
+	 * Является ли поле `@id` СТРАНИЧНОЙ сущности (WebPage, Article,
+	 * BreadcrumbList) — его нужно локализовать так же, как `url`.
+	 *
+	 * @param string $key        Имя поля.
+	 * @param string $parentType Значение `@type` ближайшего объекта, в нижнем регистре.
+	 */
+	public static function isPageScopedId( string $key, string $parentType ): bool {
+		if ( ! in_array( $key, self::ID, true ) ) {
+			return false;
+		}
+
+		return in_array( strtolower( $parentType ), self::PAGE_SCOPED_ID_TYPES, true );
 	}
 
 	/**

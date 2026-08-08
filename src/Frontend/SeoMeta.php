@@ -17,6 +17,7 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Support\Locale;
 
 /**
  * Приводит к текущему языку то, что нельзя перевести — только заменить.
@@ -145,12 +146,18 @@ final class SeoMeta implements DocumentFilter {
 	}
 
 	/**
-	 * Локаль в формате Open Graph: `ru_RU`, а не `ru-RU`.
+	 * Локаль в формате Open Graph: `ru_RU`, а не `ru-RU` и не голое `ru`.
+	 *
+	 * Facebook требует полный код `xx_XX` из своего документированного
+	 * списка (https://developers.facebook.com/docs/messenger-platform/... —
+	 * og:locale); просто заменить дефис на подчёркивание в `bcp47()`
+	 * недостаточно, когда код языка в настройках задан без региона
+	 * («en», а не «en-US») — тогда получится невалидное голое «en».
 	 *
 	 * @param Language $language Язык.
 	 */
 	private function ogLocale( Language $language ): string {
-		return str_replace( '-', '_', $language->bcp47() );
+		return Locale::toOgLocale( $language->locale );
 	}
 
 	/**
@@ -167,6 +174,7 @@ final class SeoMeta implements DocumentFilter {
 	private function fixJsonLd( HtmlDocument $document, Language $target ): void {
 		$origin   = untrailingslashit( (string) get_option( 'home' ) );
 		$basePath = LanguageResolver::basePath();
+		$slugs    = $this->urls->knownSlugs();
 
 		foreach ( $document->document()->getElementsByTagName( 'script' ) as $script ) {
 			if ( 'application/ld+json' !== strtolower( trim( (string) $script->getAttribute( 'type' ) ) ) ) {
@@ -180,13 +188,15 @@ final class SeoMeta implements DocumentFilter {
 			}
 
 			if ( ! $target->isDefault ) {
-				$this->localizeUrls( $json, $target, $origin, $basePath );
+				$this->localizeUrls( $json, $target, $origin, $basePath, $slugs );
+				$this->localizePageScopedIds( $json, $target, $origin, $basePath, $slugs );
 			}
 
-			// Постоянные идентификаторы правятся на любом языке, включая
-			// дефолтный: home_url() мог уже отдать значение с чужим
-			// префиксом до того, как страница дошла до разбора DOM.
-			$this->normalizeStableIds( $json, $basePath );
+			// Постоянные идентификаторы стабильных сущностей (Organization,
+			// Person, WebSite) правятся на любом языке, включая дефолтный:
+			// home_url() мог уже отдать значение с чужим префиксом до того,
+			// как страница дошла до разбора DOM.
+			$this->normalizeStableIds( $json, $basePath, $slugs );
 
 			foreach ( array_keys( $json->inLanguageFields() ) as $path ) {
 				$json->setByEncodedPath( $path, $target->bcp47() );
@@ -195,30 +205,59 @@ final class SeoMeta implements DocumentFilter {
 	}
 
 	/**
-	 * Возвращает `@id` к виду без языкового префикса.
+	 * Возвращает `@id` СТАБИЛЬНЫХ сущностей к виду без языкового префикса.
 	 *
-	 * `@id` — это постоянный якорь сущности (`.../#organization`), а не
-	 * адрес страницы: он обязан быть одинаковым на всех языках сайта. Но
-	 * само значение WordPress уже мог собрать через home_url(), а этот
-	 * вызов проходит через наш же UrlConverter::filterHomeUrl() и получает
-	 * префикс текущего языка ещё до того, как ответ дойдёт до разбора DOM
-	 * (см. JsonLdRules::isStableId()). Поэтому префикс здесь не добавляют,
-	 * а снимают — какой бы язык ни просочился в исходное значение.
+	 * Стабильная сущность — Organization, Person, WebSite (см.
+	 * JsonLdRules::STABLE_ID_TYPES): это не страница, а объект реального
+	 * мира, один и тот же на любом языке сайта, поэтому его `@id`
+	 * (`.../#organization`) обязан быть одинаковым везде. Но само значение
+	 * WordPress уже мог собрать через home_url(), а этот вызов проходит
+	 * через наш же UrlConverter::filterHomeUrl() и получает префикс текущего
+	 * языка ещё до того, как ответ дойдёт до разбора DOM. Поэтому префикс
+	 * здесь не добавляют, а снимают — какой бы язык ни просочился в исходное
+	 * значение. `@id` страничных сущностей (WebPage, Article, BreadcrumbList)
+	 * сюда не попадает — у них ровно противоположное правило, см.
+	 * localizePageScopedIds().
 	 *
 	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
 	 * @param string         $basePath Базовый путь установки WordPress.
+	 * @param list<string>   $slugs    Слаги всех языков сайта.
 	 */
-	private function normalizeStableIds( JsonLdDocument $json, string $basePath ): void {
-		$slugs = array_map(
-			static fn( Language $language ): string => strtolower( $language->slug ),
-			array_values( $this->settings->all() )
-		);
-
+	private function normalizeStableIds( JsonLdDocument $json, string $basePath, array $slugs ): void {
 		foreach ( $json->stableIdFields() as $path => $value ) {
 			$normalized = UrlConverter::withoutLanguagePrefix( $value, $basePath, $slugs );
 
 			if ( $normalized !== $value ) {
 				$json->setByEncodedPath( $path, $normalized );
+			}
+		}
+	}
+
+	/**
+	 * Приводит `@id` СТРАНИЧНЫХ сущностей (WebPage, Article/BlogPosting,
+	 * BreadcrumbList) к адресу текущего языка.
+	 *
+	 * В отличие от Organization/Person/WebSite, эти узлы описывают КОНКРЕТНУЮ
+	 * языковую версию страницы — у английской и русской версий одной записи
+	 * это два разных узла графа, и их `@id` обязан различаться так же, как
+	 * различается сам адрес страницы (см. JsonLdRules::isPageScopedId()).
+	 *
+	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
+	 * @param Language       $target   Текущий язык.
+	 * @param string         $origin   Адрес сайта без хвостового слеша.
+	 * @param string         $basePath Базовый путь установки WordPress.
+	 * @param list<string>   $slugs    Слаги всех языков сайта.
+	 */
+	private function localizePageScopedIds( JsonLdDocument $json, Language $target, string $origin, string $basePath, array $slugs ): void {
+		foreach ( $json->pageScopedIdFields() as $path => $value ) {
+			if ( ! str_starts_with( $value, $origin ) ) {
+				continue;
+			}
+
+			$localized = UrlConverter::withLanguagePrefix( $value, $basePath, $target->slug, $slugs );
+
+			if ( $localized !== $value ) {
+				$json->setByEncodedPath( $path, $localized );
 			}
 		}
 	}
@@ -230,8 +269,9 @@ final class SeoMeta implements DocumentFilter {
 	 * @param Language       $target   Текущий язык.
 	 * @param string         $origin   Адрес сайта без хвостового слеша.
 	 * @param string         $basePath Базовый путь установки WordPress.
+	 * @param list<string>   $slugs    Слаги всех языков сайта.
 	 */
-	private function localizeUrls( JsonLdDocument $json, Language $target, string $origin, string $basePath ): void {
+	private function localizeUrls( JsonLdDocument $json, Language $target, string $origin, string $basePath, array $slugs ): void {
 		foreach ( $json->urls() as $path => $url ) {
 			// Чужие домены не трогаем: языковой префикс есть только у нас.
 			if ( ! str_starts_with( $url, $origin ) ) {
@@ -248,7 +288,7 @@ final class SeoMeta implements DocumentFilter {
 				continue;
 			}
 
-			$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug );
+			$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug, $slugs );
 
 			if ( $localized !== $url ) {
 				$json->setByEncodedPath( $path, $localized );

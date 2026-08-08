@@ -80,4 +80,31 @@ final class LocaleTest extends TestCase {
 		$this->assertSame( 'pt-BR', Locale::toBcp47( 'pt_br' ) );
 		$this->assertSame( 'zh-Hans-CN', Locale::toBcp47( 'zh-hans-cn' ) );
 	}
+
+	/**
+	 * Языки без явного региона в настройках («ru», «bg», не «ru-RU»)
+	 * обязаны получить полный `xx_XX` — Facebook не принимает голый код.
+	 */
+	public function testOgLocaleDoublesTheLanguageCodeAsRegionByDefault(): void {
+		$this->assertSame( 'ru_RU', Locale::toOgLocale( 'ru' ) );
+		$this->assertSame( 'bg_BG', Locale::toOgLocale( 'bg' ) );
+		$this->assertSame( 'de_DE', Locale::toOgLocale( 'de' ) );
+	}
+
+	/**
+	 * Языки, где удвоение кода даёт неверную страну, — из таблицы исключений.
+	 */
+	public function testOgLocaleUsesExceptionTableWhereDoublingIsWrong(): void {
+		$this->assertSame( 'en_US', Locale::toOgLocale( 'en' ) );
+		$this->assertSame( 'zh_CN', Locale::toOgLocale( 'zh' ) );
+		$this->assertSame( 'ja_JP', Locale::toOgLocale( 'ja' ) );
+	}
+
+	/**
+	 * Код с уже заданным регионом использует его, а не таблицу по умолчанию.
+	 */
+	public function testOgLocaleKeepsExplicitRegion(): void {
+		$this->assertSame( 'pt_BR', Locale::toOgLocale( 'pt-br' ) );
+		$this->assertSame( 'en_GB', Locale::toOgLocale( 'en-gb' ) );
+	}
 }
