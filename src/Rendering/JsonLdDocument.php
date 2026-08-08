@@ -81,23 +81,87 @@ final class JsonLdDocument {
 	}
 
 	/**
-	 * Поля `@id` стабильных сущностей (Organization/Person/WebSite): путь
-	 * (закодированный) => текущее значение.
+	 * Все поля `@id` в графе: путь (закодированный) => текущее значение.
+	 *
+	 * Без разбора по типу и без оглядки на родителя намеренно: `@id` — это
+	 * не только «определение» сущности (`{"@type":"Organization","@id":"..."}`),
+	 * но и ссылка на неё же из другого места графа
+	 * (`"publisher":{"@id":"..."}"`, `"author":{"@id":"..."}"`,
+	 * `"mainEntityOfPage":{"@id":"..."}"` — у ссылки своего `@type` обычно
+	 * нет вовсе, и определять её по родителю бессмысленно: `publisher` у
+	 * `Article` не делает саму ссылку статьёй). Правильный способ решить,
+	 * что делать со значением `@id`, — не структурная позиция в графе, а
+	 * СОВПАДЕНИЕ этого значения с `@id` где-то ОПРЕДELённой сущности, см.
+	 * definedEntityTypes() и SeoMeta::normalizeGraphIds().
 	 *
 	 * @return array<string, string>
 	 */
-	public function stableIdFields(): array {
-		return $this->collect( array( JsonLdRules::class, 'isStableId' ) );
+	public function allIdFields(): array {
+		return $this->collect( static fn( string $key, string $type ): bool => '@id' === $key );
 	}
 
 	/**
-	 * Поля `@id` страничных сущностей (WebPage/Article/BreadcrumbList): путь
-	 * (закодированный) => текущее значение.
+	 * Карта «`@id` → типы сущности» для каждого узла графа, где сущность
+	 * ОПРЕДЕЛЕНА (несёт и `@id`, и `@type` на одном уровне), а не просто
+	 * упомянута ссылкой.
 	 *
-	 * @return array<string, string>
+	 * `@type` в схеме — валидно и строкой, и списком строк
+	 * (`"@type":["Person","Organization"]`), поэтому типы всегда
+	 * возвращаются списком, в нижнем регистре.
+	 *
+	 * @return array<string, list<string>>
 	 */
-	public function pageScopedIdFields(): array {
-		return $this->collect( array( JsonLdRules::class, 'isPageScopedId' ) );
+	public function definedEntityTypes(): array {
+		$definitions = array();
+
+		$this->collectDefinitions( $this->data, $definitions );
+
+		return $definitions;
+	}
+
+	/**
+	 * Рекурсивно ищет узлы, определяющие сущность.
+	 *
+	 * @param mixed                        $node        Текущий узел графа.
+	 * @param array<string, list<string>>  $definitions Накопитель результата.
+	 */
+	private function collectDefinitions( $node, array &$definitions ): void {
+		if ( ! is_array( $node ) ) {
+			return;
+		}
+
+		if ( isset( $node['@id'], $node['@type'] ) && is_string( $node['@id'] ) && '' !== $node['@id'] ) {
+			$types = self::typesOf( $node['@type'] );
+
+			if ( array() !== $types ) {
+				$definitions[ $node['@id'] ] = $types;
+			}
+		}
+
+		foreach ( $node as $value ) {
+			if ( is_array( $value ) ) {
+				$this->collectDefinitions( $value, $definitions );
+			}
+		}
+	}
+
+	/**
+	 * Приводит значение `@type` к списку строк в нижнем регистре. Чистая функция.
+	 *
+	 * @param mixed $type Сырое значение `@type`: строка, список строк или мусор.
+	 * @return list<string>
+	 */
+	private static function typesOf( $type ): array {
+		$raw = is_array( $type ) ? $type : array( $type );
+
+		return array_values(
+			array_filter(
+				array_map(
+					static fn( $value ): ?string => is_string( $value ) && '' !== $value ? strtolower( $value ) : null,
+					$raw
+				)
+			)
+		);
 	}
 
 	/**
@@ -147,7 +211,12 @@ final class JsonLdDocument {
 			return;
 		}
 
-		$type = isset( $node['@type'] ) && is_string( $node['@type'] ) ? $node['@type'] : $parentType;
+		// `@type` валиден и строкой, и списком строк (`["Person","Organization"]`):
+		// первый распознанный элемент считается основным типом узла — так же,
+		// как это делает definedEntityTypes() для более точной, полноценной
+		// классификации по всему списку типов.
+		$types = isset( $node['@type'] ) ? self::typesOf( $node['@type'] ) : array();
+		$type  = array() !== $types ? $types[0] : $parentType;
 
 		foreach ( $node as $key => $value ) {
 			$childPath = array_merge( $path, array( $key ) );

@@ -57,11 +57,6 @@ final class JsonLdRules {
 	private const URLS = array( 'url' );
 
 	/**
-	 * Поля с постоянным идентификатором сущности.
-	 */
-	private const ID = array( '@id' );
-
-	/**
 	 * Типы, у которых `@id` — это якорь на РЕАЛЬНЫЙ объект (организацию,
 	 * автора, сайт целиком), а не на конкретную языковую версию страницы.
 	 *
@@ -88,6 +83,31 @@ final class JsonLdRules {
 	 * префикс совершенно так же, как обычное поле `url` (см. isUrl()).
 	 */
 	private const PAGE_SCOPED_ID_TYPES = array( 'webpage', 'article', 'blogposting', 'newsarticle', 'breadcrumblist' );
+
+	/**
+	 * Пересекается ли список типов узла со STABLE_ID_TYPES.
+	 *
+	 * Список, а не строка: `@type` в схеме валиден и как `"Organization"`,
+	 * и как `["Person","Organization"]`. Проверяется полный список типов
+	 * СОБСТВЕННОГО определения узла (JsonLdDocument::definedEntityTypes()),
+	 * а не тип родителя по дереву — родитель для ссылки на сущность
+	 * (`"publisher":{"@id":"..."}"`) вообще не имеет отношения к тому, чем
+	 * является сама эта сущность.
+	 *
+	 * @param list<string> $types Типы узла, в нижнем регистре.
+	 */
+	public static function isStableEntityType( array $types ): bool {
+		return array() !== array_intersect( $types, self::STABLE_ID_TYPES );
+	}
+
+	/**
+	 * Пересекается ли список типов узла со PAGE_SCOPED_ID_TYPES.
+	 *
+	 * @param list<string> $types Типы узла, в нижнем регистре.
+	 */
+	public static function isPageScopedEntityType( array $types ): bool {
+		return array() !== array_intersect( $types, self::PAGE_SCOPED_ID_TYPES );
+	}
 
 	/**
 	 * Типы, у которых `url` — адрес файла, а не страницы.
@@ -147,36 +167,6 @@ final class JsonLdRules {
 		}
 
 		return ! in_array( strtolower( $parentType ), self::MEDIA_TYPES, true );
-	}
-
-	/**
-	 * Является ли поле постоянным `@id` СТАБИЛЬНОЙ сущности (Organization,
-	 * Person, WebSite) — его нужно вернуть к виду без языкового префикса.
-	 *
-	 * @param string $key        Имя поля.
-	 * @param string $parentType Значение `@type` ближайшего объекта, в нижнем регистре.
-	 */
-	public static function isStableId( string $key, string $parentType ): bool {
-		if ( ! in_array( $key, self::ID, true ) ) {
-			return false;
-		}
-
-		return in_array( strtolower( $parentType ), self::STABLE_ID_TYPES, true );
-	}
-
-	/**
-	 * Является ли поле `@id` СТРАНИЧНОЙ сущности (WebPage, Article,
-	 * BreadcrumbList) — его нужно локализовать так же, как `url`.
-	 *
-	 * @param string $key        Имя поля.
-	 * @param string $parentType Значение `@type` ближайшего объекта, в нижнем регистре.
-	 */
-	public static function isPageScopedId( string $key, string $parentType ): bool {
-		if ( ! in_array( $key, self::ID, true ) ) {
-			return false;
-		}
-
-		return in_array( strtolower( $parentType ), self::PAGE_SCOPED_ID_TYPES, true );
 	}
 
 	/**

@@ -80,9 +80,9 @@ final class JsonLdRulesTest extends TestCase {
 	 * @param string $type Тип сущности реального мира — @id одинаков на всех языках.
 	 */
 	#[DataProvider( 'stableEntityTypes' )]
-	public function testAtIdIsAStableIdOnRealWorldEntities( string $type ): void {
-		$this->assertTrue( JsonLdRules::isStableId( '@id', $type ) );
-		$this->assertFalse( JsonLdRules::isPageScopedId( '@id', $type ) );
+	public function testStableEntityTypesAreRecognized( string $type ): void {
+		$this->assertTrue( JsonLdRules::isStableEntityType( array( strtolower( $type ) ) ) );
+		$this->assertFalse( JsonLdRules::isPageScopedEntityType( array( strtolower( $type ) ) ) );
 	}
 
 	/**
@@ -101,9 +101,9 @@ final class JsonLdRulesTest extends TestCase {
 	 * @param string $type Тип конкретной языковой версии страницы — @id локализуется как url.
 	 */
 	#[DataProvider( 'pageScopedTypes' )]
-	public function testAtIdIsPageScopedOnPageEntities( string $type ): void {
-		$this->assertTrue( JsonLdRules::isPageScopedId( '@id', $type ) );
-		$this->assertFalse( JsonLdRules::isStableId( '@id', $type ) );
+	public function testPageScopedTypesAreRecognized( string $type ): void {
+		$this->assertTrue( JsonLdRules::isPageScopedEntityType( array( strtolower( $type ) ) ) );
+		$this->assertFalse( JsonLdRules::isStableEntityType( array( strtolower( $type ) ) ) );
 	}
 
 	/**
@@ -119,15 +119,22 @@ final class JsonLdRulesTest extends TestCase {
 		);
 	}
 
-	public function testAtIdOnUnknownTypeIsNeitherStableNorPageScoped(): void {
-		$this->assertFalse( JsonLdRules::isStableId( '@id', 'ImageObject' ) );
-		$this->assertFalse( JsonLdRules::isPageScopedId( '@id', 'ImageObject' ) );
+	public function testUnknownTypeIsNeitherStableNorPageScoped(): void {
+		$this->assertFalse( JsonLdRules::isStableEntityType( array( 'imageobject' ) ) );
+		$this->assertFalse( JsonLdRules::isPageScopedEntityType( array( 'imageobject' ) ) );
 	}
 
-	public function testOnlyAtIdKeyMatches(): void {
-		$this->assertFalse( JsonLdRules::isStableId( 'url', 'Organization' ) );
-		$this->assertFalse( JsonLdRules::isStableId( 'id', 'Organization' ) );
-		$this->assertFalse( JsonLdRules::isPageScopedId( 'url', 'WebPage' ) );
-		$this->assertFalse( JsonLdRules::isPageScopedId( 'mainEntityOfPage', 'WebPage' ) );
+	/**
+	 * `@type` — валидный список из нескольких значений
+	 * (`["Person","Organization"]`): достаточно, чтобы совпал хотя бы один.
+	 */
+	public function testTypeListMatchesIfAnyElementMatches(): void {
+		$this->assertTrue( JsonLdRules::isStableEntityType( array( 'imageobject', 'organization' ) ) );
+		$this->assertTrue( JsonLdRules::isPageScopedEntityType( array( 'aboutpage', 'webpage' ) ) );
+	}
+
+	public function testEmptyTypeListMatchesNeither(): void {
+		$this->assertFalse( JsonLdRules::isStableEntityType( array() ) );
+		$this->assertFalse( JsonLdRules::isPageScopedEntityType( array() ) );
 	}
 }

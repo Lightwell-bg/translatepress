@@ -134,6 +134,10 @@ final class RenderedHtmlTest extends TestCase {
 		// @id обязан получить префикс текущего языка точно так же, как url.
 		$webPageUrl = self::HOME . '/about/';
 
+		// Как в настоящем графе Yoast: узлы ссылаются друг на друга через
+		// голый `{"@id": "..."}"`, без собственного `@type` у самой ссылки —
+		// это и есть та форма, которую предыдущая версия (классификация по
+		// родителю в дереве) не распознавала вовсе.
 		$jsonLd = json_encode(
 			array(
 				'@context' => 'https://schema.org',
@@ -150,16 +154,22 @@ final class RenderedHtmlTest extends TestCase {
 					array(
 						'@type' => 'WebSite',
 						'@id'   => $websiteId,
+						'publisher' => array( '@id' => $organizationId ),
 					),
 					array(
-						'@type' => 'WebPage',
-						'@id'   => self::HOME . '/about/#webpage',
-						'url'   => $webPageUrl,
+						'@type'     => 'WebPage',
+						'@id'       => self::HOME . '/about/#webpage',
+						'url'       => $webPageUrl,
+						'about'     => array( '@id' => $organizationId ),
+						'isPartOf'  => array( '@id' => $websiteId ),
 					),
 					array(
-						'@type'    => 'Article',
-						'@id'      => self::HOME . '/about/#article',
-						'headline' => 'Заголовок статьи',
+						'@type'             => 'Article',
+						'@id'               => self::HOME . '/about/#article',
+						'headline'          => 'Заголовок статьи',
+						'publisher'         => array( '@id' => $organizationId ),
+						'author'            => array( '@id' => $personId ),
+						'mainEntityOfPage'  => array( '@id' => self::HOME . '/about/#webpage' ),
 					),
 					array(
 						'@type' => 'BreadcrumbList',
@@ -365,6 +375,153 @@ final class RenderedHtmlTest extends TestCase {
 
 		$this->assertStringContainsString( '© 2026 Example. All rights reserved.', $translated );
 		$this->assertStringNotContainsString( 'Все права защищены', $translated );
+	}
+
+	/**
+	 * Тест целостности графа: КАЖДАЯ внутренняя ссылка `@id` (publisher,
+	 * author, about, isPartOf, mainEntityOfPage — любое голое
+	 * `{"@id": "..."}"` без собственного `@type`) обязана совпадать со
+	 * значением `@id` какой-то реально ОПРЕДЕЛЁННОЙ сущности того же графа.
+	 * Разбирает итоговый HTML заново, напрямую через json_decode — не через
+	 * внутренние методы JsonLdDocument, чтобы проверка была независимой от
+	 * реализации и ловила именно то, что видел бы поисковик.
+	 */
+	public function testEveryInternalIdReferenceMatchesADefinedEntity(): void {
+		foreach ( array( '', 'bg', 'en' ) as $slug ) {
+			$html = $this->render( $slug )['html'];
+			$graph = $this->decodeGraph( $html );
+
+			$defined = array();
+			$this->collectDefinedIds( $graph, $defined );
+
+			$references = array();
+			$this->collectAllIdValues( $graph, $references );
+
+			$this->assertNotEmpty( $references, "no @id values found at all on '$slug'" );
+
+			foreach ( $references as $id ) {
+				if ( ! str_starts_with( $id, self::HOME ) ) {
+					continue;
+				}
+
+				$this->assertArrayHasKey(
+					$id,
+					$defined,
+					"\"$id\" is referenced on '$slug' but no entity in the graph defines it"
+				);
+			}
+		}
+	}
+
+	/**
+	 * То же целостность, но конкретно: ссылка внутри Article/WebPage
+	 * обязана указывать РОВНО на нормализованный `@id` Organization/Person/
+	 * WebSite — не на устаревшее (с чужим языковым префиксом) значение.
+	 */
+	public function testReferencesPointToTheNormalizedTargetId(): void {
+		$html          = $this->render( 'en' )['html'];
+		$graph         = $this->decodeGraph( $html );
+		$organization  = $this->findNodeByType( $graph, 'organization' );
+		$person        = $this->findNodeByType( $graph, 'person' );
+		$website       = $this->findNodeByType( $graph, 'website' );
+		$article       = $this->findNodeByType( $graph, 'article' );
+		$webPage       = $this->findNodeByType( $graph, 'webpage' );
+
+		$this->assertNotNull( $organization );
+		$this->assertNotNull( $person );
+		$this->assertNotNull( $website );
+		$this->assertNotNull( $article );
+		$this->assertNotNull( $webPage );
+
+		$this->assertSame( 'https://site.example/blog/#organization', $organization['@id'] );
+		$this->assertSame( $organization['@id'], $article['publisher']['@id'] );
+		$this->assertSame( $person['@id'], $article['author']['@id'] );
+		$this->assertSame( $organization['@id'], $webPage['about']['@id'] );
+		$this->assertSame( $website['@id'], $webPage['isPartOf']['@id'] );
+		$this->assertSame( $webPage['@id'], $article['mainEntityOfPage']['@id'] );
+	}
+
+	/**
+	 * Достаёт `@graph` из итогового HTML напрямую, без внутренних классов
+	 * плагина.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function decodeGraph( string $html ): array {
+		if ( 1 !== preg_match( '#<script type="application/ld\+json">(.*?)</script>#s', $html, $match ) ) {
+			$this->fail( 'JSON-LD script not found in rendered HTML.' );
+		}
+
+		$decoded = json_decode( $match[1], true );
+
+		$this->assertIsArray( $decoded );
+		$this->assertIsArray( $decoded['@graph'] ?? null );
+
+		return $decoded['@graph'];
+	}
+
+	/**
+	 * Узлы, где сущность ОПРЕДЕЛЕНА (несёт и `@id`, и `@type`): id => узел.
+	 *
+	 * @param mixed                        $node    Текущий узел графа.
+	 * @param array<string, array<mixed>>  $defined Накопитель результата.
+	 */
+	private function collectDefinedIds( $node, array &$defined ): void {
+		if ( ! is_array( $node ) ) {
+			return;
+		}
+
+		if ( isset( $node['@id'], $node['@type'] ) && is_string( $node['@id'] ) ) {
+			$defined[ $node['@id'] ] = $node;
+		}
+
+		foreach ( $node as $value ) {
+			if ( is_array( $value ) ) {
+				$this->collectDefinedIds( $value, $defined );
+			}
+		}
+	}
+
+	/**
+	 * Все значения `@id` в графе, включая голые ссылки без `@type`.
+	 *
+	 * @param mixed        $node Текущий узел графа.
+	 * @param list<string> $out  Накопитель результата.
+	 */
+	private function collectAllIdValues( $node, array &$out ): void {
+		if ( ! is_array( $node ) ) {
+			return;
+		}
+
+		if ( isset( $node['@id'] ) && is_string( $node['@id'] ) ) {
+			$out[] = $node['@id'];
+		}
+
+		foreach ( $node as $value ) {
+			if ( is_array( $value ) ) {
+				$this->collectAllIdValues( $value, $out );
+			}
+		}
+	}
+
+	/**
+	 * Первый узел графа верхнего уровня заданного типа (без учёта регистра).
+	 *
+	 * @param list<array<string, mixed>> $graph Список узлов `@graph`.
+	 * @param string                     $type  Искомый тип, в нижнем регистре.
+	 * @return array<string, mixed>|null
+	 */
+	private function findNodeByType( array $graph, string $type ): ?array {
+		foreach ( $graph as $node ) {
+			$types = is_array( $node['@type'] ?? null ) ? $node['@type'] : array( $node['@type'] ?? '' );
+			$types = array_map( static fn( $t ): string => strtolower( (string) $t ), $types );
+
+			if ( in_array( $type, $types, true ) ) {
+				return $node;
+			}
+		}
+
+		return null;
 	}
 
 	/**

@@ -189,14 +189,9 @@ final class SeoMeta implements DocumentFilter {
 
 			if ( ! $target->isDefault ) {
 				$this->localizeUrls( $json, $target, $origin, $basePath, $slugs );
-				$this->localizePageScopedIds( $json, $target, $origin, $basePath, $slugs );
 			}
 
-			// Постоянные идентификаторы стабильных сущностей (Organization,
-			// Person, WebSite) правятся на любом языке, включая дефолтный:
-			// home_url() мог уже отдать значение с чужим префиксом до того,
-			// как страница дошла до разбора DOM.
-			$this->normalizeStableIds( $json, $basePath, $slugs );
+			$this->normalizeGraphIds( $json, $target, $origin, $basePath, $slugs );
 
 			foreach ( array_keys( $json->inLanguageFields() ) as $path ) {
 				$json->setByEncodedPath( $path, $target->bcp47() );
@@ -205,42 +200,27 @@ final class SeoMeta implements DocumentFilter {
 	}
 
 	/**
-	 * Возвращает `@id` СТАБИЛЬНЫХ сущностей к виду без языкового префикса.
+	 * Приводит все `@id` графа к правильному виду — сначала строит карту
+	 * ОПРЕДЕЛЁННЫХ сущностей, затем заменяет по ней КАЖДОЕ упоминание `@id`
+	 * в графе, а не только то, что стоит рядом с `@type`.
 	 *
-	 * Стабильная сущность — Organization, Person, WebSite (см.
-	 * JsonLdRules::STABLE_ID_TYPES): это не страница, а объект реального
-	 * мира, один и тот же на любом языке сайта, поэтому его `@id`
-	 * (`.../#organization`) обязан быть одинаковым везде. Но само значение
-	 * WordPress уже мог собрать через home_url(), а этот вызов проходит
-	 * через наш же UrlConverter::filterHomeUrl() и получает префикс текущего
-	 * языка ещё до того, как ответ дойдёт до разбора DOM. Поэтому префикс
-	 * здесь не добавляют, а снимают — какой бы язык ни просочился в исходное
-	 * значение. `@id` страничных сущностей (WebPage, Article, BreadcrumbList)
-	 * сюда не попадает — у них ровно противоположное правило, см.
-	 * localizePageScopedIds().
+	 * Двухпроходная схема — не излишество, а единственный способ починить
+	 * то, что ломало прошлую версию: `@id` встречается в графе не только там,
+	 * где сущность ОПРЕДЕЛЕНА (`{"@type":"Organization","@id":"..."}`), но и
+	 * там, где на неё просто ССЫЛАЮТСЯ — `"publisher":{"@id":"..."}"`,
+	 * `"author":{"@id":"..."}"`, `"mainEntityOfPage":{"@id":"..."}"`. У ссылки
+	 * своего `@type` обычно нет вовсе, и решать по родителю в дереве (`Article`
+	 * у `publisher`) — саму сущность это не делает статьёй. Поэтому:
 	 *
-	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
-	 * @param string         $basePath Базовый путь установки WordPress.
-	 * @param list<string>   $slugs    Слаги всех языков сайта.
-	 */
-	private function normalizeStableIds( JsonLdDocument $json, string $basePath, array $slugs ): void {
-		foreach ( $json->stableIdFields() as $path => $value ) {
-			$normalized = UrlConverter::withoutLanguagePrefix( $value, $basePath, $slugs );
-
-			if ( $normalized !== $value ) {
-				$json->setByEncodedPath( $path, $normalized );
-			}
-		}
-	}
-
-	/**
-	 * Приводит `@id` СТРАНИЧНЫХ сущностей (WebPage, Article/BlogPosting,
-	 * BreadcrumbList) к адресу текущего языка.
-	 *
-	 * В отличие от Organization/Person/WebSite, эти узлы описывают КОНКРЕТНУЮ
-	 * языковую версию страницы — у английской и русской версий одной записи
-	 * это два разных узла графа, и их `@id` обязан различаться так же, как
-	 * различается сам адрес страницы (см. JsonLdRules::isPageScopedId()).
+	 * 1. `definedEntityTypes()` находит только узлы, где сущность
+	 *    ОПРЕДЕЛЕНА (несёт и `@id`, и `@type` на одном уровне), и решает по
+	 *    ЕЁ СОБСТВЕННОМУ типу (не по родителю), новое значение `@id`:
+	 *    Organization/Person/WebSite — без префикса, WebPage/Article/
+	 *    BlogPosting/BreadcrumbList — с префиксом текущего языка.
+	 * 2. Готовая карта «старое значение → новое» применяется через
+	 *    `allIdFields()` — это ВСЕ вхождения `@id` в графе, включая ссылки.
+	 *    Совпало значение — заменили, вне зависимости от того, где именно
+	 *    в графе это вхождение находится.
 	 *
 	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
 	 * @param Language       $target   Текущий язык.
@@ -248,16 +228,41 @@ final class SeoMeta implements DocumentFilter {
 	 * @param string         $basePath Базовый путь установки WordPress.
 	 * @param list<string>   $slugs    Слаги всех языков сайта.
 	 */
-	private function localizePageScopedIds( JsonLdDocument $json, Language $target, string $origin, string $basePath, array $slugs ): void {
-		foreach ( $json->pageScopedIdFields() as $path => $value ) {
-			if ( ! str_starts_with( $value, $origin ) ) {
+	private function normalizeGraphIds( JsonLdDocument $json, Language $target, string $origin, string $basePath, array $slugs ): void {
+		$idMap = array();
+
+		foreach ( $json->definedEntityTypes() as $id => $types ) {
+			if ( ! str_starts_with( $id, $origin ) ) {
+				// Чужой домен (импортированная сущность) — не наш префикс, не трогаем.
 				continue;
 			}
 
-			$localized = UrlConverter::withLanguagePrefix( $value, $basePath, $target->slug, $slugs );
+			if ( JsonLdRules::isStableEntityType( $types ) ) {
+				$normalized = UrlConverter::withoutLanguagePrefix( $id, $basePath, $slugs );
 
-			if ( $localized !== $value ) {
-				$json->setByEncodedPath( $path, $localized );
+				if ( $normalized !== $id ) {
+					$idMap[ $id ] = $normalized;
+				}
+
+				continue;
+			}
+
+			if ( ! $target->isDefault && JsonLdRules::isPageScopedEntityType( $types ) ) {
+				$localized = UrlConverter::withLanguagePrefix( $id, $basePath, $target->slug, $slugs );
+
+				if ( $localized !== $id ) {
+					$idMap[ $id ] = $localized;
+				}
+			}
+		}
+
+		if ( array() === $idMap ) {
+			return;
+		}
+
+		foreach ( $json->allIdFields() as $path => $value ) {
+			if ( isset( $idMap[ $value ] ) ) {
+				$json->setByEncodedPath( $path, $idMap[ $value ] );
 			}
 		}
 	}

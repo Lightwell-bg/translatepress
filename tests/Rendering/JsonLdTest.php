@@ -197,11 +197,11 @@ final class JsonLdTest extends TestCase {
 	}
 
 	/**
-	 * stableIdFields() собирает `@id` только у Organization/Person/WebSite —
-	 * ImageObject внутри того же графа не попадает в выборку, у него нет
-	 * общего правила для `@id` (плагин его не трогает вовсе).
+	 * definedEntityTypes() находит только узлы, где сущность ОПРЕДЕЛЕНА
+	 * (несёт `@id` и `@type` на одном уровне) — с типами в нижнем регистре,
+	 * даже если в самом графе они записаны иначе.
 	 */
-	public function testCollectsStableIdsOnlyForRealWorldEntities(): void {
+	public function testDefinedEntityTypesCollectsIdAndTypeTogether(): void {
 		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
 			. '{"@type":"Organization","@id":"https://site.ru/en/#organization","url":"https://site.ru/en/",'
 			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/en/#logo","url":"https://site.ru/logo.png"}}'
@@ -215,18 +215,21 @@ final class JsonLdTest extends TestCase {
 
 		$this->assertNotNull( $json );
 		$this->assertSame(
-			array( '@id' => 'https://site.ru/en/#organization' ),
-			$json->stableIdFields()
+			array(
+				'https://site.ru/en/#organization' => array( 'organization' ),
+				'https://site.ru/en/#logo'          => array( 'imageobject' ),
+			),
+			$json->definedEntityTypes()
 		);
 	}
 
 	/**
-	 * pageScopedIdFields() — ровно наоборот: WebPage да, Organization нет.
+	 * `@type` — валидно и списком: definedEntityTypes() отдаёт полный
+	 * список, не только первый элемент.
 	 */
-	public function testCollectsPageScopedIdsOnlyForPageEntities(): void {
+	public function testDefinedEntityTypesHandlesTypeAsArray(): void {
 		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
-			. '{"@type":"WebPage","@id":"https://site.ru/en/about/#webpage",'
-			. '"about":{"@type":"Organization","@id":"https://site.ru/en/#organization"}}'
+			. '{"@type":["Person","Organization"],"@id":"https://site.ru/#/schema/person/1","name":"Иван"}'
 			. '</script></head><body></body></html>';
 		$document = HtmlDocument::parse( $html );
 
@@ -237,8 +240,36 @@ final class JsonLdTest extends TestCase {
 
 		$this->assertNotNull( $json );
 		$this->assertSame(
-			array( '@id' => 'https://site.ru/en/about/#webpage' ),
-			$json->pageScopedIdFields()
+			array( 'https://site.ru/#/schema/person/1' => array( 'person', 'organization' ) ),
+			$json->definedEntityTypes()
+		);
+	}
+
+	/**
+	 * allIdFields() — КАЖДОЕ вхождение `@id` в графе, включая ссылки на
+	 * сущность (`publisher`), у которых своего `@type` обычно нет вовсе.
+	 * Именно эта разница ломала прошлую версию: ссылка классифицировалась
+	 * по типу родителя (`Article`), а не по тому, на что она указывает.
+	 */
+	public function testAllIdFieldsCollectsDefinitionsAndReferencesAlike(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Article","@id":"https://site.ru/en/about/#article",'
+			. '"publisher":{"@id":"https://site.ru/en/#organization"}}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame(
+			array(
+				'@id'                  => 'https://site.ru/en/about/#article',
+				"publisher\x1F@id" => 'https://site.ru/en/#organization',
+			),
+			$json->allIdFields()
 		);
 	}
 
