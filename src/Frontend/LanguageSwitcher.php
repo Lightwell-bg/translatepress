@@ -121,7 +121,13 @@ final class LanguageSwitcher implements Hookable {
 
 		foreach ( $items as $item ) {
 			$html .= sprintf(
-				'<li class="mlp-language-switcher__item%1$s"><a href="%2$s" lang="%3$s" hreflang="%3$s"%4$s>%5$s</a></li>',
+				/*
+				 * Класс `mlp-language-item` на самой ссылке — не только на `<li>` —
+				 * это маркер для InternalLinks::apply(): каждая ссылка здесь уже
+				 * ведёт на свой язык, второй, независимый проход не должен её
+				 * трогать (см. InternalLinks::SWITCHER_CLASS).
+				 */
+				'<li class="mlp-language-switcher__item%1$s"><a href="%2$s" class="mlp-language-item" lang="%3$s" hreflang="%3$s"%4$s>%5$s</a></li>',
 				$item['current'] ? ' is-current' : '',
 				esc_url( $item['url'] ),
 				esc_attr( $item['lang'] ),

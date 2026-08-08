@@ -183,6 +183,56 @@ final class UrlConverter implements Hookable {
 	}
 
 	/**
+	 * Убирает языковой префикс из адреса, если он там есть. Чистая функция.
+	 *
+	 * Симметрична withLanguagePrefix(), но в обратную сторону: нужна для
+	 * постоянных идентификаторов (`@id` в JSON-LD), которые обязаны быть
+	 * одинаковыми на всех языках, даже если префикс уже попал в значение
+	 * до того, как плагин успел это увидеть (см. JsonLdRules::isStableId()).
+	 *
+	 * @param string        $url      Абсолютный, относительный или схемо-независимый адрес.
+	 * @param string        $basePath Базовый путь установки WordPress.
+	 * @param list<string>  $slugs    Слаги всех известных языков (включая черновики).
+	 */
+	public static function withoutLanguagePrefix( string $url, string $basePath, array $slugs ): string {
+		$parts = wp_parse_url( $url );
+
+		if ( ! is_array( $parts ) ) {
+			return $url;
+		}
+
+		$path    = (string) ( $parts['path'] ?? '/' );
+		$newPath = self::removePrefixFromPath( $path, $basePath, $slugs );
+
+		if ( $newPath === $path ) {
+			return $url;
+		}
+
+		$parts['path'] = $newPath;
+
+		return self::buildUrl( $parts, str_starts_with( $url, '//' ) );
+	}
+
+	/**
+	 * Убирает первый сегмент пути, если это слаг известного языка. Чистая функция.
+	 *
+	 * @param string       $path     Полный путь из адреса, например `/blog/en/sample-page/`.
+	 * @param string       $basePath Базовый путь установки, например `/blog`.
+	 * @param list<string> $slugs    Слаги всех известных языков.
+	 */
+	public static function removePrefixFromPath( string $path, string $basePath, array $slugs ): string {
+		$relative = LanguageResolver::relativePath( $path, $basePath );
+
+		list( $segment, $rest ) = LanguageResolver::splitFirstSegment( $relative );
+
+		if ( '' === $segment || ! in_array( strtolower( $segment ), $slugs, true ) ) {
+			return $path;
+		}
+
+		return $basePath . $rest;
+	}
+
+	/**
 	 * Собирает адрес обратно из разобранных частей.
 	 *
 	 * Подменять путь поиском по строке нельзя: в `https://site.ru/` первый

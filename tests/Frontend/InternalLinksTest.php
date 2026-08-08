@@ -126,6 +126,38 @@ final class InternalLinksTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Воспроизводит регрессию из жалобы: переключатель языков уже несёт
+	 * ссылки на СВОИ языки (ru, bg, en), выбранные не по языку текущей
+	 * страницы. Общий проход не должен затирать их префиксом текущего
+	 * языка — иначе переключатель перестаёт переключать.
+	 */
+	public function testLanguageSwitcherLinksAreNotRePrefixed(): void {
+		$html = $this->apply(
+			'<ul>'
+			. '<li><a class="mlp-language-item" href="/kontakty/">RU</a></li>'
+			. '<li><a class="mlp-language-item" href="/bg/kontakty/">BG</a></li>'
+			. '<li><a class="mlp-language-item" href="/en/kontakty/">EN</a></li>'
+			. '</ul>'
+		);
+
+		$this->assertStringContainsString( 'href="/kontakty/"', $html );
+		$this->assertStringContainsString( 'href="/bg/kontakty/"', $html );
+		$this->assertStringContainsString( 'href="/en/kontakty/"', $html );
+		$this->assertStringNotContainsString( '/en/en/', $html );
+		$this->assertStringNotContainsString( '/en/bg/', $html );
+	}
+
+	/**
+	 * Класс сравнивается как целый токен: похожий, но чужой класс не должен
+	 * случайно выключить защиту.
+	 */
+	public function testLookalikeClassIsNotTreatedAsSwitcher(): void {
+		$html = $this->apply( '<a class="mlp-language-items-wrapper" href="/kontakty/">Контакты</a>' );
+
+		$this->assertStringContainsString( 'href="/en/kontakty/"', $html );
+	}
+
 	public function testDefaultLanguageIsNotTouched(): void {
 		$html = $this->apply( '<a href="/kontakty/">Контакты</a>', 'ru' );
 

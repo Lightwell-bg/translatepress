@@ -174,6 +174,47 @@ final class SeoMetaTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Воспроизводит настоящую причину бага из жалобы: SEO-плагин строит `@id`
+	 * через `home_url()`, а этот вызов уже проходит через наш собственный
+	 * фильтр языкового префикса раньше, чем страница попадает в SeoMeta.
+	 * К моменту разбора DOM `@id` уже содержит чужой префикс — тест
+	 * проверяет, что SeoMeta возвращает его к виду без префикса, а не
+	 * просто оставляет как есть (что было бы недостаточно).
+	 */
+	public function testStableEntityIdWithBakedInPrefixIsNormalized(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization"}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, $this->target() );
+
+		$this->assertStringContainsString( '"@id":"https://site.ru/#organization"', $document->html() );
+		$this->assertStringNotContainsString( '/en/#organization', $document->html() );
+	}
+
+	/**
+	 * То же самое, но на языке по умолчанию: там `home_url()` не добавляет
+	 * префикс вовсе, поэтому нормализация — no-op, а не порча значения.
+	 */
+	public function testStableEntityIdIsUntouchedOnDefaultLanguage(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/#organization"}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, ( new Settings() )->get( 'ru' ) );
+
+		$this->assertStringContainsString( '"@id":"https://site.ru/#organization"', $document->html() );
+	}
+
 	public function testWebPageUrlDoesGetPrefixed(): void {
 		$document = HtmlDocument::parse(
 			'<!DOCTYPE html><html><head><script type="application/ld+json">'

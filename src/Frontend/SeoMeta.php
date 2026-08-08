@@ -183,8 +183,42 @@ final class SeoMeta implements DocumentFilter {
 				$this->localizeUrls( $json, $target, $origin, $basePath );
 			}
 
+			// Постоянные идентификаторы правятся на любом языке, включая
+			// дефолтный: home_url() мог уже отдать значение с чужим
+			// префиксом до того, как страница дошла до разбора DOM.
+			$this->normalizeStableIds( $json, $basePath );
+
 			foreach ( array_keys( $json->inLanguageFields() ) as $path ) {
 				$json->setByEncodedPath( $path, $target->bcp47() );
+			}
+		}
+	}
+
+	/**
+	 * Возвращает `@id` к виду без языкового префикса.
+	 *
+	 * `@id` — это постоянный якорь сущности (`.../#organization`), а не
+	 * адрес страницы: он обязан быть одинаковым на всех языках сайта. Но
+	 * само значение WordPress уже мог собрать через home_url(), а этот
+	 * вызов проходит через наш же UrlConverter::filterHomeUrl() и получает
+	 * префикс текущего языка ещё до того, как ответ дойдёт до разбора DOM
+	 * (см. JsonLdRules::isStableId()). Поэтому префикс здесь не добавляют,
+	 * а снимают — какой бы язык ни просочился в исходное значение.
+	 *
+	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
+	 * @param string         $basePath Базовый путь установки WordPress.
+	 */
+	private function normalizeStableIds( JsonLdDocument $json, string $basePath ): void {
+		$slugs = array_map(
+			static fn( Language $language ): string => strtolower( $language->slug ),
+			array_values( $this->settings->all() )
+		);
+
+		foreach ( $json->stableIdFields() as $path => $value ) {
+			$normalized = UrlConverter::withoutLanguagePrefix( $value, $basePath, $slugs );
+
+			if ( $normalized !== $value ) {
+				$json->setByEncodedPath( $path, $normalized );
 			}
 		}
 	}

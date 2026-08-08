@@ -196,6 +196,28 @@ final class JsonLdTest extends TestCase {
 		$this->assertSame( array( 'url' => 'https://site.ru/a/' ), $json->urls() );
 	}
 
+	public function testCollectsStableIdsRegardlessOfType(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization","url":"https://site.ru/en/",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/en/#logo","url":"https://site.ru/logo.png"}}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame(
+			array(
+				'@id'          => 'https://site.ru/en/#organization',
+				"logo\x1F@id" => 'https://site.ru/en/#logo',
+			),
+			$json->stableIdFields()
+		);
+	}
+
 	public function testRulesRejectUnknownKeys(): void {
 		$this->assertFalse( JsonLdRules::isTranslatable( 'datePublished', 'Article' ) );
 		$this->assertFalse( JsonLdRules::isTranslatable( '@type', 'Article' ) );

@@ -75,6 +75,13 @@ final class Extractor {
 	 * его не трогает вообще. Только человекочитаемый текст. Адреса
 	 * (`og:url`, `twitter:url`) и локаль (`og:locale`) сюда не входят: их
 	 * не переводят, а подменяют — этим занимается SeoMeta.
+	 *
+	 * `twitter:label1`/`twitter:label2`/`twitter:data2` — подписи
+	 * дополнительных полей карточки («Written by», «Est. reading time»,
+	 * «5 minutes») и переводятся как обычный текст. `twitter:data1` в
+	 * списке нет намеренно: Yoast и Rank Math кладут туда имя автора —
+	 * это имя собственное, а не текст для читателя (см. класс-докблок
+	 * про имена брендов).
 	 */
 	private const TRANSLATABLE_META = array(
 		'description',
@@ -87,6 +94,9 @@ final class Extractor {
 		'twitter:title',
 		'twitter:description',
 		'twitter:image:alt',
+		'twitter:label1',
+		'twitter:label2',
+		'twitter:data2',
 	);
 
 	/**

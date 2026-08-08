@@ -170,6 +170,37 @@ final class NavMenuTest extends TestCase {
 	}
 
 	/**
+	 * InternalLinks::apply() (второй проход по готовому HTML, добавляющий
+	 * языковой префикс к ссылкам темы) узнаёт ссылки переключателя по классу
+	 * прямо на `<a>` — ядро WordPress по умолчанию выводит `$item->classes`
+	 * только на `<li>`. Без этого фильтра переключатель ломался бы точно так
+	 * же, как в жалобе, на любой теме с собственным Walker'ом.
+	 */
+	public function testLinkAttributesGetsSwitcherClassForLanguageItems(): void {
+		$marker = $this->marker( '#mlp-language-switcher-dropdown', 42 );
+		$result = $this->navMenu()->injectLanguages( array( $marker ) );
+
+		$languageItem = $result[1];
+		$this->assertContains( 'mlp-language-item', $languageItem->classes );
+
+		$atts = $this->navMenu()->filterLinkAttributes( array(), $languageItem );
+
+		$this->assertSame( 'mlp-language-item', $atts['class'] );
+	}
+
+	/**
+	 * Обычные пункты меню класс не получают и остальные атрибуты ссылки
+	 * (например заданные темой `target`) не теряют.
+	 */
+	public function testLinkAttributesLeavesRegularItemsUntouched(): void {
+		$regular = $this->marker( 'https://example.com/about/', 3 );
+
+		$atts = $this->navMenu()->filterLinkAttributes( array( 'target' => '_blank' ), $regular );
+
+		$this->assertSame( array( 'target' => '_blank' ), $atts );
+	}
+
+	/**
 	 * Один опубликованный язык — переключаться не на что, маркер убирается
 	 * целиком, а не остаётся пустой нерабочей ссылкой в меню.
 	 */

@@ -75,4 +75,14 @@ final class JsonLdRulesTest extends TestCase {
 		$this->assertFalse( JsonLdRules::isTranslatable( '@id', 'WebPage' ) );
 		$this->assertFalse( JsonLdRules::isTranslatable( '@id', 'Article' ) );
 	}
+
+	public function testAtIdIsAStableId(): void {
+		$this->assertTrue( JsonLdRules::isStableId( '@id' ) );
+	}
+
+	public function testOnlyAtIdIsAStableId(): void {
+		$this->assertFalse( JsonLdRules::isStableId( 'url' ) );
+		$this->assertFalse( JsonLdRules::isStableId( 'id' ) );
+		$this->assertFalse( JsonLdRules::isStableId( 'mainEntityOfPage' ) );
+	}
 }

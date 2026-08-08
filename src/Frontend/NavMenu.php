@@ -68,6 +68,7 @@ final class NavMenu implements Hookable {
 	public function register(): void {
 		add_action( 'admin_head-nav-menus.php', array( $this, 'addMetaBox' ) );
 		add_filter( 'wp_nav_menu_objects', array( $this, 'injectLanguages' ), 10, 1 );
+		add_filter( 'nav_menu_link_attributes', array( $this, 'filterLinkAttributes' ), 10, 2 );
 	}
 
 	/**
@@ -204,6 +205,33 @@ final class NavMenu implements Hookable {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Добавляет класс `mlp-language-item` прямо на `<a>` языкового пункта.
+	 *
+	 * Ядро WordPress выводит `$item->classes` только на `<li>`. Этого обычно
+	 * достаточно, но InternalLinks::apply() (второй, независимый проход по
+	 * готовому HTML, который добавляет языковой префикс к ссылкам темы)
+	 * должен уметь узнать ссылку переключателя, даже если тема подменяет
+	 * Walker и не выводит классы `<li>` как ожидается. Класс прямо на `<a>` —
+	 * это гарантия, не зависящая от чужого кода вывода меню.
+	 *
+	 * @param array<string, string> $atts  Атрибуты ссылки.
+	 * @param object                $item  Пункт меню.
+	 * @return array<string, string>
+	 */
+	public function filterLinkAttributes( $atts, $item ): array {
+		$atts = is_array( $atts ) ? $atts : array();
+
+		if ( ! in_array( 'mlp-language-item', (array) ( $item->classes ?? array() ), true ) ) {
+			return $atts;
+		}
+
+		$existing      = isset( $atts['class'] ) ? trim( (string) $atts['class'] ) : '';
+		$atts['class'] = '' !== $existing ? $existing . ' mlp-language-item' : 'mlp-language-item';
+
+		return $atts;
 	}
 
 	/**

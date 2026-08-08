@@ -31,6 +31,18 @@ use WpMlp\Settings\Language;
 final class InternalLinks implements DocumentFilter {
 
 	/**
+	 * CSS-класс, которым переключатель языков (NavMenu, LanguageSwitcher)
+	 * помечает свои собственные ссылки.
+	 *
+	 * Каждая такая ссылка уже ведёт на СВОЙ язык (ru → без префикса,
+	 * bg → `/bg/...`, en → `/en/...`), выбранный не по языку текущей
+	 * страницы, а по языку, который она предлагает. Если прогнать её через
+	 * общий проход ниже, префикс текущего языка страницы затрёт чужой —
+	 * переключатель перестанет вести куда должен.
+	 */
+	private const SWITCHER_CLASS = 'mlp-language-item';
+
+	/**
 	 * @param UrlConverter $urls Построение языковых адресов.
 	 */
 	public function __construct( private readonly UrlConverter $urls ) {
@@ -49,6 +61,10 @@ final class InternalLinks implements DocumentFilter {
 
 		foreach ( $document->document()->getElementsByTagName( 'a' ) as $link ) {
 			if ( ! $link->hasAttribute( 'href' ) ) {
+				continue;
+			}
+
+			if ( self::hasClass( $link, self::SWITCHER_CLASS ) ) {
 				continue;
 			}
 
@@ -89,5 +105,23 @@ final class InternalLinks implements DocumentFilter {
 		}
 
 		return 1 === preg_match( '#^(https?://|//|/(?!/))#i', $href );
+	}
+
+	/**
+	 * Несёт ли элемент указанный класс. Точное совпадение токена, а не
+	 * поиск подстроки: `mlp-language-item` не должен сработать на
+	 * `mlp-language-items-wrapper`.
+	 *
+	 * @param object $element Элемент DOM.
+	 * @param string $class   Искомый класс.
+	 */
+	private static function hasClass( object $element, string $class ): bool {
+		if ( ! $element->hasAttribute( 'class' ) ) {
+			return false;
+		}
+
+		$classes = preg_split( '/\s+/', trim( (string) $element->getAttribute( 'class' ) ) );
+
+		return in_array( $class, $classes ?: array(), true );
 	}
 }

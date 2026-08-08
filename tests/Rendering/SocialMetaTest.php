@@ -131,6 +131,38 @@ final class SocialMetaTest extends TestCase {
 		$this->assertSame( array( 'Только это' ), $texts );
 	}
 
+	/**
+	 * `twitter:label1`/`twitter:label2`/`twitter:data2` — подписи вроде
+	 * «Written by» / «Est. reading time» / «5 minutes», которые Yoast и
+	 * Rank Math добавляют в карточку. Это человекочитаемый текст, а не
+	 * служебное значение — его нужно переводить.
+	 */
+	public function testExtractsTwitterLabelsAndSecondDataField(): void {
+		$texts = $this->texts(
+			'<meta name="twitter:label1" content="Автор">'
+			. '<meta name="twitter:label2" content="Время чтения">'
+			. '<meta name="twitter:data2" content="5 минут">'
+		);
+
+		$this->assertContains( 'Автор', $texts );
+		$this->assertContains( 'Время чтения', $texts );
+		$this->assertContains( '5 минут', $texts );
+	}
+
+	/**
+	 * `twitter:data1` в белый список не входит намеренно: там лежит имя
+	 * автора — имя собственное, а не текст для читателя.
+	 */
+	public function testIgnoresTwitterDataOneAsAProperNoun(): void {
+		$texts = $this->texts(
+			'<meta name="twitter:label1" content="Автор">'
+			. '<meta name="twitter:data1" content="Иван Петров">'
+		);
+
+		$this->assertContains( 'Автор', $texts );
+		$this->assertNotContains( 'Иван Петров', $texts );
+	}
+
 	public function testIgnoresUnrelatedMeta(): void {
 		$texts = $this->texts(
 			'<meta name="viewport" content="width=device-width">'

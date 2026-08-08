@@ -81,6 +81,15 @@ final class JsonLdDocument {
 	}
 
 	/**
+	 * Поля `@id`: путь (закодированный) => текущее значение.
+	 *
+	 * @return array<string, string>
+	 */
+	public function stableIdFields(): array {
+		return $this->collect( static fn( string $key, string $type ): bool => JsonLdRules::isStableId( $key ) );
+	}
+
+	/**
 	 * Поля `inLanguage`: путь (закодированный) => текущее значение.
 	 *
 	 * Не текст для перевода, а код языка для подмены — как `og:locale`,
