@@ -106,13 +106,19 @@ final class TranslationCache {
 	}
 
 	/**
-	 * Обесценивает весь кэш переводов.
+	 * Обесценивает весь кэш переводов и кэш страниц сторонних плагинов.
+	 *
+	 * Без второй части посетитель мог бы ещё долго видеть старую версию
+	 * страницы из чужого page cache (ТЗ 12.1) — наш кэш тут ни при чём,
+	 * раздающий готовый HTML плагин о нём не знает.
 	 */
 	public function flush(): void {
 		$version = $this->currentVersion() + 1;
 
 		update_option( self::OPTION_VERSION, $version, true );
 		$this->version = $version;
+
+		PageCachePurger::purgeAll();
 	}
 
 	/**

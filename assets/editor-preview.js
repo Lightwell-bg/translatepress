@@ -170,15 +170,33 @@
 	document.addEventListener(
 		'click',
 		function ( event ) {
-			var element = translatableFrom( event.target );
+			if ( ! ( event.target instanceof Element ) ) {
+				return;
+			}
 
-			// Переход по ссылке внутри предпросмотра сохраняет режим редактора.
-			var link = event.target instanceof Element ? event.target.closest( 'a[href]' ) : null;
+			var element = translatableFrom( event.target );
+			var link = event.target.closest( 'a[href]' );
 
 			if ( element ) {
-				event.preventDefault();
-				event.stopPropagation();
 				select( element );
+
+				/*
+				 * Раньше здесь стоял безусловный event.stopPropagation(), и
+				 * он ломал раскрытие меню темы: панель редактора сужает
+				 * iframe, тема переключается на мобильную вёрстку с
+				 * гамбургером, а его переключатель часто реализован через
+				 * <label>/чекбокс, <summary> или обработчик клика на
+				 * родителе — stopPropagation() не давал клику дойти туда.
+				 * preventDefault() тоже ставим только когда кликнули по
+				 * настоящей ссылке — иначе редактор перебросило бы на
+				 * другую страницу; для остальных элементов (в том числе
+				 * переключателей меню) поведение темы не трогаем вообще.
+				 */
+				var ownLink = 'A' === element.tagName ? element : element.closest( 'a[href]' );
+
+				if ( ownLink ) {
+					event.preventDefault();
+				}
 
 				// Кандидатом в блок может быть родитель кликнутого узла:
 				// маркер стоит на куске текста, а объединять нужно абзац.

@@ -7,7 +7,10 @@
       "Bash(rm -rf C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build)",
       "Bash(mkdir -p C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp)",
       "Bash(cp wp-mlp.php uninstall.php README.md .env.example C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp/)",
-      "Bash(cp -r src assets C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp/)"
+      "Bash(cp -r src assets C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp/)",
+      "Bash(node --check assets/editor-preview.js)",
+      "Bash(/c/php/php.exe -l src/Storage/PageCachePurger.php)",
+      "Bash(/c/php/php.exe -l src/Storage/TranslationCache.php)"
     ]
   }
 }

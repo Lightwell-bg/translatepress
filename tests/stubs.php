@@ -112,6 +112,53 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 	}
 }
 
+/**
+ * Учёт вызовов do_action() — на время одного теста.
+ *
+ * @param string|null $tag   Имя хука для записи в журнал.
+ * @param bool        $reset Если true, журнал очищается перед возвратом.
+ * @return list<string>
+ */
+function wp_mlp_test_actions( ?string $tag = null, bool $reset = false ): array {
+	static $fired = array();
+
+	if ( $reset ) {
+		$fired = array();
+	}
+
+	if ( null !== $tag ) {
+		$fired[] = $tag;
+	}
+
+	return $fired;
+}
+
+if ( ! function_exists( 'do_action' ) ) {
+	/**
+	 * @param string $tag  Имя хука.
+	 * @param mixed  ...$args Аргументы хука.
+	 */
+	function do_action( string $tag, ...$args ): void {
+		unset( $args );
+
+		wp_mlp_test_actions( $tag );
+	}
+}
+
+if ( ! function_exists( 'has_action' ) ) {
+	/**
+	 * Без реальной системы хуков считаем, что ничего не подписано —
+	 * тесты сами решают, вызывать ли соответствующие функции-заглушки.
+	 *
+	 * @param string $tag Имя хука.
+	 */
+	function has_action( string $tag ) {
+		unset( $tag );
+
+		return false;
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * Без реальной системы хуков: тесты не регистрируют фильтры, поэтому
