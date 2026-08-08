@@ -15,6 +15,7 @@ use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\NavMenu;
 use WpMlp\Frontend\SeoTags;
+use WpMlp\Frontend\Sitemap;
 use WpMlp\Frontend\UntranslatedFilter;
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
@@ -253,6 +254,16 @@ final class Plugin {
 		);
 
 		$c->set(
+			Sitemap::class,
+			static fn( Container $c ): Sitemap => new Sitemap(
+				$c->get( Settings::class ),
+				$c->get( UrlConverter::class ),
+				$c->get( OccurrenceRepository::class ),
+				$c->get( TranslationCache::class )
+			)
+		);
+
+		$c->set(
 			UntranslatedFilter::class,
 			static fn( Container $c ): UntranslatedFilter => new UntranslatedFilter(
 				$c->get( Settings::class ),
@@ -342,6 +353,7 @@ final class Plugin {
 			$services[] = SeoTags::class;
 			$services[] = EditorContext::class;
 			$services[] = UntranslatedFilter::class;
+			$services[] = Sitemap::class;
 			$services[] = OutputBuffer::class;
 		}
 

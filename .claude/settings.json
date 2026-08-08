@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m ' *)"
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -q -m ' *)",
+      "Bash(sed -n '/### Этап 4/,/### Этап 5/p' docs/technical-spec.md)",
+      "Bash(sed -n '/### 8.5. Sitemap/,/### 8.6/p' docs/technical-spec.md)",
+      "Bash(rm -rf C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build)",
+      "Bash(mkdir -p C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp)",
+      "Bash(cp wp-mlp.php uninstall.php README.md .env.example C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp/)",
+      "Bash(cp -r src assets C:/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/wp-mlp-build/wp-mlp/)"
     ]
   }
 }

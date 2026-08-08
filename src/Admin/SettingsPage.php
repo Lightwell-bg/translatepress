@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Admin;
 
+use WpMlp\Frontend\Sitemap;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Env;
@@ -185,6 +186,23 @@ final class SettingsPage implements Hookable {
 								<?php esc_html_e( 'Запоминать новые строки при открытии переведённых страниц', 'wp-mlp' ); ?>
 							</label>
 							<p class="description"><?php esc_html_e( 'Словарь пополняется по мере посещения страниц на дополнительном языке. Если выключить, новые строки перестанут появляться в разделе «Перевод строк».', 'wp-mlp' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Карта сайта', 'wp-mlp' ); ?></th>
+						<td>
+							<?php $sitemapUrl = home_url( '/' . Sitemap::FILE ); ?>
+							<p>
+								<a href="<?php echo esc_url( $sitemapUrl ); ?>" target="_blank" rel="noopener noreferrer">
+									<code><?php echo esc_html( $sitemapUrl ); ?></code>
+								</a>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Содержит все языковые версии со взаимными hreflang — по ним Google понимает, что это одна страница на разных языках, а не дубли. Непереведённые страницы в карту не попадают.', 'wp-mlp' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Адрес уже добавлен в robots.txt, поэтому поисковики найдут его сами. Отправить его вручную в Google Search Console — быстрее.', 'wp-mlp' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>
