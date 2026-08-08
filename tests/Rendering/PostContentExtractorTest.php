@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\PostContentExtractor;
 use WpMlp\Rendering\PostExtractionResult;
+use WpMlp\Rendering\PostFieldPatcher;
 use WpMlp\Rendering\PostSegment;
 use WpMlp\Rendering\Segment;
 
@@ -49,13 +50,18 @@ final class PostContentExtractorTest extends TestCase {
 	}
 
 	/**
-	 * Применяет карту переводов ко всем сегментам одного поля.
+	 * Строит карту «uniq_hash => перевод» для сегментов одного поля — по
+	 * карте «исходный текст => перевод», как её писал бы человек, глядя на
+	 * список строк в админке.
 	 *
-	 * @param list<PostSegment>    $segments    Все сегменты записи.
-	 * @param string                $field      PostSegment::FIELD_*.
+	 * @param list<PostSegment>     $segments     Все сегменты записи.
+	 * @param string                $field        PostSegment::FIELD_*.
 	 * @param array<string, string> $translations Исходный текст => перевод.
+	 * @return array<string, string> uniq_hash => перевод.
 	 */
-	private function translateField( array $segments, string $field, array $translations ): void {
+	private function translationsFor( array $segments, string $field, array $translations ): array {
+		$byHash = array();
+
 		foreach ( $segments as $postSegment ) {
 			if ( $field !== $postSegment->field ) {
 				continue;
@@ -65,8 +71,22 @@ final class PostContentExtractorTest extends TestCase {
 
 			$this->assertNotNull( $translation, "Нет перевода в карте для: \"{$postSegment->segment->text}\"" );
 
-			$postSegment->segment->apply( (string) $translation );
+			$byHash[ $postSegment->segment->uniqHash ] = (string) $translation;
 		}
+
+		return $byHash;
+	}
+
+	/**
+	 * Сегменты одного поля, в порядке появления в его сыром значении —
+	 * ровно то, что ожидает PostFieldPatcher::apply().
+	 *
+	 * @param list<PostSegment> $segments Все сегменты записи.
+	 * @param string            $field    PostSegment::FIELD_*.
+	 * @return list<PostSegment>
+	 */
+	private function fieldSegments( array $segments, string $field ): array {
+		return array_values( array_filter( $segments, static fn( PostSegment $s ): bool => $field === $s->field ) );
 	}
 
 	public function testTitleAndExcerptSegmentsAreTaggedWithTheirField(): void {
@@ -149,9 +169,18 @@ final class PostContentExtractorTest extends TestCase {
 	/**
 	 * Сценарий из требования: классический редактор — голый текст вперемешку
 	 * с ручным HTML (заголовок, абзац со ссылкой, список, таблица, цитата с
-	 * классом и инлайн-стилем, шорткод вперемешку с текстом, изображение).
-	 * Одной операцией переводится ВЕСЬ видимый текст; разметка, ссылки,
-	 * изображение и класс/стиль не меняются.
+	 * классом и инлайн-стилем, шорткод вперемешку с текстом, самозакрывающееся
+	 * изображение). Одной операцией переводится ВЕСЬ видимый текст.
+	 *
+	 * Перевод подставляется НЕ через разбор-сборку DOM (PostExtractionResult
+	 * ей больше не пользуется в этом тесте), а точечно, в исходную строку
+	 * `post_content` — PostFieldPatcher::apply() возвращает null, если хотя
+	 * бы один сегмент не удалось однозначно найти, так что сам факт
+	 * ненулевого результата уже доказывает точность разметки диапазонов.
+	 * Дальше — посимвольная проверка: то, что не входило ни в один диапазон
+	 * замены (самозакрывающий `/>`, атрибуты, шорткод, ссылка), обязано
+	 * остаться в точности тем же самым, включая случаи, которые раньше
+	 * ломала пересборка через DOM (`<img ... />` → `<img ...>`).
 	 */
 	public function testClassicEditorPostTranslatesAllVisibleTextPreservingStructure(): void {
 		$title   = 'Первый пост в классическом редакторе';
@@ -177,23 +206,23 @@ final class PostContentExtractorTest extends TestCase {
 
 <blockquote class="highlight" style="color:red;">Цитата с классом и инлайн-стилем.</blockquote>
 
-<p><img src="https://example.com/wp-content/uploads/photo.jpg" alt="Описание фото" width="600" height="400" class="aligncenter"></p>
+<p><img src="https://example.com/wp-content/uploads/photo.jpg" alt="Описание фото" width="600" height="400" class="aligncenter" /></p>
 HTML;
 
 		$post   = $this->post( $title, $excerpt, $content );
 		$result = $this->extractor()->extract( $post );
 
-		$this->translateField(
+		$titleTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_TITLE,
 			array( $title => 'First post in the classic editor' )
 		);
-		$this->translateField(
+		$excerptTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_EXCERPT,
 			array( $excerpt => 'A short summary of the post for the teaser' )
 		);
-		$this->translateField(
+		$contentTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_CONTENT,
 			array(
@@ -218,13 +247,18 @@ HTML;
 			)
 		);
 
-		$titleHtml   = PostExtractionResult::bodyHtml( $result->titleDocument );
-		$excerptHtml = PostExtractionResult::bodyHtml( $result->excerptDocument );
-		$contentHtml = PostExtractionResult::bodyHtml( $result->contentDocument );
+		$titlePatched   = PostFieldPatcher::apply( $title, $this->fieldSegments( $result->segments, PostSegment::FIELD_TITLE ), $titleTranslations );
+		$excerptPatched = PostFieldPatcher::apply( $excerpt, $this->fieldSegments( $result->segments, PostSegment::FIELD_EXCERPT ), $excerptTranslations );
+		$contentPatched = PostFieldPatcher::apply( $content, $this->fieldSegments( $result->segments, PostSegment::FIELD_CONTENT ), $contentTranslations );
 
-		// Заголовок и анонс переведены.
-		$this->assertStringContainsString( 'First post in the classic editor', $titleHtml );
-		$this->assertStringContainsString( 'A short summary of the post for the teaser', $excerptHtml );
+		// Ни для одного поля патчер не сдался — каждый сегмент был найден
+		// в исходной строке однозначно, диапазон за диапазоном.
+		$this->assertNotNull( $titlePatched, 'Не удалось точно найти заголовок в исходной строке.' );
+		$this->assertNotNull( $excerptPatched, 'Не удалось точно найти анонс в исходной строке.' );
+		$this->assertNotNull( $contentPatched, 'Не удалось точно найти все сегменты содержимого в исходной строке.' );
+
+		$this->assertSame( 'First post in the classic editor', $titlePatched );
+		$this->assertSame( 'A short summary of the post for the teaser', $excerptPatched );
 
 		// Весь видимый текст содержимого переведён…
 		foreach (
@@ -247,27 +281,45 @@ HTML;
 				'A quote with a class and inline style.',
 			) as $expectedEnglish
 		) {
-			$this->assertStringContainsString( $expectedEnglish, $contentHtml, "Missing translation: \"$expectedEnglish\"" );
+			$this->assertStringContainsString( $expectedEnglish, $contentPatched, "Missing translation: \"$expectedEnglish\"" );
 		}
 
 		// …и русский исходник в содержимом не остался.
 		foreach ( array( 'Абзац с', 'Первый пункт списка', 'Колонка', 'Цитата с классом' ) as $shouldBeGone ) {
-			$this->assertStringNotContainsString( $shouldBeGone, $contentHtml, "Original Russian text leaked through: \"$shouldBeGone\"" );
+			$this->assertStringNotContainsString( $shouldBeGone, $contentPatched, "Original Russian text leaked through: \"$shouldBeGone\"" );
 		}
 
-		// Разметка, шорткод, ссылка, изображение и класс/стиль — не тронуты.
-		$this->assertStringContainsString( '<h2>', $contentHtml );
-		$this->assertSame( 2, substr_count( $contentHtml, '<li>' ) );
-		$this->assertSame( 2, substr_count( $contentHtml, '<td>' ) );
-		$this->assertSame( 2, substr_count( $contentHtml, '<th>' ) );
-		$this->assertStringContainsString( '[rsvp_button event="5"]', $contentHtml );
-		$this->assertStringContainsString( 'href="https://example.com/more/"', $contentHtml );
-		$this->assertStringContainsString( 'src="https://example.com/wp-content/uploads/photo.jpg"', $contentHtml );
-		$this->assertStringContainsString( 'width="600"', $contentHtml );
-		$this->assertStringContainsString( 'height="400"', $contentHtml );
-		$this->assertStringContainsString( 'class="aligncenter"', $contentHtml );
-		$this->assertStringContainsString( 'class="highlight"', $contentHtml );
-		$this->assertStringContainsString( 'style="color:red', $contentHtml );
+		// Разметка целиком, символ в символ — не пересобрана DOM'ом, а
+		// скопирована из исходника: самозакрывающий тег остаётся
+		// самозакрывающимся (это то самое, что раньше ломала DOM-пересборка).
+		$this->assertStringContainsString(
+			'<img src="https://example.com/wp-content/uploads/photo.jpg" alt="Photo description" width="600" height="400" class="aligncenter" />',
+			$contentPatched
+		);
+		$this->assertStringContainsString( '<h2>Section subheading</h2>', $contentPatched );
+		$this->assertStringContainsString( '<blockquote class="highlight" style="color:red;">', $contentPatched );
+		$this->assertSame( 2, substr_count( $contentPatched, '<li>' ) );
+		$this->assertSame( 2, substr_count( $contentPatched, '<td>' ) );
+		$this->assertSame( 2, substr_count( $contentPatched, '<th>' ) );
+		$this->assertStringContainsString( '[rsvp_button event="5"]', $contentPatched );
+		$this->assertStringContainsString( 'href="https://example.com/more/"', $contentPatched );
+
+		// Длина изменилась ровно настолько, насколько отличаются длины
+		// оригинальных и переведённых кусков, — независимое, посимвольное
+		// доказательство того, что патчер ничего не потерял и не добавил
+		// сверх самих переводов.
+		$expectedDelta = 0;
+
+		foreach ( $contentTranslations as $hash => $translation ) {
+			foreach ( $this->fieldSegments( $result->segments, PostSegment::FIELD_CONTENT ) as $postSegment ) {
+				if ( $postSegment->segment->uniqHash === $hash ) {
+					$expectedDelta += mb_strlen( $translation ) - mb_strlen( $postSegment->segment->text );
+					break;
+				}
+			}
+		}
+
+		$this->assertSame( mb_strlen( $content ) + $expectedDelta, mb_strlen( $contentPatched ) );
 	}
 
 	/**
@@ -324,17 +376,17 @@ HTML;
 		$post   = $this->post( $title, $excerpt, $content );
 		$result = $this->extractor()->extract( $post );
 
-		$this->translateField(
+		$titleTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_TITLE,
 			array( $title => 'Overview of the new product' )
 		);
-		$this->translateField(
+		$excerptTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_EXCERPT,
 			array( $excerpt => "What's new in this product" )
 		);
-		$this->translateField(
+		$contentTranslations = $this->translationsFor(
 			$result->segments,
 			PostSegment::FIELD_CONTENT,
 			array(
@@ -354,12 +406,16 @@ HTML;
 			)
 		);
 
-		$titleHtml   = PostExtractionResult::bodyHtml( $result->titleDocument );
-		$excerptHtml = PostExtractionResult::bodyHtml( $result->excerptDocument );
-		$contentHtml = PostExtractionResult::bodyHtml( $result->contentDocument );
+		$titlePatched   = PostFieldPatcher::apply( $title, $this->fieldSegments( $result->segments, PostSegment::FIELD_TITLE ), $titleTranslations );
+		$excerptPatched = PostFieldPatcher::apply( $excerpt, $this->fieldSegments( $result->segments, PostSegment::FIELD_EXCERPT ), $excerptTranslations );
+		$contentPatched = PostFieldPatcher::apply( $content, $this->fieldSegments( $result->segments, PostSegment::FIELD_CONTENT ), $contentTranslations );
 
-		$this->assertStringContainsString( 'Overview of the new product', $titleHtml );
-		$this->assertStringContainsString( "What's new in this product", $excerptHtml );
+		$this->assertNotNull( $titlePatched, 'Не удалось точно найти заголовок в исходной строке.' );
+		$this->assertNotNull( $excerptPatched, 'Не удалось точно найти анонс в исходной строке.' );
+		$this->assertNotNull( $contentPatched, 'Не удалось точно найти все сегменты содержимого в исходной строке.' );
+
+		$this->assertSame( 'Overview of the new product', $titlePatched );
+		$this->assertSame( "What's new in this product", $excerptPatched );
 
 		foreach (
 			array(
@@ -379,14 +435,15 @@ HTML;
 				'A link to the details',
 			) as $expectedEnglish
 		) {
-			$this->assertStringContainsString( $expectedEnglish, $contentHtml, "Missing translation: \"$expectedEnglish\"" );
+			$this->assertStringContainsString( $expectedEnglish, $contentPatched, "Missing translation: \"$expectedEnglish\"" );
 		}
 
 		foreach ( array( 'Первый заголовок блока', 'Первый пункт списка', 'Подпись к изображению' ) as $shouldBeGone ) {
-			$this->assertStringNotContainsString( $shouldBeGone, $contentHtml, "Original Russian text leaked through: \"$shouldBeGone\"" );
+			$this->assertStringNotContainsString( $shouldBeGone, $contentPatched, "Original Russian text leaked through: \"$shouldBeGone\"" );
 		}
 
-		// Комментарии Gutenberg — включая JSON-атрибуты — байт-в-байт, как были.
+		// Комментарии Gutenberg — включая JSON-атрибуты — байт-в-байт, как
+		// были: они скопированы substr()'ом из исходника, не пересобраны.
 		foreach (
 			array(
 				'<!-- wp:heading -->',
@@ -404,21 +461,40 @@ HTML;
 				'<!-- wp:paragraph {"className":"highlight"} -->',
 			) as $comment
 		) {
-			$this->assertStringContainsString( $comment, $contentHtml, "Gutenberg comment lost or altered: \"$comment\"" );
+			$this->assertStringContainsString( $comment, $contentPatched, "Gutenberg comment lost or altered: \"$comment\"" );
 		}
 
-		// Классы, инлайн-стиль, шорткод, ссылка и изображение — не тронуты.
-		$this->assertStringContainsString( 'class="wp-block-heading"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-block-list"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-block-table"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-block-image size-large"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-image-42"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-element-caption"', $contentHtml );
-		$this->assertStringContainsString( 'class="highlight has-text-color has-red-color"', $contentHtml );
-		$this->assertStringContainsString( 'class="wp-block-button__link"', $contentHtml );
-		$this->assertStringContainsString( 'style="color:red', $contentHtml );
-		$this->assertStringContainsString( '[rsvp_button event="5"]', $contentHtml );
-		$this->assertStringContainsString( 'href="https://example.com/more/"', $contentHtml );
-		$this->assertStringContainsString( 'src="https://example.com/wp-content/uploads/photo.jpg"', $contentHtml );
+		// Самозакрывающийся <img ... /> внутри figure — весь тег целиком,
+		// без единого символа расхождения (а не «класс где-то есть»).
+		$this->assertStringContainsString(
+			'<img src="https://example.com/wp-content/uploads/photo.jpg" alt="Photo description" class="wp-image-42"/>',
+			$contentPatched
+		);
+
+		// Классы, инлайн-стиль, шорткод, ссылка — не тронуты.
+		$this->assertStringContainsString( 'class="wp-block-heading"', $contentPatched );
+		$this->assertStringContainsString( 'class="wp-block-list"', $contentPatched );
+		$this->assertStringContainsString( 'class="wp-block-table"', $contentPatched );
+		$this->assertStringContainsString( 'class="wp-block-image size-large"', $contentPatched );
+		$this->assertStringContainsString( 'class="wp-element-caption"', $contentPatched );
+		$this->assertStringContainsString( 'class="highlight has-text-color has-red-color"', $contentPatched );
+		$this->assertStringContainsString( 'class="wp-block-button__link"', $contentPatched );
+		$this->assertStringContainsString( 'style="color:red"', $contentPatched );
+		$this->assertStringContainsString( '[rsvp_button event="5"]', $contentPatched );
+		$this->assertStringContainsString( 'href="https://example.com/more/"', $contentPatched );
+
+		// Тот же посимвольный контроль длины, что и в классическом тесте.
+		$expectedDelta = 0;
+
+		foreach ( $contentTranslations as $hash => $translation ) {
+			foreach ( $this->fieldSegments( $result->segments, PostSegment::FIELD_CONTENT ) as $postSegment ) {
+				if ( $postSegment->segment->uniqHash === $hash ) {
+					$expectedDelta += mb_strlen( $translation ) - mb_strlen( $postSegment->segment->text );
+					break;
+				}
+			}
+		}
+
+		$this->assertSame( mb_strlen( $content ) + $expectedDelta, mb_strlen( $contentPatched ) );
 	}
 }

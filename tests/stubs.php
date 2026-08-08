@@ -54,10 +54,16 @@ if ( ! function_exists( 'sanitize_text_field' ) ) {
 
 if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 	/**
+	 * Ядро сначала вырезает `<script>`/`<style>` целиком, вместе с
+	 * содержимым, и только потом снимает остальные теги — просто
+	 * strip_tags() этого не делает (оставляет текст внутри script/style).
+	 *
 	 * @param string $text Строка.
 	 */
 	function wp_strip_all_tags( string $text ): string {
-		return strip_tags( $text );
+		$text = (string) preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $text );
+
+		return trim( strip_tags( $text ) );
 	}
 }
 

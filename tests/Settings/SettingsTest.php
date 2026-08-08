@@ -127,10 +127,12 @@ final class SettingsTest extends TestCase {
 	}
 
 	public function testFlagFieldStripsTagsAndTrimsLength(): void {
-		// Теги вырезаются (защита от HTML-инъекции), но текст между ними
-		// остаётся — так же ведёт себя strip_tags() в остальном плагине.
-		$this->assertSame( 'alert(1)', Language::sanitizeFlag( '<script>alert(1)</script>' ) );
-		$this->assertStringNotContainsString( '<', Language::sanitizeFlag( '<b>🇷🇺</b>' ) );
+		// wp_strip_all_tags() вырезает <script>/<style> целиком, вместе с
+		// содержимым, — иначе поле «флаг» стало бы местом, куда можно
+		// вписать код и получить его как есть после «очистки».
+		$this->assertSame( '', Language::sanitizeFlag( '<script>alert(1)</script>' ) );
+		// Обычный тег вырезается, а текст внутри — нет: это не script/style.
+		$this->assertSame( '🇷🇺', Language::sanitizeFlag( '<b>🇷🇺</b>' ) );
 		$this->assertSame(
 			str_repeat( 'a', 16 ),
 			Language::sanitizeFlag( str_repeat( 'a', 40 ) )

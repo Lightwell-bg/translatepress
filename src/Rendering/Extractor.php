@@ -202,8 +202,18 @@ final class Extractor {
 				}
 			}
 
-			foreach ( $node->childNodes as $child ) {
-				$stack[] = $child;
+			/*
+			 * Стек — LIFO: чтобы дети снимались в том же порядке, в котором
+			 * стоят в разметке (а не в обратном), на стек их нужно класть
+			 * в обратном порядке. Раньше это было не важно — Translator и
+			 * EditorMarkers работают с каждым сегментом через его собственную
+			 * ссылку на узел, порядок списка им не нужен. Но RawContentPatcher
+			 * (см. Rendering/RawContentPatcher.php) склеивает перевод в
+			 * исходную строку, двигаясь по ней только вперёд, — ему порядок
+			 * уже необходим.
+			 */
+			for ( $i = $node->childNodes->length - 1; $i >= 0; $i-- ) {
+				$stack[] = $node->childNodes->item( $i );
 			}
 		}
 

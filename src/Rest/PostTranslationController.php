@@ -17,6 +17,7 @@ use WpMlp\Rendering\BlockSanitizer;
 use WpMlp\Rendering\PostContentExtractor;
 use WpMlp\Rendering\PostSegment;
 use WpMlp\Rendering\Segment;
+use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\PostTranslationSnapshot;
@@ -30,7 +31,9 @@ use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Support\ShortcodeGuard;
 use WpMlp\Translation\BatchChunker;
+use WpMlp\Translation\BulkTranslationMode;
 use WpMlp\Translation\OpenAiProvider;
+use WpMlp\Translation\PostCommitValidator;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
@@ -53,20 +56,23 @@ use WpMlp\Translation\TranslationContext;
  * 2. `POST .../chunk` — один запрос к провайдеру на один чанк id'ов.
  *    Ничего не сохраняет: результат уходит в панель редактора черновиком,
  *    как и одиночный «Перевести с ИИ» (см. TranslationsController::suggest()).
- * 3. `POST .../commit` — единственный шаг, который пишет в БД. Пишет одной
- *    SQL-транзакцией: ошибка на любой строке — откат всех, а не половина
- *    записи с половиной перевода.
+ *    Строку с испорченным шорткодом отбрасывает уже здесь — это подсказка
+ *    интерфейсу сразу после перевода, а не единственная защита: то же
+ *    самое commit() перепроверит ещё раз перед записью.
+ * 3. `POST .../commit` — единственный шаг, который пишет в БД. Сначала
+ *    PostCommitValidator проверяет ВЕСЬ присланный пакет и возвращает
+ *    либо чистый список строк на запись, либо список ошибок — без единого
+ *    обращения к $wpdb на запись. Ошибка хотя бы в одном сегменте (чужой
+ *    id, задвоенный id, испорченный шорткод) останавливает всё до того,
+ *    как транзакция вообще началась. Если проверка прошла, запись всё
+ *    равно идёт одной SQL-транзакцией — на случай, если откажет сама БД
+ *    посреди цикла: тогда откатывается уже начатая запись, а не только
+ *    непроверенные строки.
  */
 final class PostTranslationController implements Hookable {
 
 	public const NAMESPACE  = 'mlp/v1';
 	public const CAPABILITY = 'manage_options';
-
-	/** Режим «перевести только пустые сегменты». */
-	public const MODE_EMPTY = 'empty';
-
-	/** Режим «перевести заново весь материал». */
-	public const MODE_ALL = 'all';
 
 	/**
 	 * Сколько id одним запросом принимает `/chunk` и `/commit` — защита от
@@ -76,15 +82,15 @@ final class PostTranslationController implements Hookable {
 	private const MAX_IDS_PER_REQUEST = 400;
 
 	/**
-	 * @param Settings               $settings     Настройки плагина.
-	 * @param PostContentExtractor   $extractor    Разбор записи на сегменты.
-	 * @param SourceRepository       $sources      Исходные строки.
-	 * @param OccurrenceRepository   $occurrences  Места использования строк.
-	 * @param TranslationRepository  $translations Переводы.
-	 * @param TranslationCache       $cache        Кэш переводов.
-	 * @param ProviderInterface      $provider     Провайдер машинного перевода.
-	 * @param UsageTracker           $usage        Дневной бюджет символов.
-	 * @param PostTranslationSnapshot $snapshot    Слепок прошлого массового перевода.
+	 * @param Settings                $settings     Настройки плагина.
+	 * @param PostContentExtractor    $extractor    Разбор записи на сегменты.
+	 * @param SourceRepository        $sources      Исходные строки.
+	 * @param OccurrenceRepository    $occurrences  Места использования строк.
+	 * @param TranslationRepository   $translations Переводы.
+	 * @param TranslationCache        $cache        Кэш переводов.
+	 * @param ProviderInterface       $provider     Провайдер машинного перевода.
+	 * @param UsageTracker            $usage        Дневной бюджет символов.
+	 * @param PostTranslationSnapshot $snapshot     Слепок прошлого массового перевода.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
@@ -132,7 +138,7 @@ final class PostTranslationController implements Hookable {
 					'mode' => array(
 						'required' => true,
 						'type'     => 'string',
-						'enum'     => array( self::MODE_EMPTY, self::MODE_ALL ),
+						'enum'     => BulkTranslationMode::all(),
 					),
 				),
 			)
@@ -194,7 +200,7 @@ final class PostTranslationController implements Hookable {
 
 		list( $post, $language ) = $context;
 
-		$mode        = (string) $request->get_param( 'mode' );
+		$mode         = (string) $request->get_param( 'mode' );
 		$sourceLocale = $this->settings->defaultLanguage()->locale;
 
 		$result = $this->extractor->extract( $post, $sourceLocale, $this->sources->blockHashes() );
@@ -210,9 +216,10 @@ final class PostTranslationController implements Hookable {
 		if ( array() === $unique ) {
 			return new WP_REST_Response(
 				array(
-					'total'   => 0,
-					'chunks'  => array(),
-					'segments' => array(),
+					'total'        => 0,
+					'to_translate' => 0,
+					'chunks'       => array(),
+					'segments'     => array(),
 				)
 			);
 		}
@@ -222,17 +229,19 @@ final class PostTranslationController implements Hookable {
 		$ids   = $this->sources->idsByHashes( array_keys( $unique ) );
 		$found = $this->sources->lookup( array_keys( $unique ), $language->locale );
 
+		$existingTexts = array();
+
+		foreach ( $found as $hash => $row ) {
+			$existingTexts[ $hash ] = (string) ( $row['text'] ?? '' );
+		}
+
 		$previousHashes = $this->snapshot->hashesFor( (int) $post->ID, $language->locale );
 		$changed        = PostTranslationSnapshot::changed( array_keys( $unique ), $previousHashes );
+		$toTranslate    = BulkTranslationMode::selectForTranslation( array_keys( $unique ), $existingTexts, $mode );
 
 		$segments = array();
-		$toSend   = array();
 
 		foreach ( $unique as $hash => $postSegment ) {
-			$existingText   = (string) ( $found[ $hash ]['text'] ?? '' );
-			$existingStatus = (string) ( $found[ $hash ]['status'] ?? TranslationStatus::MISSING );
-			$needsTranslation = self::MODE_ALL === $mode || '' === trim( $existingText );
-
 			$segments[] = array(
 				'uniq_hash'       => $hash,
 				'id'              => $ids[ $hash ] ?? null,
@@ -240,22 +249,24 @@ final class PostTranslationController implements Hookable {
 				'kind'            => $postSegment->segment->kind,
 				'attribute'       => $postSegment->segment->attribute,
 				'source_text'     => $postSegment->segment->text,
-				'translated_text' => $existingText,
-				'status'          => $existingStatus,
+				'translated_text' => $existingTexts[ $hash ] ?? '',
+				'status'          => (string) ( $found[ $hash ]['status'] ?? TranslationStatus::MISSING ),
 				'changed'         => isset( $changed[ $hash ] ),
 			);
+		}
 
-			if ( $needsTranslation ) {
-				$toSend[ $hash ] = $postSegment->segment->text;
-			}
+		$toSend = array();
+
+		foreach ( $toTranslate as $hash ) {
+			$toSend[ $hash ] = $unique[ $hash ]->segment->text;
 		}
 
 		return new WP_REST_Response(
 			array(
-				'total'    => count( $unique ),
+				'total'        => count( $unique ),
 				'to_translate' => count( $toSend ),
-				'chunks'   => array_map( 'array_keys', BatchChunker::chunk( $toSend ) ),
-				'segments' => $segments,
+				'chunks'       => array_map( 'array_keys', BatchChunker::chunk( $toSend ) ),
+				'segments'     => $segments,
 			)
 		);
 	}
@@ -295,16 +306,8 @@ final class PostTranslationController implements Hookable {
 			);
 		}
 
-		$rows = $this->sources->findMany( array_values( $this->sources->idsByHashes( $hashes ) ) );
-
-		// idsByHashes() отдаёт id по хешу — findMany() нужны сами id.
-		$byHash = array();
-
-		foreach ( $rows as $row ) {
-			$byHash[ (string) $row['uniq_hash'] ] = $row;
-		}
-
-		$items = array();
+		$byHash = $this->sourcesByHash( $hashes );
+		$items  = array();
 
 		foreach ( $hashes as $hash ) {
 			if ( isset( $byHash[ $hash ] ) ) {
@@ -341,7 +344,7 @@ final class PostTranslationController implements Hookable {
 			}
 		}
 
-		$context = new TranslationContext(
+		$aiContext = new TranslationContext(
 			$hasHtmlBlock ? Segment::KIND_HTML_BLOCK : Segment::KIND_TEXT,
 			'post',
 			(int) $request->get_param( 'post_id' ),
@@ -350,7 +353,7 @@ final class PostTranslationController implements Hookable {
 			$language->label
 		);
 
-		$result = $this->provider->translateBatch( $items, $sourceLocale, $language->locale, $context );
+		$result = $this->provider->translateBatch( $items, $sourceLocale, $language->locale, $aiContext );
 
 		if ( array() === $result ) {
 			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->lastError() : null;
@@ -382,7 +385,7 @@ final class PostTranslationController implements Hookable {
 			if ( ShortcodeGuard::containsShortcode( $sourceText ) && ! ShortcodeGuard::isPreserved( $sourceText, $text ) ) {
 				$rejected[] = array(
 					'uniq_hash' => $hash,
-					'reason'    => 'shortcode_mismatch',
+					'reason'    => PostCommitValidator::ERROR_SHORTCODE,
 				);
 
 				continue;
@@ -398,12 +401,16 @@ final class PostTranslationController implements Hookable {
 			array(
 				'translations' => $translations,
 				'rejected'     => $rejected,
+				// Хеши, для которых модель вообще не прислала ответ — не путать
+				// с $rejected (там прислала, но результат оказался небезопасен).
+				'missing'      => array_values( array_diff( array_keys( $items ), array_keys( $result ) ) ),
 			)
 		);
 	}
 
 	/**
-	 * Шаг 3: сохраняет весь присланный список одной транзакцией.
+	 * Шаг 3: проверяет весь присланный пакет и, только если он целиком
+	 * прошёл проверку, сохраняет его одной транзакцией.
 	 *
 	 * @param WP_REST_Request $request Запрос.
 	 * @return WP_REST_Response|WP_Error
@@ -417,86 +424,93 @@ final class PostTranslationController implements Hookable {
 
 		list( $post, $language ) = $context;
 
-		$rows = is_array( $request->get_param( 'segments' ) ) ? $request->get_param( 'segments' ) : array();
-
-		if ( array() === $rows || count( $rows ) > self::MAX_IDS_PER_REQUEST ) {
-			return new WP_Error(
-				'mlp_invalid_segments',
-				__( 'Список сегментов пуст или слишком велик.', 'wp-mlp' ),
-				array( 'status' => 400 )
-			);
-		}
+		$segments = $request->get_param( 'segments' );
+		$segments = is_array( $segments ) ? $segments : array();
 
 		$hashes = array();
 
-		foreach ( $rows as $row ) {
-			$hash = is_array( $row ) ? (string) ( $row['uniq_hash'] ?? '' ) : '';
+		foreach ( $segments as $segment ) {
+			$hash = is_array( $segment ) ? (string) ( $segment['uniq_hash'] ?? '' ) : '';
 
 			if ( Hash::isValid( $hash ) ) {
 				$hashes[] = $hash;
 			}
 		}
 
-		$ids  = $this->sources->idsByHashes( $hashes );
-		$meta = $this->sources->findMany( array_values( $ids ) );
+		$knownSources = $this->sourcesByHash( array_values( array_unique( $hashes ) ) );
+		$postId       = (int) $post->ID;
 
-		$byHash = array();
+		$validated = PostCommitValidator::validate(
+			$segments,
+			$knownSources,
+			fn( int $sourceId ): bool => $this->occurrences->belongsToObject( $sourceId, $postId ),
+			self::MAX_IDS_PER_REQUEST
+		);
 
-		foreach ( $meta as $id => $row ) {
-			$byHash[ (string) $row['uniq_hash'] ] = array( 'id' => $id, 'kind' => (string) $row['kind'], 'source_hash' => $row['source_hash'] );
+		if ( ! $validated['ok'] ) {
+			return new WP_Error(
+				'mlp_commit_invalid',
+				sprintf(
+					/* translators: %s: список кодов ошибок валидации */
+					__( 'Не удалось сохранить: проверка пакета не прошла (%s). Ни один перевод не записан.', 'wp-mlp' ),
+					implode( ', ', $validated['errors'] )
+				),
+				array(
+					'status' => 400,
+					'errors' => $validated['errors'],
+				)
+			);
 		}
 
-		// Каждый id обязан быть строкой, реально найденной в ЭТОЙ записи —
-		// иначе запросом можно было бы переписать чужой перевод где угодно
-		// на сайте, просто зная его uniq_hash.
-		foreach ( $hashes as $hash ) {
-			$row = $byHash[ $hash ] ?? null;
+		$saveError = $this->writeAtomically( $validated['rows'], $language->locale );
 
-			if ( null === $row || ! $this->occurrences->belongsToObject( (int) $row['id'], (int) $post->ID ) ) {
-				return new WP_Error(
-					'mlp_foreign_segment',
-					__( 'Один из сегментов не принадлежит этой записи. Обновите список и попробуйте снова.', 'wp-mlp' ),
-					array( 'status' => 400 )
-				);
-			}
+		if ( null !== $saveError ) {
+			return $saveError;
 		}
 
+		$this->snapshot->save( $postId, $language->locale, array_keys( $knownSources ) );
+		$this->cache->flush();
+
+		return new WP_REST_Response(
+			array(
+				'saved'   => count( $validated['rows'] ),
+				'locale'  => $language->locale,
+				'post_id' => $postId,
+			)
+		);
+	}
+
+	/**
+	 * Пишет уже провалидированные строки одной SQL-транзакцией.
+	 *
+	 * Вторая, независимая от PostCommitValidator линия защиты: та проверка
+	 * ловит плохие ДАННЫЕ (чужой id, испорченный шорткод) ДО обращения к
+	 * БД; эта — сбой самой БД ПОСРЕДИ записи. Если он случится на пятой
+	 * строке из десяти — откатываются все пять уже записанных, а не
+	 * остаются висеть как частичный результат.
+	 *
+	 * @param list<array{id: int, kind: string, text: string, status: string}> $rows   Готовые к записи строки.
+	 * @param string                                                            $locale Целевой язык.
+	 */
+	private function writeAtomically( array $rows, string $locale ): ?WP_Error {
 		global $wpdb;
 
-		$saved  = 0;
 		$failed = false;
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- своя таблица, атомарность нескольких save() требует ручной транзакции.
 		$wpdb->query( 'START TRANSACTION' );
 
 		foreach ( $rows as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-
-			$hash    = (string) ( $row['uniq_hash'] ?? '' );
-			$rowMeta = $byHash[ $hash ] ?? null;
-
-			if ( null === $rowMeta ) {
-				continue;
-			}
-
-			$text = trim( (string) ( $row['translated_text'] ?? '' ) );
-			$text = Segment::KIND_HTML_BLOCK === $rowMeta['kind'] ? BlockSanitizer::sanitize( $text ) : wp_strip_all_tags( $text );
-
-			$status = (string) ( $row['status'] ?? '' );
-
-			if ( ! TranslationStatus::isValid( $status ) ) {
-				$status = '' !== $text ? TranslationStatus::APPROVED : TranslationStatus::MISSING;
-			}
-
+			// source_revision (6-й параметр save()) здесь не передаётся:
+			// «устарел ли перевод» для массового перевода отслеживает
+			// PostTranslationSnapshot — отдельный, более грубый (на уровне
+			// всей записи, не одной строки) снимок, см. commit() выше.
 			$ok = $this->translations->save(
-				(int) $rowMeta['id'],
-				$language->locale,
-				$text,
-				$status,
-				get_current_user_id(),
-				$this->sourceRevision( $rowMeta )
+				$row['id'],
+				$locale,
+				$row['text'],
+				$row['status'],
+				get_current_user_id()
 			);
 
 			if ( ! $ok ) {
@@ -504,44 +518,43 @@ final class PostTranslationController implements Hookable {
 
 				break;
 			}
-
-			++$saved;
 		}
 
 		$wpdb->query( $failed ? 'ROLLBACK' : 'COMMIT' );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 
-		if ( $failed ) {
-			return new WP_Error(
-				'mlp_commit_failed',
-				__( 'Не удалось сохранить перевод — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
-				array( 'status' => 500 )
-			);
+		if ( ! $failed ) {
+			return null;
 		}
 
-		$this->snapshot->save( (int) $post->ID, $language->locale, array_keys( $byHash ) );
-		$this->cache->flush();
-
-		return new WP_REST_Response(
-			array(
-				'saved'   => $saved,
-				'locale'  => $language->locale,
-				'post_id' => (int) $post->ID,
-			)
+		return new WP_Error(
+			'mlp_commit_failed',
+			__( 'Не удалось сохранить перевод — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
+			array( 'status' => 500 )
 		);
 	}
 
 	/**
-	 * Hex исходного хеша строки — SourceRepository::findMany() уже отдаёт
-	 * его в hex (см. её докблок), в отличие от find(), после которого
-	 * TranslationsController::sourceRevision() ещё сам делает bin2hex().
+	 * Исходные строки по их uniq_hash одним запросом (через findMany()).
 	 *
-	 * @param array{source_hash: mixed} $meta Строка sources, урезанная до id/kind/source_hash.
+	 * @param list<string> $hashes Hex uniq_hash.
+	 * @return array<string, array{id: int, kind: string, source_text: string}>
 	 */
-	private function sourceRevision( array $meta ): ?string {
-		$hash = $meta['source_hash'] ?? null;
+	private function sourcesByHash( array $hashes ): array {
+		$ids = $this->sources->idsByHashes( $hashes );
+		$rows = $this->sources->findMany( array_values( $ids ) );
 
-		return is_string( $hash ) && Hash::isValid( $hash ) ? $hash : null;
+		$byHash = array();
+
+		foreach ( $rows as $row ) {
+			$byHash[ (string) $row['uniq_hash'] ] = array(
+				'id'          => (int) $row['id'],
+				'kind'        => (string) $row['kind'],
+				'source_text' => (string) $row['source_text'],
+			);
+		}
+
+		return $byHash;
 	}
 
 	/**
@@ -593,7 +606,7 @@ final class PostTranslationController implements Hookable {
 	 * Достаёт и проверяет запись и язык, общие для всех трёх шагов.
 	 *
 	 * @param WP_REST_Request $request Запрос.
-	 * @return WP_Error|array{0: WP_Post, 1: \WpMlp\Settings\Language}
+	 * @return WP_Error|array{0: WP_Post, 1: Language}
 	 */
 	private function resolveContext( WP_REST_Request $request ) {
 		$postId = (int) $request->get_param( 'post_id' );

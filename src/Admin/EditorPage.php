@@ -13,6 +13,7 @@ use WpMlp\Rendering\EditorContext;
 use WpMlp\Rest\BlocksController;
 use WpMlp\Rest\PostTranslationController;
 use WpMlp\Rest\TranslationsController;
+use WpMlp\Translation\BulkTranslationMode;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
@@ -113,8 +114,8 @@ final class EditorPage implements Hookable {
 				'blocks'       => esc_url_raw( rest_url( BlocksController::NAMESPACE . '/blocks' ) ),
 				'postRoot'     => esc_url_raw( rest_url( PostTranslationController::NAMESPACE . '/posts/' ) ),
 				'postId'       => $postId,
-				'modeEmpty'    => PostTranslationController::MODE_EMPTY,
-				'modeAll'      => PostTranslationController::MODE_ALL,
+				'modeEmpty'    => BulkTranslationMode::EMPTY,
+				'modeAll'      => BulkTranslationMode::ALL,
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'statuses'     => $this->statusLabels(),
 				'i18n'         => array(
@@ -261,11 +262,11 @@ final class EditorPage implements Hookable {
 								<fieldset>
 									<legend><?php esc_html_e( 'Что переводить?', 'wp-mlp' ); ?></legend>
 									<label>
-										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( PostTranslationController::MODE_EMPTY ); ?>" checked>
+										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::EMPTY ); ?>" checked>
 										<?php esc_html_e( 'Только пустые сегменты', 'wp-mlp' ); ?>
 									</label>
 									<label>
-										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( PostTranslationController::MODE_ALL ); ?>">
+										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::ALL ); ?>">
 										<?php esc_html_e( 'Перевести заново весь материал', 'wp-mlp' ); ?>
 									</label>
 								</fieldset>

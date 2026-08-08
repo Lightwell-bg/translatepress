@@ -400,13 +400,31 @@
 	 */
 	function bulkRunChunks( chunks, onDone ) {
 		var index         = 0;
-		var rejectedTotal = 0;
+		var unresolvedTotal = 0;
+
+		/**
+		 * Останавливает всё на ошибке одного чанка. Сегменты, накопленные
+		 * из УЖЕ успешных чанков, намеренно отбрасываются вместе с ними:
+		 * список проверки и кнопка «Сохранить всё» так и остаются скрытыми
+		 * (обе показывает только bulkRenderList(), а её здесь не вызвать),
+		 * значит сохранить частично переведённый материал через обычное
+		 * взаимодействие с панелью нельзя — ни один chunk не сорвёт commit
+		 * молча, только явным «Начать» заново.
+		 *
+		 * @param {string} message Текст ошибки.
+		 */
+		function abort( message ) {
+			bulkSegments = [];
+			bulkSay( message, 'error' );
+			bulkBusy = false;
+			bulkStartBtn.disabled = false;
+		}
 
 		function next() {
 			if ( index >= chunks.length ) {
-				if ( rejectedTotal > 0 ) {
+				if ( unresolvedTotal > 0 ) {
 					bulkWarnBox.hidden = false;
-					bulkWarnBox.textContent = settings.i18n.bulkRejected.replace( '{count}', String( rejectedTotal ) );
+					bulkWarnBox.textContent = settings.i18n.bulkRejected.replace( '{count}', String( unresolvedTotal ) );
 				}
 
 				onDone();
@@ -432,7 +450,13 @@
 					return response.json();
 				} )
 				.then( function ( data ) {
-					rejectedTotal += ( data.rejected || [] ).length;
+					// «Отклонено» (шорткод разошёлся) и «пропущено» (модель
+					// вообще не прислала перевод для хеша) — обе группы
+					// остаются со старым/пустым значением и попадают в один
+					// и тот же счётчик предупреждения: разница для читателя
+					// панели не важна, важно, что ЭТИ строки нужно доперевести
+					// вручную.
+					unresolvedTotal += ( data.rejected || [] ).length + ( data.missing || [] ).length;
 
 					bulkSegments.forEach( function ( row ) {
 						if ( Object.prototype.hasOwnProperty.call( data.translations || {}, row.uniq_hash ) ) {
@@ -446,9 +470,7 @@
 					next();
 				} )
 				.catch( function ( error ) {
-					bulkSay( error.message || settings.i18n.bulkFailed, 'error' );
-					bulkBusy = false;
-					bulkStartBtn.disabled = false;
+					abort( error.message || settings.i18n.bulkFailed );
 				} );
 		}
 

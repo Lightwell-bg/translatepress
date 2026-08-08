@@ -37,6 +37,43 @@ final class ExtractorTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Сегменты обязаны идти в том же порядке, в каком стоят в разметке —
+	 * не важно для Translator/EditorMarkers (у каждого сегмента своя ссылка
+	 * на узел DOM), но обязательно для RawContentPatcher: он клеит перевод
+	 * в исходную строку одним проходом вперёд и без порядка перепутает
+	 * позиции при первом же повторяющемся слове.
+	 */
+	public function testSegmentsComeOutInDocumentOrder(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><body>'
+			. '<p>Первый</p>'
+			. '<p>Второй с <em>акцентом</em> и остатком</p>'
+			. '<ul><li>Третий</li><li>Четвёртый</li></ul>'
+			. '<img alt="Пятый" src="a.png">'
+			. '</body></html>'
+		);
+
+		$this->assertSame(
+			array( 'Первый', 'Второй с', 'акцентом', 'и остатком', 'Третий', 'Четвёртый', 'Пятый' ),
+			$texts
+		);
+	}
+
+	/**
+	 * Атрибут элемента идёт в списке РОВНО там, где сам элемент стоит среди
+	 * соседей по тексту — а не до всех соседних текстовых узлов и не после.
+	 */
+	public function testAttributeSegmentTakesElementsPositionAmongSiblings(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><body>'
+			. '<p>Раньше <img alt="Картинка" src="a.png"> позже</p>'
+			. '</body></html>'
+		);
+
+		$this->assertSame( array( 'Раньше', 'Картинка', 'позже' ), $texts );
+	}
+
 	public function testExtractsTextNodesAndTitle(): void {
 		$texts = $this->texts(
 			'<!DOCTYPE html><html><head><title>Заголовок</title></head>
