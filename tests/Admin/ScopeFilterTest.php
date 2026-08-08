@@ -67,4 +67,34 @@ final class ScopeFilterTest extends TestCase {
 			array( '../../etc/passwd' ),
 		);
 	}
+
+	public function testTypeAllowlistAcceptsKnownValues(): void {
+		$this->assertSame( SourceRepository::TYPE_SEO, StringTranslationPage::parseType( SourceRepository::TYPE_SEO ) );
+		$this->assertSame( SourceRepository::TYPE_TEXT, StringTranslationPage::parseType( SourceRepository::TYPE_TEXT ) );
+		$this->assertSame( SourceRepository::TYPE_ATTRIBUTE, StringTranslationPage::parseType( SourceRepository::TYPE_ATTRIBUTE ) );
+		$this->assertSame( SourceRepository::TYPE_BLOCK, StringTranslationPage::parseType( SourceRepository::TYPE_BLOCK ) );
+	}
+
+	public function testTypeEmptyValueMeansAnyType(): void {
+		$this->assertSame( SourceRepository::TYPE_ALL, StringTranslationPage::parseType( '' ) );
+	}
+
+	/**
+	 * @param string $value Подозрительное значение параметра.
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider( 'untrustedTypes' )]
+	public function testTypeRejectsUnknownValues( string $value ): void {
+		$this->assertSame( SourceRepository::TYPE_ALL, StringTranslationPage::parseType( $value ) );
+	}
+
+	/**
+	 * @return list<array{string}>
+	 */
+	public static function untrustedTypes(): array {
+		return array(
+			array( 'nonsense' ),
+			array( 'SEO' ),
+			array( 'text; DROP TABLE wp_mlp_sources' ),
+		);
+	}
 }

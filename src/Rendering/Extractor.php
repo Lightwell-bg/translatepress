@@ -82,6 +82,8 @@ final class Extractor {
 		'og:description',
 		'og:image:alt',
 		'og:site_name',
+		'article:section',
+		'article:tag',
 		'twitter:title',
 		'twitter:description',
 		'twitter:image:alt',

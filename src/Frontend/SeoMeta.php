@@ -12,6 +12,7 @@ namespace WpMlp\Frontend;
 use WpMlp\Rendering\DocumentFilter;
 use WpMlp\Rendering\HtmlDocument;
 use WpMlp\Rendering\JsonLdDocument;
+use WpMlp\Rendering\JsonLdRules;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
@@ -55,7 +56,7 @@ final class SeoMeta implements DocumentFilter {
 	 */
 	public function apply( HtmlDocument $document, Language $target ): void {
 		$this->fixMetaTags( $document, $target );
-		$this->fixJsonLdUrls( $document, $target );
+		$this->fixJsonLd( $document, $target );
 	}
 
 	/**
@@ -153,16 +154,17 @@ final class SeoMeta implements DocumentFilter {
 	}
 
 	/**
-	 * Добавляет языковой префикс к адресам внутри структурированных данных.
+	 * Приводит структурированные данные к текущему языку: адреса страниц
+	 * получают префикс, `inLanguage` — код текущего языка.
+	 *
+	 * Оба прохода — по одному и тому же разобранному графу за один проход
+	 * по тегам `<script>`, а не по два: страница может нести несколько
+	 * блоков JSON-LD, и разбирать каждый дважды незачем.
 	 *
 	 * @param HtmlDocument $document Разобранный документ.
 	 * @param Language     $target   Текущий язык.
 	 */
-	private function fixJsonLdUrls( HtmlDocument $document, Language $target ): void {
-		if ( $target->isDefault ) {
-			return;
-		}
-
+	private function fixJsonLd( HtmlDocument $document, Language $target ): void {
 		$origin   = untrailingslashit( (string) get_option( 'home' ) );
 		$basePath = LanguageResolver::basePath();
 
@@ -177,17 +179,45 @@ final class SeoMeta implements DocumentFilter {
 				continue;
 			}
 
-			foreach ( $json->urls() as $path => $url ) {
-				// Чужие домены не трогаем: языковой префикс есть только у нас.
-				if ( ! str_starts_with( $url, $origin ) ) {
-					continue;
-				}
+			if ( ! $target->isDefault ) {
+				$this->localizeUrls( $json, $target, $origin, $basePath );
+			}
 
-				$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug );
+			foreach ( array_keys( $json->inLanguageFields() ) as $path ) {
+				$json->setByEncodedPath( $path, $target->bcp47() );
+			}
+		}
+	}
 
-				if ( $localized !== $url ) {
-					$json->setByEncodedPath( $path, $localized );
-				}
+	/**
+	 * Добавляет языковой префикс к адресам страниц внутри графа.
+	 *
+	 * @param JsonLdDocument $json     Разобранный блок структурированных данных.
+	 * @param Language       $target   Текущий язык.
+	 * @param string         $origin   Адрес сайта без хвостового слеша.
+	 * @param string         $basePath Базовый путь установки WordPress.
+	 */
+	private function localizeUrls( JsonLdDocument $json, Language $target, string $origin, string $basePath ): void {
+		foreach ( $json->urls() as $path => $url ) {
+			// Чужие домены не трогаем: языковой префикс есть только у нас.
+			if ( ! str_starts_with( $url, $origin ) ) {
+				continue;
+			}
+
+			/*
+			 * Вторая, независимая от @type защита картинок: JsonLdRules::isUrl()
+			 * уже исключает поля url у ImageObject/VideoObject/AudioObject, но
+			 * тип в чужом графе может быть указан неточно или отсутствовать —
+			 * расширение файла надёжнее.
+			 */
+			if ( JsonLdRules::looksLikeMediaFile( $url ) ) {
+				continue;
+			}
+
+			$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug );
+
+			if ( $localized !== $url ) {
+				$json->setByEncodedPath( $path, $localized );
 			}
 		}
 	}

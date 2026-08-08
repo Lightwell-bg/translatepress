@@ -12,6 +12,7 @@ namespace WpMlp;
 use WpMlp\Admin\EditorPage;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
+use WpMlp\Frontend\InternalLinks;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\NavMenu;
 use WpMlp\Frontend\SeoMeta;
@@ -198,6 +199,11 @@ final class Plugin {
 		);
 
 		$c->set(
+			InternalLinks::class,
+			static fn( Container $c ): InternalLinks => new InternalLinks( $c->get( UrlConverter::class ) )
+		);
+
+		$c->set(
 			Translator::class,
 			static fn( Container $c ): Translator => new Translator(
 				$c->get( Extractor::class ),
@@ -207,7 +213,7 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( EditorContext::class ),
 				$c->get( EditorMarkers::class ),
-				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ) )
+				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ), $c->get( InternalLinks::class ) )
 			)
 		);
 

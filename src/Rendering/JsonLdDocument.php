@@ -64,20 +64,65 @@ final class JsonLdDocument {
 	public function fields(): array {
 		$fields = array();
 
-		$this->walk( $this->data, array(), '', $fields );
+		foreach ( $this->collect( array( JsonLdRules::class, 'isTranslatable' ) ) as $encodedPath => $value ) {
+			$fields[] = new JsonLdField( $this, explode( "\x1F", $encodedPath ), $value );
+		}
 
 		return $fields;
 	}
 
 	/**
+	 * Адреса, которые стоит локализовать: путь (закодированный) => значение.
+	 *
+	 * @return array<string, string>
+	 */
+	public function urls(): array {
+		return $this->collect( array( JsonLdRules::class, 'isUrl' ) );
+	}
+
+	/**
+	 * Поля `inLanguage`: путь (закодированный) => текущее значение.
+	 *
+	 * Не текст для перевода, а код языка для подмены — как `og:locale`,
+	 * только внутри графа. Тип объекта тут не важен: `inLanguage` значит
+	 * «язык содержимого» у любого узла, где встречается.
+	 *
+	 * @return array<string, string>
+	 */
+	public function inLanguageFields(): array {
+		return $this->collect( static fn( string $key, string $type ): bool => 'inLanguage' === $key );
+	}
+
+	/**
+	 * Обходит граф и собирает пары путь-значение, прошедшие предикат.
+	 *
+	 * Общий обход для `fields()`, `urls()` и `inLanguageFields()`: у всех
+	 * одна и та же форма задачи — «дойти до каждой строки в графе, зная
+	 * путь до неё и `@type` ближайшего объекта, решить по предикату, брать
+	 * ли её». Три copy-paste обхода было источником рассинхронизации:
+	 * `urls()` не знал о `@type` вообще, пока `fields()` уже умел.
+	 *
+	 * @param callable(string $key, string $parentType): bool $predicate Что искать.
+	 * @return array<string, string> Путь, закодированный `\x1F`, => значение.
+	 */
+	private function collect( callable $predicate ): array {
+		$found = array();
+
+		$this->walk( $this->data, array(), '', $predicate, $found );
+
+		return $found;
+	}
+
+	/**
 	 * Рекурсивно обходит граф.
 	 *
-	 * @param mixed             $node       Текущий узел графа.
-	 * @param list<string|int>  $path       Путь до узла.
-	 * @param string            $parentType Значение `@type` ближайшего объекта.
-	 * @param list<JsonLdField> $fields     Накопитель результата.
+	 * @param mixed                                            $node       Текущий узел графа.
+	 * @param list<string|int>                                 $path       Путь до узла.
+	 * @param string                                            $parentType Значение `@type` ближайшего объекта.
+	 * @param callable(string $key, string $parentType): bool  $predicate  Что искать.
+	 * @param array<string, string>                            $found      Накопитель результата.
 	 */
-	private function walk( $node, array $path, string $parentType, array &$fields ): void {
+	private function walk( $node, array $path, string $parentType, callable $predicate, array &$found ): void {
 		if ( ! is_array( $node ) ) {
 			return;
 		}
@@ -88,7 +133,7 @@ final class JsonLdDocument {
 			$childPath = array_merge( $path, array( $key ) );
 
 			if ( is_array( $value ) ) {
-				$this->walk( $value, $childPath, $type, $fields );
+				$this->walk( $value, $childPath, $type, $predicate, $found );
 
 				continue;
 			}
@@ -100,54 +145,8 @@ final class JsonLdDocument {
 			// Ключи массивов числовые — тип поля определяет имя выше по пути.
 			$name = is_string( $key ) ? $key : (string) ( $path[ count( $path ) - 1 ] ?? '' );
 
-			if ( JsonLdRules::isTranslatable( $name, $type ) ) {
-				$fields[] = new JsonLdField( $this, $childPath, $value );
-			}
-		}
-	}
-
-	/**
-	 * Адреса, которые стоит локализовать: путь до значения => значение.
-	 *
-	 * @return array<string, string> Ключ — путь, закодированный для set().
-	 */
-	public function urls(): array {
-		$urls = array();
-
-		$this->collectUrls( $this->data, array(), $urls );
-
-		return $urls;
-	}
-
-	/**
-	 * Рекурсивно собирает адреса.
-	 *
-	 * @param mixed                 $node Текущий узел графа.
-	 * @param list<string|int>      $path Путь до узла.
-	 * @param array<string, string> $urls Накопитель результата.
-	 */
-	private function collectUrls( $node, array $path, array &$urls ): void {
-		if ( ! is_array( $node ) ) {
-			return;
-		}
-
-		foreach ( $node as $key => $value ) {
-			$childPath = array_merge( $path, array( $key ) );
-
-			if ( is_array( $value ) ) {
-				$this->collectUrls( $value, $childPath, $urls );
-
-				continue;
-			}
-
-			if ( ! is_string( $value ) ) {
-				continue;
-			}
-
-			$name = is_string( $key ) ? $key : (string) ( $path[ count( $path ) - 1 ] ?? '' );
-
-			if ( JsonLdRules::isUrl( $name ) ) {
-				$urls[ implode( "\x1F", $childPath ) ] = $value;
+			if ( $predicate( $name, $type ) ) {
+				$found[ implode( "\x1F", $childPath ) ] = $value;
 			}
 		}
 	}

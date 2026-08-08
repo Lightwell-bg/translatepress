@@ -176,6 +176,7 @@ final class StringTranslationPage implements Hookable {
 				'search'    => $filters['search'],
 				'scope'     => $filters['scope'],
 				'object_id' => $filters['object_id'],
+				'type'      => $filters['type'],
 				'page'      => $filters['page'],
 				'per_page'  => self::PER_PAGE,
 			)
@@ -238,7 +239,16 @@ final class StringTranslationPage implements Hookable {
 		?>
 		<tr>
 			<td class="wp-mlp-col-source"><?php echo esc_html( (string) $row['source_text'] ); ?></td>
-			<td class="wp-mlp-col-kind"><?php echo esc_html( $this->kindLabel( (string) $row['kind'] ) ); ?></td>
+			<td class="wp-mlp-col-kind">
+				<?php
+				echo esc_html(
+					$this->kindLabel(
+						(string) $row['kind'],
+						isset( $row['attribute_name'] ) && '' !== (string) $row['attribute_name'] ? (string) $row['attribute_name'] : null
+					)
+				);
+				?>
+			</td>
 			<td class="wp-mlp-col-translation">
 				<label class="screen-reader-text" for="mlp-input-<?php echo esc_attr( (string) $row['id'] ); ?>">
 					<?php esc_html_e( 'Перевод', 'wp-mlp' ); ?>
@@ -319,6 +329,23 @@ final class StringTranslationPage implements Hookable {
 						</option>
 					<?php endforeach; ?>
 				</optgroup>
+			</select>
+
+			<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'Тип строки', 'wp-mlp' ); ?></label>
+			<select name="mlp_type" id="mlp-type">
+				<option value=""><?php esc_html_e( 'Все типы', 'wp-mlp' ); ?></option>
+				<option value="<?php echo esc_attr( SourceRepository::TYPE_SEO ); ?>" <?php selected( SourceRepository::TYPE_SEO, $filters['type'] ); ?>>
+					<?php esc_html_e( 'SEO/GEO (meta, OG/Twitter, JSON-LD)', 'wp-mlp' ); ?>
+				</option>
+				<option value="<?php echo esc_attr( SourceRepository::TYPE_TEXT ); ?>" <?php selected( SourceRepository::TYPE_TEXT, $filters['type'] ); ?>>
+					<?php esc_html_e( 'Текст', 'wp-mlp' ); ?>
+				</option>
+				<option value="<?php echo esc_attr( SourceRepository::TYPE_ATTRIBUTE ); ?>" <?php selected( SourceRepository::TYPE_ATTRIBUTE, $filters['type'] ); ?>>
+					<?php esc_html_e( 'Атрибут (alt, title, placeholder)', 'wp-mlp' ); ?>
+				</option>
+				<option value="<?php echo esc_attr( SourceRepository::TYPE_BLOCK ); ?>" <?php selected( SourceRepository::TYPE_BLOCK, $filters['type'] ); ?>>
+					<?php esc_html_e( 'Блок (абзац с разметкой)', 'wp-mlp' ); ?>
+				</option>
 			</select>
 
 			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Поиск', 'wp-mlp' ); ?></label>
@@ -452,7 +479,7 @@ final class StringTranslationPage implements Hookable {
 	 * подхватывает стили ядра и даёт кнопки перехода плюс поле с номером.
 	 *
 	 * @param int                                                                                          $total    Всего строк.
-	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters  Текущие фильтры.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int} $filters  Текущие фильтры.
 	 * @param string                                                                                       $position `top` или `bottom`.
 	 */
 	private function renderTableNav( int $total, array $filters, string $position ): void {
@@ -511,7 +538,7 @@ final class StringTranslationPage implements Hookable {
 	 *
 	 * @param string                                                                                       $label   Символ на кнопке.
 	 * @param int                                                                                          $page    Целевая страница.
-	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int} $filters Текущие фильтры.
 	 * @param bool                                                                                         $enabled Активна ли кнопка.
 	 * @param string                                                                                       $class   Класс кнопки из ядра.
 	 */
@@ -536,8 +563,8 @@ final class StringTranslationPage implements Hookable {
 	/**
 	 * Адрес страницы списка с сохранением всех фильтров.
 	 *
-	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
-	 * @param int                                                                                          $page    Целевая страница.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int} $filters Текущие фильтры.
+	 * @param int                                                                                                       $page    Целевая страница.
 	 */
 	private function filteredUrl( array $filters, int $page ): string {
 		return add_query_arg(
@@ -546,6 +573,7 @@ final class StringTranslationPage implements Hookable {
 				'mlp_locale' => $filters['locale'],
 				'mlp_status' => $filters['status'],
 				'mlp_scope'  => self::scopeValue( $filters ),
+				'mlp_type'   => $filters['type'],
 				's'          => $filters['search'],
 				'paged'      => (string) max( 1, $page ),
 			),
@@ -595,7 +623,7 @@ final class StringTranslationPage implements Hookable {
 	/**
 	 * Скрытые поля, сохраняющие фильтры при переходе по страницам.
 	 *
-	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, page: int} $filters Текущие фильтры.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int} $filters Текущие фильтры.
 	 */
 	private function renderHiddenFilters( array $filters ): void {
 		$fields = array(
@@ -603,6 +631,7 @@ final class StringTranslationPage implements Hookable {
 			'mlp_locale' => $filters['locale'],
 			'mlp_status' => $filters['status'],
 			'mlp_scope'  => self::scopeValue( $filters ),
+			'mlp_type'   => $filters['type'],
 			's'          => $filters['search'],
 		);
 
@@ -619,7 +648,7 @@ final class StringTranslationPage implements Hookable {
 	 * Читает фильтры из адресной строки.
 	 *
 	 * @param array<string, Language> $secondary Дополнительные языки.
-	 * @return array{locale: string, status: string, search: string, scope: string, object_id: int, page: int}
+	 * @return array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int}
 	 */
 	private function readFilters( array $secondary ): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- фильтры только читают данные.
@@ -627,6 +656,7 @@ final class StringTranslationPage implements Hookable {
 		$status = isset( $_GET['mlp_status'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_status'] ) ) : '';
 		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['s'] ) ) : '';
 		$scope  = isset( $_GET['mlp_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_scope'] ) ) : '';
+		$type   = isset( $_GET['mlp_type'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_type'] ) ) : '';
 		$page   = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -642,8 +672,29 @@ final class StringTranslationPage implements Hookable {
 			'search'    => $search,
 			'scope'     => $scopeName,
 			'object_id' => $objectId,
+			'type'      => self::parseType( $type ),
 			'page'      => max( 1, $page ),
 		);
+	}
+
+	/**
+	 * Проверяет значение фильтра типа. Чистая функция.
+	 *
+	 * Значение приходит из адресной строки, поэтому всё, чего нет в
+	 * allowlist, схлопывается в «любой тип» — так же, как parseScope()
+	 * поступает с областью поиска.
+	 *
+	 * @param string $value Сырое значение параметра.
+	 */
+	public static function parseType( string $value ): string {
+		$allowed = array(
+			SourceRepository::TYPE_SEO,
+			SourceRepository::TYPE_TEXT,
+			SourceRepository::TYPE_ATTRIBUTE,
+			SourceRepository::TYPE_BLOCK,
+		);
+
+		return in_array( $value, $allowed, true ) ? $value : SourceRepository::TYPE_ALL;
 	}
 
 	/**
@@ -683,9 +734,23 @@ final class StringTranslationPage implements Hookable {
 	/**
 	 * Название вида строки.
 	 *
-	 * @param string $kind Значение колонки kind.
+	 * `content`-атрибут — это meta-тег (SEO/GEO), не обычный атрибут вроде
+	 * `alt` или `placeholder`, поэтому у него отдельная подпись, хотя в
+	 * колонке `kind` он хранится как `attribute` — своего вида в таблице
+	 * `sources` для meta-тегов нет.
+	 *
+	 * @param string      $kind          Значение колонки kind.
+	 * @param string|null $attributeName Имя атрибута из occurrences, если есть.
 	 */
-	private function kindLabel( string $kind ): string {
+	private function kindLabel( string $kind, ?string $attributeName = null ): string {
+		if ( Segment::KIND_SEO === $kind || ( Segment::KIND_ATTRIBUTE === $kind && 'content' === $attributeName ) ) {
+			return __( 'SEO/GEO', 'wp-mlp' );
+		}
+
+		if ( Segment::KIND_HTML_BLOCK === $kind ) {
+			return __( 'Блок', 'wp-mlp' );
+		}
+
 		return Segment::KIND_ATTRIBUTE === $kind
 			? __( 'Атрибут', 'wp-mlp' )
 			: __( 'Текст', 'wp-mlp' );

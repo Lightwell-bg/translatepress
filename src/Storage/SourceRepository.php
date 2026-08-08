@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+use WpMlp\Rendering\Segment;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Locale;
 
@@ -320,9 +321,43 @@ final class SourceRepository {
 	public const SCOPE_OBJECT = 'object';
 
 	/**
+	 * Тип строки: любой.
+	 */
+	public const TYPE_ALL = '';
+
+	/**
+	 * Тип строки: обычный текст.
+	 */
+	public const TYPE_TEXT = Segment::KIND_TEXT;
+
+	/**
+	 * Тип строки: значение HTML-атрибута — кроме meta-тегов SEO/GEO, у них
+	 * свой тип (см. TYPE_SEO).
+	 */
+	public const TYPE_ATTRIBUTE = Segment::KIND_ATTRIBUTE;
+
+	/**
+	 * Тип строки: translation block (абзац с разметкой внутри).
+	 */
+	public const TYPE_BLOCK = Segment::KIND_HTML_BLOCK;
+
+	/**
+	 * Тип строки: SEO/GEO — то, что не видно на странице напрямую, а нужно
+	 * поисковикам и превью в соцсетях: meta description, Open Graph,
+	 * Twitter Card и текстовые поля JSON-LD.
+	 *
+	 * В хранилище это не один `kind`, а два: `seo` (поля JSON-LD, у них
+	 * узел вне DOM) и `attribute` с `attribute_name = content` — meta-теги
+	 * извлекаются как атрибут `content`, другого признака у них в таблице
+	 * `sources` нет. Второе условие ниже отличает их от обычных атрибутов
+	 * вроде `alt` или `placeholder`.
+	 */
+	public const TYPE_SEO = 'seo';
+
+	/**
 	 * Постраничный список строк с переводом на выбранный язык — для админки.
 	 *
-	 * @param array{locale: string, status?: string, search?: string, scope?: string, object_id?: int, page?: int, per_page?: int} $args Фильтры.
+	 * @param array{locale: string, status?: string, search?: string, scope?: string, object_id?: int, type?: string, page?: int, per_page?: int} $args Фильтры.
 	 * @return array{items: list<array<string, mixed>>, total: int}
 	 */
 	public function paginate( array $args ): array {
@@ -378,6 +413,29 @@ final class SourceRepository {
 			$where[]  = $distinctObjects . ' = 1';
 		}
 
+		$type = (string) ( $args['type'] ?? self::TYPE_ALL );
+
+		if ( self::TYPE_SEO === $type ) {
+			$where[] = "(s.kind = %s OR (s.kind = %s AND EXISTS ("
+				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name = %s"
+				. ')))';
+			$params[] = Segment::KIND_SEO;
+			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = 'content';
+		} elseif ( self::TYPE_ATTRIBUTE === $type ) {
+			// Meta-теги (attribute_name = content) — это TYPE_SEO, здесь их
+			// не показываем, иначе одна и та же строка встречалась бы в двух
+			// фильтрах сразу и запутывала счётчик найденных строк.
+			$where[] = '(s.kind = %s AND NOT EXISTS ('
+				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name = %s"
+				. '))';
+			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = 'content';
+		} elseif ( in_array( $type, array( self::TYPE_TEXT, self::TYPE_BLOCK ), true ) ) {
+			$where[]  = 's.kind = %s';
+			$params[] = $type;
+		}
+
 		if ( '' !== $search ) {
 			$like     = '%' . $wpdb->esc_like( $search ) . '%';
 			$where[]  = '(s.source_text LIKE %s OR t.translated_text LIKE %s)';
@@ -401,7 +459,9 @@ final class SourceRepository {
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT s.id, s.kind, s.source_text, s.last_seen_at,
-						t.translated_text, t.status, t.updated_at
+						t.translated_text, t.status, t.updated_at,
+						(SELECT o4.attribute_name FROM {$occurrences} o4
+						 WHERE o4.source_id = s.id AND o4.attribute_name IS NOT NULL LIMIT 1) AS attribute_name
 				 FROM {$sources} s
 				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
 				 WHERE {$whereSql}

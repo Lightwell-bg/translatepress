@@ -105,6 +105,32 @@ final class SocialMetaTest extends TestCase {
 		$this->assertSame( array( 'Только это' ), $texts );
 	}
 
+	public function testExtractsArticleSectionAndTag(): void {
+		$texts = $this->texts(
+			'<meta property="article:section" content="Технологии">'
+			. '<meta property="article:tag" content="ИИ">'
+			. '<meta property="article:tag" content="WordPress">'
+		);
+
+		$this->assertContains( 'Технологии', $texts );
+		$this->assertContains( 'ИИ', $texts );
+		$this->assertContains( 'WordPress', $texts );
+	}
+
+	/**
+	 * Даты и адреса article:* — не текст, их не переводят и не подменяют:
+	 * плагин их вообще не трогает, только article:section и article:tag.
+	 */
+	public function testIgnoresOtherArticleFields(): void {
+		$texts = $this->texts(
+			'<meta property="article:published_time" content="2026-08-08T10:00:00+00:00">'
+			. '<meta property="article:author" content="https://site.ru/author/ivan/">'
+			. '<meta property="article:section" content="Только это">'
+		);
+
+		$this->assertSame( array( 'Только это' ), $texts );
+	}
+
 	public function testIgnoresUnrelatedMeta(): void {
 		$texts = $this->texts(
 			'<meta name="viewport" content="width=device-width">'
