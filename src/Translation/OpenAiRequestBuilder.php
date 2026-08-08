@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\Translation;
 
 use WpMlp\Rendering\Segment;
+use WpMlp\Support\ShortcodeGuard;
 
 /**
  * Чистая логика вокруг Chat Completions API, без единого сетевого вызова.
@@ -45,7 +46,7 @@ final class OpenAiRequestBuilder {
 			'messages' => array(
 				array(
 					'role'    => 'system',
-					'content' => self::systemPrompt( $sourceLocale, $targetLocale, $targetLanguageLabel, $context ),
+					'content' => self::systemPrompt( $sourceLocale, $targetLocale, $targetLanguageLabel, $context, $items ),
 				),
 				array(
 					'role'    => 'user',
@@ -62,12 +63,16 @@ final class OpenAiRequestBuilder {
 	 * @param string              $targetLocale        Целевой язык.
 	 * @param string|null         $targetLanguageLabel Название языка для человека.
 	 * @param TranslationContext  $context             Контекст перевода.
+	 * @param array<string,string> $items              Хеш строки => исходный текст —
+	 *                                                  только чтобы решить, упоминать
+	 *                                                  ли инструкцию про шорткоды.
 	 */
 	private static function systemPrompt(
 		string $sourceLocale,
 		string $targetLocale,
 		?string $targetLanguageLabel,
-		TranslationContext $context
+		TranslationContext $context,
+		array $items = array()
 	): string {
 		$target = $targetLanguageLabel ?? $targetLocale;
 
@@ -82,6 +87,15 @@ final class OpenAiRequestBuilder {
 			$lines[] = 'Some strings contain inline HTML tags (b, i, a, span, and similar). Preserve every tag and its attributes exactly, unchanged, and translate only the text between tags. Do not add, remove, or reorder tags.';
 		}
 
+		/*
+		 * Инструкция добавляется, только когда в пачке реально есть шорткод —
+		 * не на каждый запрос: лишняя инструкция про то, чего нет в этих
+		 * строках, только отвлекает модель.
+		 */
+		if ( self::anyContainsShortcode( $items ) ) {
+			$lines[] = 'Some strings contain WordPress shortcodes like [tag attr="value"]text[/tag] or a standalone [tag attr="value"]. Preserve every shortcode tag and its attributes exactly as written, in the same position, and translate only the human-readable text outside and between the tags. Do not translate, remove, or reorder the tags themselves.';
+		}
+
 		if ( array() !== $context->glossary ) {
 			$pairs = array();
 
@@ -93,6 +107,21 @@ final class OpenAiRequestBuilder {
 		}
 
 		return implode( ' ', $lines );
+	}
+
+	/**
+	 * Есть ли в пачке хоть одна строка, похожая на шорткод.
+	 *
+	 * @param array<string, string> $items Хеш строки => исходный текст.
+	 */
+	private static function anyContainsShortcode( array $items ): bool {
+		foreach ( $items as $text ) {
+			if ( ShortcodeGuard::containsShortcode( $text ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

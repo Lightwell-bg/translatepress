@@ -46,6 +46,33 @@ final class OpenAiRequestBuilderTest extends TestCase {
 		$this->assertStringContainsString( 'HTML', $payload['messages'][0]['content'] );
 	}
 
+	/**
+	 * Инструкция про шорткоды добавляется, только когда в пачке реально
+	 * есть строка, похожая на шорткод — иначе она просто отвлекала бы
+	 * модель на каждом обычном запросе.
+	 */
+	public function testShortcodeInstructionAppearsOnlyWhenBatchContainsOne(): void {
+		$withShortcode = OpenAiRequestBuilder::buildPayload(
+			array( 'hash1' => 'Нажмите [button url="/x"]здесь[/button], чтобы продолжить' ),
+			'gpt-5.6-terra',
+			'ru',
+			'en',
+			new TranslationContext()
+		);
+
+		$this->assertStringContainsString( 'shortcode', $withShortcode['messages'][0]['content'] );
+
+		$withoutShortcode = OpenAiRequestBuilder::buildPayload(
+			array( 'hash1' => 'Обычный абзац без шорткодов' ),
+			'gpt-5.6-terra',
+			'ru',
+			'en',
+			new TranslationContext()
+		);
+
+		$this->assertStringNotContainsString( 'shortcode', $withoutShortcode['messages'][0]['content'] );
+	}
+
 	public function testGlossaryIsIncludedInSystemPrompt(): void {
 		$payload = OpenAiRequestBuilder::buildPayload(
 			array( 'hash1' => 'Bright Store' ),

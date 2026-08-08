@@ -154,6 +154,36 @@ final class OccurrenceRepository {
 	}
 
 	/**
+	 * Встречалась ли строка у этого объекта (защита commit'а массового
+	 * перевода: id строки в запросе обязан быть тем, что действительно
+	 * извлечён из ЭТОЙ записи, а не чужим, подставленным вручную в запрос).
+	 *
+	 * @param int $sourceId Исходная строка.
+	 * @param int $objectId Идентификатор объекта (записи).
+	 */
+	public function belongsToObject( int $sourceId, int $objectId ): bool {
+		global $wpdb;
+
+		if ( $sourceId <= 0 || $objectId <= 0 ) {
+			return false;
+		}
+
+		$table = Schema::table( 'occurrences' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$found = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT 1 FROM {$table} WHERE source_id = %d AND object_id = %d LIMIT 1",
+				$sourceId,
+				$objectId
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return null !== $found;
+	}
+
+	/**
 	 * Где встречалась строка — для подсказки в админке.
 	 *
 	 * @param int $sourceId Исходная строка.

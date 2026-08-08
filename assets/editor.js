@@ -265,6 +265,325 @@
 			} );
 	}
 
+	// -----------------------------------------------------------------
+	// «Перевести весь материал с ИИ»: заголовок, анонс и весь текст записи
+	// одной операцией — вместо клика по каждому блоку в предпросмотре.
+	// -----------------------------------------------------------------
+
+	var postId        = parseInt( settings.postId, 10 ) || 0;
+	var bulkPanel     = document.getElementById( 'mlp-editor-bulk-panel' );
+	var bulkStartBtn  = document.getElementById( 'mlp-editor-bulk-start' );
+	var bulkSaveBtn   = document.getElementById( 'mlp-editor-bulk-save' );
+	var bulkStatusBox = bulkPanel ? bulkPanel.querySelector( '.wp-mlp-editor__bulk-progress' ) : null;
+	var bulkWarnBox   = bulkPanel ? bulkPanel.querySelector( '.wp-mlp-editor__bulk-warning' ) : null;
+	var bulkListBox   = bulkPanel ? bulkPanel.querySelector( '.wp-mlp-editor__bulk-list' ) : null;
+	var bulkCommitBox = bulkPanel ? bulkPanel.querySelector( '.wp-mlp-editor__bulk-commit' ) : null;
+
+	// Текущее состояние панели ревью: то, что реально уйдёт в /commit.
+	var bulkSegments = [];
+	var bulkBusy     = false;
+
+	/**
+	 * Короткое сообщение в статусной строке панели массового перевода —
+	 * отдельно от say(), которая говорит про одиночный выбранный сегмент.
+	 *
+	 * @param {string} text  Текст.
+	 * @param {string} state Модификатор класса (error/ok) или пусто.
+	 */
+	function bulkSay( text, state ) {
+		if ( ! bulkStatusBox ) {
+			return;
+		}
+
+		bulkStatusBox.hidden = ! text;
+		bulkStatusBox.textContent = text || '';
+		bulkStatusBox.className = 'wp-mlp-editor__bulk-progress' + ( state ? ' is-' + state : '' );
+	}
+
+	/**
+	 * @param {string} field PostSegment::FIELD_*.
+	 * @return {string}
+	 */
+	function bulkFieldLabel( field ) {
+		if ( 'title' === field ) {
+			return settings.i18n.bulkFieldTitle;
+		}
+
+		return 'excerpt' === field ? settings.i18n.bulkFieldExcerpt : settings.i18n.bulkFieldContent;
+	}
+
+	/**
+	 * Перерисовывает список сегментов на проверку из bulkSegments.
+	 */
+	function bulkRenderList() {
+		if ( ! bulkListBox ) {
+			return;
+		}
+
+		bulkListBox.innerHTML = '';
+
+		bulkSegments.forEach( function ( row, index ) {
+			var li = document.createElement( 'li' );
+			li.className = 'wp-mlp-editor__bulk-row';
+
+			var meta = document.createElement( 'p' );
+			meta.className = 'wp-mlp-editor__bulk-row-meta';
+			meta.textContent = bulkFieldLabel( row.field ) + ( row.changed ? ' — ' + settings.i18n.bulkChanged : '' );
+			li.appendChild( meta );
+
+			var source = document.createElement( 'p' );
+			source.className = 'wp-mlp-editor__bulk-source';
+			source.textContent = row.source_text;
+			li.appendChild( source );
+
+			var textarea = document.createElement( 'textarea' );
+			textarea.className = 'wp-mlp-editor__bulk-target';
+			textarea.rows = 2;
+			textarea.value = row.translated_text || '';
+			textarea.addEventListener( 'input', function () {
+				bulkSegments[ index ].translated_text = textarea.value;
+			} );
+			li.appendChild( textarea );
+
+			var select = document.createElement( 'select' );
+			select.className = 'wp-mlp-editor__bulk-status';
+
+			Object.keys( settings.statuses ).forEach( function ( value ) {
+				var option = document.createElement( 'option' );
+				option.value = value;
+				option.textContent = settings.statuses[ value ];
+				option.selected = value === row.status;
+				select.appendChild( option );
+			} );
+
+			select.addEventListener( 'change', function () {
+				bulkSegments[ index ].status = select.value;
+			} );
+			li.appendChild( select );
+
+			bulkListBox.appendChild( li );
+		} );
+
+		bulkListBox.hidden = ! bulkSegments.length;
+
+		if ( bulkCommitBox ) {
+			bulkCommitBox.hidden = ! bulkSegments.length;
+		}
+	}
+
+	/**
+	 * Показывает перевод сразу в предпросмотре, пока панель ещё не сохранена —
+	 * тот же postMessage, что и для одиночного сегмента.
+	 *
+	 * @param {Object} row Строка bulkSegments.
+	 */
+	function bulkApplyPreview( row ) {
+		if ( ! row.id ) {
+			return;
+		}
+
+		toPreview( {
+			type: 'apply',
+			id: row.id,
+			kind: row.kind,
+			attribute: row.attribute,
+			text: row.translated_text
+		} );
+	}
+
+	/**
+	 * Переводит чанки последовательно — по одному запросу на чанк, чтобы не
+	 * упереться в таймаут на большой записи, и с прогрессом на каждом шаге.
+	 *
+	 * @param {Array}    chunks Список чанков — каждый список hex-хешей.
+	 * @param {Function} onDone Вызывается после последнего чанка.
+	 */
+	function bulkRunChunks( chunks, onDone ) {
+		var index         = 0;
+		var rejectedTotal = 0;
+
+		function next() {
+			if ( index >= chunks.length ) {
+				if ( rejectedTotal > 0 ) {
+					bulkWarnBox.hidden = false;
+					bulkWarnBox.textContent = settings.i18n.bulkRejected.replace( '{count}', String( rejectedTotal ) );
+				}
+
+				onDone();
+
+				return;
+			}
+
+			bulkSay( settings.i18n.bulkProgress.replace( '{current}', String( index + 1 ) ).replace( '{total}', String( chunks.length ) ) );
+
+			fetch( settings.postRoot + encodeURIComponent( postId ) + '/chunk', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': settings.nonce },
+				body: JSON.stringify( { locale: locale, hashes: chunks[ index ] } )
+			} )
+				.then( function ( response ) {
+					if ( ! response.ok ) {
+						return response.json().then( function ( data ) {
+							throw new Error( data.message || 'HTTP ' + response.status );
+						} );
+					}
+
+					return response.json();
+				} )
+				.then( function ( data ) {
+					rejectedTotal += ( data.rejected || [] ).length;
+
+					bulkSegments.forEach( function ( row ) {
+						if ( Object.prototype.hasOwnProperty.call( data.translations || {}, row.uniq_hash ) ) {
+							row.translated_text = data.translations[ row.uniq_hash ];
+							row.status = 'machine';
+							bulkApplyPreview( row );
+						}
+					} );
+
+					index++;
+					next();
+				} )
+				.catch( function ( error ) {
+					bulkSay( error.message || settings.i18n.bulkFailed, 'error' );
+					bulkBusy = false;
+					bulkStartBtn.disabled = false;
+				} );
+		}
+
+		next();
+	}
+
+	/**
+	 * Запускает массовый перевод: шаг 1 (summary), затем по чанку за раз.
+	 */
+	function bulkStart() {
+		if ( bulkBusy || ! postId || ! bulkPanel ) {
+			return;
+		}
+
+		var modeInput = bulkPanel.querySelector( 'input[name="mlp-bulk-mode"]:checked' );
+		var mode      = modeInput ? modeInput.value : settings.modeEmpty;
+
+		bulkBusy = true;
+		bulkStartBtn.disabled = true;
+		bulkWarnBox.hidden = true;
+		bulkSegments = [];
+		bulkRenderList();
+		bulkSay( settings.i18n.bulkPreparing );
+
+		var url = settings.postRoot + encodeURIComponent( postId ) + '/summary'
+			+ '?locale=' + encodeURIComponent( locale ) + '&mode=' + encodeURIComponent( mode );
+
+		fetch( url, { credentials: 'same-origin', headers: { 'X-WP-Nonce': settings.nonce } } )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					return response.json().then( function ( data ) {
+						throw new Error( data.message || 'HTTP ' + response.status );
+					} );
+				}
+
+				return response.json();
+			} )
+			.then( function ( data ) {
+				bulkSegments = data.segments || [];
+
+				var finish = function () {
+					bulkSay( '' );
+					bulkRenderList();
+					bulkBusy = false;
+					bulkStartBtn.disabled = false;
+				};
+
+				if ( ! data.chunks || ! data.chunks.length ) {
+					if ( ! data.to_translate ) {
+						bulkSay( settings.i18n.bulkNothing );
+					}
+
+					bulkRenderList();
+					bulkBusy = false;
+					bulkStartBtn.disabled = false;
+
+					return;
+				}
+
+				bulkRunChunks( data.chunks, finish );
+			} )
+			.catch( function ( error ) {
+				bulkSay( error.message || settings.i18n.bulkFailed, 'error' );
+				bulkBusy = false;
+				bulkStartBtn.disabled = false;
+			} );
+	}
+
+	/**
+	 * Сохраняет весь список одной атомарной операцией (commit).
+	 */
+	function bulkSaveAll() {
+		if ( bulkBusy || ! bulkSegments.length ) {
+			return;
+		}
+
+		bulkBusy = true;
+		bulkSaveBtn.disabled = true;
+		bulkSay( settings.i18n.bulkSaving );
+
+		var payload = bulkSegments.map( function ( row ) {
+			return {
+				uniq_hash: row.uniq_hash,
+				translated_text: row.translated_text || '',
+				status: row.status
+			};
+		} );
+
+		fetch( settings.postRoot + encodeURIComponent( postId ) + '/commit', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': settings.nonce },
+			body: JSON.stringify( { locale: locale, segments: payload } )
+		} )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					return response.json().then( function ( data ) {
+						throw new Error( data.message || settings.i18n.bulkCommitFailed );
+					} );
+				}
+
+				return response.json();
+			} )
+			.then( function () {
+				bulkSay( settings.i18n.bulkSaved, 'ok' );
+				bulkBusy = false;
+				bulkSaveBtn.disabled = false;
+
+				// Гарантированно верный итог, а не точечные патчи DOM: как и
+				// после makeBlock(), проще и надёжнее перезагрузить превью.
+				toPreview( { type: 'reload' } );
+			} )
+			.catch( function ( error ) {
+				// Сегменты в панели НЕ сбрасываются: commit атомарен на сервере,
+				// а здесь неудача не должна стереть то, что человек уже проверил.
+				bulkSay( error.message || settings.i18n.bulkCommitFailed, 'error' );
+				bulkBusy = false;
+				bulkSaveBtn.disabled = false;
+			} );
+	}
+
+	if ( bulkPanel ) {
+		onClick( 'mlp-editor-bulk-open', function () {
+			bulkPanel.hidden = ! bulkPanel.hidden;
+		} );
+		onClick( 'mlp-editor-bulk-cancel', function () {
+			bulkPanel.hidden = true;
+		} );
+		onClick( 'mlp-editor-bulk-close', function () {
+			bulkPanel.hidden = true;
+		} );
+		onClick( 'mlp-editor-bulk-start', bulkStart );
+		onClick( 'mlp-editor-bulk-save', bulkSaveAll );
+	}
+
 	window.addEventListener( 'message', function ( event ) {
 		if ( event.origin !== window.location.origin || ! event.data ) {
 			return;

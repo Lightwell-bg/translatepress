@@ -301,6 +301,59 @@ final class SourceRepository {
 	}
 
 	/**
+	 * Несколько строк по идентификаторам одним запросом.
+	 *
+	 * Нужен массовому переводу записи: там десятки строк, а не одна, и
+	 * запрос на каждую нарушил бы тот же бюджет «3–5 запросов на операцию»,
+	 * что и во всём остальном плагине.
+	 *
+	 * Хеши отдаются в hex, а не сырыми байтами — `SELECT *` тут не годится:
+	 * `uniq_hash`/`source_hash` в таблице binary(32), и вызывающему коду
+	 * (сопоставление по хешу, а не по id) нужен ровно тот же hex-вид, что и
+	 * у lookup()/idsByHashes(), а не сырые байты, которые пришлось бы
+	 * переводить в hex отдельно на каждом месте использования.
+	 *
+	 * @param list<int> $ids Идентификаторы.
+	 * @return array<int, array<string, mixed>> Ключ — id.
+	 */
+	public function findMany( array $ids ): array {
+		global $wpdb;
+
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => $id > 0 ) ) );
+
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$table  = Schema::table( 'sources' );
+		$result = array();
+
+		foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, source_locale, kind, source_text, last_seen_at,
+							LOWER(HEX(source_hash)) AS source_hash,
+							LOWER(HEX(context_hash)) AS context_hash,
+							LOWER(HEX(uniq_hash)) AS uniq_hash
+					 FROM {$table} WHERE id IN ({$placeholders})",
+					$chunk
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			foreach ( (array) $rows as $row ) {
+				$result[ (int) $row['id'] ] = $row;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Область поиска: все строки сайта.
 	 */
 	public const SCOPE_ALL = '';

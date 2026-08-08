@@ -11,6 +11,7 @@ namespace WpMlp\Admin;
 
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rest\BlocksController;
+use WpMlp\Rest\PostTranslationController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
@@ -100,33 +101,100 @@ final class EditorPage implements Hookable {
 		wp_enqueue_style( 'wp-mlp-editor', Assets::url( 'assets/editor.css' ), array(), Assets::version( 'assets/editor.css' ) );
 		wp_enqueue_script( 'wp-mlp-editor', Assets::url( 'assets/editor.js' ), array(), Assets::version( 'assets/editor.js' ), true );
 
+		$selection = $this->currentSelection();
+		$postId    = $this->resolvePostId( $selection['path'] );
+
 		wp_localize_script(
 			'wp-mlp-editor',
 			'wpMlpEditor',
 			array(
-				'sources'  => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/sources/' ) ),
-				'saveRoot' => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
-				'blocks'   => esc_url_raw( rest_url( BlocksController::NAMESPACE . '/blocks' ) ),
-				'nonce'    => wp_create_nonce( 'wp_rest' ),
-				'statuses' => $this->statusLabels(),
-				'i18n'     => array(
-					'pick'          => __( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ),
-					'saving'        => __( 'Сохраняю…', 'wp-mlp' ),
-					'saved'         => __( 'Сохранено', 'wp-mlp' ),
-					'failed'        => __( 'Не удалось сохранить', 'wp-mlp' ),
-					'loading'       => __( 'Загружаю…', 'wp-mlp' ),
-					'confirmDelete' => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
-					'confirmBlock'  => __( 'Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться.', 'wp-mlp' ),
-					'blockCreated'  => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
-					'attribute'     => __( 'Атрибут', 'wp-mlp' ),
-					'text'          => __( 'Текст', 'wp-mlp' ),
-					'htmlBlock'     => __( 'Блок с разметкой', 'wp-mlp' ),
-					'translating'   => __( 'Перевожу с ИИ…', 'wp-mlp' ),
-					'aiSuggested'   => __( 'Предложено ИИ — проверьте перед сохранением', 'wp-mlp' ),
-					'aiFailed'      => __( 'ИИ не смог перевести', 'wp-mlp' ),
+				'sources'      => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/sources/' ) ),
+				'saveRoot'     => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
+				'blocks'       => esc_url_raw( rest_url( BlocksController::NAMESPACE . '/blocks' ) ),
+				'postRoot'     => esc_url_raw( rest_url( PostTranslationController::NAMESPACE . '/posts/' ) ),
+				'postId'       => $postId,
+				'modeEmpty'    => PostTranslationController::MODE_EMPTY,
+				'modeAll'      => PostTranslationController::MODE_ALL,
+				'nonce'        => wp_create_nonce( 'wp_rest' ),
+				'statuses'     => $this->statusLabels(),
+				'i18n'         => array(
+					'pick'              => __( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ),
+					'saving'            => __( 'Сохраняю…', 'wp-mlp' ),
+					'saved'             => __( 'Сохранено', 'wp-mlp' ),
+					'failed'            => __( 'Не удалось сохранить', 'wp-mlp' ),
+					'loading'           => __( 'Загружаю…', 'wp-mlp' ),
+					'confirmDelete'     => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
+					'confirmBlock'      => __( 'Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться.', 'wp-mlp' ),
+					'blockCreated'      => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
+					'attribute'         => __( 'Атрибут', 'wp-mlp' ),
+					'text'              => __( 'Текст', 'wp-mlp' ),
+					'htmlBlock'         => __( 'Блок с разметкой', 'wp-mlp' ),
+					'translating'       => __( 'Перевожу с ИИ…', 'wp-mlp' ),
+					'aiSuggested'       => __( 'Предложено ИИ — проверьте перед сохранением', 'wp-mlp' ),
+					'aiFailed'          => __( 'ИИ не смог перевести', 'wp-mlp' ),
+					'bulkButton'        => __( 'Перевести весь материал с ИИ', 'wp-mlp' ),
+					'bulkModeTitle'     => __( 'Что переводить?', 'wp-mlp' ),
+					'bulkModeEmpty'     => __( 'Только пустые сегменты', 'wp-mlp' ),
+					'bulkModeAll'       => __( 'Перевести заново весь материал', 'wp-mlp' ),
+					'bulkStart'         => __( 'Начать', 'wp-mlp' ),
+					'bulkCancel'        => __( 'Отмена', 'wp-mlp' ),
+					'bulkPreparing'     => __( 'Разбираю запись…', 'wp-mlp' ),
+					'bulkProgress'      => __( 'Перевожу часть {current} из {total}…', 'wp-mlp' ),
+					'bulkNothing'       => __( 'Переводить нечего — материал уже переведён. Переключите режим на «Перевести заново весь материал», если хотите обновить перевод.', 'wp-mlp' ),
+					'bulkReviewTitle'   => __( 'Проверьте перевод перед сохранением', 'wp-mlp' ),
+					'bulkSaveAll'       => __( 'Сохранить всё', 'wp-mlp' ),
+					'bulkSaving'        => __( 'Сохраняю всё…', 'wp-mlp' ),
+					'bulkSaved'         => __( 'Материал сохранён и обновлён в превью.', 'wp-mlp' ),
+					'bulkFailed'        => __( 'Не удалось перевести', 'wp-mlp' ),
+					'bulkCommitFailed'  => __( 'Не удалось сохранить — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
+					'bulkRejected'      => __( 'ИИ не смог безопасно перевести {count} строк(и), не повредив шорткод — переведите их вручную ниже.', 'wp-mlp' ),
+					'bulkChanged'       => __( 'изменилось с прошлого перевода', 'wp-mlp' ),
+					'bulkFieldTitle'    => __( 'Заголовок', 'wp-mlp' ),
+					'bulkFieldExcerpt'  => __( 'Анонс', 'wp-mlp' ),
+					'bulkFieldContent'  => __( 'Текст записи', 'wp-mlp' ),
+					'bulkClose'         => __( 'Закрыть', 'wp-mlp' ),
 				),
 			)
 		);
+	}
+
+	/**
+	 * Разбирает `mlp_locale`/`mlp_path` из адресной строки с тем же
+	 * фолбэком, что и раньше был только в render(): нужен и enqueue() —
+	 * там решается, какую запись резолвить в postId.
+	 *
+	 * @return array{locale: string, path: string}
+	 */
+	private function currentSelection(): array {
+		$secondary = $this->settings->secondary();
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
+		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
+		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( ! isset( $secondary[ $locale ] ) ) {
+			$locale = (string) array_key_first( $secondary );
+		}
+
+		return array(
+			'locale' => $locale,
+			'path'   => '/' . ltrim( $path, '/' ),
+		);
+	}
+
+	/**
+	 * Резолвит открытую в редакторе страницу в id записи — с ним и работает
+	 * «Перевести весь материал с ИИ» (заголовок/excerpt/post_content, а не
+	 * что попало на странице). Не запись — 0, кнопка массового перевода в
+	 * разметке просто не появится (см. render()).
+	 *
+	 * @param string $path Путь без языкового префикса, как в mlp_path.
+	 */
+	private function resolvePostId( string $path ): int {
+		$url = $this->urls->absolute( $path, $this->settings->defaultLanguage() );
+
+		return (int) url_to_postid( $url );
 	}
 
 	/**
@@ -149,17 +217,11 @@ final class EditorPage implements Hookable {
 			return;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
-		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
-		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		if ( ! isset( $secondary[ $locale ] ) ) {
-			$locale = (string) array_key_first( $secondary );
-		}
-
-		$path      = '/' . ltrim( $path, '/' );
+		$selection = $this->currentSelection();
+		$locale    = $selection['locale'];
+		$path      = $selection['path'];
 		$previewer = EditorContext::previewUrl( $this->urls->absolute( $path, $secondary[ $locale ] ) );
+		$postId    = $this->resolvePostId( $path );
 
 		?>
 		<div class="wrap wp-mlp-editor-wrap">
@@ -184,8 +246,57 @@ final class EditorPage implements Hookable {
 				<?php submit_button( __( 'Открыть', 'wp-mlp' ), 'secondary', '', false ); ?>
 			</form>
 
-			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>">
+			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>" data-post-id="<?php echo esc_attr( (string) $postId ); ?>">
 				<div class="wp-mlp-editor__panel">
+					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
+						<div class="wp-mlp-editor__bulk">
+							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">
+								<?php esc_html_e( 'Перевести весь материал с ИИ', 'wp-mlp' ); ?>
+							</button>
+							<p class="description">
+								<?php esc_html_e( 'Заголовок, анонс и весь текст записи одной операцией — вместо перевода блок за блоком.', 'wp-mlp' ); ?>
+							</p>
+
+							<div class="wp-mlp-editor__bulk-panel" id="mlp-editor-bulk-panel" hidden>
+								<fieldset>
+									<legend><?php esc_html_e( 'Что переводить?', 'wp-mlp' ); ?></legend>
+									<label>
+										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( PostTranslationController::MODE_EMPTY ); ?>" checked>
+										<?php esc_html_e( 'Только пустые сегменты', 'wp-mlp' ); ?>
+									</label>
+									<label>
+										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( PostTranslationController::MODE_ALL ); ?>">
+										<?php esc_html_e( 'Перевести заново весь материал', 'wp-mlp' ); ?>
+									</label>
+								</fieldset>
+
+								<div class="wp-mlp-editor__actions">
+									<button type="button" class="button button-primary" id="mlp-editor-bulk-start">
+										<?php esc_html_e( 'Начать', 'wp-mlp' ); ?>
+									</button>
+									<button type="button" class="button" id="mlp-editor-bulk-cancel">
+										<?php esc_html_e( 'Отмена', 'wp-mlp' ); ?>
+									</button>
+								</div>
+
+								<p class="wp-mlp-editor__bulk-progress" role="status" hidden></p>
+								<p class="wp-mlp-editor__bulk-warning notice notice-warning" hidden></p>
+
+								<ol class="wp-mlp-editor__bulk-list" hidden></ol>
+
+								<div class="wp-mlp-editor__actions wp-mlp-editor__bulk-commit" hidden>
+									<button type="button" class="button button-primary" id="mlp-editor-bulk-save">
+										<?php esc_html_e( 'Сохранить всё', 'wp-mlp' ); ?>
+									</button>
+									<button type="button" class="button" id="mlp-editor-bulk-close">
+										<?php esc_html_e( 'Закрыть', 'wp-mlp' ); ?>
+									</button>
+								</div>
+							</div>
+						</div>
+						<hr>
+					<?php endif; ?>
+
 					<p class="wp-mlp-editor__hint">
 						<?php esc_html_e( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ); ?>
 					</p>

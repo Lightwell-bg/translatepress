@@ -265,3 +265,104 @@ if ( ! function_exists( 'user_trailingslashit' ) ) {
 		return $value;
 	}
 }
+
+if ( ! function_exists( 'has_blocks' ) ) {
+	/**
+	 * Огрублённое, но достаточное для тестов приближение ядра: настоящая
+	 * функция тоже, по сути, ищет комментарий-маркер блока в тексте.
+	 *
+	 * @param string $content `post_content`.
+	 */
+	function has_blocks( string $content ): bool {
+		return false !== strpos( $content, '<!-- wp:' );
+	}
+}
+
+if ( ! function_exists( 'wpautop' ) ) {
+	/**
+	 * Урезанная версия ядрового wpautop(): двойной перевод строки — новый
+	 * абзац, одинарный — `<br />`. Настоящих edge-case'ов ядра (списки,
+	 * таблицы, `<pre>` и т. п. внутри "голого" текста) не воспроизводит —
+	 * для этого в реальных постах и так используются настоящие теги, а не
+	 * голый текст, и до этой функции в PostContentExtractor такой HTML
+	 * вообще не доходит (has_blocks() отсекает).
+	 *
+	 * @param string $text Исходный текст.
+	 */
+	function wpautop( string $text ): string {
+		$text = trim( $text );
+
+		if ( '' === $text ) {
+			return '';
+		}
+
+		$paragraphs = preg_split( '/\n\s*\n/', $text );
+		$html       = array();
+
+		foreach ( (array) $paragraphs as $paragraph ) {
+			$paragraph = trim( (string) $paragraph );
+
+			if ( '' === $paragraph ) {
+				continue;
+			}
+
+			// Уже блочная разметка — не заворачиваем её ещё раз в <p>.
+			if ( 1 === preg_match( '#^<(h[1-6]|ul|ol|li|table|blockquote|figure|div|p)[ >]#i', $paragraph ) ) {
+				$html[] = $paragraph;
+
+				continue;
+			}
+
+			$html[] = '<p>' . nl2br( $paragraph ) . '</p>';
+		}
+
+		return implode( "\n", $html );
+	}
+}
+
+/**
+ * Хранилище postmeta в памяти — на время одного теста.
+ *
+ * @param array<int, array<string, mixed>>|null $reset Если передан массив, хранилище им заменяется.
+ * @return array<int, array<string, mixed>>
+ */
+function wp_mlp_test_postmeta( ?array $reset = null ): array {
+	static $meta = array();
+
+	if ( null !== $reset ) {
+		$meta = $reset;
+	}
+
+	return $meta;
+}
+
+if ( ! function_exists( 'get_post_meta' ) ) {
+	/**
+	 * @param int    $postId Идентификатор записи.
+	 * @param string $key    Ключ метаполя.
+	 * @param bool   $single Вернуть одно значение вместо списка.
+	 * @return mixed
+	 */
+	function get_post_meta( int $postId, string $key = '', bool $single = false ) {
+		$store = wp_mlp_test_postmeta();
+		$value = $store[ $postId ][ $key ] ?? ( $single ? '' : array() );
+
+		return $single ? $value : array( $value );
+	}
+}
+
+if ( ! function_exists( 'update_post_meta' ) ) {
+	/**
+	 * @param int    $postId Идентификатор записи.
+	 * @param string $key    Ключ метаполя.
+	 * @param mixed  $value  Значение.
+	 */
+	function update_post_meta( int $postId, string $key, $value ): bool {
+		$store                    = wp_mlp_test_postmeta();
+		$store[ $postId ][ $key ] = $value;
+
+		wp_mlp_test_postmeta( $store );
+
+		return true;
+	}
+}

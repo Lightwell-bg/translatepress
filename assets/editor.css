@@ -81,6 +81,107 @@
 	color: #b32d2e;
 }
 
+.wp-mlp-editor__bulk {
+	margin-bottom: 16px;
+}
+
+.wp-mlp-editor__bulk .button-hero {
+	width: 100%;
+}
+
+.wp-mlp-editor__bulk .description {
+	margin: 6px 0 0;
+}
+
+.wp-mlp-editor__bulk-panel {
+	margin-top: 12px;
+	padding: 12px;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+}
+
+.wp-mlp-editor__bulk-panel fieldset {
+	border: 0;
+	padding: 0;
+	margin: 0;
+}
+
+.wp-mlp-editor__bulk-panel legend {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.wp-mlp-editor__bulk-panel fieldset label {
+	display: block;
+	font-weight: 400;
+	margin: 4px 0;
+}
+
+.wp-mlp-editor__bulk-progress {
+	min-height: 1.4em;
+	margin: 10px 0 0;
+	color: #646970;
+}
+
+.wp-mlp-editor__bulk-progress.is-ok {
+	color: #00650f;
+}
+
+.wp-mlp-editor__bulk-progress.is-error {
+	color: #b32d2e;
+}
+
+.wp-mlp-editor__bulk-warning {
+	margin: 10px 0 0;
+	padding: 8px 12px;
+}
+
+.wp-mlp-editor__bulk-list {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+.wp-mlp-editor__bulk-row {
+	padding: 8px 0;
+	border-top: 1px solid #dcdcde;
+}
+
+.wp-mlp-editor__bulk-row:first-child {
+	border-top: 0;
+}
+
+.wp-mlp-editor__bulk-row-meta {
+	margin: 0 0 4px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #646970;
+	text-transform: uppercase;
+}
+
+.wp-mlp-editor__bulk-source {
+	margin: 0 0 4px;
+	padding: 4px 6px;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.wp-mlp-editor__bulk-target {
+	display: block;
+	width: 100%;
+	margin-bottom: 4px;
+}
+
+.wp-mlp-editor__bulk-status {
+	width: 100%;
+}
+
+.wp-mlp-editor__bulk-commit {
+	margin-top: 12px;
+}
+
 @media screen and ( max-width: 960px ) {
 	.wp-mlp-editor {
 		flex-direction: column;

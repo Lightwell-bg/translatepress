@@ -23,8 +23,10 @@ use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\OutputBuffer;
+use WpMlp\Rendering\PostContentExtractor;
 use WpMlp\Rendering\Translator;
 use WpMlp\Rest\BlocksController;
+use WpMlp\Rest\PostTranslationController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\CanonicalRedirect;
 use WpMlp\Routing\LanguageResolver;
@@ -32,6 +34,7 @@ use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\PostTranslationSnapshot;
 use WpMlp\Storage\Schema;
 use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
@@ -151,6 +154,13 @@ final class Plugin {
 		$c->set( OccurrenceRepository::class, static fn(): OccurrenceRepository => new OccurrenceRepository() );
 		$c->set( TranslationCache::class, static fn(): TranslationCache => new TranslationCache() );
 		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
+
+		$c->set(
+			PostContentExtractor::class,
+			static fn( Container $c ): PostContentExtractor => new PostContentExtractor( $c->get( Extractor::class ) )
+		);
+
+		$c->set( PostTranslationSnapshot::class, static fn(): PostTranslationSnapshot => new PostTranslationSnapshot() );
 
 		$c->set( UsageTracker::class, static fn(): UsageTracker => new UsageTracker() );
 
@@ -335,6 +345,21 @@ final class Plugin {
 				$c->get( UsageTracker::class )
 			)
 		);
+
+		$c->set(
+			PostTranslationController::class,
+			static fn( Container $c ): PostTranslationController => new PostTranslationController(
+				$c->get( Settings::class ),
+				$c->get( PostContentExtractor::class ),
+				$c->get( SourceRepository::class ),
+				$c->get( OccurrenceRepository::class ),
+				$c->get( TranslationRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( ProviderInterface::class ),
+				$c->get( UsageTracker::class ),
+				$c->get( PostTranslationSnapshot::class )
+			)
+		);
 	}
 
 	/**
@@ -352,6 +377,7 @@ final class Plugin {
 			// rest_api_init не сработает, если маршрут не зарегистрирован заранее.
 			TranslationsController::class,
 			BlocksController::class,
+			PostTranslationController::class,
 			// Ссылка «Перевести страницу» живёт в админ-баре на фронтенде.
 			EditorPage::class,
 			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
