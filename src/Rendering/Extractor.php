@@ -67,6 +67,24 @@ final class Extractor {
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
 
 	/**
+	 * Значения `name`/`property` тегов `<meta>`, чьё содержимое переводится.
+	 *
+	 * Только человекочитаемый текст. Адреса (`og:url`, `og:image`), локаль
+	 * и тип сюда не входят: их не переводят, а подменяют — этим занимается
+	 * SeoMeta.
+	 */
+	private const TRANSLATABLE_META = array(
+		'description',
+		'og:title',
+		'og:description',
+		'og:image:alt',
+		'og:site_name',
+		'twitter:title',
+		'twitter:description',
+		'twitter:image:alt',
+	);
+
+	/**
 	 * Инлайновые теги: их присутствие внутри абзаца не мешает перевести его
 	 * целиком одним блоком.
 	 */
@@ -145,6 +163,12 @@ final class Extractor {
 			}
 
 			if ( in_array( strtolower( (string) $node->nodeName ), self::SKIP_SUBTREE, true ) ) {
+				// `script` пропускается целиком, но структурированные данные
+				// внутри него — это текст для поисковика, а не код.
+				foreach ( $this->jsonLdSegments( $node, $locale, $contextHash ) as $segment ) {
+					$segments[] = $segment;
+				}
+
 				continue;
 			}
 
@@ -166,6 +190,55 @@ final class Extractor {
 			foreach ( $node->childNodes as $child ) {
 				$stack[] = $child;
 			}
+		}
+
+		return $segments;
+	}
+
+	/**
+	 * Строки из блока структурированных данных.
+	 *
+	 * @param object $element     Элемент DOM.
+	 * @param string $locale      Исходный язык.
+	 * @param string $contextHash Хеш контекста.
+	 * @return list<Segment>
+	 */
+	private function jsonLdSegments( object $element, string $locale, string $contextHash ): array {
+		if ( 'script' !== strtolower( (string) $element->nodeName ) ) {
+			return array();
+		}
+
+		$type = strtolower( trim( (string) $element->getAttribute( 'type' ) ) );
+
+		if ( 'application/ld+json' !== $type ) {
+			return array();
+		}
+
+		$json = JsonLdDocument::fromNode( $element );
+
+		if ( null === $json ) {
+			return array();
+		}
+
+		$segments = array();
+
+		foreach ( $json->fields() as $field ) {
+			$normalized = Text::normalize( $field->value );
+
+			if ( ! Text::isTranslatable( $normalized ) ) {
+				continue;
+			}
+
+			$segments[] = $this->makeSegment(
+				$field,
+				Segment::KIND_SEO,
+				null,
+				$normalized,
+				'',
+				'',
+				$locale,
+				$contextHash
+			);
 		}
 
 		return $segments;
@@ -340,12 +413,33 @@ final class Extractor {
 			$attributes[] = 'value';
 		}
 
-		// Единственный meta, который нужен уже на Этапе 1: описание страницы.
-		if ( 'meta' === $tag && 'description' === strtolower( (string) $element->getAttribute( 'name' ) ) ) {
+		if ( 'meta' === $tag && $this->isTranslatableMeta( $element ) ) {
 			$attributes[] = 'content';
 		}
 
 		return $attributes;
+	}
+
+	/**
+	 * Переводимо ли содержимое тега `<meta>`.
+	 *
+	 * Именно эти поля показывают превью ссылки в соцсетях и мессенджерах —
+	 * без них расшаренная английская страница выглядела бы русской.
+	 *
+	 * Проверяются оба атрибута: стандарт Open Graph требует `property`,
+	 * Twitter — `name`, а SEO-плагины (Yoast, Rank Math) в разных версиях
+	 * выводят twitter-теги то так, то так.
+	 *
+	 * @param object $element Элемент `<meta>`.
+	 */
+	private function isTranslatableMeta( object $element ): bool {
+		$key = strtolower( trim( (string) $element->getAttribute( 'property' ) ) );
+
+		if ( '' === $key ) {
+			$key = strtolower( trim( (string) $element->getAttribute( 'name' ) ) );
+		}
+
+		return in_array( $key, self::TRANSLATABLE_META, true );
 	}
 
 	/**

@@ -32,6 +32,14 @@ final class Segment {
 	public const KIND_HTML_BLOCK = 'html_block';
 
 	/**
+	 * Строка из структурированных данных JSON-LD (ТЗ 6.1: kind = seo).
+	 *
+	 * Живёт не в DOM, а внутри `<script type="application/ld+json">`, поэтому
+	 * подстановкой занимается сам узел через TranslatableTarget.
+	 */
+	public const KIND_SEO = 'seo';
+
+	/**
 	 * @param object      $node      Текстовый узел или элемент-владелец атрибута.
 	 * @param string      $kind      KIND_TEXT или KIND_ATTRIBUTE.
 	 * @param string|null $attribute Имя атрибута для KIND_ATTRIBUTE.
@@ -66,6 +74,13 @@ final class Segment {
 	 */
 	public function apply( string $translation, ?HtmlDocument $document = null ): void {
 		if ( '' === $translation ) {
+			return;
+		}
+
+		// JSON-LD и прочие цели вне DOM знают сами, куда себя записать.
+		if ( $this->node instanceof TranslatableTarget ) {
+			$this->node->applyTranslation( $translation );
+
 			return;
 		}
 
