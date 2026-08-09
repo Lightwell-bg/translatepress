@@ -80,15 +80,23 @@ final class Extractor {
 	 * дополнительных полей карточки («Written by», «Est. reading time»,
 	 * «5 minutes») и переводятся как обычный текст. `twitter:data1` в
 	 * списке нет намеренно: Yoast и Rank Math кладут туда имя автора —
-	 * это имя собственное, а не текст для читателя (см. класс-докблок
-	 * про имена брендов).
+	 * это имя собственное, а не текст для читателя (см.
+	 * JsonLdRules::NAME_IS_PROPER_NOUN про имена брендов).
+	 *
+	 * `og:site_name` в списке НЕТ намеренно, хотя по формату это такой же
+	 * человекочитаемый текст, как и остальные: по спецификации Open Graph
+	 * это название сайта целиком («CenterAI»), т.е. то же самое имя бренда,
+	 * что и `name` у `Organization`/`WebSite` в JSON-LD — а оно уже защищено
+	 * от перевода (JsonLdRules::NAME_IS_PROPER_NOUN). Если оставить
+	 * `og:site_name` переводимым, название бренда осталось бы доступно для
+	 * правки в «Переводе строк» и могло случайно смениться на другом языке
+	 * ровно там, где JSON-LD того же названия защищён.
 	 */
 	private const TRANSLATABLE_META = array(
 		'description',
 		'og:title',
 		'og:description',
 		'og:image:alt',
-		'og:site_name',
 		'article:section',
 		'article:tag',
 		'twitter:title',
@@ -98,6 +106,17 @@ final class Extractor {
 		'twitter:label2',
 		'twitter:data2',
 	);
+
+	/**
+	 * Meta-поля, дублирующие заголовок записи, а не собственный текст.
+	 *
+	 * `og:title`/`twitter:title` в подавляющем большинстве конфигураций
+	 * SEO-плагина несут ТОТ ЖЕ текст, что и заголовок записи (H1, `<title>`).
+	 * Свои они по природе, а не по случайности: должны получать один и тот же
+	 * перевод, а не расходиться в формулировках оттого, что кто-то перевёл
+	 * их порознь. См. makeSegment() и jsonLdSegments().
+	 */
+	private const TITLE_META = array( 'og:title', 'twitter:title' );
 
 	/**
 	 * Инлайновые теги: их присутствие внутри абзаца не мешает перевести его
@@ -254,6 +273,15 @@ final class Extractor {
 				continue;
 			}
 
+			/*
+			 * `headline` — заголовок записи внутри структурированных данных
+			 * (ТЗ 8.4), тот же текст, что и H1/`<title>`/og:title. Хеш
+			 * считается как у обычного текста (см. TITLE_META в
+			 * attributeSegments()), чтобы одна и та же фраза везде получала
+			 * один и тот же перевод, а не расходилась по формулировкам.
+			 */
+			$hashKind = 'headline' === $field->key() ? Segment::KIND_TEXT : '';
+
 			$segments[] = $this->makeSegment(
 				$field,
 				Segment::KIND_SEO,
@@ -262,7 +290,8 @@ final class Extractor {
 				'',
 				'',
 				$locale,
-				$contextHash
+				$contextHash,
+				$hashKind
 			);
 		}
 
@@ -394,6 +423,7 @@ final class Extractor {
 	 */
 	private function attributeSegments( object $element, string $locale, string $contextHash ): array {
 		$segments = array();
+		$isMeta   = 'meta' === strtolower( (string) $element->nodeName );
 
 		foreach ( $this->translatableAttributes( $element ) as $attribute ) {
 			if ( ! $element->hasAttribute( $attribute ) ) {
@@ -406,6 +436,17 @@ final class Extractor {
 				continue;
 			}
 
+			/*
+			 * og:title/twitter:title — заголовок записи, продублированный в
+			 * meta для соцсетей (ТЗ 8.2), тот же текст, что и H1/`<title>`/
+			 * JSON-LD headline. Хешируется как обычный текст (см. TITLE_META),
+			 * а не как атрибут, — иначе один и тот же заголовок получал бы
+			 * два независимых, расходящихся друг с другом перевода.
+			 */
+			$hashKind = ( $isMeta && 'content' === $attribute && in_array( $this->metaKey( $element ), self::TITLE_META, true ) )
+				? Segment::KIND_TEXT
+				: '';
+
 			$segments[] = $this->makeSegment(
 				$element,
 				Segment::KIND_ATTRIBUTE,
@@ -414,7 +455,8 @@ final class Extractor {
 				'',
 				'',
 				$locale,
-				$contextHash
+				$contextHash,
+				$hashKind
 			);
 		}
 
@@ -458,26 +500,47 @@ final class Extractor {
 	 * @param object $element Элемент `<meta>`.
 	 */
 	private function isTranslatableMeta( object $element ): bool {
+		return in_array( $this->metaKey( $element ), self::TRANSLATABLE_META, true );
+	}
+
+	/**
+	 * Ключ тега `<meta>`: `property` (Open Graph) или, если пуст, `name`
+	 * (Twitter Card, обычные meta). Общий для isTranslatableMeta() и
+	 * attributeSegments() — там нужно тем же способом узнать og:title/
+	 * twitter:title среди прочих meta, не дублируя разбор атрибутов.
+	 *
+	 * @param object $element Элемент `<meta>`.
+	 */
+	private function metaKey( object $element ): string {
 		$key = strtolower( trim( (string) $element->getAttribute( 'property' ) ) );
 
 		if ( '' === $key ) {
 			$key = strtolower( trim( (string) $element->getAttribute( 'name' ) ) );
 		}
 
-		return in_array( $key, self::TRANSLATABLE_META, true );
+		return $key;
 	}
 
 	/**
 	 * Считает хеши и собирает сегмент.
 	 *
 	 * @param object      $node        Узел DOM.
-	 * @param string      $kind        Segment::KIND_*.
+	 * @param string      $kind        Segment::KIND_* — что реально хранится
+	 *                                 и показывается в «Переводе строк».
 	 * @param string|null $attribute   Имя атрибута.
 	 * @param string      $text        Нормализованный текст.
 	 * @param string      $prefix      Отступ слева.
 	 * @param string      $suffix      Отступ справа.
 	 * @param string      $locale      Исходный язык.
 	 * @param string      $contextHash Хеш контекста.
+	 * @param string      $hashKind    Значение вместо $kind ТОЛЬКО для расчёта
+	 *                                 uniq_hash — пусто, если считать по $kind.
+	 *                                 Нужно полям, дублирующим заголовок записи
+	 *                                 (og:title/twitter:title/JSON-LD headline):
+	 *                                 они хранятся как есть (attribute/seo), но
+	 *                                 хешируются как KIND_TEXT — так же, как
+	 *                                 H1/`<title>` — чтобы одинаковый текст
+	 *                                 везде находил один и тот же перевод.
 	 */
 	private function makeSegment(
 		object $node,
@@ -487,9 +550,11 @@ final class Extractor {
 		string $prefix,
 		string $suffix,
 		string $locale,
-		string $contextHash
+		string $contextHash,
+		string $hashKind = ''
 	): Segment {
 		$sourceHash = Hash::of( $text );
+		$hashKind   = '' !== $hashKind ? $hashKind : $kind;
 
 		/*
 		 * Порядок частей повторяет уникальный индекс из ТЗ 6.1. domain,
@@ -497,7 +562,7 @@ final class Extractor {
 		 * появится позже, и тогда они начнут различать одинаковые строки.
 		 */
 		$uniqHash = Hash::ofParts(
-			array( $locale, $kind, $sourceHash, $contextHash, '', '', '' )
+			array( $locale, $hashKind, $sourceHash, $contextHash, '', '', '' )
 		);
 
 		return new Segment( $node, $kind, $attribute, $text, $prefix, $suffix, $sourceHash, $uniqHash );

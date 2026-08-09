@@ -154,6 +154,57 @@ final class OccurrenceRepository {
 	}
 
 	/**
+	 * Дата последнего изменения перевода записи на этот язык — самая
+	 * свежая среди всех переведённых строк, которые встречались в этой
+	 * записи.
+	 *
+	 * Нужна карте сайта (см. Frontend\Sitemap): `wp_posts.post_modified`
+	 * относится только к исходному языку — перевод живёт в отдельной
+	 * таблице и его не меняет. Без этого метода `lastmod` английской
+	 * версии страницы навсегда оставался бы датой последней правки
+	 * русского текста, даже если сам перевод появился только сегодня.
+	 *
+	 * @param string $locale Целевой язык.
+	 * @return array<int, string> Идентификатор записи => `updated_at` (UTC, `Y-m-d H:i:s`) самого свежего перевода среди её строк.
+	 */
+	public function lastTranslatedAt( string $locale ): array {
+		global $wpdb;
+
+		if ( ! Locale::isValid( $locale ) ) {
+			return array();
+		}
+
+		$occurrences  = Schema::table( 'occurrences' );
+		$translations = Schema::table( 'translations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT o.object_id, MAX(t.updated_at) AS last_updated
+				 FROM {$occurrences} o
+				 INNER JOIN {$translations} t
+					ON t.source_id = o.source_id AND t.target_locale = %s
+				 WHERE o.object_id IS NOT NULL
+					AND o.object_id > 0
+					AND t.translated_text IS NOT NULL
+					AND t.translated_text <> ''
+				 GROUP BY o.object_id",
+				$locale
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		$result = array();
+
+		foreach ( (array) $rows as $row ) {
+			$result[ (int) $row['object_id'] ] = (string) $row['last_updated'];
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Встречалась ли строка у этого объекта (защита commit'а массового
 	 * перевода: id строки в запросе обязан быть тем, что действительно
 	 * извлечён из ЭТОЙ записи, а не чужим, подставленным вручную в запрос).

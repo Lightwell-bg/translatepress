@@ -206,6 +206,19 @@ final class SettingsPage implements Hookable {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="mlp-sitemap-excluded"><?php esc_html_e( 'Исключить из карты сайта', 'wp-mlp' ); ?></label></th>
+						<td>
+							<textarea name="sitemap_excluded_slugs" id="mlp-sitemap-excluded" class="large-text code" rows="4"
+								placeholder="oformlenie-zakaza&#10;net-dostupa"><?php echo esc_textarea( implode( "\n", $this->settings->sitemapExcludedSlugs() ) ); ?></textarea>
+							<p class="description">
+								<?php esc_html_e( 'По одному слагу на строку — последний сегмент адреса страницы, без слешей (для /blog/oformlenie-zakaza/ впишите oformlenie-zakaza). Страница со вложенными страницами исключается вместе с ними.', 'wp-mlp' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Заполнять нужно не всегда: страницы корзины, оформления заказа и личного кабинета WooCommerce, а также страницы, помеченные noindex в Yoast SEO, Rank Math или SEOPress, исключаются сами, без этого поля. Впишите сюда только то, что осталось без плагина корзины и без отметки noindex — например, техническую страницу «Нет доступа» или созданную вручную страницу оформления заказа.', 'wp-mlp' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Непереведённые записи', 'wp-mlp' ); ?></th>
 						<td>
 							<label>

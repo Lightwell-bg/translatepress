@@ -165,6 +165,55 @@ final class JsonLdDocument {
 	}
 
 	/**
+	 * Значения `@id`, на которые ссылается свойство `logo` где-либо в графе.
+	 *
+	 * `Organization.logo`/`Person.logo` — это сайтовый брендовый актив, тот же
+	 * логотип на любой языковой версии: его `@id` обязан оставаться стабильным
+	 * ровно как у самой Organization, даже когда тип сущности-логотипа —
+	 * `ImageObject`, который в остальных случаях («изображение записи»,
+	 * `Article.image`/`WebPage.primaryImageOfPage`) наоборот, страницезависим
+	 * и получает языковой префикс (см. PAGE_SCOPED_ID_TYPES). Различить два
+	 * этих случая по одному только `@type` нельзя — оба `ImageObject`, — а вот
+	 * по ИМЕНИ ССЫЛАЮЩЕГОСЯ СВОЙСТВА можно: `logo` есть только у бренда.
+	 * Работает и когда `logo` — голая ссылка (`{"@id":"..."}`), и когда это
+	 * полное inline-определение сущности (`{"@type":"ImageObject","@id":"..."}`)
+	 * — оба вида несут `@id` на своём уровне, только второй ещё и `@type`.
+	 *
+	 * @return list<string>
+	 */
+	public function logoReferenceIds(): array {
+		$ids = array();
+
+		$this->collectLogoReferenceIds( $this->data, $ids );
+
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
+	 * Рекурсивно ищет свойства `logo` со значением `@id`.
+	 *
+	 * @param mixed        $node Текущий узел графа.
+	 * @param list<string> $ids  Накопитель результата.
+	 */
+	private function collectLogoReferenceIds( $node, array &$ids ): void {
+		if ( ! is_array( $node ) ) {
+			return;
+		}
+
+		if ( isset( $node['logo'] ) && is_array( $node['logo'] )
+			&& isset( $node['logo']['@id'] ) && is_string( $node['logo']['@id'] ) && '' !== $node['logo']['@id']
+		) {
+			$ids[] = $node['logo']['@id'];
+		}
+
+		foreach ( $node as $value ) {
+			if ( is_array( $value ) ) {
+				$this->collectLogoReferenceIds( $value, $ids );
+			}
+		}
+	}
+
+	/**
 	 * Поля `inLanguage`: путь (закодированный) => текущее значение.
 	 *
 	 * Не текст для перевода, а код языка для подмены — как `og:locale`,

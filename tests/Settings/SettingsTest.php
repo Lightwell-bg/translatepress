@@ -363,4 +363,82 @@ final class SettingsTest extends TestCase {
 		$this->assertArrayHasKey( 'ru', $result['settings']['languages'] );
 		$this->assertNotEmpty( $result['errors'] );
 	}
+
+	/**
+	 * Жалоба на карту сайта (переписка 08.08.2026): вручную созданные
+	 * страницы вроде «Оформление заказа» не отличить от обычного контента
+	 * программно — единственный способ убрать их из карты сайта это явный
+	 * список слагов в настройках, по одному на строку textarea.
+	 */
+	public function testSanitizeParsesSitemapExcludedSlugsOnePerLine(): void {
+		$settings = new Settings();
+
+		$result = $this->sanitizeWithSlugsField( $settings, "oformlenie-zakaza\r\nnet-dostupa\n\ntovary" );
+
+		$this->assertSame(
+			array( 'oformlenie-zakaza', 'net-dostupa', 'tovary' ),
+			$result['settings']['sitemap_excluded_slugs']
+		);
+	}
+
+	/**
+	 * Слаг переживает копирование из адресной строки как есть: обрамляющие
+	 * пробелы, слеши и разный регистр не должны давать отдельные записи,
+	 * иначе `post_name` (всегда в нижнем регистре, без слешей) с ним никогда
+	 * не совпадёт.
+	 */
+	public function testSanitizeNormalizesSlugsCaseSlashesAndWhitespace(): void {
+		$settings = new Settings();
+
+		$result = $this->sanitizeWithSlugsField( $settings, "  /Oformlenie-Zakaza/  \n oformlenie-zakaza \n" );
+
+		$this->assertSame( array( 'oformlenie-zakaza' ), $result['settings']['sitemap_excluded_slugs'] );
+	}
+
+	public function testSanitizeEmptySlugsFieldGivesEmptyList(): void {
+		$settings = new Settings();
+
+		$result = $this->sanitizeWithSlugsField( $settings, '' );
+
+		$this->assertSame( array(), $result['settings']['sitemap_excluded_slugs'] );
+	}
+
+	/**
+	 * Уже сохранённый список остаётся в raw()/sitemapExcludedSlugs() ровно
+	 * таким, каким его отдал sanitize() — без повторной нормализации при
+	 * каждом чтении.
+	 */
+	public function testSitemapExcludedSlugsGetterReadsStoredValue(): void {
+		wp_mlp_test_options(
+			array(
+				Settings::OPTION => array_merge(
+					Settings::defaults(),
+					array( 'sitemap_excluded_slugs' => array( 'oformlenie-zakaza', 'net-dostupa' ) )
+				),
+			)
+		);
+
+		$settings = new Settings();
+
+		$this->assertSame( array( 'oformlenie-zakaza', 'net-dostupa' ), $settings->sitemapExcludedSlugs() );
+	}
+
+	/**
+	 * @param string $rawTextarea Содержимое textarea, как его прислал бы браузер.
+	 * @return array{settings: array<string, mixed>, errors: list<string>}
+	 */
+	private function sanitizeWithSlugsField( Settings $settings, string $rawTextarea ): array {
+		return $settings->sanitize(
+			array(
+				'default_locale'         => 'ru',
+				'languages'              => array(
+					array(
+						'locale' => 'ru',
+						'slug'   => 'ru',
+					),
+				),
+				'sitemap_excluded_slugs' => $rawTextarea,
+			)
+		);
+	}
 }

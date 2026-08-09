@@ -217,6 +217,12 @@ final class SeoMeta implements DocumentFilter {
 	 *    ЕЁ СОБСТВЕННОМУ типу (не по родителю), новое значение `@id`:
 	 *    Organization/Person/WebSite — без префикса, WebPage/Article/
 	 *    BlogPosting/BreadcrumbList — с префиксом текущего языка.
+	 *    Дополнительно стабильными считаются и узлы типа `ImageObject`,
+	 *    на которые ссылается свойство `logo` (см. `logoReferenceIds()`):
+	 *    сам `@type` тут неоднозначен — `ImageObject` бывает и логотипом
+	 *    бренда (стабилен), и картинкой конкретной записи (страницезависим,
+	 *    поэтому в PAGE_SCOPED_ID_TYPES не входит и остаётся нетронутым) —
+	 *    разница только в том, что на него ссылается ИМЕННО `logo`.
 	 * 2. Готовая карта «старое значение → новое» применяется через
 	 *    `allIdFields()` — это ВСЕ вхождения `@id` в графе, включая ссылки.
 	 *    Совпало значение — заменили, вне зависимости от того, где именно
@@ -229,7 +235,8 @@ final class SeoMeta implements DocumentFilter {
 	 * @param list<string>   $slugs    Слаги всех языков сайта.
 	 */
 	private function normalizeGraphIds( JsonLdDocument $json, Language $target, string $origin, string $basePath, array $slugs ): void {
-		$idMap = array();
+		$idMap     = array();
+		$stableIds = array_fill_keys( $json->logoReferenceIds(), true );
 
 		foreach ( $json->definedEntityTypes() as $id => $types ) {
 			if ( ! str_starts_with( $id, $origin ) ) {
@@ -237,7 +244,7 @@ final class SeoMeta implements DocumentFilter {
 				continue;
 			}
 
-			if ( JsonLdRules::isStableEntityType( $types ) ) {
+			if ( JsonLdRules::isStableEntityType( $types ) || isset( $stableIds[ $id ] ) ) {
 				$normalized = UrlConverter::withoutLanguagePrefix( $id, $basePath, $slugs );
 
 				if ( $normalized !== $id ) {
@@ -253,6 +260,25 @@ final class SeoMeta implements DocumentFilter {
 				if ( $localized !== $id ) {
 					$idMap[ $id ] = $localized;
 				}
+			}
+		}
+
+		/*
+		 * logo может ссылаться на @id, у которого нет собственного узла с
+		 * @type в этом же графе (нетипичный, но валидный JSON-LD) —
+		 * definedEntityTypes() такой узел не найдёт вовсе. Отдельный проход
+		 * ловит и этот случай: он не завязан на то, что сущность где-то
+		 * ОПРЕДЕЛЕНА, только на то, что на её @id ссылаются как на логотип.
+		 */
+		foreach ( array_keys( $stableIds ) as $id ) {
+			if ( isset( $idMap[ $id ] ) || ! str_starts_with( $id, $origin ) ) {
+				continue;
+			}
+
+			$normalized = UrlConverter::withoutLanguagePrefix( $id, $basePath, $slugs );
+
+			if ( $normalized !== $id ) {
+				$idMap[ $id ] = $normalized;
 			}
 		}
 

@@ -69,6 +69,7 @@ final class Settings {
 			'openai_api_key'           => '',
 			'openai_model'             => '',
 			'openai_base_url'          => self::DEFAULT_OPENAI_BASE_URL,
+			'sitemap_excluded_slugs'   => array(),
 		);
 	}
 
@@ -280,6 +281,24 @@ final class Settings {
 	}
 
 	/**
+	 * Слаги страниц/записей, исключённых из карты сайта вручную.
+	 *
+	 * Только для того, что нельзя распознать программно: обычная страница,
+	 * созданная руками (не через WooCommerce и не через другой известный
+	 * плагин с собственным API), исключается только по явному указанию
+	 * владельца сайта — угадывать по названию или адресу небезопасно.
+	 * Исключается и сама страница, и всё, что вложено под ней (см.
+	 * Sitemap::withoutServicePages()).
+	 *
+	 * @return list<string>
+	 */
+	public function sitemapExcludedSlugs(): array {
+		$raw = $this->raw()['sitemap_excluded_slugs'] ?? array();
+
+		return is_array( $raw ) ? array_values( array_filter( array_map( 'strval', $raw ) ) ) : array();
+	}
+
+	/**
 	 * Сохраняет уже очищенные настройки.
 	 *
 	 * @param array<string, mixed> $settings Результат sanitize().
@@ -389,9 +408,40 @@ final class Settings {
 				'openai_api_key'           => $this->sanitizeApiKey( $input ),
 				'openai_model'             => sanitize_text_field( (string) ( $input['openai_model'] ?? $this->openAiModel() ) ),
 				'openai_base_url'          => $this->sanitizeBaseUrl( $input ),
+				'sitemap_excluded_slugs'   => $this->sanitizeSitemapExcludedSlugs( $input ),
 			),
 			'errors'   => $errors,
 		);
+	}
+
+	/**
+	 * Разбирает список слагов из textarea формы — по одному на строку.
+	 *
+	 * Только нижний регистр и обрезка пробелов/слешей по краям — без
+	 * `sanitize_title()`: он транслитерирует кириллицу не всегда так же, как
+	 * это когда-то сделал WordPress при создании страницы, и слаг перестал
+	 * бы совпадать с `post_name`. Ожидается, что владелец сайта скопирует
+	 * слаг из адресной строки (последний сегмент пути), а не впишет
+	 * заголовок страницы.
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 * @return list<string>
+	 */
+	private function sanitizeSitemapExcludedSlugs( array $input ): array {
+		$raw   = (string) ( $input['sitemap_excluded_slugs'] ?? '' );
+		$lines = preg_split( '/[\r\n]+/', $raw );
+
+		$slugs = array();
+
+		foreach ( is_array( $lines ) ? $lines : array() as $line ) {
+			$slug = strtolower( trim( (string) $line, " \t\n\r\0\x0B/" ) );
+
+			if ( '' !== $slug ) {
+				$slugs[] = $slug;
+			}
+		}
+
+		return array_values( array_unique( $slugs ) );
 	}
 
 	/**

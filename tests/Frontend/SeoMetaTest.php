@@ -217,6 +217,111 @@ final class SeoMetaTest extends TestCase {
 		$this->assertStringContainsString( '"@id":"https://site.ru/#organization"', $document->html() );
 	}
 
+	/**
+	 * Пункт 2 жалобы, воспроизведён буквально: сайтовый логотип
+	 * (`Organization.logo`, тип `ImageObject`) не должен менять `@id` между
+	 * языками, хотя `ImageObject` сам по себе ни стабилен, ни страницезависим
+	 * (см. JsonLdRulesTest::testUnknownTypeIsNeitherStableNorPageScoped) —
+	 * решает не тип, а то, что на него ссылаются как на `logo`.
+	 */
+	public function testLogoImageObjectIdIsStableAcrossLanguages(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/#organization",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/#logo","url":"https://site.ru/logo.png"}}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, $this->target() );
+
+		$this->assertStringContainsString( '"@id":"https://site.ru/#logo"', $document->html() );
+	}
+
+	/**
+	 * Тот же случай, что и у Organization/Person/WebSite: SEO-плагин строит
+	 * `@id` логотипа через `home_url()`, который уже прошёл через наш
+	 * фильтр языкового префикса до того, как страница попала в SeoMeta —
+	 * значение приходит С чужим префиксом и должно быть возвращено к виду
+	 * без него, а не просто оставлено как есть.
+	 */
+	public function testLogoImageObjectIdWithBakedInPrefixIsNormalized(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/en/#logo","url":"https://site.ru/logo.png"}}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, $this->target() );
+
+		$html = $document->html();
+
+		$this->assertStringContainsString( '"@id":"https://site.ru/#logo"', $html );
+		$this->assertStringNotContainsString( '/en/#logo', $html );
+	}
+
+	/**
+	 * Пункт 4 жалобы: логотип и изображение самой записи — оба `ImageObject`,
+	 * но разной природы. Стабилизация `@id` логотипа (пункт 2) не должна
+	 * задеть `@id`/`url` изображения записи — оно как было, так и остаётся
+	 * нетронутым (страницезависимого типа `ImageObject` у нас нет, и это
+	 * осознанный выбор: см. JsonLdRules — файл в uploads один на все языки).
+	 */
+	public function testArticleOwnImageIsUnaffectedByLogoStabilization(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@context":"https://schema.org","@graph":['
+			. '{"@type":"Organization","@id":"https://site.ru/#organization",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/#logo","url":"https://site.ru/logo.png"}},'
+			. '{"@type":"Article","@id":"https://site.ru/about/#article",'
+			. '"image":{"@type":"ImageObject","@id":"https://site.ru/about/#primaryimage","url":"https://site.ru/wp-content/uploads/photo.jpg"}}'
+			. ']}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, $this->target() );
+
+		$html = $document->html();
+
+		// Логотип — стабилен (пункт 2).
+		$this->assertStringContainsString( '"@id":"https://site.ru/#logo"', $html );
+
+		// Изображение самой записи — нетронуто: ни @id, ни url не поменялись.
+		$this->assertStringContainsString( '"@id":"https://site.ru/about/#primaryimage"', $html );
+		$this->assertStringContainsString( '"url":"https://site.ru/wp-content/uploads/photo.jpg"', $html );
+	}
+
+	/**
+	 * Пункт 4 жалобы: og:image никогда не трогается плагином, даже когда та
+	 * же страница несёт логотип со стабилизированным `@id`, — оба механизма
+	 * независимы, один не должен просачиваться в другой.
+	 */
+	public function testOgImageStaysUntouchedWhenLogoIsAlsoPresent(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<meta property="og:image" content="https://site.ru/wp-content/uploads/2026/article-photo.jpg">'
+			. '<script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/#organization",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/#logo","url":"https://site.ru/logo.png"}}'
+			. '</script></head><body></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$this->seoMeta()->apply( $document, $this->target() );
+
+		$this->assertStringContainsString(
+			'og:image" content="https://site.ru/wp-content/uploads/2026/article-photo.jpg"',
+			$document->html()
+		);
+	}
+
 	public function testWebPageUrlDoesGetPrefixed(): void {
 		$document = HtmlDocument::parse(
 			'<!DOCTYPE html><html><head><script type="application/ld+json">'

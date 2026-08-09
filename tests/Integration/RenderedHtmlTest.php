@@ -18,6 +18,7 @@ use WpMlp\Rendering\DocumentFilter;
 use WpMlp\Rendering\Extractor;
 use WpMlp\Rendering\HtmlDocument;
 use WpMlp\Rendering\Segment;
+use WpMlp\Rendering\SegmentDeduplicator;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
@@ -128,6 +129,7 @@ final class RenderedHtmlTest extends TestCase {
 		$organizationId = $urls->absolute( '/#organization', $target );
 		$personId       = $urls->absolute( '/#/schema/person/abc123', $target );
 		$websiteId      = $urls->absolute( '/#website', $target );
+		$logoId         = $urls->absolute( '/#logo', $target );
 
 		// А эти — исходные, ещё не локализованные значения (как WebPage.url
 		// в уже существующем юнит-тесте SeoMeta): у страничных сущностей
@@ -145,6 +147,11 @@ final class RenderedHtmlTest extends TestCase {
 					array(
 						'@type' => 'Organization',
 						'@id'   => $organizationId,
+						'logo'  => array(
+							'@type' => 'ImageObject',
+							'@id'   => $logoId,
+							'url'   => self::HOME . '/wp-content/uploads/logo.png',
+						),
 					),
 					array(
 						'@type' => 'Person',
@@ -181,13 +188,16 @@ final class RenderedHtmlTest extends TestCase {
 		);
 
 		return '<!DOCTYPE html><html><head>'
+			. '<title>Заголовок статьи</title>'
 			. '<link rel="canonical" href="' . self::HOME . '/about/">'
 			. '<meta property="og:url" content="' . self::HOME . '/about/">'
 			. '<meta property="og:locale" content="ru_RU">'
+			. '<meta property="og:title" content="Заголовок статьи">'
+			. '<meta name="twitter:title" content="Заголовок статьи">'
 			. '<script type="application/ld+json">' . $jsonLd . '</script>'
 			. '</head><body>'
 			. '<nav>' . $this->switcherMarkup( $urls, $request['settings'] ) . '</nav>'
-			. '<main><p>Добро пожаловать</p></main>'
+			. '<main><h1>Заголовок статьи</h1><p>Добро пожаловать</p></main>'
 			. '<footer>'
 			. '<a href="/blog/ru/">Home</a>'
 			. '<a href="/ru/discuss-the-task/">Discuss the task</a>'
@@ -315,6 +325,22 @@ final class RenderedHtmlTest extends TestCase {
 	}
 
 	/**
+	 * Пункт 2 жалобы, воспроизведён буквально примером из неё: логотип
+	 * (`https://centerai.eu/blog/#logo` в реальной жалобе, здесь —
+	 * `https://site.example/blog/#logo`) не должен получать `/en/`/`/bg/`
+	 * ни на одном языке — как и Organization/Person/WebSite.
+	 */
+	public function testLogoIdIsIdenticalOnEveryLanguage(): void {
+		foreach ( array( '', 'bg', 'en' ) as $slug ) {
+			$html = $this->render( $slug )['html'];
+
+			$this->assertStringContainsString( '"@id":"https://site.example/blog/#logo"', $html, "wrong logo @id on '$slug'" );
+			$this->assertStringNotContainsString( '/en/#logo', $html );
+			$this->assertStringNotContainsString( '/bg/#logo', $html );
+		}
+	}
+
+	/**
 	 * Пункт 3 жалобы, вторая половина: WebPage/Article/BreadcrumbList,
 	 * наоборот, ДОЛЖНЫ получать префикс текущего языка.
 	 */
@@ -375,6 +401,60 @@ final class RenderedHtmlTest extends TestCase {
 
 		$this->assertStringContainsString( '© 2026 Example. All rights reserved.', $translated );
 		$this->assertStringNotContainsString( 'Все права защищены', $translated );
+	}
+
+	/**
+	 * Пункт 3 жалобы, воспроизведён на всей странице целиком, а не в
+	 * изоляции: заголовок записи в `<title>`, H1, og:title, twitter:title и
+	 * JSON-LD `headline` — везде одна и та же фраза «Заголовок статьи» — все
+	 * должны свестись к ОДНОМУ сегменту словаря (один uniq_hash), и перевод,
+	 * подставленный туда один раз, обязан оказаться сразу во всех пяти
+	 * местах готовой страницы — без ручного перевода каждого по отдельности
+	 * и без риска разных формулировок.
+	 */
+	public function testPostTitleIsConsistentAcrossHeadTitleH1OgTwitterAndJsonLdHeadline(): void {
+		$request  = $this->requestFor( 'en' );
+		$source   = $this->page( $request );
+		$document = HtmlDocument::parse( $source );
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Заголовок статьи' === $s->text ) );
+
+		// <title>, og:title, twitter:title, JSON-LD headline, H1 — пять мест.
+		$this->assertCount( 5, $matching, 'Ожидалось пять сегментов с текстом заголовка записи.' );
+
+		$hashes = array_unique( array_map( static fn( Segment $s ): string => $s->uniqHash, $matching ) );
+		$this->assertCount( 1, $hashes, 'У всех пяти мест заголовка должен быть один и тот же uniq_hash.' );
+
+		/*
+		 * Аудит 64027, пункт 5: представитель, которого Translator выберет
+		 * для этого общего хеша (а значит и kind, с которым строка попадёт
+		 * в sources), обязан быть SEO-сегментом (og:title/headline), а не
+		 * H1/`<title>` — иначе объединённая строка заголовка пропадёт из
+		 * фильтра «Тип → SEO/GEO» в «Переводе строк» (см.
+		 * SegmentDeduplicatorTest для правила приоритета в изоляции).
+		 */
+		$representative = SegmentDeduplicator::deduplicate( $segments )[ $hashes[0] ];
+		$this->assertTrue(
+			Segment::KIND_SEO === $representative->kind
+				|| ( Segment::KIND_ATTRIBUTE === $representative->kind && 'content' === $representative->attribute ),
+			'Представитель объединённого заголовка должен быть SEO-сегментом, чтобы строка находилась фильтром SEO/GEO.'
+		);
+
+		foreach ( $matching as $segment ) {
+			$segment->apply( 'Article headline', $document );
+		}
+
+		$html = $document->html();
+
+		$this->assertStringContainsString( '<title>Article headline</title>', $html );
+		$this->assertStringContainsString( '<h1>Article headline</h1>', $html );
+		$this->assertStringContainsString( 'og:title" content="Article headline"', $html );
+		$this->assertStringContainsString( 'twitter:title" content="Article headline"', $html );
+		$this->assertStringContainsString( '"headline":"Article headline"', $html );
+		$this->assertStringNotContainsString( 'Заголовок статьи', $html );
 	}
 
 	/**

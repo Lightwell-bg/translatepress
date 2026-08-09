@@ -278,4 +278,157 @@ final class ExtractorTest extends TestCase {
 		$this->assertNotNull( $document );
 		$this->assertStringContainsString( 'Текст', $document->html() );
 	}
+
+	/**
+	 * Находит сегмент с точным (не нормализованным-обрезанным) текстом.
+	 *
+	 * @param list<Segment> $segments Найденные сегменты.
+	 * @param string        $text     Искомый нормализованный текст.
+	 */
+	private function segmentWithText( array $segments, string $text ): ?Segment {
+		foreach ( $segments as $segment ) {
+			if ( $segment->text === $text ) {
+				return $segment;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Пункт 3 жалобы: заголовок записи должен получать один и тот же перевод
+	 * в H1, `<title>`, og:title и twitter:title — иначе SEO-плагин выводит
+	 * четыре независимо переведённых, потенциально расходящихся варианта
+	 * одной и той же фразы. og:title/twitter:title хранятся как attribute
+	 * (см. testTitleMetaKeepsOwnStoredKind ниже), но хешируются как обычный
+	 * текст — ровно как H1 и `<title>`.
+	 */
+	public function testOgAndTwitterTitleShareHashWithMatchingHeadingText(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<title>Пять советов</title>'
+			. '<meta property="og:title" content="Пять советов">'
+			. '<meta name="twitter:title" content="Пять советов">'
+			. '</head><body><h1>Пять советов</h1></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Пять советов' === $s->text ) );
+
+		$this->assertCount( 4, $matching, 'title/og:title/twitter:title/H1 должны дать четыре сегмента с одним и тем же текстом.' );
+
+		$hashes = array_unique( array_map( static fn( Segment $s ): string => $s->uniqHash, $matching ) );
+
+		$this->assertCount( 1, $hashes, 'У title/og:title/twitter:title/H1 с одинаковым текстом должен быть один uniq_hash.' );
+	}
+
+	/**
+	 * Перевод, найденный по общему хешу, применяется независимо от того,
+	 * в какой именно из четырёх сегментов подставлять, — так и должно быть,
+	 * раз хеш один: Translator подставляет один и тот же перевод во все.
+	 */
+	public function testApplyingSharedTranslationReachesEverySurface(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<title>Пять советов</title>'
+			. '<meta property="og:title" content="Пять советов">'
+			. '</head><body><h1>Пять советов</h1></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+
+		foreach ( $segments as $segment ) {
+			if ( 'Пять советов' === $segment->text ) {
+				$segment->apply( 'Five tips', $document );
+			}
+		}
+
+		$html = $document->html();
+
+		$this->assertStringContainsString( '<title>Five tips</title>', $html );
+		$this->assertStringContainsString( 'og:title" content="Five tips"', $html );
+		$this->assertStringContainsString( '<h1>Five tips</h1>', $html );
+		$this->assertStringNotContainsString( 'Пять советов', $html );
+	}
+
+	/**
+	 * og:title остаётся ПО ХРАНЕНИЮ атрибутом (`kind = attribute`), а не
+	 * текстом: только хеш общий с текстом, не сам вид строки. Это важно для
+	 * пункта 5 жалобы — meta-поля обязаны оставаться отличимыми как
+	 * SEO/GEO в «Переводе строк», а не превращаться в обычный «Текст».
+	 */
+	public function testTitleMetaKeepsOwnStoredKindDespiteSharedHash(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<meta property="og:title" content="Пять советов">'
+			. '</head><body><h1>Пять советов</h1></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$ogTitle  = $this->segmentWithText( $segments, 'Пять советов' );
+
+		foreach ( $segments as $segment ) {
+			if ( Segment::KIND_ATTRIBUTE === $segment->kind && 'content' === $segment->attribute ) {
+				$ogTitle = $segment;
+			}
+		}
+
+		$this->assertNotNull( $ogTitle );
+		$this->assertSame( Segment::KIND_ATTRIBUTE, $ogTitle->kind );
+		$this->assertSame( 'content', $ogTitle->attribute );
+	}
+
+	/**
+	 * Область действия узкая: только og:title/twitter:title, НЕ любое meta.
+	 * og:description с тем же текстом, что и обычный абзац где-то на
+	 * странице, — это совпадение, а не признак «одна и та же фраза заголовка»,
+	 * и не должно неожиданно склеиваться в один перевод.
+	 */
+	public function testOgDescriptionDoesNotShareHashWithMatchingText(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<meta property="og:description" content="Добро пожаловать">'
+			. '</head><body><p>Добро пожаловать</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Добро пожаловать' === $s->text ) );
+
+		$this->assertCount( 2, $matching );
+		$this->assertNotSame( $matching[0]->uniqHash, $matching[1]->uniqHash );
+	}
+
+	/**
+	 * Когда текст правда разный (например, у `<title>` есть суффикс с именем
+	 * сайта, которого нет в H1), хеши остаются разными — общий хеш-вид не
+	 * заставляет РАЗНЫЙ текст притворяться одинаковым, он лишь снимает
+	 * искусственное различие по виду сегмента для текста, который и так
+	 * совпадает.
+	 */
+	public function testTitleWithSiteNameSuffixStaysDistinctFromBareHeading(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><head>'
+			. '<title>Пять советов — CenterAI</title>'
+			. '<meta property="og:title" content="Пять советов">'
+			. '</head><body><h1>Пять советов</h1></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments  = ( new Extractor() )->extract( $document, 'ru' );
+		$pageTitle = $this->segmentWithText( $segments, 'Пять советов — CenterAI' );
+		$ogTitle   = $this->segmentWithText( $segments, 'Пять советов' );
+
+		$this->assertNotNull( $pageTitle );
+		$this->assertNotNull( $ogTitle );
+		$this->assertNotSame( $pageTitle->uniqHash, $ogTitle->uniqHash );
+	}
 }

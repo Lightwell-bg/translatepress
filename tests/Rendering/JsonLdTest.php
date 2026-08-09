@@ -280,4 +280,105 @@ final class JsonLdTest extends TestCase {
 		$this->assertTrue( JsonLdRules::isTranslatable( 'name', 'ListItem' ) );
 		$this->assertFalse( JsonLdRules::isTranslatable( 'name', 'Organization' ) );
 	}
+
+	/**
+	 * Пункт 3 жалобы: `headline` — заголовок записи внутри графа, тот же
+	 * текст, что и H1/`<title>`/og:title. Должен получать тот же uniq_hash,
+	 * что и обычный текстовый сегмент с теми же словами, — иначе редактор,
+	 * переводящий страницу, и «Перевод строк» заводят для одной фразы два
+	 * несвязанных словарных ключа.
+	 */
+	public function testHeadlineSharesHashWithMatchingPlainText(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Article","headline":"Пять советов"}'
+			. '</script></head><body><h1>Пять советов</h1></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Пять советов' === $s->text ) );
+
+		$this->assertCount( 2, $matching, 'headline и H1 должны дать два сегмента с одним и тем же текстом.' );
+		$this->assertSame( $matching[0]->uniqHash, $matching[1]->uniqHash );
+
+		// headline остаётся SEO/GEO по хранимому виду — общий только хеш.
+		$headline = Segment::KIND_SEO === $matching[0]->kind ? $matching[0] : $matching[1];
+		$this->assertSame( Segment::KIND_SEO, $headline->kind );
+	}
+
+	/**
+	 * Только `headline` — не любое поле графа. `description` с тем же
+	 * текстом, что и случайный абзац на странице, не должна неожиданно
+	 * склеиваться с ним в один словарный ключ.
+	 */
+	public function testDescriptionDoesNotShareHashWithMatchingPlainText(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Article","description":"Добро пожаловать"}'
+			. '</script></head><body><p>Добро пожаловать</p></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Добро пожаловать' === $s->text ) );
+
+		$this->assertCount( 2, $matching );
+		$this->assertNotSame( $matching[0]->uniqHash, $matching[1]->uniqHash );
+	}
+
+	/**
+	 * Пункт 2 жалобы: `logoReferenceIds()` находит `@id` логотипа, когда он
+	 * задан полным inline-определением (несёт и `@type`, и `@id` на своём
+	 * уровне) — самая частая форма у Yoast/Rank Math.
+	 */
+	public function testLogoReferenceIdsFindsInlineDefinition(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization","url":"https://site.ru/en/",'
+			. '"logo":{"@type":"ImageObject","@id":"https://site.ru/en/#logo","url":"https://site.ru/logo.png"}}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame( array( 'https://site.ru/en/#logo' ), $json->logoReferenceIds() );
+	}
+
+	/**
+	 * То же самое, но `logo` — голая ссылка без собственного `@type`
+	 * (`{"@id":"..."}`) — валидная, хоть и менее распространённая форма.
+	 */
+	public function testLogoReferenceIdsFindsBareReference(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization","logo":{"@id":"https://site.ru/en/#logo"}}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame( array( 'https://site.ru/en/#logo' ), $json->logoReferenceIds() );
+	}
+
+	public function testLogoReferenceIdsIsEmptyWhenThereIsNoLogo(): void {
+		$html     = '<!DOCTYPE html><html><head><script type="application/ld+json">'
+			. '{"@type":"Organization","@id":"https://site.ru/en/#organization"}'
+			. '</script></head><body></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$script = $document->document()->getElementsByTagName( 'script' )->item( 0 );
+		$json   = JsonLdDocument::fromNode( $script );
+
+		$this->assertNotNull( $json );
+		$this->assertSame( array(), $json->logoReferenceIds() );
+	}
 }

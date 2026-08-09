@@ -163,6 +163,23 @@ final class SocialMetaTest extends TestCase {
 		$this->assertNotContains( 'Иван Петров', $texts );
 	}
 
+	/**
+	 * Пункт 6 жалобы (аудит 64027): `og:site_name` — название сайта целиком
+	 * («CenterAI»), то же имя бренда, что и `name` у `Organization`/`WebSite`
+	 * в JSON-LD, которое уже защищено (JsonLdRules::NAME_IS_PROPER_NOUN).
+	 * Если бы `og:site_name` оставался переводимым, брендовое имя можно было
+	 * бы случайно поменять в «Переводе строк» ровно там, где JSON-LD того же
+	 * названия не даёт так сделать.
+	 */
+	public function testIgnoresSiteNameAsAProperNoun(): void {
+		$texts = $this->texts(
+			'<meta property="og:site_name" content="CenterAI">'
+			. '<meta property="og:title" content="Только это">'
+		);
+
+		$this->assertSame( array( 'Только это' ), $texts );
+	}
+
 	public function testIgnoresUnrelatedMeta(): void {
 		$texts = $this->texts(
 			'<meta name="viewport" content="width=device-width">'

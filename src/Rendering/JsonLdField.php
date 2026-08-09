@@ -36,4 +36,16 @@ final class JsonLdField implements TranslatableTarget {
 	public function applyTranslation( string $translation ): void {
 		$this->document->set( $this->path, $translation );
 	}
+
+	/**
+	 * Имя самого поля — последний элемент пути (`headline`, `description`…).
+	 *
+	 * Нужно Extractor'у, чтобы отличить `headline` (дублирует заголовок
+	 * записи, хешируется как обычный текст, см. Extractor::makeSegment())
+	 * от остальных переводимых полей JSON-LD — не разбирать `$path` заново
+	 * там, где для этого уже есть готовый объект.
+	 */
+	public function key(): string {
+		return array() !== $this->path ? (string) $this->path[ count( $this->path ) - 1 ] : '';
+	}
 }

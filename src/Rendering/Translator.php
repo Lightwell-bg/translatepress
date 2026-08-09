@@ -86,11 +86,7 @@ final class Translator {
 		}
 
 		// Одинаковые строки на странице ищем один раз (ТЗ 4.5).
-		$unique = array();
-
-		foreach ( $segments as $segment ) {
-			$unique[ $segment->uniqHash ] ??= $segment;
-		}
+		$unique = SegmentDeduplicator::deduplicate( $segments );
 
 		$found = $editorMode
 			? $this->sources->lookup( array_keys( $unique ), $target->locale )
