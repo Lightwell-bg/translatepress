@@ -37,6 +37,11 @@ final class StringTranslationPage implements Hookable {
 	public const ACTION_PURGE = 'mlp_purge_translations';
 
 	/**
+	 * Чистка собранных строк интерфейса без перевода.
+	 */
+	public const ACTION_CLEAN_GETTEXT = 'mlp_clean_gettext';
+
+	/**
 	 * Вкладка «Контент» — тексты сайта: записи, страницы, меню, виджеты.
 	 */
 	public const TAB_CONTENT = 'content';
@@ -61,6 +66,7 @@ final class StringTranslationPage implements Hookable {
 	 * @param ProviderFactory        $providers    Доступы к провайдеру перевода.
 	 * @param OccurrenceRepository   $occurrences  Места использования строк.
 	 * @param InterfaceStringsScreen $interface    Вкладка «Интерфейс».
+	 * @param GettextRepository      $gettext      Gettext-часть словаря.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
@@ -69,7 +75,8 @@ final class StringTranslationPage implements Hookable {
 		private readonly TranslationCache $cache,
 		private readonly ProviderFactory $providers,
 		private readonly OccurrenceRepository $occurrences,
-		private readonly InterfaceStringsScreen $interface
+		private readonly InterfaceStringsScreen $interface,
+		private readonly GettextRepository $gettext
 	) {
 	}
 
@@ -80,6 +87,7 @@ final class StringTranslationPage implements Hookable {
 		add_action( 'admin_menu', array( $this, 'addMenu' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_post_' . self::ACTION_PURGE, array( $this, 'handlePurge' ) );
+		add_action( 'admin_post_' . self::ACTION_CLEAN_GETTEXT, array( $this, 'handleCleanGettext' ) );
 	}
 
 	/**
@@ -112,6 +120,41 @@ final class StringTranslationPage implements Hookable {
 					'page'        => self::MENU_SLUG,
 					'mlp_locale'  => $language->locale,
 					'mlp-purged'  => (string) $deleted,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Убирает собранные строки интерфейса, которые никто не переводил.
+	 *
+	 * Отдельно от «удалить все переводы»: там удаляются переводы и
+	 * остаются исходные строки, а здесь наоборот — уходят сами строки,
+	 * но только те, что никто не трогал руками. Для gettext это
+	 * безопасно: они собираются заново сами при следующем показе страницы.
+	 */
+	public function handleCleanGettext(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::ACTION_CLEAN_GETTEXT );
+
+		$deleted = $this->gettext->deleteUntranslated();
+		$this->cache->flush();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		$locale = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => self::MENU_SLUG,
+					'mlp_tab'     => self::TAB_INTERFACE,
+					'mlp_locale'  => $locale,
+					'mlp-cleaned' => (string) $deleted,
 				),
 				admin_url( 'admin.php' )
 			)
@@ -198,7 +241,9 @@ final class StringTranslationPage implements Hookable {
 			<?php $this->renderAiNotice(); ?>
 
 			<?php if ( self::TAB_INTERFACE === $tab ) : ?>
-				<?php $this->renderInterfaceTab( $secondary[ $filters['locale'] ], $filters ); ?>
+				<?php $this->renderCleanNotice(); ?>
+				<?php $this->renderInterfaceTab( $secondary[ $filters['locale'] ], $secondary, $filters ); ?>
+				<?php $this->renderCleanForm( $filters['locale'] ); ?>
 			<?php else : ?>
 				<?php $this->renderStringsTab( $tab, $secondary, $filters ); ?>
 			<?php endif; ?>
@@ -213,9 +258,10 @@ final class StringTranslationPage implements Hookable {
 	 * @param Language                                                                                     $language Целевой язык.
 	 * @param array{locale: string, status: string, search: string, domain: string, page: int} $filters  Текущие фильтры.
 	 */
-	private function renderInterfaceTab( Language $language, array $filters ): void {
+	private function renderInterfaceTab( Language $language, array $secondary, array $filters ): void {
 		$this->interface->render(
 			$language,
+			$secondary,
 			array(
 				'domain' => $filters['domain'],
 				'status' => $filters['status'],
@@ -298,6 +344,53 @@ final class StringTranslationPage implements Hookable {
 
 		<?php $this->renderTableNav( $result['total'], $filters, 'bottom' ); ?>
 		<?php
+	}
+
+	/**
+	 * Кнопка чистки собранных строк интерфейса.
+	 *
+	 * @param string $locale Текущий язык — вернуться на ту же вкладку.
+	 */
+	private function renderCleanForm( string $locale ): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_CLEAN_GETTEXT ); ?>">
+			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $locale ); ?>">
+			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
+
+			<button type="submit" class="button"
+				data-mlp-confirm="<?php esc_attr_e( 'Убрать собранные строки интерфейса, у которых нет ни одного перевода? Ваши переопределения останутся, а нужные строки соберутся заново при следующем показе страниц.', 'wp-mlp' ); ?>">
+				<?php esc_html_e( 'Очистить несохранённые строки интерфейса', 'wp-mlp' ); ?>
+			</button>
+			<span class="description">
+				<?php esc_html_e( 'Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
+			</span>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Сообщение о результате чистки.
+	 */
+	private function renderCleanNotice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение счётчика из URL.
+		if ( ! isset( $_GET['mlp-cleaned'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение приводится к целому.
+		$deleted = absint( $_GET['mlp-cleaned'] );
+
+		printf(
+			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: number of deleted strings */
+					__( 'Убрано строк интерфейса: %s.', 'wp-mlp' ),
+					number_format_i18n( $deleted )
+				)
+			)
+		);
 	}
 
 	/**

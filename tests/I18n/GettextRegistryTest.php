@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WpMlp\I18n\GettextKey;
 use WpMlp\I18n\GettextRegistry;
+use WpMlp\I18n\LanguagePacks;
 use WpMlp\I18n\LocaleSwitcher;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Settings\Settings;
@@ -76,7 +77,9 @@ final class GettextRegistryTest extends TestCase {
 			)
 		);
 
-		wp_mlp_test_request( array() );
+		// Пакет болгарского установлен: без него сбор строк намеренно
+		// выключен целиком (см. testMissingLanguagePackStopsCollecting).
+		wp_mlp_test_request( array( 'languages' => array( 'bg_BG' ) ) );
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 
 		/*
@@ -102,7 +105,8 @@ final class GettextRegistryTest extends TestCase {
 			new LocaleSwitcher( new LanguageResolver( $settings ) ),
 			$store,
 			new TranslationCache(),
-			$settings
+			$settings,
+			new LanguagePacks()
 		);
 	}
 
@@ -275,6 +279,9 @@ final class GettextRegistryTest extends TestCase {
 		$options[ Settings::OPTION ]['languages']['en']['wp_locale'] = 'en_GB';
 		wp_mlp_test_options( $options );
 
+		// У британского английского пакет есть — иначе сбор выключен вовсе.
+		wp_mlp_test_request( array( 'languages' => array( 'en_GB' ) ) );
+
 		$_SERVER['REQUEST_URI'] = '/en/about/';
 
 		$store    = new InMemoryGettextStore();
@@ -284,6 +291,60 @@ final class GettextRegistryTest extends TestCase {
 		$registry->flush();
 
 		$this->assertCount( 1, $store->inserted );
+	}
+
+	/**
+	 * У ядра WordPress есть msgid, которые переводом не являются: запятая-
+	 * разделитель, `–` с контекстом «en dash», список сокращений для
+	 * wptexturize(). Технически это gettext, но в списке «переведите
+	 * интерфейс» они только прячут за собой настоящие строки.
+	 */
+	public function testPunctuationOnlyMsgidsAreNotCollected(): void {
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( ',', ',', 'default' );
+		$registry->filterTextWithContext( '–', '–', 'en dash', 'default' );
+		$registry->filterTextWithContext( '×', '×', 'multiplication', 'default' );
+		$registry->flush();
+
+		$this->assertSame( array(), $store->inserted );
+	}
+
+	/**
+	 * Настоящая строка интерфейса рядом с ними всё равно собирается —
+	 * фильтр отсекает мусор, а не всё подряд.
+	 */
+	public function testRealStringsAreStillCollectedAlongsidePunctuation(): void {
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( ',', ',', 'default' );
+		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
+		$registry->flush();
+
+		$this->assertCount( 1, $store->inserted );
+		$this->assertSame( 'Download now', $store->inserted[0]['msgid'] );
+	}
+
+	/**
+	 * Без языкового пакета WordPress возвращает оригинал КАЖДОЙ строки —
+	 * ядра, темы и всех плагинов. Собирать их значит завалить словарь
+	 * тысячами строк, среди которых не найти те несколько, что правда
+	 * ждут перевода. Пока пакета нет, сбор выключен целиком, а админка
+	 * объясняет, почему список пуст.
+	 */
+	public function testMissingLanguagePackStopsCollecting(): void {
+		wp_mlp_test_request( array( 'languages' => array() ) );
+
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( 'Reply', 'Reply', 'default' );
+		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
+		$registry->flush();
+
+		$this->assertSame( array(), $store->inserted );
 	}
 
 	/**

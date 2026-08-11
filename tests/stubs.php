@@ -319,6 +319,18 @@ if ( ! function_exists( 'wp_doing_cron' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_available_languages' ) ) {
+	/**
+	 * Установленные языковые пакеты. Настоящая функция сканирует
+	 * `wp-content/languages`; в тестах список задаётся контекстом запроса.
+	 *
+	 * @return list<string>
+	 */
+	function get_available_languages(): array {
+		return (array) ( wp_mlp_test_request()['languages'] ?? array() );
+	}
+}
+
 if ( ! function_exists( 'update_option' ) ) {
 	/**
 	 * @param string $name  Ключ.

@@ -320,7 +320,8 @@ final class Plugin {
 				$c->get( LocaleSwitcher::class ),
 				$c->get( GettextRepository::class ),
 				$c->get( TranslationCache::class ),
-				$c->get( Settings::class )
+				$c->get( Settings::class ),
+				$c->get( LanguagePacks::class )
 			)
 		);
 
@@ -335,7 +336,8 @@ final class Plugin {
 		$c->set(
 			InterfaceStringsScreen::class,
 			static fn( Container $c ): InterfaceStringsScreen => new InterfaceStringsScreen(
-				$c->get( GettextRepository::class )
+				$c->get( GettextRepository::class ),
+				$c->get( LanguagePacks::class )
 			)
 		);
 
@@ -348,7 +350,8 @@ final class Plugin {
 				$c->get( TranslationCache::class ),
 				$c->get( ProviderFactory::class ),
 				$c->get( OccurrenceRepository::class ),
-				$c->get( InterfaceStringsScreen::class )
+				$c->get( InterfaceStringsScreen::class ),
+				$c->get( GettextRepository::class )
 			)
 		);
 

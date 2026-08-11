@@ -86,16 +86,23 @@ final class GettextRegistry implements Hookable {
 	private bool $flushScheduled = false;
 
 	/**
+	 * Установлен ли пакет целевого языка. null — ещё не проверяли.
+	 */
+	private ?bool $hasPack = null;
+
+	/**
 	 * @param LocaleSwitcher   $switcher   Решение «переключаемся ли мы сейчас».
 	 * @param GettextStore     $repository Gettext-часть словаря.
 	 * @param TranslationCache $cache      Кэш переводов (нужен номер версии).
 	 * @param Settings         $settings   Настройки плагина.
+	 * @param LanguagePacks    $packs      Языковые пакеты WordPress.
 	 */
 	public function __construct(
 		private readonly LocaleSwitcher $switcher,
 		private readonly GettextStore $repository,
 		private readonly TranslationCache $cache,
-		private readonly Settings $settings
+		private readonly Settings $settings,
+		private readonly LanguagePacks $packs
 	) {
 	}
 
@@ -283,6 +290,32 @@ final class GettextRegistry implements Hookable {
 			return;
 		}
 
+		if ( ! Text::isTranslatable( Text::normalize( $msgid ) ) ) {
+			/*
+			 * У ядра есть msgid, которые переводом не являются вовсе:
+			 * запятая-разделитель, `–` с контекстом «en dash», формат даты,
+			 * список сокращений для wptexturize(). Технически они gettext,
+			 * но человеку в списке «переведите интерфейс» они не нужны и
+			 * только прячут за собой настоящие строки. Отсеиваются тем же
+			 * правилом, что и текст из DOM (Support\Text::isTranslatable()):
+			 * без единой буквы, голый URL, плейсхолдер — не строка.
+			 */
+			return;
+		}
+
+		if ( ! $this->hasLanguagePack() ) {
+			/*
+			 * Пакета для целевого языка нет вовсе — значит WordPress вернул
+			 * оригинал КАЖДОЙ строки ядра, темы и плагинов, и «не покрыто
+			 * переводом» тут означает не «нужно перевести руками», а
+			 * «сначала поставьте пакет». Собранные в таком состоянии тысячи
+			 * строк — не рабочий список, а шум, в котором не найти те
+			 * несколько, что действительно ждут перевода. Админка объясняет
+			 * это на самой вкладке «Интерфейс».
+			 */
+			return;
+		}
+
 		if ( $this->targetIsSourceLanguage() ) {
 			/*
 			 * Целевой язык — тот же, на котором написан сам msgid (то есть
@@ -319,6 +352,22 @@ final class GettextRegistry implements Hookable {
 	 * оригинала. Британский сайт вполне может захотеть переопределить
 	 * «color» на «colour», и такие строки в словарь попадать должны.
 	 */
+	/**
+	 * Установлен ли языковой пакет целевого языка.
+	 *
+	 * Ответ мемоизируется: проверка сканирует каталог переводов, а
+	 * спрашивают её на каждой ненайденной строке — то есть потенциально
+	 * тысячи раз за запрос.
+	 */
+	private function hasLanguagePack(): bool {
+		if ( null === $this->hasPack ) {
+			$language      = $this->switcher->targetLanguage();
+			$this->hasPack = null !== $language && $this->packs->isInstalled( $language->wpLocale );
+		}
+
+		return $this->hasPack;
+	}
+
 	private function targetIsSourceLanguage(): bool {
 		$language = $this->switcher->targetLanguage();
 

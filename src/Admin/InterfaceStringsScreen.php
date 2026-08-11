@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\Admin;
 
 use WpMlp\I18n\DomainLabel;
+use WpMlp\I18n\LanguagePacks;
 use WpMlp\Settings\Language;
 use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\TranslationStatus;
@@ -33,8 +34,12 @@ final class InterfaceStringsScreen {
 
 	/**
 	 * @param GettextRepository $gettext Gettext-часть словаря.
+	 * @param LanguagePacks     $packs   Языковые пакеты WordPress.
 	 */
-	public function __construct( private readonly GettextRepository $gettext ) {
+	public function __construct(
+		private readonly GettextRepository $gettext,
+		private readonly LanguagePacks $packs
+	) {
 	}
 
 	/**
@@ -45,7 +50,9 @@ final class InterfaceStringsScreen {
 	 * @param int                                                                               $perPage  Строк на странице.
 	 * @param callable(int, int): void                                                          $renderNav Постраничная навигация.
 	 */
-	public function render( Language $language, array $filters, int $perPage, callable $renderNav ): void {
+	public function render( Language $language, array $secondary, array $filters, int $perPage, callable $renderNav ): void {
+		$this->renderPackNotice( $language );
+
 		$result = $this->gettext->paginate(
 			array(
 				'locale'   => $language->locale,
@@ -65,7 +72,7 @@ final class InterfaceStringsScreen {
 			<?php esc_html_e( 'Строки самого WordPress, темы и плагинов. Большинство из них переводит официальный языковой пакет — здесь показано только то, для чего перевода в пакете не нашлось, и то, что вы поправили вручную.', 'wp-mlp' ); ?>
 		</p>
 
-		<?php $this->renderFilters( $filters, $result['total'] ); ?>
+		<?php $this->renderFilters( $language, $secondary, $filters, $result['total'] ); ?>
 		<?php $renderNav( $result['total'], (int) $filters['page'] ); ?>
 
 		<table class="widefat striped wp-mlp-table">
@@ -281,14 +288,22 @@ final class InterfaceStringsScreen {
 	 * @param array{domain: string, status: string, search: string, page: int} $filters Текущие фильтры.
 	 * @param int                                                              $total   Всего строк.
 	 */
-	private function renderFilters( array $filters, int $total ): void {
+	private function renderFilters( Language $language, array $secondary, array $filters, int $total ): void {
 		$labels = $this->domainLabels();
 
 		?>
 		<form method="get" class="wp-mlp-filters">
 			<input type="hidden" name="page" value="<?php echo esc_attr( StringTranslationPage::MENU_SLUG ); ?>">
 			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( StringTranslationPage::TAB_INTERFACE ); ?>">
-			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $this->currentLocaleField() ); ?>">
+
+			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Язык', 'wp-mlp' ); ?></label>
+			<select name="mlp_locale" id="mlp-locale">
+				<?php foreach ( $secondary as $option ) : ?>
+					<option value="<?php echo esc_attr( $option->locale ); ?>" <?php selected( $option->locale, $language->locale ); ?>>
+						<?php echo esc_html( sprintf( '%s (%s)', $option->label, $option->locale ) ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
 
 			<label for="mlp-domain" class="screen-reader-text"><?php esc_html_e( 'Источник', 'wp-mlp' ); ?></label>
 			<select name="mlp_domain" id="mlp-domain">
@@ -331,10 +346,41 @@ final class InterfaceStringsScreen {
 	}
 
 	/**
-	 * Значение поля языка для формы фильтров.
+	 * Предупреждает, что без языкового пакета этот экран бессмыслен.
+	 *
+	 * Без пакета WordPress возвращает английские оригиналы КАЖДОЙ строки —
+	 * и ядра, и темы, и всех плагинов. Формально они все «не покрыты
+	 * переводом», но список из тысяч строк ядра (включая служебные вроде
+	 * `en dash` и правил `wptexturize`) — не рабочий перечень, а шум, в
+	 * котором не найти те несколько строк, что правда ждут перевода.
+	 * Поэтому сбор для такого языка выключен (см. GettextRegistry), а
+	 * экран честно объясняет, почему он пуст, и что делать.
+	 *
+	 * @param Language $language Целевой язык.
 	 */
-	private function currentLocaleField(): string {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение фильтра из URL.
-		return isset( $_GET['mlp_locale'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) : '';
+	private function renderPackNotice( Language $language ): void {
+		if ( $this->packs->isInstalled( $language->wpLocale ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p>%s</p><p>%s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: 1: language label, 2: WordPress locale */
+					__( 'Языковой пакет для «%1$s» (%2$s) не установлен. Пока его нет, WordPress отдаёт английские оригиналы вообще всех строк интерфейса, и собирать их в словарь бессмысленно — поэтому этот список для данного языка не пополняется.', 'wp-mlp' ),
+					$language->label,
+					$language->wpLocale
+				)
+			),
+			wp_kses(
+				sprintf(
+					/* translators: %s: link to the languages settings page */
+					__( 'Установите пакет на странице %s — после этого сюда попадёт только то, чего в нём действительно не хватает.', 'wp-mlp' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Мультиязычность → Языки', 'wp-mlp' ) . '</a>'
+				),
+				array( 'a' => array( 'href' => array() ) )
+			)
+		);
 	}
 }

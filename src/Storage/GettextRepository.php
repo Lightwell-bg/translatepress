@@ -226,6 +226,51 @@ final class GettextRepository implements GettextStore {
 	}
 
 	/**
+	 * Удаляет собранные строки интерфейса, которые никто не переводил.
+	 *
+	 * Безопасно в отличие от такой же чистки контента: gettext-строки —
+	 * данные производные, они появляются заново сами при следующем показе
+	 * страницы, если ещё нужны. А вот ручные переопределения не трогаются
+	 * вовсе: строка с непустым переводом хоть на один язык остаётся.
+	 *
+	 * Нужно после того, как в словарь успел попасть мусор — например,
+	 * строки, собранные до установки языкового пакета, когда «непереведённой»
+	 * выглядела каждая строка ядра.
+	 *
+	 * @return int Сколько строк удалено.
+	 */
+	public function deleteUntranslated(): int {
+		global $wpdb;
+
+		$sources      = Schema::table( 'sources' );
+		$translations = Schema::table( 'translations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// Сначала пустые записи переводов: иначе они остались бы сиротами
+		// и не дали бы удалить сам источник проверкой ниже.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE t FROM {$translations} t
+				 INNER JOIN {$sources} s ON s.id = t.source_id
+				 WHERE s.kind = %s AND (t.translated_text IS NULL OR t.translated_text = '')",
+				GettextKey::KIND
+			)
+		);
+
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE s FROM {$sources} s
+				 WHERE s.kind = %s
+					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
+				GettextKey::KIND
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return max( 0, (int) $deleted );
+	}
+
+	/**
 	 * Фильтр «есть наше переопределение».
 	 */
 	public const STATUS_OVERRIDDEN = 'overridden';
