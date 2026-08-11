@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+use WpMlp\I18n\GettextRegistry;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\OccurrenceRepository;
@@ -43,6 +44,7 @@ final class Translator {
 	 * @param Settings             $settings    Настройки плагина.
 	 * @param EditorContext        $editor      Режим визуального редактора.
 	 * @param EditorMarkers        $markers     Маркеры узлов для редактора.
+	 * @param GettextRegistry      $gettext     Контур строк темы и плагинов.
 	 * @param list<DocumentFilter> $filters     Пост-обработчики готового DOM.
 	 */
 	public function __construct(
@@ -53,6 +55,7 @@ final class Translator {
 		private readonly Settings $settings,
 		private readonly EditorContext $editor,
 		private readonly EditorMarkers $markers,
+		private readonly GettextRegistry $gettext,
 		private readonly array $filters = array()
 	) {
 	}
@@ -76,7 +79,14 @@ final class Translator {
 			$document,
 			$sourceLocale,
 			$this->sources->blockHashes(),
-			$editorMode
+			$editorMode,
+			/*
+			 * Строки, уже обслуженные gettext-контуром на этом же запросе,
+			 * в словарь второй раз не заводим: иначе одна и та же фраза
+			 * («Ответить») оказалась бы и в «Интерфейсе», и в «Контенте», и
+			 * переводить её пришлось бы дважды, в двух разных экранах.
+			 */
+			$this->gettext->servedTexts()
 		);
 
 		if ( array() === $segments ) {

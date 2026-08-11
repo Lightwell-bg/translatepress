@@ -227,6 +227,7 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( EditorContext::class ),
 				$c->get( EditorMarkers::class ),
+				$c->get( GettextRegistry::class ),
 				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ), $c->get( InternalLinks::class ) )
 			)
 		);
