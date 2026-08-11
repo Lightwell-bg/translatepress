@@ -19,6 +19,7 @@ use WpMlp\Frontend\SeoMeta;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Frontend\Sitemap;
 use WpMlp\Frontend\UntranslatedFilter;
+use WpMlp\I18n\LanguagePacks;
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
@@ -299,9 +300,14 @@ final class Plugin {
 			)
 		);
 
+		$c->set( LanguagePacks::class, static fn(): LanguagePacks => new LanguagePacks() );
+
 		$c->set(
 			SettingsPage::class,
-			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
+			static fn( Container $c ): SettingsPage => new SettingsPage(
+				$c->get( Settings::class ),
+				$c->get( LanguagePacks::class )
+			)
 		);
 
 		$c->set(

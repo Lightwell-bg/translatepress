@@ -50,16 +50,18 @@ final class Settings {
 			'default_locale'           => 'ru',
 			'languages'                => array(
 				'ru' => array(
-					'locale' => 'ru',
-					'slug'   => 'ru',
-					'label'  => 'Русский',
-					'status' => Language::STATUS_PUBLISHED,
+					'locale'    => 'ru',
+					'slug'      => 'ru',
+					'label'     => 'Русский',
+					'wp_locale' => 'ru_RU',
+					'status'    => Language::STATUS_PUBLISHED,
 				),
 				'en' => array(
-					'locale' => 'en',
-					'slug'   => 'en',
-					'label'  => 'English',
-					'status' => Language::STATUS_PUBLISHED,
+					'locale'    => 'en',
+					'slug'      => 'en',
+					'label'     => 'English',
+					'wp_locale' => 'en_US',
+					'status'    => Language::STATUS_PUBLISHED,
 				),
 			),
 			'discover_strings'         => true,
@@ -370,12 +372,28 @@ final class Settings {
 
 			$slugs[ $slug ] = true;
 
+			/*
+			 * Пустое поле — это «выведи сама», а не ошибка: у языков,
+			 * заведённых до появления поля, значения ещё нет, и требовать
+			 * его заполнения вручную значило бы ломать сохранение настроек
+			 * до того, как владелец сайта вообще узнает про новое поле.
+			 * Разбор пустого значения берёт на себя Language::fromArray().
+			 */
+			$wpLocale = Locale::sanitizeWpLocale( (string) ( $row['wp_locale'] ?? '' ) );
+
+			if ( '' !== $wpLocale && ! Locale::isValidWpLocale( $wpLocale ) ) {
+				/* translators: %s: WordPress locale entered by the user */
+				$errors[] = sprintf( __( 'Локаль WordPress «%s» недопустима: разрешены латинские буквы, цифры и подчёркивание, например en_US.', 'wp-mlp' ), $wpLocale );
+				$wpLocale = '';
+			}
+
 			$languages[ $locale ] = array(
-				'locale' => $locale,
-				'slug'   => $slug,
-				'label'  => sanitize_text_field( (string) ( $row['label'] ?? $locale ) ),
-				'flag'   => Language::sanitizeFlag( (string) ( $row['flag'] ?? '' ) ),
-				'status' => ( $row['status'] ?? '' ) === Language::STATUS_DRAFT
+				'locale'    => $locale,
+				'slug'      => $slug,
+				'label'     => sanitize_text_field( (string) ( $row['label'] ?? $locale ) ),
+				'flag'      => Language::sanitizeFlag( (string) ( $row['flag'] ?? '' ) ),
+				'wp_locale' => $wpLocale,
+				'status'    => ( $row['status'] ?? '' ) === Language::STATUS_DRAFT
 					? Language::STATUS_DRAFT
 					: Language::STATUS_PUBLISHED,
 			);

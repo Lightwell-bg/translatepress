@@ -133,6 +133,77 @@ final class Locale {
 	}
 
 	/**
+	 * Максимальная длина локали WordPress: `de_DE_formal` — 12 символов,
+	 * запас взят с большим избытком, ограничение защищает от мусора в поле.
+	 */
+	public const MAX_WP_LOCALE_LENGTH = 35;
+
+	/**
+	 * Предполагаемая локаль WordPress по короткому коду языка.
+	 *
+	 * ТОЛЬКО предзаполнение поля в админке, не источник истины: настоящая
+	 * локаль хранится в настройках языка и правится вручную. Угадать её
+	 * нельзя в принципе — `en` это и `en_US`, и `en_GB`, а у части языков
+	 * (каталанский `ca`, баскский `eu`) локаль WordPress вообще без региона,
+	 * и удвоение кода дало бы несуществующий `ca_CA`.
+	 *
+	 * Таблица регионов общая с {@see toOgLocale()} — сегодня оба формата
+	 * совпадают (`xx_XX`), но это разные величины: og:locale обязан быть из
+	 * документированного списка Facebook, а локаль WordPress — из списка
+	 * переводов WordPress.org. Метод отдельный именно поэтому: когда списки
+	 * разойдутся, чинить нужно будет ровно один из них.
+	 *
+	 * @param string $locale Короткий код языка из настроек.
+	 */
+	public static function toWpLocale( string $locale ): string {
+		$parts    = explode( '-', self::normalize( $locale ) );
+		$language = $parts[0];
+
+		if ( isset( $parts[1] ) && '' !== $parts[1] ) {
+			return $language . '_' . strtoupper( $parts[1] );
+		}
+
+		$region = self::OG_LOCALE_REGIONS[ $language ] ?? strtoupper( $language );
+
+		return $language . '_' . $region;
+	}
+
+	/**
+	 * Приводит локаль WordPress к безопасному виду.
+	 *
+	 * Значение попадает в имена файлов переводов (`wp-content/languages/
+	 * {locale}.mo`) и в вызовы ядра, поэтому чистится тем же способом, что
+	 * и в самом WordPress (`sanitize_locale_name()`): всё, кроме латиницы,
+	 * цифр и подчёркивания, вырезается — так в путь не проберётся ни `..`,
+	 * ни слеш.
+	 *
+	 * @param string $locale Сырое значение поля.
+	 */
+	public static function sanitizeWpLocale( string $locale ): string {
+		$locale = (string) preg_replace( '/[^A-Za-z0-9_]/', '', trim( $locale ) );
+
+		return substr( $locale, 0, self::MAX_WP_LOCALE_LENGTH );
+	}
+
+	/**
+	 * Похоже ли значение на локаль WordPress.
+	 *
+	 * Проверка намеренно широкая: список локалей WordPress живёт на
+	 * translate.wordpress.org и пополняется, зашивать его в плагин нельзя.
+	 * Требуется только то, что делает значение безопасным и осмысленным —
+	 * начинается с буквы, состоит из латиницы, цифр и подчёркиваний.
+	 *
+	 * @param string $locale Значение после sanitizeWpLocale().
+	 */
+	public static function isValidWpLocale( string $locale ): bool {
+		if ( strlen( $locale ) < 2 || strlen( $locale ) > self::MAX_WP_LOCALE_LENGTH ) {
+			return false;
+		}
+
+		return 1 === preg_match( '/^[A-Za-z][A-Za-z0-9_]*$/', $locale );
+	}
+
+	/**
 	 * Код в форме BCP-47 для атрибутов `lang` и `hreflang`.
 	 *
 	 * `pt-br` → `pt-BR`, `zh-hans-cn` → `zh-Hans-CN`. Регистр не влияет на

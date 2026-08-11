@@ -107,4 +107,46 @@ final class LocaleTest extends TestCase {
 		$this->assertSame( 'pt_BR', Locale::toOgLocale( 'pt-br' ) );
 		$this->assertSame( 'en_GB', Locale::toOgLocale( 'en-gb' ) );
 	}
+
+	/**
+	 * Предзаполнение поля «Локаль WordPress» в админке — те самые значения,
+	 * что согласованы для ru/bg/en.
+	 */
+	public function testWpLocaleDerivesTheAgreedDefaults(): void {
+		$this->assertSame( 'ru_RU', Locale::toWpLocale( 'ru' ) );
+		$this->assertSame( 'bg_BG', Locale::toWpLocale( 'bg' ) );
+		$this->assertSame( 'en_US', Locale::toWpLocale( 'en' ) );
+	}
+
+	public function testWpLocaleKeepsExplicitRegion(): void {
+		$this->assertSame( 'en_GB', Locale::toWpLocale( 'en-gb' ) );
+		$this->assertSame( 'pt_BR', Locale::toWpLocale( 'pt-br' ) );
+	}
+
+	/**
+	 * Значение уходит в имя файла перевода, поэтому из него вычищается
+	 * всё, кроме латиницы, цифр и подчёркивания — ни слеша, ни `..`.
+	 */
+	public function testWpLocaleSanitizationStripsPathCharacters(): void {
+		$this->assertSame( 'enUS', Locale::sanitizeWpLocale( 'en/US' ) );
+		$this->assertSame( 'en_US', Locale::sanitizeWpLocale( '../en_US' ) );
+		$this->assertSame( 'en_US', Locale::sanitizeWpLocale( '  en_US  ' ) );
+		$this->assertSame( 'deDEformal', Locale::sanitizeWpLocale( 'de-DE-formal' ) );
+	}
+
+	public function testWpLocaleValidationAcceptsRealLocales(): void {
+		$this->assertTrue( Locale::isValidWpLocale( 'en_US' ) );
+		$this->assertTrue( Locale::isValidWpLocale( 'de_DE_formal' ) );
+		// Локаль без региона — валидна: каталанский в WordPress именно `ca`.
+		$this->assertTrue( Locale::isValidWpLocale( 'ca' ) );
+	}
+
+	public function testWpLocaleValidationRejectsUnsafeValues(): void {
+		$this->assertFalse( Locale::isValidWpLocale( '' ) );
+		$this->assertFalse( Locale::isValidWpLocale( 'e' ) );
+		$this->assertFalse( Locale::isValidWpLocale( '../etc/passwd' ) );
+		$this->assertFalse( Locale::isValidWpLocale( 'en US' ) );
+		$this->assertFalse( Locale::isValidWpLocale( '1en' ) );
+		$this->assertFalse( Locale::isValidWpLocale( str_repeat( 'a', 40 ) ) );
+	}
 }
