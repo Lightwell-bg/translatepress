@@ -20,6 +20,7 @@ use WpMlp\Frontend\SeoTags;
 use WpMlp\Frontend\Sitemap;
 use WpMlp\Frontend\UntranslatedFilter;
 use WpMlp\I18n\LanguagePacks;
+use WpMlp\I18n\LocaleSwitcher;
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
@@ -303,6 +304,11 @@ final class Plugin {
 		$c->set( LanguagePacks::class, static fn(): LanguagePacks => new LanguagePacks() );
 
 		$c->set(
+			LocaleSwitcher::class,
+			static fn( Container $c ): LocaleSwitcher => new LocaleSwitcher( $c->get( LanguageResolver::class ) )
+		);
+
+		$c->set(
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage(
 				$c->get( Settings::class ),
@@ -377,6 +383,13 @@ final class Plugin {
 	 */
 	private static function hookableServices(): array {
 		$services = array(
+			/*
+			 * Подмена локали — самой первой: её фильтры обязаны стоять
+			 * раньше, чем ядро, тема и плагины начнут грузить свои файлы
+			 * перевода (это происходит уже после `plugins_loaded`). Всё
+			 * остальное в списке к этому моменту нечувствительно.
+			 */
+			LocaleSwitcher::class,
 			// Rewrites нужен и в админке: правила пересобираются при flush.
 			Rewrites::class,
 			UrlConverter::class,

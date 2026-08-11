@@ -248,6 +248,45 @@ if ( ! function_exists( 'get_option' ) ) {
 	}
 }
 
+/**
+ * Тип текущего запроса — на время одного теста.
+ *
+ * Константы REST_REQUEST/XMLRPC_REQUEST/WP_CLI сюда не входят намеренно:
+ * определённую константу нельзя вернуть обратно в пределах процесса, а
+ * запускать ради трёх однострочных проверок отдельный процесс дороже, чем
+ * они стоят. Проверяются функции, которые действительно можно подменить.
+ *
+ * @param array<string, bool>|null $reset Если передан массив, контекст им заменяется.
+ * @return array<string, bool>
+ */
+function wp_mlp_test_request( ?array $reset = null ): array {
+	static $context = array();
+
+	if ( null !== $reset ) {
+		$context = $reset;
+	}
+
+	return $context;
+}
+
+if ( ! function_exists( 'is_admin' ) ) {
+	function is_admin(): bool {
+		return (bool) ( wp_mlp_test_request()['is_admin'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'wp_doing_ajax' ) ) {
+	function wp_doing_ajax(): bool {
+		return (bool) ( wp_mlp_test_request()['ajax'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'wp_doing_cron' ) ) {
+	function wp_doing_cron(): bool {
+		return (bool) ( wp_mlp_test_request()['cron'] ?? false );
+	}
+}
+
 if ( ! function_exists( 'update_option' ) ) {
 	/**
 	 * @param string $name  Ключ.

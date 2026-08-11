@@ -11,6 +11,7 @@ namespace WpMlp\Rendering;
 
 use Throwable;
 use WpMlp\Routing\LanguageResolver;
+use WpMlp\Support\FrontendRequest;
 use WpMlp\Support\Hookable;
 
 /**
@@ -79,33 +80,18 @@ final class OutputBuffer implements Hookable {
 
 	/**
 	 * Нужно ли вообще включать буфер.
+	 *
+	 * Условие «служебный это запрос или обычная страница» общее с подменой
+	 * локали (см. Support\FrontendRequest): если они разойдутся, страница
+	 * получится полупереведённой — строки темы на одном языке, текст на
+	 * другом.
 	 */
 	private function shouldBuffer(): bool {
 		if ( $this->resolver->isDefault() ) {
 			return false;
 		}
 
-		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
-			return false;
-		}
-
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return false;
-		}
-
-		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
-			return false;
-		}
-
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			return false;
-		}
-
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение сравнивается со списком.
-		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
-
-		// POST-ответы это, как правило, редиректы и обработчики форм.
-		return in_array( $method, array( 'GET', 'HEAD' ), true );
+		return FrontendRequest::isPublicRender();
 	}
 
 	/**
