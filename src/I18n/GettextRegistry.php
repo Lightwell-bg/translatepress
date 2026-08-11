@@ -65,14 +65,18 @@ final class GettextRegistry implements Hookable {
 	private array $discovered = array();
 
 	/**
-	 * Нормализованные тексты, которые контур уже отдал на этой странице.
+	 * Нормализованный текст => домен, из которого он пришёл.
 	 *
 	 * Нужны {@see \WpMlp\Rendering\Extractor}: строку, обслуженную здесь,
 	 * он обязан пропустить, иначе одна и та же фраза попадёт в словарь
 	 * дважды — как `gettext` и как обычный `text` — и переводить её
 	 * придётся в двух разных местах.
 	 *
-	 * @var array<string, true>
+	 * Домен нужен визуальному редактору: строку интерфейса он не даёт
+	 * перевести на месте, но обязан объяснить почему и откуда она — иначе
+	 * клик по ней просто ничего не делает (см. EditorMarkers::markGettext()).
+	 *
+	 * @var array<string, string>
 	 */
 	private array $served = array();
 
@@ -184,7 +188,7 @@ final class GettextRegistry implements Hookable {
 	/**
 	 * Нормализованные тексты, отданные контуром на этой странице.
 	 *
-	 * @return array<string, true>
+	 * @return array<string, string> Текст => домен.
 	 */
 	public function servedTexts(): array {
 		return $this->served;
@@ -203,7 +207,7 @@ final class GettextRegistry implements Hookable {
 		$override = $this->override( $msgid, $domain, $context, $pluralKey );
 
 		if ( null !== $override ) {
-			$this->remember( $override );
+			$this->remember( $override, $domain );
 
 			return $override;
 		}
@@ -219,7 +223,7 @@ final class GettextRegistry implements Hookable {
 			$this->discover( $msgid, $domain, $context, $pluralKey );
 		}
 
-		$this->remember( $translation );
+		$this->remember( $translation, $domain );
 
 		return $translation;
 	}
@@ -351,13 +355,14 @@ final class GettextRegistry implements Hookable {
 	/**
 	 * Отмечает текст как обслуженный gettext-контуром.
 	 *
-	 * @param string $text Строка в том виде, в каком она уйдёт в разметку.
+	 * @param string $text   Строка в том виде, в каком она уйдёт в разметку.
+	 * @param string $domain Домен, из которого она пришла.
 	 */
-	private function remember( string $text ): void {
+	private function remember( string $text, string $domain ): void {
 		$normalized = Text::normalize( $text );
 
 		if ( '' !== $normalized ) {
-			$this->served[ $normalized ] = true;
+			$this->served[ $normalized ] = '' !== $domain ? $domain : DomainLabel::CORE;
 		}
 	}
 

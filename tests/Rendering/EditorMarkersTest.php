@@ -139,4 +139,58 @@ final class EditorMarkersTest extends TestCase {
 		$this->assertStringContainsString( 'data-mlp-source-id="7"', $html );
 		$this->assertStringContainsString( 'data-mlp-kind="html_block"', $html );
 	}
+
+	/**
+	 * Строка интерфейса помечается отдельным атрибутом с доменом: сегмента
+	 * у неё нет (Extractor её пропустил), обычного маркера тоже, и без
+	 * этой пометки клик по ней в предпросмотре не дал бы ничего — хуже
+	 * явного отказа, потому что непонятно, сломано оно или так задумано.
+	 */
+	public function testGettextStringIsMarkedWithItsDomain(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Reply</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		( new EditorMarkers() )->markGettext( $document, array( 'Reply' => 'default' ) );
+
+		$this->assertStringContainsString( 'data-mlp-gettext="default"', $document->html() );
+	}
+
+	/**
+	 * Уже переводимый узел не перехватывается: у него свой полноценный
+	 * маркер, и подменять его пометкой «это интерфейс» нельзя.
+	 */
+	public function testAlreadyTranslatableNodeIsNotMarkedAsGettext(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Обычный текст</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$ids      = array( $segments[0]->uniqHash => 42 );
+
+		$markers = new EditorMarkers();
+		$markers->mark( $segments, $ids, $document );
+		$markers->markGettext( $document, array( 'Обычный текст' => 'default' ) );
+
+		$html = $document->html();
+
+		$this->assertStringContainsString( 'data-mlp-source-id="42"', $html );
+		$this->assertStringNotContainsString( 'data-mlp-gettext', $html );
+	}
+
+	public function testEmptyServedListMarksNothing(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Reply</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		( new EditorMarkers() )->markGettext( $document, array() );
+
+		$this->assertStringNotContainsString( 'data-mlp-gettext', $document->html() );
+	}
 }

@@ -621,6 +621,21 @@
 			return;
 		}
 
+		/*
+		 * Строка интерфейса: поля перевода не показываем вовсе — её нельзя
+		 * перевести здесь, она живёт во вкладке «Интерфейс». Молча
+		 * игнорировать клик нельзя: пользователь решил бы, что редактор
+		 * сломан, и жал бы снова.
+		 */
+		if ( 'gettext' === event.data.type ) {
+			current = null;
+			form.hidden = true;
+			hint.hidden = false;
+			hint.textContent = settings.i18n.gettextNotice.replace( '%s', event.data.domain );
+
+			return;
+		}
+
 		if ( 'select' !== event.data.type || ! event.data.strings.length ) {
 			return;
 		}

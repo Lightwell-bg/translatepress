@@ -127,7 +127,9 @@ final class EditorPage implements Hookable {
 					'confirmDelete'     => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
 					'confirmBlock'      => __( 'Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться.', 'wp-mlp' ),
 					'blockCreated'      => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
-					'attribute'         => __( 'Атрибут', 'wp-mlp' ),
+					/* translators: %s: text domain, e.g. woocommerce */
+				'gettextNotice'     => __( 'Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс».', 'wp-mlp' ),
+				'attribute'         => __( 'Атрибут', 'wp-mlp' ),
 					'text'              => __( 'Текст', 'wp-mlp' ),
 					'htmlBlock'         => __( 'Блок с разметкой', 'wp-mlp' ),
 					'translating'       => __( 'Перевожу с ИИ…', 'wp-mlp' ),

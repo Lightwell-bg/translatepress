@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+use WpMlp\Support\Text;
+
 /**
  * Помечает переводимые узлы идентификаторами строк (ТЗ 10.2).
  *
@@ -25,6 +27,17 @@ final class EditorMarkers {
 
 	/** Префикс для строк-атрибутов: data-mlp-source-id-placeholder. */
 	public const ATTR_PREFIX = 'data-mlp-source-id-';
+
+	/**
+	 * Домен строки интерфейса — она не переводится в редакторе на месте.
+	 *
+	 * У таких строк нет ни сегмента, ни идентификатора: gettext-контур уже
+	 * их обслужил, и Extractor их намеренно пропускает (иначе завелись бы
+	 * дубли в «Контенте»). Без отдельной пометки клик по такой строке в
+	 * предпросмотре просто ничего не делал бы — а это худший вид отказа:
+	 * пользователь не понимает, сломано оно или так задумано.
+	 */
+	public const ATTR_GETTEXT = 'data-mlp-gettext';
 
 	/**
 	 * Родители, чьё содержимое в предпросмотре не кликабельно.
@@ -85,6 +98,81 @@ final class EditorMarkers {
 
 			$this->markTextNode( $segment, $id, $document );
 		}
+	}
+
+	/**
+	 * Помечает узлы, которые обслужил gettext-контур.
+	 *
+	 * Отдельный проход по документу, а не часть mark(): у этих строк нет
+	 * сегментов вовсе — Extractor их пропустил, — значит и пройтись по ним
+	 * вместе с остальными не получится. Цена лишнего обхода платится
+	 * только в предпросмотре редактора, на обычной странице этот метод не
+	 * вызывается.
+	 *
+	 * @param HtmlDocument          $document Разобранный документ.
+	 * @param array<string, string> $served   Нормализованный текст => домен.
+	 */
+	public function markGettext( HtmlDocument $document, array $served ): void {
+		if ( array() === $served ) {
+			return;
+		}
+
+		$root = $document->root();
+
+		if ( null === $root ) {
+			return;
+		}
+
+		$stack = array( $root );
+
+		while ( array() !== $stack ) {
+			$node = array_pop( $stack );
+
+			if ( 3 === $node->nodeType ) {
+				$this->markGettextNode( $node, $served );
+
+				continue;
+			}
+
+			if ( 1 !== $node->nodeType || ! isset( $node->childNodes ) ) {
+				continue;
+			}
+
+			foreach ( $node->childNodes as $child ) {
+				$stack[] = $child;
+			}
+		}
+	}
+
+	/**
+	 * Вешает пометку на родителя текстового узла, если текст пришёл из gettext.
+	 *
+	 * @param object                $node   Текстовый узел.
+	 * @param array<string, string> $served Нормализованный текст => домен.
+	 */
+	private function markGettextNode( object $node, array $served ): void {
+		$normalized = Text::normalize( (string) $node->nodeValue );
+
+		if ( '' === $normalized || ! isset( $served[ $normalized ] ) ) {
+			return;
+		}
+
+		$parent = $node->parentNode;
+
+		if ( null === $parent || ! isset( $parent->nodeName ) ) {
+			return;
+		}
+
+		if ( in_array( strtolower( (string) $parent->nodeName ), self::SKIP_PARENTS, true ) ) {
+			return;
+		}
+
+		// Уже переводимый узел не трогаем: у него свой, полноценный маркер.
+		if ( $parent->hasAttribute( self::ATTR_ID ) ) {
+			return;
+		}
+
+		$parent->setAttribute( self::ATTR_GETTEXT, $served[ $normalized ] );
 	}
 
 	/**

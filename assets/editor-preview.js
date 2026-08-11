@@ -213,6 +213,27 @@
 				return;
 			}
 
+			/*
+			 * Строка интерфейса (из gettext): переводится не здесь, а во
+			 * вкладке «Интерфейс». Сегмента у неё нет, поэтому обычный
+			 * маркер отсутствует и клик иначе не дал бы вообще ничего —
+			 * молчание тут хуже отказа, пользователь решил бы, что сломано.
+			 */
+			var gettext = event.target.closest( '[data-mlp-gettext]' );
+
+			if ( gettext ) {
+				if ( link ) {
+					event.preventDefault();
+				}
+
+				notify( 'gettext', {
+					domain: gettext.getAttribute( 'data-mlp-gettext' ) || '',
+					text: ( gettext.textContent || '' ).trim().slice( 0, 200 )
+				} );
+
+				return;
+			}
+
 			if ( link ) {
 				event.preventDefault();
 				notify( 'navigate', { url: link.href } );

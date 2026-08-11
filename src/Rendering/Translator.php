@@ -126,6 +126,7 @@ final class Translator {
 			}
 
 			$this->markers->mark( $segments, $ids, $document );
+			$this->markers->markGettext( $document, $this->gettext->servedTexts() );
 		} else {
 			$this->scheduleDiscovery( $unique, $found, $sourceLocale );
 		}
