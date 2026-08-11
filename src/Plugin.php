@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\EditorPage;
+use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\InternalLinks;
@@ -332,6 +333,13 @@ final class Plugin {
 		);
 
 		$c->set(
+			InterfaceStringsScreen::class,
+			static fn( Container $c ): InterfaceStringsScreen => new InterfaceStringsScreen(
+				$c->get( GettextRepository::class )
+			)
+		);
+
+		$c->set(
 			StringTranslationPage::class,
 			static fn( Container $c ): StringTranslationPage => new StringTranslationPage(
 				$c->get( Settings::class ),
@@ -339,7 +347,8 @@ final class Plugin {
 				$c->get( TranslationRepository::class ),
 				$c->get( TranslationCache::class ),
 				$c->get( ProviderFactory::class ),
-				$c->get( OccurrenceRepository::class )
+				$c->get( OccurrenceRepository::class ),
+				$c->get( InterfaceStringsScreen::class )
 			)
 		);
 

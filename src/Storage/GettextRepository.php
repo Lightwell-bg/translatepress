@@ -103,6 +103,139 @@ final class GettextRepository implements GettextStore {
 	}
 
 	/**
+	 * Домены, которые реально встречались, — для выпадающего фильтра.
+	 *
+	 * Список строится из самого словаря, а не из перечня установленных
+	 * плагинов: в фильтре должно быть только то, по чему действительно
+	 * есть что показать.
+	 *
+	 * @return list<string>
+	 */
+	public function domains(): array {
+		global $wpdb;
+
+		$table = Schema::table( 'sources' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT domain FROM {$table}
+				 WHERE kind = %s AND domain IS NOT NULL AND domain <> ''
+				 ORDER BY domain ASC",
+				GettextKey::KIND
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return array_map( 'strval', is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
+	 * Постраничный список gettext-строк с переопределениями — для админки.
+	 *
+	 * Отдельно от SourceRepository::paginate() ради колонок
+	 * `domain`/`gettext_context`/`plural_key`: без них строку не показать
+	 * («откуда она» и «какой контекст») и не отличить от одноимённой из
+	 * другого плагина.
+	 *
+	 * @param array{locale: string, domain?: string, status?: string, search?: string, page?: int, per_page?: int} $args Фильтры.
+	 * @return array{items: list<array<string, mixed>>, total: int}
+	 */
+	public function paginate( array $args ): array {
+		global $wpdb;
+
+		$locale = (string) ( $args['locale'] ?? '' );
+
+		if ( ! Locale::isValid( $locale ) ) {
+			return array(
+				'items' => array(),
+				'total' => 0,
+			);
+		}
+
+		$perPage = max( 1, min( 200, (int) ( $args['per_page'] ?? 20 ) ) );
+		$page    = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$offset  = ( $page - 1 ) * $perPage;
+		$search  = trim( (string) ( $args['search'] ?? '' ) );
+		$domain  = trim( (string) ( $args['domain'] ?? '' ) );
+		$status  = (string) ( $args['status'] ?? '' );
+
+		$sources      = Schema::table( 'sources' );
+		$translations = Schema::table( 'translations' );
+
+		$where  = array( 's.kind = %s' );
+		$params = array( $locale, GettextKey::KIND );
+
+		if ( '' !== $domain ) {
+			$where[]  = 's.domain = %s';
+			$params[] = $domain;
+		}
+
+		/*
+		 * Фильтровать можно только по тому, что есть в SQL: наше
+		 * переопределение либо есть, либо нет. «Перевод из языкового
+		 * пакета» в базе не лежит вовсе (он в файлах .mo), поэтому он
+		 * остаётся признаком для показа, а не для фильтра, — иначе
+		 * счётчик найденных строк разошёлся бы с самой выборкой.
+		 */
+		if ( self::STATUS_OVERRIDDEN === $status ) {
+			$where[] = "(t.id IS NOT NULL AND t.translated_text IS NOT NULL AND t.translated_text <> '')";
+		} elseif ( self::STATUS_MISSING === $status ) {
+			$where[] = "(t.id IS NULL OR t.translated_text IS NULL OR t.translated_text = '')";
+		}
+
+		if ( '' !== $search ) {
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[]  = '(s.source_text LIKE %s OR t.translated_text LIKE %s)';
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$whereSql = implode( ' AND ', $where );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*)
+				 FROM {$sources} s
+				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
+				 WHERE {$whereSql}",
+				$params
+			)
+		);
+
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT s.id, s.source_text, s.domain, s.gettext_context, s.plural_key,
+						t.translated_text, t.status, t.updated_at
+				 FROM {$sources} s
+				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
+				 WHERE {$whereSql}
+				 ORDER BY s.domain ASC, s.source_text ASC, s.plural_key ASC
+				 LIMIT %d OFFSET %d",
+				array_merge( $params, array( $perPage, $offset ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return array(
+			'items' => is_array( $items ) ? $items : array(),
+			'total' => $total,
+		);
+	}
+
+	/**
+	 * Фильтр «есть наше переопределение».
+	 */
+	public const STATUS_OVERRIDDEN = 'overridden';
+
+	/**
+	 * Фильтр «нашего переопределения нет».
+	 */
+	public const STATUS_MISSING = 'missing';
+
+	/**
 	 * Заводит gettext-строки, которых ещё нет в словаре.
 	 *
 	 * Своя реализация вместо SourceRepository::insertMissing() именно ради
