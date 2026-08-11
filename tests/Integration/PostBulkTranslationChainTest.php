@@ -19,6 +19,7 @@ use WpMlp\Support\ShortcodeGuard;
 use WpMlp\Translation\BatchChunker;
 use WpMlp\Translation\BulkTranslationMode;
 use WpMlp\Translation\PostCommitValidator;
+use WpMlp\Translation\PostOccurrenceRows;
 
 /**
  * `PostTranslationController` сам не тестируется юнит-тестами (как и
@@ -328,5 +329,103 @@ final class PostBulkTranslationChainTest extends TestCase {
 		// И два хеша из трёх — ровно те же, что были: их перевод и id в
 		// поддельной БД остаются валидны без повторного перевода.
 		$this->assertCount( 2, array_intersect( $before, $after ) );
+	}
+
+	/**
+	 * Жалоба 09.08.2026: «Не удалось сохранить: проверка пакета не прошла
+	 * (foreign_segment:...)». Причина — общий абзац (один и тот же source_id
+	 * в mlp_sources — источник строк общий на весь сайт) встречается в ДВУХ
+	 * РАЗНЫХ записях. До фикса occurrence-строка каждой записи собиралась
+	 * без учёта object_id, и `INSERT ... ON DUPLICATE KEY UPDATE` (в
+	 * occurrences уникальный индекс — ровно uniq_hash, см. Schema.php) тихо
+	 * СЛИВАЛ регистрацию второй записи с первой — вторая никогда не могла
+	 * подтвердить владение сегментом.
+	 *
+	 * Фейковая occurrences здесь — словарь, ключ которого САМ uniq_hash
+	 * occurrence-строки (не `id => postId`, как в discover() выше выше):
+	 * только так вставка второй записи с тем же uniq_hash реально
+	 * ЗАМЕЩАЕТ первую в фейковой таблице, если фикс не работает, — ровно
+	 * то поведение MySQL, которое и вызывало баг.
+	 */
+	public function testTwoPostsSharingTheSameParagraphBothOwnTheirOwnOccurrence(): void {
+		$postA = $this->post();
+
+		$postB               = $this->post();
+		$postB->ID           = 777;
+		$postB->post_content = '<!-- wp:paragraph --><p>Спасибо, что вы с нами.</p><!-- /wp:paragraph -->'
+			. '<!-- wp:paragraph --><p>Уникальный абзац второй записи.</p><!-- /wp:paragraph -->';
+
+		$sharedSources          = array();
+		$nextId                 = 1;
+		$occurrencesByUniqHash  = array();
+
+		$register = function ( object $post ) use ( &$sharedSources, &$nextId, &$occurrencesByUniqHash ): array {
+			$result = ( new PostContentExtractor( new Extractor() ) )->extract( $post, 'ru' );
+
+			$unique = array();
+
+			foreach ( $result->segments as $postSegment ) {
+				$unique[ $postSegment->segment->uniqHash ] ??= $postSegment;
+			}
+
+			$ids = array();
+
+			foreach ( $unique as $hash => $postSegment ) {
+				if ( ! isset( $sharedSources[ $hash ] ) ) {
+					$sharedSources[ $hash ] = array(
+						'id'          => $nextId++,
+						'kind'        => $postSegment->segment->kind,
+						'source_text' => $postSegment->segment->text,
+					);
+				}
+
+				$ids[ $hash ] = $sharedSources[ $hash ]['id'];
+			}
+
+			foreach ( PostOccurrenceRows::build( $unique, $ids, (int) $post->ID ) as $row ) {
+				// ON DUPLICATE KEY UPDATE: тот же uniq_hash перезаписывает ту
+				// же строку вместо второй, — ровно то, что делает MySQL.
+				$occurrencesByUniqHash[ $row['uniq_hash'] ] = $row;
+			}
+
+			return $ids;
+		};
+
+		$idsA = $register( $postA );
+		$idsB = $register( $postB );
+
+		$sharedHash = array_search(
+			'Спасибо, что вы с нами.',
+			array_map( static fn( array $s ): string => $s['source_text'], $sharedSources ),
+			true
+		);
+
+		$this->assertNotFalse( $sharedHash, 'Фикстура должна дать общий абзац в обеих записях.' );
+		$this->assertSame(
+			$idsA[ $sharedHash ],
+			$idsB[ $sharedHash ],
+			'source_id общего абзаца обязан быть один и тот же в обеих записях — источник строк общий.'
+		);
+
+		$sharedSourceId = $idsA[ $sharedHash ];
+
+		$belongsTo = static function ( int $sourceId, int $postId ) use ( $occurrencesByUniqHash ): bool {
+			foreach ( $occurrencesByUniqHash as $row ) {
+				if ( $row['source_id'] === $sourceId && $row['object_id'] === $postId ) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+		$this->assertTrue(
+			$belongsTo( $sharedSourceId, self::POST_ID ),
+			'Общий абзац обязан подтверждаться как принадлежащий первой записи.'
+		);
+		$this->assertTrue(
+			$belongsTo( $sharedSourceId, 777 ),
+			'Общий абзац обязан подтверждаться как принадлежащий и второй записи — не только первой (это и есть баг из жалобы).'
+		);
 	}
 }

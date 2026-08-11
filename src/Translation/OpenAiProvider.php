@@ -23,13 +23,30 @@ final class OpenAiProvider implements ProviderInterface {
 	/**
 	 * Таймаут одной попытки. Вызывается синхронно по клику в админке —
 	 * посетитель сайта этого не ждёт, но и админа нельзя морозить надолго.
+	 *
+	 * Не меньше — крупный чанк (BatchChunker::DEFAULT_MAX_CHARS — 6000
+	 * символов на входе, перевод сопоставимого объёма на выходе) под
+	 * нагрузкой на стороне OpenAI иногда не укладывается в 30 секунд даже
+	 * без единой ошибки: WordPress в этом случае отдаёт `cURL error 28`
+	 * («0 bytes received») — то же самое сообщение, что и при настоящем
+	 * обрыве связи, отличить одно от другого по тексту ошибки нельзя.
 	 */
-	private const TIMEOUT_SECONDS = 30;
+	private const TIMEOUT_SECONDS = 45;
 
 	/**
 	 * Сколько раз повторить запрос при сетевой ошибке или 5xx.
 	 */
 	private const MAX_ATTEMPTS = 2;
+
+	/**
+	 * Пауза перед повтором, секунд.
+	 *
+	 * Не в момент неудачи — до следующей попытки: мгновенный повтор той же
+	 * ошибки почти всегда даёт тот же результат, а секунда-другая пауза
+	 * достаточна, чтобы пережить короткий сетевой сбой, не удлиняя
+	 * ожидание заметно для админа.
+	 */
+	private const RETRY_DELAY_SECONDS = 2;
 
 	/**
 	 * Причина последней неудачи. Без ключа и прочих секретов — этот текст
@@ -122,10 +139,29 @@ final class OpenAiProvider implements ProviderInterface {
 		// строк не должен тарифицироваться дважды, если шлюз это поддерживает.
 		$idempotencyKey = Hash::ofParts( array_merge( array( $this->model ), $itemKeys ) );
 
+		/*
+		 * До MAX_ATTEMPTS попыток по TIMEOUT_SECONDS каждая плюс паузы между
+		 * ними в сумме способны превысить обычный max_execution_time
+		 * хостинга (нередко 30 секунд по умолчанию на дешёвом тарифе) — тогда
+		 * PHP оборвал бы запрос сам, отдав вместо ясного сообщения об ошибке
+		 * голый HTTP 500. Лимит увеличивается с запасом только на время этого
+		 * вызова, не глобально; на хостингах, где set_time_limit() отключён
+		 * (safe-режимы, некоторые дешёвые тарифы), функции нет в
+		 * function_exists() — вызов просто пропускается, риска фатальной
+		 * ошибки это не добавляет.
+		 */
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( ( self::TIMEOUT_SECONDS + self::RETRY_DELAY_SECONDS ) * self::MAX_ATTEMPTS + 10 );
+		}
+
 		$attempt = 0;
 
 		do {
 			++$attempt;
+
+			if ( $attempt > 1 ) {
+				sleep( self::RETRY_DELAY_SECONDS );
+			}
 
 			$response = wp_remote_post(
 				$this->baseUrl . '/chat/completions',

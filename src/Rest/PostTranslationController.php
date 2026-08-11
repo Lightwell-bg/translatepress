@@ -34,6 +34,7 @@ use WpMlp\Translation\BatchChunker;
 use WpMlp\Translation\BulkTranslationMode;
 use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\PostCommitValidator;
+use WpMlp\Translation\PostOccurrenceRows;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
@@ -582,24 +583,7 @@ final class PostTranslationController implements Hookable {
 
 		$ids = $this->sources->idsByHashes( array_keys( $unique ) );
 
-		$occurrenceRows = array();
-
-		foreach ( $unique as $hash => $postSegment ) {
-			if ( ! isset( $ids[ $hash ] ) ) {
-				continue;
-			}
-
-			$occurrenceRows[] = array(
-				'source_id'      => $ids[ $hash ],
-				'object_type'    => 'post',
-				'object_id'      => $postId,
-				'url_hash'       => null,
-				'attribute_name' => $postSegment->segment->attribute,
-				'uniq_hash'      => Hash::ofParts( array( $ids[ $hash ], 'post', '', (string) $postSegment->segment->attribute ) ),
-			);
-		}
-
-		$this->occurrences->insertMany( $occurrenceRows );
+		$this->occurrences->insertMany( PostOccurrenceRows::build( $unique, $ids, $postId ) );
 	}
 
 	/**
