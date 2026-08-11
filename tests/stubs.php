@@ -181,6 +181,38 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_action' ) ) {
+	/**
+	 * Заглушка регистрации хука: тесты вызывают обработчики напрямую, а
+	 * не через диспетчер WordPress, поэтому регистрацию достаточно принять
+	 * и забыть. Возвращаемое значение совпадает с настоящим.
+	 *
+	 * @param string $tag      Имя хука.
+	 * @param mixed  $callback Обработчик.
+	 * @param int    $priority Приоритет.
+	 * @param int    $args     Число аргументов.
+	 */
+	function add_action( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
+		unset( $tag, $callback, $priority, $args );
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * @param string $tag      Имя фильтра.
+	 * @param mixed  $callback Обработчик.
+	 * @param int    $priority Приоритет.
+	 * @param int    $args     Число аргументов.
+	 */
+	function add_filter( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
+		unset( $tag, $callback, $priority, $args );
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_unslash' ) ) {
 	/**
 	 * @param mixed $value Значение.

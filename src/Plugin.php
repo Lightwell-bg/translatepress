@@ -19,6 +19,7 @@ use WpMlp\Frontend\SeoMeta;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Frontend\Sitemap;
 use WpMlp\Frontend\UntranslatedFilter;
+use WpMlp\I18n\GettextRegistry;
 use WpMlp\I18n\LanguagePacks;
 use WpMlp\I18n\LocaleSwitcher;
 use WpMlp\Rendering\EditorContext;
@@ -35,6 +36,7 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\PostTranslationSnapshot;
 use WpMlp\Storage\Schema;
@@ -308,6 +310,18 @@ final class Plugin {
 			static fn( Container $c ): LocaleSwitcher => new LocaleSwitcher( $c->get( LanguageResolver::class ) )
 		);
 
+		$c->set( GettextRepository::class, static fn(): GettextRepository => new GettextRepository() );
+
+		$c->set(
+			GettextRegistry::class,
+			static fn( Container $c ): GettextRegistry => new GettextRegistry(
+				$c->get( LocaleSwitcher::class ),
+				$c->get( GettextRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( Settings::class )
+			)
+		);
+
 		$c->set(
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage(
@@ -390,6 +404,12 @@ final class Plugin {
 			 * остальное в списке к этому моменту нечувствительно.
 			 */
 			LocaleSwitcher::class,
+			/*
+			 * Сразу за ней — gettext-контур: он тоже вешает фильтры,
+			 * которые обязаны стоять до загрузки файлов перевода, и сам
+			 * решает по LocaleSwitcher, нужно ли вообще включаться.
+			 */
+			GettextRegistry::class,
 			// Rewrites нужен и в админке: правила пересобираются при flush.
 			Rewrites::class,
 			UrlConverter::class,

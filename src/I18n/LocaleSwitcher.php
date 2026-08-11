@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\I18n;
 
 use WpMlp\Routing\LanguageResolver;
+use WpMlp\Settings\Language;
 use WpMlp\Support\FrontendRequest;
 use WpMlp\Support\Hookable;
 
@@ -86,12 +87,18 @@ final class LocaleSwitcher implements Hookable {
 	}
 
 	/**
-	 * Локаль, на которую нужно переключиться, или null — если не нужно.
+	 * Язык, на который нужно переключиться, или null — если не нужно.
 	 *
-	 * Публичный, потому что на тот же самый ответ опирается gettext-контур:
-	 * решать «переключаемся ли мы сейчас» в двух местах по-разному нельзя.
+	 * Единственное место, где вообще принимается решение «переключаемся ли
+	 * мы сейчас». Публичное, потому что на тот же ответ опирается
+	 * gettext-контур ({@see GettextRegistry}): решай эти двое по-разному —
+	 * и получится страница, где половина строк переведена, а половина нет.
+	 *
+	 * Возвращается весь язык, а не одна локаль: gettext-словарь адресуется
+	 * коротким кодом (`bg`), а файлы переводов WordPress — полной локалью
+	 * (`bg_BG`), и оба значения нужны из одного источника.
 	 */
-	public function targetLocale(): ?string {
+	public function targetLanguage(): ?Language {
 		if ( ! FrontendRequest::isPublicRender() ) {
 			return null;
 		}
@@ -103,6 +110,15 @@ final class LocaleSwitcher implements Hookable {
 			return null;
 		}
 
-		return '' !== $language->wpLocale ? $language->wpLocale : null;
+		return '' !== $language->wpLocale ? $language : null;
+	}
+
+	/**
+	 * Локаль WordPress целевого языка, или null — если переключаться не нужно.
+	 */
+	public function targetLocale(): ?string {
+		$language = $this->targetLanguage();
+
+		return null !== $language ? $language->wpLocale : null;
 	}
 }
