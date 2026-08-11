@@ -280,6 +280,76 @@ final class SourceRepository {
 	}
 
 	/**
+	 * Удаляет исходные строки, у которых нет ни одного перевода.
+	 *
+	 * Безопасно по той же причине, что и у gettext: строки словаря —
+	 * данные производные, они появляются заново при следующем показе
+	 * страницы. Строка, которую кто-то перевёл хоть на один язык, не
+	 * трогается вовсе — теряется только список «что ещё предстоит», и он
+	 * восстанавливается сам.
+	 *
+	 * Нужно, когда в словарь успел попасть мусор: например, строки
+	 * интерфейса, собранные как контент до появления gettext-контура, —
+	 * они так и остались бы в «Контенте» навсегда.
+	 *
+	 * @param list<string> $kinds Виды строк, которые чистим.
+	 * @return int Сколько строк удалено.
+	 */
+	public function deleteUntranslated( array $kinds ): int {
+		global $wpdb;
+
+		$kinds = array_values( array_filter( $kinds, 'is_string' ) );
+
+		if ( array() === $kinds ) {
+			return 0;
+		}
+
+		$sources      = Schema::table( 'sources' );
+		$translations = Schema::table( 'translations' );
+		$occurrences  = Schema::table( 'occurrences' );
+
+		$placeholders = implode( ',', array_fill( 0, count( $kinds ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// Пустые записи переводов мешают проверке «перевода нет вовсе».
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE t FROM {$translations} t
+				 INNER JOIN {$sources} s ON s.id = t.source_id
+				 WHERE s.kind IN ({$placeholders})
+					AND (t.translated_text IS NULL OR t.translated_text = '')",
+				$kinds
+			)
+		);
+
+		// Места использования — следом за строками, иначе останутся сироты.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE o FROM {$occurrences} o
+				 INNER JOIN {$sources} s ON s.id = o.source_id
+				 WHERE s.kind IN ({$placeholders})
+					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
+				$kinds
+			)
+		);
+
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE s FROM {$sources} s
+				 WHERE s.kind IN ({$placeholders})
+					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
+				$kinds
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		// Список translation blocks кэшируется в опции — он мог измениться.
+		$this->flushBlockHashes();
+
+		return max( 0, (int) $deleted );
+	}
+
+	/**
 	 * Одна строка по идентификатору.
 	 *
 	 * @param int $id Идентификатор.

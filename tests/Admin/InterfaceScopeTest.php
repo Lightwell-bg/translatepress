@@ -88,6 +88,24 @@ final class InterfaceScopeTest extends TestCase {
 		$this->assertNotContains( TranslationStatus::LOCALE_FILE, TranslationStatus::all() );
 	}
 
+	/**
+	 * Кнопка чистки трогает ровно то, что показано на вкладке: на
+	 * «Интерфейсе» — только gettext, на остальных — виды строк из DOM.
+	 * Иначе кнопка на «Контенте» молча снесла бы и строки интерфейса.
+	 */
+	public function testCleanableKindsMatchTheTab(): void {
+		$this->assertSame(
+			array( 'gettext' ),
+			StringTranslationPage::cleanableKinds( StringTranslationPage::TAB_INTERFACE )
+		);
+
+		$content = StringTranslationPage::cleanableKinds( StringTranslationPage::TAB_CONTENT );
+
+		$this->assertNotContains( 'gettext', $content );
+		$this->assertContains( 'text', $content );
+		$this->assertContains( 'seo', $content );
+	}
+
 	public function testCoreDomainGetsAHumanName(): void {
 		$this->assertSame( 'WordPress (ядро)', DomainLabel::format( 'default' ) );
 		// Пустой домен WordPress трактует как `default`.

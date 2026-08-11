@@ -290,6 +290,16 @@ final class GettextRegistry implements Hookable {
 			return;
 		}
 
+		if ( GettextNoise::isConfiguration( $context ) ) {
+			/*
+			 * Строка-настройка ядра: список сокращений для wptexturize(),
+			 * символ тире, разделитель разрядов. Буквы в ней есть, поэтому
+			 * общее правило ниже её не ловит, — отличает её контекст, в
+			 * котором ядро прямо пишет, что это список или символ.
+			 */
+			return;
+		}
+
 		if ( ! Text::isTranslatable( Text::normalize( $msgid ) ) ) {
 			/*
 			 * У ядра есть msgid, которые переводом не являются вовсе:

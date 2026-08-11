@@ -312,6 +312,47 @@ final class GettextRegistryTest extends TestCase {
 	}
 
 	/**
+	 * Строки-настройки ядра: список сокращений для wptexturize(), символы
+	 * тире, разделители разрядов. Буквы в них есть, поэтому общее правило
+	 * их не ловит — отличает контекст, в котором ядро прямо пишет, что это
+	 * список или символ.
+	 */
+	public function testCoreConfigurationStringsAreNotCollected(): void {
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterTextWithContext(
+			"'tain't,'twere,'twas,'tis,'twill,'til,'bout,'nuff,'round,'cause,'em",
+			"'tain't,'twere,'twas,'tis,'twill,'til,'bout,'nuff,'round,'cause,'em",
+			'Comma-separated list of words to texturize in your language',
+			'default'
+		);
+		$registry->filterTextWithContext(
+			"'tain't,'twere",
+			"'tain't,'twere",
+			'Comma-separated list of replacement words in your language',
+			'default'
+		);
+		$registry->flush();
+
+		$this->assertSame( array(), $store->inserted );
+	}
+
+	/**
+	 * Незнакомый контекст отсеиваться не должен: пропустить лишнюю строку
+	 * не страшно, потерять нужную — страшно.
+	 */
+	public function testUnknownContextIsStillCollected(): void {
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterTextWithContext( 'Post', 'Post', 'verb', 'default' );
+		$registry->flush();
+
+		$this->assertCount( 1, $store->inserted );
+	}
+
+	/**
 	 * Настоящая строка интерфейса рядом с ними всё равно собирается —
 	 * фильтр отсекает мусор, а не всё подряд.
 	 */

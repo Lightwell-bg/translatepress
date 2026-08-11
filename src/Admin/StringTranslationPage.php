@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Admin;
 
+use WpMlp\I18n\GettextKey;
 use WpMlp\Rendering\Segment;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Settings\Language;
@@ -142,17 +143,29 @@ final class StringTranslationPage implements Hookable {
 
 		check_admin_referer( self::ACTION_CLEAN_GETTEXT );
 
-		$deleted = $this->gettext->deleteUntranslated();
-		$this->cache->flush();
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
 		$locale = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
+		$tab    = self::parseTab( isset( $_POST['mlp_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['mlp_tab'] ) ) : '' );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		/*
+		 * Чистим ровно то, что показано на этой вкладке. Иначе кнопка на
+		 * «Контенте» молча снесла бы и SEO-строки — а это разные списки с
+		 * разной ценой ошибки.
+		 */
+		if ( self::TAB_INTERFACE === $tab ) {
+			$deleted = $this->gettext->deleteUntranslated();
+		} else {
+			$deleted = $this->sources->deleteUntranslated( self::cleanableKinds( $tab ) );
+		}
+
+		$this->cache->flush();
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'        => self::MENU_SLUG,
-					'mlp_tab'     => self::TAB_INTERFACE,
+					'mlp_tab'     => $tab,
 					'mlp_locale'  => $locale,
 					'mlp-cleaned' => (string) $deleted,
 				),
@@ -160,6 +173,31 @@ final class StringTranslationPage implements Hookable {
 			)
 		);
 		exit;
+	}
+
+	/**
+	 * Какие виды строк чистит кнопка на этой вкладке. Чистая функция.
+	 *
+	 * SEO-строки и контент лежат в одних и тех же `kind`, различает их
+	 * только `attribute_name = 'content'` в местах использования, поэтому
+	 * «почистить только SEO» отдельным запросом не выйдет — и обе вкладки
+	 * чистят один и тот же набор видов. Это честнее, чем делать вид, что
+	 * кнопка на «SEO/GEO» трогает только его.
+	 *
+	 * @param string $tab Текущая вкладка.
+	 * @return list<string>
+	 */
+	public static function cleanableKinds( string $tab ): array {
+		if ( self::TAB_INTERFACE === $tab ) {
+			return array( GettextKey::KIND );
+		}
+
+		return array(
+			SourceRepository::TYPE_TEXT,
+			SourceRepository::TYPE_ATTRIBUTE,
+			SourceRepository::TYPE_BLOCK,
+			SourceRepository::TYPE_SEO,
+		);
 	}
 
 	/**
@@ -240,13 +278,15 @@ final class StringTranslationPage implements Hookable {
 			<?php $this->renderPurgeNotice(); ?>
 			<?php $this->renderAiNotice(); ?>
 
+			<?php $this->renderCleanNotice(); ?>
+
 			<?php if ( self::TAB_INTERFACE === $tab ) : ?>
-				<?php $this->renderCleanNotice(); ?>
 				<?php $this->renderInterfaceTab( $secondary[ $filters['locale'] ], $secondary, $filters ); ?>
-				<?php $this->renderCleanForm( $filters['locale'] ); ?>
 			<?php else : ?>
 				<?php $this->renderStringsTab( $tab, $secondary, $filters ); ?>
 			<?php endif; ?>
+
+			<?php $this->renderCleanForm( $tab, $filters['locale'] ); ?>
 		</div>
 		<?php
 	}
@@ -351,19 +391,26 @@ final class StringTranslationPage implements Hookable {
 	 *
 	 * @param string $locale Текущий язык — вернуться на ту же вкладку.
 	 */
-	private function renderCleanForm( string $locale ): void {
+	private function renderCleanForm( string $tab, string $locale ): void {
+		$isInterface = self::TAB_INTERFACE === $tab;
+
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
 			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_CLEAN_GETTEXT ); ?>">
 			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $locale ); ?>">
+			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
 			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
 
 			<button type="submit" class="button"
-				data-mlp-confirm="<?php esc_attr_e( 'Убрать собранные строки интерфейса, у которых нет ни одного перевода? Ваши переопределения останутся, а нужные строки соберутся заново при следующем показе страниц.', 'wp-mlp' ); ?>">
-				<?php esc_html_e( 'Очистить несохранённые строки интерфейса', 'wp-mlp' ); ?>
+				data-mlp-confirm="<?php esc_attr_e( 'Убрать найденные строки, у которых нет ни одного перевода? Всё переведённое останется, а нужные строки соберутся заново при следующем показе страниц.', 'wp-mlp' ); ?>">
+				<?php esc_html_e( 'Очистить строки без перевода', 'wp-mlp' ); ?>
 			</button>
 			<span class="description">
-				<?php esc_html_e( 'Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
+				<?php if ( $isInterface ) : ?>
+					<?php esc_html_e( 'Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Чистит «Контент» и «SEO/GEO» разом — они лежат в одной таблице. Полезно, если в список попали строки интерфейса, собранные до появления вкладки «Интерфейс». Переведённое не удаляется, остальное соберётся заново.', 'wp-mlp' ); ?>
+				<?php endif; ?>
 			</span>
 		</form>
 		<?php
