@@ -48,6 +48,29 @@ final class GettextNoise {
 	);
 
 	/**
+	 * Контексты строк, которые видит только редактор, а не посетитель.
+	 *
+	 * WordPress регистрирует блоки на КАЖДОМ запросе, включая фронтенд, и
+	 * их названия, описания и ключевые слова проходят через gettext всегда
+	 * — хотя показываются исключительно в редакторе. Для того, кто
+	 * переводит сайт, это чистый шум: `Breadcrumbs`, `Author (deprecated)`,
+	 * `atom`, `hr` посетитель не увидит ни при каких условиях.
+	 *
+	 * Здесь сравнение по началу контекста, а не точное: у блочных строк
+	 * контекст всегда начинается с `block `, а конкретных вариантов ядро
+	 * добавляет всё новые (`block title`, `block description`,
+	 * `block keyword`, `block style label`, `block variation title`…).
+	 */
+	private const EDITOR_CONTEXT_PREFIXES = array(
+		'block ',
+		'pattern ',
+		'font collection ',
+		'rest api ',
+		'taxonomy ',
+		'post type ',
+	);
+
+	/**
 	 * Служебная ли это строка. Чистая функция.
 	 *
 	 * @param string $context Контекст из `_x()`, пустая строка — если его нет.
@@ -57,6 +80,18 @@ final class GettextNoise {
 			return false;
 		}
 
-		return in_array( strtolower( trim( $context ) ), self::CONFIG_CONTEXTS, true );
+		$context = strtolower( trim( $context ) );
+
+		if ( in_array( $context, self::CONFIG_CONTEXTS, true ) ) {
+			return true;
+		}
+
+		foreach ( self::EDITOR_CONTEXT_PREFIXES as $prefix ) {
+			if ( str_starts_with( $context, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

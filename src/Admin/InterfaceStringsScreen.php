@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\Admin;
 
 use WpMlp\I18n\DomainLabel;
+use WpMlp\I18n\GettextKey;
 use WpMlp\I18n\LanguagePacks;
 use WpMlp\Settings\Language;
 use WpMlp\Storage\GettextRepository;
@@ -359,6 +360,23 @@ final class InterfaceStringsScreen {
 	 * @param Language $language Целевой язык.
 	 */
 	private function renderPackNotice( Language $language ): void {
+		if ( GettextKey::SOURCE_LOCALE === $language->wpLocale ) {
+			/*
+			 * Словарь интерфейса общий для всех языков: `msgid` английский
+			 * по определению, и одна строка обслуживает и болгарский, и
+			 * любой другой. Поэтому на английской вкладке видны строки,
+			 * собранные на ДРУГИХ языках, — и у каждой честно написано
+			 * «нет перевода», хотя переводить нечего: оригинал уже
+			 * английский. Без этого объяснения экран выглядит поломанным.
+			 */
+			printf(
+				'<div class="notice notice-info"><p>%s</p></div>',
+				esc_html__( 'Английский — язык самих оригиналов: строки интерфейса на нём уже написаны, и переводить их не нужно. Список ниже общий для всех языков (он собран там, где перевода не хватало), поэтому у строк стоит «Нет перевода» — на английском это нормально. Переключите язык, чтобы увидеть, где перевод действительно нужен.', 'wp-mlp' )
+			);
+
+			return;
+		}
+
 		if ( $this->packs->isInstalled( $language->wpLocale ) ) {
 			return;
 		}

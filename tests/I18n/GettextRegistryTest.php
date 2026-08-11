@@ -339,6 +339,26 @@ final class GettextRegistryTest extends TestCase {
 	}
 
 	/**
+	 * Метаданные блоков регистрируются на КАЖДОМ запросе, включая
+	 * фронтенд, но показываются только в редакторе. Посетитель `Breadcrumbs`,
+	 * `atom` или «A customizable button to close overlays» не увидит
+	 * никогда — в списке на перевод им делать нечего.
+	 */
+	public function testEditorOnlyBlockStringsAreNotCollected(): void {
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterTextWithContext( 'Breadcrumbs', 'Breadcrumbs', 'block title', 'default' );
+		$registry->filterTextWithContext( 'atom', 'atom', 'block keyword', 'default' );
+		$registry->filterTextWithContext( 'Insert an SVG icon.', 'Insert an SVG icon.', 'block description', 'default' );
+		$registry->filterTextWithContext( 'Google Fonts', 'Google Fonts', 'font collection name', 'default' );
+		$registry->filterTextWithContext( 'JSON', 'JSON', 'REST API resource link name', 'default' );
+		$registry->flush();
+
+		$this->assertSame( array(), $store->inserted );
+	}
+
+	/**
 	 * Незнакомый контекст отсеиваться не должен: пропустить лишнюю строку
 	 * не страшно, потерять нужную — страшно.
 	 */
