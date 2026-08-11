@@ -69,6 +69,7 @@ final class GettextRegistryTest extends TestCase {
 					'languages'        => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published', 'wp_locale' => 'ru_RU' ),
 						'en' => array( 'locale' => 'en', 'slug' => 'en', 'status' => 'published', 'wp_locale' => 'en_US' ),
+						'bg' => array( 'locale' => 'bg', 'slug' => 'bg', 'status' => 'published', 'wp_locale' => 'bg_BG' ),
 					),
 				),
 				'home' => 'https://site.example',
@@ -77,7 +78,15 @@ final class GettextRegistryTest extends TestCase {
 
 		wp_mlp_test_request( array() );
 		$_SERVER['REQUEST_METHOD'] = 'GET';
-		$_SERVER['REQUEST_URI']    = '/en/about/';
+
+		/*
+		 * Болгарский, а не английский, — язык по умолчанию для тестов
+		 * этого класса: на английском `msgid` и есть готовый ответ, и
+		 * никакая строка в словарь не попадает (см.
+		 * testEnglishTargetDoesNotStoreUntranslatedStrings). Проверять на
+		 * нём запись новых строк значило бы проверять пустоту.
+		 */
+		$_SERVER['REQUEST_URI'] = '/bg/about/';
 	}
 
 	protected function tearDown(): void {
@@ -235,6 +244,46 @@ final class GettextRegistryTest extends TestCase {
 		// pluralKey() падает на английское правило: 1 -> форма 0, иначе 1.
 		$this->assertSame( '%s комментарий', $registry->filterPlural( '%s comment', '%s comment', '%s comments', 1, 'default' ) );
 		$this->assertSame( '%s комментария', $registry->filterPlural( '%s comments', '%s comment', '%s comments', 5, 'default' ) );
+	}
+
+	/**
+	 * Английский как целевой язык: `msgid` уже английский, и «WordPress
+	 * вернул оригинал» тут значит «перевод не нужен», а не «перевода нет».
+	 * Без этой проверки одно открытие /en/ занесло бы в словарь ВСЕ строки
+	 * ядра, темы и плагинов — тысячи строк, которые нечего переводить.
+	 */
+	public function testEnglishTargetDoesNotStoreUntranslatedStrings(): void {
+		$_SERVER['REQUEST_URI'] = '/en/about/';
+
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		// Ровно то, что происходит на каждой строке ядра при /en/.
+		$registry->filterText( 'Reply', 'Reply', 'default' );
+		$registry->filterText( 'Search', 'Search', 'default' );
+		$registry->flush();
+
+		$this->assertSame( array(), $store->inserted );
+	}
+
+	/**
+	 * `en_GB` — это НЕ язык оригинала: британский сайт вправе захотеть
+	 * «colour» вместо «color», и такие строки в словарь попадать должны.
+	 */
+	public function testBritishEnglishIsNotTreatedAsTheSourceLanguage(): void {
+		$options = wp_mlp_test_options();
+		$options[ Settings::OPTION ]['languages']['en']['wp_locale'] = 'en_GB';
+		wp_mlp_test_options( $options );
+
+		$_SERVER['REQUEST_URI'] = '/en/about/';
+
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( 'Color', 'Color', 'default' );
+		$registry->flush();
+
+		$this->assertCount( 1, $store->inserted );
 	}
 
 	/**

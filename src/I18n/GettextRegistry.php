@@ -279,6 +279,19 @@ final class GettextRegistry implements Hookable {
 			return;
 		}
 
+		if ( $this->targetIsSourceLanguage() ) {
+			/*
+			 * Целевой язык — тот же, на котором написан сам msgid (то есть
+			 * английский). Тогда «WordPress вернул оригинал» означает не
+			 * «перевода нет», а «перевод не нужен»: английский текст уже
+			 * и есть готовый ответ. Без этой проверки открытие /en/ занесло
+			 * бы в словарь ВСЕ строки ядра, темы и плагинов разом — тысячи
+			 * строк, которые нечего переводить, — и утопило бы в них те
+			 * немногие, что действительно ждут перевода.
+			 */
+			return;
+		}
+
 		$key = GettextKey::lookup( $msgid, $domain, $context, $pluralKey );
 
 		if ( isset( $this->discovered[ $key ] ) ) {
@@ -293,6 +306,19 @@ final class GettextRegistry implements Hookable {
 		);
 
 		$this->scheduleFlush();
+	}
+
+	/**
+	 * Совпадает ли целевой язык с языком самих `msgid`.
+	 *
+	 * Сравнивается полная локаль, а не код языка: `en_GB` — это НЕ язык
+	 * оригинала. Британский сайт вполне может захотеть переопределить
+	 * «color» на «colour», и такие строки в словарь попадать должны.
+	 */
+	private function targetIsSourceLanguage(): bool {
+		$language = $this->switcher->targetLanguage();
+
+		return null !== $language && GettextKey::SOURCE_LOCALE === $language->wpLocale;
 	}
 
 	/**
