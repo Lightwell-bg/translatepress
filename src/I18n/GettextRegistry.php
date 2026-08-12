@@ -418,10 +418,10 @@ final class GettextRegistry implements Hookable {
 	 * @param string $domain Домен, из которого она пришла.
 	 */
 	private function remember( string $text, string $domain ): void {
-		$normalized = Text::normalize( $text );
+		$domain = '' !== $domain ? $domain : DomainLabel::CORE;
 
-		if ( '' !== $normalized ) {
-			$this->served[ $normalized ] = '' !== $domain ? $domain : DomainLabel::CORE;
+		foreach ( GettextFragments::of( $text ) as $fragment ) {
+			$this->served[ $fragment ] = $domain;
 		}
 	}
 
