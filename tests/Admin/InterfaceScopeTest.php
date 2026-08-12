@@ -106,6 +106,32 @@ final class InterfaceScopeTest extends TestCase {
 		$this->assertContains( 'seo', $content );
 	}
 
+	/**
+	 * Живой баг: кнопка «Перевести с ИИ» показывалась и на строках-ссылках,
+	 * хотя языковой модели их показывать нельзя — она перепишет адрес.
+	 */
+	public function testLinkRowIsDetectedByKindAndAttributeName(): void {
+		$this->assertTrue(
+			StringTranslationPage::isLinkRow( array( 'kind' => 'attribute', 'attribute_name' => 'href' ) )
+		);
+	}
+
+	public function testOrdinaryAttributeRowIsNotALink(): void {
+		$this->assertFalse(
+			StringTranslationPage::isLinkRow( array( 'kind' => 'attribute', 'attribute_name' => 'alt' ) )
+		);
+	}
+
+	public function testTextRowIsNotALink(): void {
+		$this->assertFalse(
+			StringTranslationPage::isLinkRow( array( 'kind' => 'text', 'attribute_name' => null ) )
+		);
+	}
+
+	public function testMissingAttributeNameIsNotALink(): void {
+		$this->assertFalse( StringTranslationPage::isLinkRow( array( 'kind' => 'attribute' ) ) );
+	}
+
 	public function testCoreDomainGetsAHumanName(): void {
 		$this->assertSame( 'WordPress (ядро)', DomainLabel::format( 'default' ) );
 		// Пустой домен WordPress трактует как `default`.

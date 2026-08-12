@@ -519,6 +519,24 @@ final class StringTranslationPage implements Hookable {
 	 * @param array<string, mixed> $row    Данные строки.
 	 * @param string               $locale Целевой язык.
 	 */
+	/**
+	 * Строка списка — это адрес ссылки (`href`). Чистая функция.
+	 *
+	 * Языковой модели такую строку не показываем: она переводит то, что
+	 * видит, — `/o-nas/` станет `/about-us/`, параметры перемешаются, и
+	 * ссылка молча поведёт в никуда, а перевод будет выглядеть успешным
+	 * (та же причина, что и в PostTranslationController::isLinkTarget() и
+	 * в редакторе — см. assets/editor.js). Список строк отдаёт кнопку на
+	 * каждой строке отдельно от одиночного редактора, поэтому проверка
+	 * нужна и здесь.
+	 *
+	 * @param array<string, mixed> $row Строка из SourceRepository::paginate().
+	 */
+	public static function isLinkRow( array $row ): bool {
+		return Segment::KIND_ATTRIBUTE === (string) ( $row['kind'] ?? '' )
+			&& 'href' === (string) ( $row['attribute_name'] ?? '' );
+	}
+
 	private function renderRow( array $row, string $locale ): void {
 		$status = (string) ( $row['status'] ?? '' );
 		$text   = (string) ( $row['translated_text'] ?? '' );
@@ -526,6 +544,8 @@ final class StringTranslationPage implements Hookable {
 		if ( '' === $text ) {
 			$status = TranslationStatus::MISSING;
 		}
+
+		$isLink = self::isLinkRow( $row );
 
 		?>
 		<tr>
@@ -553,7 +573,7 @@ final class StringTranslationPage implements Hookable {
 				<button type="button" class="button button-secondary wp-mlp-save">
 					<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
 				</button>
-				<?php if ( $this->providers->isReady() ) : ?>
+				<?php if ( $this->providers->isReady() && ! $isLink ) : ?>
 					<button type="button" class="button-link wp-mlp-translate"
 						title="<?php esc_attr_e( 'Заполнить поле переводом от ИИ — не сохраняет автоматически', 'wp-mlp' ); ?>">
 						<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
@@ -623,8 +643,8 @@ final class StringTranslationPage implements Hookable {
 				</optgroup>
 			</select>
 
-			<?php if ( self::TAB_SEO !== $tab ) : ?>
-				<?php /* На вкладке SEO/GEO выбирать нечего: она сама и есть тип. */ ?>
+			<?php if ( self::TAB_SEO !== $tab && self::TAB_LINKS !== $tab ) : ?>
+				<?php /* На SEO/GEO и «Ссылках» выбирать нечего: вкладка сама и есть тип. */ ?>
 				<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'Тип строки', 'wp-mlp' ); ?></label>
 				<select name="mlp_type" id="mlp-type">
 					<option value=""><?php esc_html_e( 'Всё содержимое', 'wp-mlp' ); ?></option>
