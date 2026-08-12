@@ -33,6 +33,7 @@ final class JsonLdRules {
 		'articleSection',
 		'abstract',
 		'disambiguatingDescription',
+		'keywords',
 	);
 
 	/**

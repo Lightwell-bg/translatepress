@@ -88,6 +88,22 @@ final class JsonLdTest extends TestCase {
 	}
 
 	/**
+	 * Живой случай: страница отдавалась на английском, а `keywords` в
+	 * JSON-LD BlogPosting оставался русским — поле не входило в список
+	 * переводимых. Читают его только поисковики и другие программы,
+	 * разбирающие структурированные данные, но раз уж `inLanguage: "en"`
+	 * заявлен в том же графе, ключевые слова другого языка — нестыковка,
+	 * которую стоит убрать.
+	 */
+	public function testExtractsKeywords(): void {
+		$result = $this->extract(
+			'{"@type":"BlogPosting","headline":"Заголовок","keywords":"плагины мультиязычности WordPress"}'
+		);
+
+		$this->assertContains( 'плагины мультиязычности WordPress', $this->seoTexts( $result['segments'] ) );
+	}
+
+	/**
 	 * Название компании и имя автора — имена собственные, они одинаковы
 	 * на всех языках.
 	 */
@@ -279,6 +295,7 @@ final class JsonLdTest extends TestCase {
 		$this->assertTrue( JsonLdRules::isTranslatable( 'description', 'Article' ) );
 		$this->assertTrue( JsonLdRules::isTranslatable( 'name', 'ListItem' ) );
 		$this->assertFalse( JsonLdRules::isTranslatable( 'name', 'Organization' ) );
+		$this->assertTrue( JsonLdRules::isTranslatable( 'keywords', 'BlogPosting' ) );
 	}
 
 	/**
