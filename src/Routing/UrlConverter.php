@@ -194,7 +194,12 @@ final class UrlConverter implements Hookable {
 			return $url;
 		}
 
-		$path    = (string) ( $parts['path'] ?? '/' );
+		$path = (string) ( $parts['path'] ?? '/' );
+
+		if ( self::isOutsideInstallation( $parts, $path, $basePath ) ) {
+			return $url;
+		}
+
 		$newPath = self::addPrefixToPath( $path, $basePath, $slug, $knownSlugs );
 
 		if ( $newPath === $path ) {
@@ -204,6 +209,36 @@ final class UrlConverter implements Hookable {
 		$parts['path'] = $newPath;
 
 		return self::buildUrl( $parts, str_starts_with( $url, '//' ) );
+	}
+
+	/**
+	 * Указывает ли полный адрес за пределы установки WordPress. Чистая функция.
+	 *
+	 * WordPress может стоять в подкаталоге (`/blog`), и тогда на том же
+	 * домене живёт что-то ещё — лендинг, статика, другая CMS. Языковых
+	 * версий у них нет, и добавлять префикс им нельзя: адрес
+	 * `https://site.ru/about/` превратился бы в `https://site.ru/blog/bg/about/`,
+	 * то есть ссылка на чужую страницу молча уехала бы внутрь блога и
+	 * отдала 404.
+	 *
+	 * Проверяется только адрес С ЯВНЫМ ХОСТОМ. У относительного пути
+	 * (`/kontakty/`) автор не сказал, куда он ведёт, и мы по-прежнему
+	 * считаем его ссылкой внутрь установки: именно так выглядят пункты
+	 * меню, сохранённые до появления плагина, и ломать их поведение
+	 * нельзя. А написав адрес целиком, автор указал место точно — и его
+	 * нужно уважать.
+	 *
+	 * @param array<string, mixed> $parts    Результат wp_parse_url().
+	 * @param string               $path     Путь из адреса.
+	 * @param string               $basePath Базовый путь установки, `` для корня домена.
+	 */
+	private static function isOutsideInstallation( array $parts, string $path, string $basePath ): bool {
+		if ( '' === $basePath || ! isset( $parts['host'] ) ) {
+			// WordPress в корне домена — «снаружи» просто нет.
+			return false;
+		}
+
+		return $path !== $basePath && ! str_starts_with( $path, $basePath . '/' );
 	}
 
 	/**

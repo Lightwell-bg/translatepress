@@ -154,4 +154,69 @@ final class RoutingTest extends TestCase {
 
 		$this->assertSame( $rules, Rewrites::buildRules( $rules, array() ) );
 	}
+
+	/**
+	 * Жалоба с живого сайта: WordPress стоит в `/blog`, а ссылка ведёт на
+	 * корень домена — на лендинг, который к блогу отношения не имеет.
+	 * Префикс превращал её в `https://centerai.eu/blog/bg/`, то есть
+	 * посетитель уезжал в блог вместо целевой страницы.
+	 */
+	public function testAbsoluteLinkOutsideInstallationIsLeftAlone(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'https://centerai.eu/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/', '/blog', 'bg', $slugs )
+		);
+		$this->assertSame(
+			'https://centerai.eu/about/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/about/', '/blog', 'bg', $slugs )
+		);
+	}
+
+	/**
+	 * А внутри установки всё работает как раньше — иначе «починка»
+	 * отключила бы перевод ссылок вообще.
+	 */
+	public function testAbsoluteLinkInsideInstallationStillGetsThePrefix(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'https://centerai.eu/blog/bg/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/blog/', '/blog', 'bg', $slugs )
+		);
+		$this->assertSame(
+			'https://centerai.eu/blog/bg/some-post/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/blog/some-post/', '/blog', 'bg', $slugs )
+		);
+	}
+
+	/**
+	 * У относительного пути автор не сказал, куда он ведёт: так выглядят
+	 * пункты меню, сохранённые до появления плагина. Их поведение не
+	 * меняется — они по-прежнему считаются ссылками внутрь установки.
+	 */
+	public function testRelativePathKeepsItsPreviousBehaviour(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'/blog/bg/kontakty/',
+			UrlConverter::withLanguagePrefix( '/kontakty/', '/blog', 'bg', $slugs )
+		);
+		$this->assertSame(
+			'/blog/bg/',
+			UrlConverter::withLanguagePrefix( '/blog/ru/', '/blog', 'bg', $slugs )
+		);
+	}
+
+	/**
+	 * Когда WordPress стоит в корне домена, «снаружи установки» просто не
+	 * существует — проверка не должна отключать префикс на таком сайте.
+	 */
+	public function testInstallationAtDomainRootLocalisesEverything(): void {
+		$this->assertSame(
+			'https://site.ru/bg/about/',
+			UrlConverter::withLanguagePrefix( 'https://site.ru/about/', '', 'bg', array( 'ru', 'bg' ) )
+		);
+	}
 }
