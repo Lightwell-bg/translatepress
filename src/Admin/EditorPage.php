@@ -129,6 +129,8 @@ final class EditorPage implements Hookable {
 					'blockCreated'      => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
 					/* translators: %s: text domain, e.g. woocommerce */
 				'gettextNotice'     => __( 'Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс».', 'wp-mlp' ),
+				'collapsePanel'     => __( 'Свернуть панель', 'wp-mlp' ),
+				'expandPanel'       => __( 'Развернуть панель', 'wp-mlp' ),
 				'attribute'         => __( 'Атрибут', 'wp-mlp' ),
 					'text'              => __( 'Текст', 'wp-mlp' ),
 					'htmlBlock'         => __( 'Блок с разметкой', 'wp-mlp' ),
@@ -249,8 +251,29 @@ final class EditorPage implements Hookable {
 				<?php submit_button( __( 'Открыть', 'wp-mlp' ), 'secondary', '', false ); ?>
 			</form>
 
+			<?php
+			/*
+			 * Панель занимает 360px, и на обычном ноутбуке превью остаётся
+			 * уже того порога, на котором тема переключается на мобильную
+			 * вёрстку: вместо меню появляется гамбургер, а клик по нему
+			 * открывает выезжающую панель поверх всего превью. Работать в
+			 * таком виде невозможно, а на широком мониторе проблемы нет —
+			 * поэтому нужна не перестройка вёрстки, а способ временно
+			 * убрать панель и вернуть превью полную ширину.
+			 */
+			?>
+			<p class="wp-mlp-editor-toolbar__aside">
+				<button type="button" class="button" id="mlp-editor-toggle-panel"
+					aria-expanded="true" aria-controls="mlp-editor-panel">
+					<?php esc_html_e( 'Свернуть панель', 'wp-mlp' ); ?>
+				</button>
+				<span class="description">
+					<?php esc_html_e( 'Превью получит всю ширину — тема покажет обычное меню вместо мобильного.', 'wp-mlp' ); ?>
+				</span>
+			</p>
+
 			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>" data-post-id="<?php echo esc_attr( (string) $postId ); ?>">
-				<div class="wp-mlp-editor__panel">
+				<div class="wp-mlp-editor__panel" id="mlp-editor-panel">
 					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
 						<div class="wp-mlp-editor__bulk">
 							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">

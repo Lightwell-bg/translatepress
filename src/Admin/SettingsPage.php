@@ -169,6 +169,11 @@ final class SettingsPage implements Hookable {
 				<?php esc_html_e( 'Язык по умолчанию отдаётся по обычным адресам сайта, без префикса. Остальные языки живут на своём префиксе, например /en/. Черновой язык недоступен посетителям и не попадает в hreflang.', 'wp-mlp' ); ?>
 			</p>
 
+			<p class="description">
+				<strong><?php esc_html_e( 'Что в какой колонке:', 'wp-mlp' ); ?></strong>
+				<?php esc_html_e( '«Код языка» — короткое имя внутри плагина. «URL-слаг» — то, что появится в адресе: /bg/статья/. «Название» и «Флаг» видит посетитель в переключателе языков. «Локаль WordPress» — имя, под которым WordPress ищет переводы своего интерфейса (bg_BG, en_US); именно благодаря ей «Reply» становится «Отговор» без вашего участия.', 'wp-mlp' ); ?>
+			</p>
+
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_SAVE ); ?>">
 				<?php wp_nonce_field( self::ACTION_SAVE ); ?>
@@ -180,7 +185,11 @@ final class SettingsPage implements Hookable {
 							<th scope="col"><?php esc_html_e( 'URL-слаг', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Название', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Флаг', 'wp-mlp' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Локаль WordPress', 'wp-mlp' ); ?></th>
+							<th scope="col">
+								<?php esc_html_e( 'Локаль WordPress', 'wp-mlp' ); ?>
+								<span class="dashicons dashicons-editor-help"
+									title="<?php esc_attr_e( 'Имя, под которым WordPress хранит переводы своего интерфейса: en_US, bg_BG, ru_RU. По нему ядро, тема и плагины находят свои файлы перевода и сами отдают «Ответить» вместо «Reply». Не путать с кодом языка слева — тот идёт в адрес страницы.', 'wp-mlp' ); ?>"></span>
+							</th>
 							<th scope="col"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Удалить', 'wp-mlp' ); ?></th>
 						</tr>
@@ -216,7 +225,12 @@ final class SettingsPage implements Hookable {
 								<input type="checkbox" name="discover_strings" value="1" <?php checked( ! empty( $raw['discover_strings'] ) ); ?>>
 								<?php esc_html_e( 'Запоминать новые строки при открытии переведённых страниц', 'wp-mlp' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'Словарь пополняется по мере посещения страниц на дополнительном языке. Если выключить, новые строки перестанут появляться в разделе «Перевод строк».', 'wp-mlp' ); ?></p>
+							<p class="description">
+								<?php esc_html_e( 'Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк».', 'wp-mlp' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Держите включённым. Выключать имеет смысл, только когда сайт полностью переведён и вы не хотите, чтобы список пополнялся дальше.', 'wp-mlp' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>
