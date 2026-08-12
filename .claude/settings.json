@@ -22,7 +22,12 @@
       "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --filter \"testOgAndTwitterTitleShareHashWithMatchingHeadingText|testApplyingSharedTranslationReachesEverySurface|testTitleMetaKeepsOwnStoredKindDespiteSharedHash|testOgDescriptionDoesNotShareHashWithMatchingText|testTitleWithSiteNameSuffixStaysDistinctFromBareHeading|testHeadlineSharesHashWithMatchingPlainText|testDescriptionDoesNotShareHashWithMatchingPlainText|testLogoReferenceIds\" --testdox)",
       "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --filter \"testLogoImageObjectIdIsStableAcrossLanguages|testLogoImageObjectIdWithBakedInPrefixIsNormalized|testArticleOwnImageIsUnaffectedByLogoStabilization|testOgImageStaysUntouchedWhenLogoIsAlsoPresent\" --testdox)",
       "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --filter \"RenderedHtmlTest\" --testdox)",
-      "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\")"
+      "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\")",
+      "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/golden-hashes.php\")",
+      "Bash(/c/php/php.exe -l tests/Support/HashCompatibilityTest.php)",
+      "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --filter \"HashCompatibilityTest\" --testdox)",
+      "Bash(/c/php/php.exe \"/c/Users/Vlad/AppData/Local/Temp/claude/d--1PythonProjects-20260807TranslatePress-translatepress/7f46ee31-f369-451c-9a3f-0e56f8846aff/scratchpad/phpunit.phar\" --filter \"HashCompatibilityTest\")",
+      "Bash(git commit -m '@ *)"
     ]
   }
 }
