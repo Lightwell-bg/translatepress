@@ -197,6 +197,10 @@ final class StringTranslationPage implements Hookable {
 			return array( GettextKey::KIND );
 		}
 
+		if ( self::TAB_LINKS === $tab ) {
+			return array( SourceRepository::TYPE_LINK );
+		}
+
 		return array(
 			SourceRepository::TYPE_TEXT,
 			SourceRepository::TYPE_ATTRIBUTE,
@@ -425,6 +429,8 @@ final class StringTranslationPage implements Hookable {
 			<span class="description">
 				<?php if ( $isInterface ) : ?>
 					<?php esc_html_e( 'Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
+				<?php elseif ( self::TAB_LINKS === $tab ) : ?>
+					<?php esc_html_e( 'Убирает только адреса ссылок. Полезно, если список засорился техническими адресами (например, собранными до этого обновления). Ссылки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
 				<?php else : ?>
 					<?php esc_html_e( 'Чистит «Контент» и «SEO/GEO» разом — они лежат в одной таблице. Полезно, если в список попали строки интерфейса, собранные до появления вкладки «Интерфейс». Переведённое не удаляется, остальное соберётся заново.', 'wp-mlp' ); ?>
 				<?php endif; ?>

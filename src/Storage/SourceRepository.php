@@ -308,7 +308,7 @@ final class SourceRepository {
 		$translations = Schema::table( 'translations' );
 		$occurrences  = Schema::table( 'occurrences' );
 
-		$placeholders = implode( ',', array_fill( 0, count( $kinds ), '%s' ) );
+		list( $whereSql, $params ) = $this->cleanableWhere( $kinds, $occurrences );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		// Пустые записи переводов мешают проверке «перевода нет вовсе».
@@ -316,9 +316,9 @@ final class SourceRepository {
 			$wpdb->prepare(
 				"DELETE t FROM {$translations} t
 				 INNER JOIN {$sources} s ON s.id = t.source_id
-				 WHERE s.kind IN ({$placeholders})
+				 WHERE ({$whereSql})
 					AND (t.translated_text IS NULL OR t.translated_text = '')",
-				$kinds
+				$params
 			)
 		);
 
@@ -327,18 +327,18 @@ final class SourceRepository {
 			$wpdb->prepare(
 				"DELETE o FROM {$occurrences} o
 				 INNER JOIN {$sources} s ON s.id = o.source_id
-				 WHERE s.kind IN ({$placeholders})
+				 WHERE ({$whereSql})
 					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				$kinds
+				$params
 			)
 		);
 
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
 				"DELETE s FROM {$sources} s
-				 WHERE s.kind IN ({$placeholders})
+				 WHERE ({$whereSql})
 					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				$kinds
+				$params
 			)
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -347,6 +347,59 @@ final class SourceRepository {
 		$this->flushBlockHashes();
 
 		return max( 0, (int) $deleted );
+	}
+
+	/**
+	 * Условие `WHERE`, отличающее ссылки от прочих атрибутов при чистке.
+	 *
+	 * Ссылки хранятся с тем же `kind = 'attribute'`, что и `alt`/`title` —
+	 * различает их только `attribute_name = 'href'` в местах использования
+	 * (см. TYPE_LINK). Без этого разделения кнопка на вкладке «Ссылки»
+	 * чистила бы «Контент» целиком (обычный `kind IN (...)` совпал бы с
+	 * любым атрибутом), а кнопка на «Контенте» — заодно стирала бы адреса,
+	 * которые владелец сайта только что задал на вкладке «Ссылки». Это не
+	 * гипотетический случай: ровно так это и произошло на живом сайте.
+	 *
+	 * @param list<string> $kinds       Виды из cleanableKinds().
+	 * @param string       $occurrences Полное имя таблицы occurrences.
+	 * @return array{0: string, 1: list<string>}
+	 */
+	private function cleanableWhere( array $kinds, string $occurrences ): array {
+		$isLinkCleanup = in_array( self::TYPE_LINK, $kinds, true );
+		$plainKinds    = array_values( array_diff( $kinds, array( self::TYPE_LINK ) ) );
+
+		$conditions = array();
+		$params     = array();
+
+		if ( $isLinkCleanup ) {
+			$conditions[] = '(s.kind = %s AND EXISTS ('
+				. "SELECT 1 FROM {$occurrences} o7 WHERE o7.source_id = s.id AND o7.attribute_name = %s"
+				. '))';
+			$params[] = self::TYPE_ATTRIBUTE;
+			$params[] = self::LINK_ATTRIBUTE;
+		}
+
+		if ( array() !== $plainKinds ) {
+			$placeholders = implode( ',', array_fill( 0, count( $plainKinds ), '%s' ) );
+			$clause       = "s.kind IN ({$placeholders})";
+
+			if ( in_array( self::TYPE_ATTRIBUTE, $plainKinds, true ) ) {
+				// Ссылки трогает только ветка выше, здесь их вычитаем явно.
+				$clause .= ' AND NOT (s.kind = %s AND EXISTS ('
+					. "SELECT 1 FROM {$occurrences} o8 WHERE o8.source_id = s.id AND o8.attribute_name = %s"
+					. '))';
+			}
+
+			$conditions[] = "({$clause})";
+			$params       = array_merge( $params, $plainKinds );
+
+			if ( in_array( self::TYPE_ATTRIBUTE, $plainKinds, true ) ) {
+				$params[] = self::TYPE_ATTRIBUTE;
+				$params[] = self::LINK_ATTRIBUTE;
+			}
+		}
+
+		return array( implode( ' OR ', $conditions ), $params );
 	}
 
 	/**

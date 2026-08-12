@@ -107,6 +107,23 @@ final class InterfaceScopeTest extends TestCase {
 	}
 
 	/**
+	 * Живой баг: без отдельного случая для «Ссылок» кнопка очистки
+	 * попадала в общую ветку (`text`, `attribute`, `block`, `seo`) и на
+	 * живом сайте снесла 192 строки контента вместо адресов ссылок.
+	 * `TYPE_LINK` — не значение `kind` в базе (ссылки хранятся с тем же
+	 * `kind = attribute`, что и alt/title), а сигнал для
+	 * `SourceRepository::deleteUntranslated()` разобрать их по
+	 * `attribute_name = href` отдельным запросом.
+	 */
+	public function testLinksTabCleansOnlyLinks(): void {
+		$links = StringTranslationPage::cleanableKinds( StringTranslationPage::TAB_LINKS );
+
+		$this->assertSame( array( 'link' ), $links );
+		$this->assertNotContains( 'text', $links );
+		$this->assertNotContains( 'attribute', $links );
+	}
+
+	/**
 	 * Живой баг: кнопка «Перевести с ИИ» показывалась и на строках-ссылках,
 	 * хотя языковой модели их показывать нельзя — она перепишет адрес.
 	 */
