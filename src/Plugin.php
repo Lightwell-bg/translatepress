@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\EditorPage;
+use WpMlp\Admin\HelpTabs;
 use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
@@ -333,6 +334,8 @@ final class Plugin {
 			)
 		);
 
+		$c->set( HelpTabs::class, static fn(): HelpTabs => new HelpTabs() );
+
 		$c->set(
 			InterfaceStringsScreen::class,
 			static fn( Container $c ): InterfaceStringsScreen => new InterfaceStringsScreen(
@@ -441,6 +444,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			// Админские сервисы не нужны фронтенду: не создаём их лишний раз.
 			$services[] = SettingsPage::class;
+			$services[] = HelpTabs::class;
 			$services[] = StringTranslationPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;
