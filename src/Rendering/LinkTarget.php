@@ -41,6 +41,20 @@ final class LinkTarget {
 	private const NON_PAGE_SCHEMES = array( 'mailto', 'tel', 'javascript', 'data', 'sms', 'ftp' );
 
 	/**
+	 * Сегменты пути, за которыми стоит служебная часть WordPress, а не
+	 * контент.
+	 *
+	 * Найдено на живом сайте: ссылка «Выйти» и «Редактировать» в форме
+	 * комментариев видна только вошедшему администратору и ведёт на
+	 * `/wp-login.php?action=logout` или `/wp-admin/post.php?action=edit`.
+	 * У административного адреса не бывает языковой версии в принципе —
+	 * его переводить в смысле «направить на другую страницу» нечем, а в
+	 * словаре такая строка — чистый шум, который к тому же виден только
+	 * администратору и никогда — обычному посетителю.
+	 */
+	private const ADMIN_PATH_PATTERN = '#/(wp-admin/|wp-login\.php)#i';
+
+	/**
 	 * Максимальная длина адреса, который мы готовы хранить.
 	 *
 	 * Колонка `source_text` — TEXT, но адреса длиннее пары килобайт это,
@@ -68,12 +82,13 @@ final class LinkTarget {
 
 		$scheme = self::scheme( $href );
 
-		if ( '' === $scheme ) {
-			// Относительный путь или `//host/path` — обычная ссылка.
-			return true;
+		if ( '' !== $scheme && in_array( $scheme, self::NON_PAGE_SCHEMES, true ) ) {
+			return false;
 		}
 
-		return ! in_array( $scheme, self::NON_PAGE_SCHEMES, true );
+		$path = self::path( $href );
+
+		return 1 !== preg_match( self::ADMIN_PATH_PATTERN, $path );
 	}
 
 	/**
@@ -119,5 +134,22 @@ final class LinkTarget {
 		}
 
 		return strtolower( $candidate );
+	}
+
+	/**
+	 * Путь адреса, с ведущим слешем, без хвостового `?query#fragment`.
+	 *
+	 * Разбирается вручную вместе со `scheme()` по той же причине:
+	 * `wp_parse_url()` на относительном пути без схемы иногда путает путь с
+	 * именем хоста, а здесь нужен именно кусок ДО `?` и `#`, каким бы ни
+	 * было начало строки.
+	 *
+	 * @param string $href Значение атрибута `href`.
+	 */
+	private static function path( string $href ): string {
+		$path = (string) preg_replace( '/[?#].*$/', '', $href );
+
+		// Слеш нужен, чтобы `wp-admin` в имени страницы не спутать с сегментом пути.
+		return '/' === substr( $path, -1 ) ? $path : $path . '/';
 	}
 }

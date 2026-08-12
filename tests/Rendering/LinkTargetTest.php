@@ -69,6 +69,39 @@ final class LinkTargetTest extends TestCase {
 	}
 
 	/**
+	 * С живого сайта: ссылка «Выйти»/«Редактировать» в форме комментариев
+	 * видна только вошедшему администратору и ведёт в админку. Языковой
+	 * версии у административного адреса не бывает в принципе, а строка,
+	 * которую видит только сам владелец сайта, — чистый шум в словаре.
+	 */
+	#[DataProvider( 'adminUrls' )]
+	public function testRejectsWordPressAdminAddresses( string $href ): void {
+		$this->assertFalse( LinkTarget::isTranslatable( $href ) );
+	}
+
+	/**
+	 * @return list<array{string}>
+	 */
+	public static function adminUrls(): array {
+		return array(
+			array( 'https://centerai.eu/blog/wp-admin/post.php?post=66&action=edit' ),
+			array( 'https://centerai.eu/blog/wp-login.php?action=logout&redirect_to=https%3A%2F%2Fx' ),
+			array( 'https://centerai.eu/blog/wp-admin/comment.php?action=editcomment&c=2' ),
+			array( '/wp-admin/' ),
+			// Без хвостового слеша: адрес всё равно указывает на каталог.
+			array( '/wp-admin' ),
+		);
+	}
+
+	/**
+	 * Путь, который лишь СОДЕРЖИТ «wp-admin» как часть чего-то другого, не
+	 * должен зацепиться за проверку — вырезается ровно сегмент пути.
+	 */
+	public function testDoesNotRejectPathsThatMerelyContainTheWord(): void {
+		$this->assertTrue( LinkTarget::isTranslatable( '/o-nas/wp-administrirovanie/' ) );
+	}
+
+	/**
 	 * Адрес только обрезается по краям. Схлопывать внутри нельзя: любой
 	 * изменённый символ ведёт уже на другую страницу.
 	 */
@@ -96,6 +129,50 @@ final class LinkTargetTest extends TestCase {
 
 		$this->assertCount( 1, $hrefs );
 		$this->assertSame( 'https://centerai.eu/', $hrefs[0]->text );
+	}
+
+	/**
+	 * С живого сайта: строки словаря на bg-вкладке содержали адреса вида
+	 * `.../blog/en/...` — это оказались собственные ссылки переключателя
+	 * языков, а не что-то, что владелец сайта написал руками. Их адрес
+	 * пересчитывается заново для каждой страницы через
+	 * `UrlConverter::localize()`, переводить (то есть переопределять)
+	 * его как обычную ссылку бессмысленно, а хранить — чистый шум:
+	 * на многоязычном сайте таких ссылок по три-четыре на страницу.
+	 */
+	public function testLanguageSwitcherLinksAreNotCollected(): void {
+		$segments = $this->segments(
+			'<!DOCTYPE html><html><body>'
+			. '<a class="mlp-language-item" href="https://centerai.eu/blog/en/x/">EN</a>'
+			. '</body></html>'
+		);
+
+		foreach ( $segments as $segment ) {
+			$this->assertNotSame( 'href', $segment->attribute );
+		}
+	}
+
+	/**
+	 * А обычная ссылка меню темы, даже если по случайности ведёт на
+	 * другой язык или за пределы установки, собирается как всегда:
+	 * пометку переключателя ставит только сам переключатель.
+	 */
+	public function testOrdinaryLinkWithoutSwitcherClassIsStillCollected(): void {
+		$segments = $this->segments(
+			'<!DOCTYPE html><html><body>'
+			. '<a class="ct-menu-link" href="https://centerai.eu/ru/">Начало</a>'
+			. '</body></html>'
+		);
+
+		$hrefs = array_values(
+			array_filter(
+				$segments,
+				static fn( Segment $s ): bool => Segment::KIND_ATTRIBUTE === $s->kind && 'href' === $s->attribute
+			)
+		);
+
+		$this->assertCount( 1, $hrefs );
+		$this->assertSame( 'https://centerai.eu/ru/', $hrefs[0]->text );
 	}
 
 	public function testTechnicalHrefsAreNotCollected(): void {

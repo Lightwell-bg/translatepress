@@ -72,6 +72,25 @@ final class Extractor {
 	private const LINK_ATTRIBUTE = 'href';
 
 	/**
+	 * Класс, которым переключатель языков (NavMenu, LanguageSwitcher)
+	 * помечает свои собственные ссылки.
+	 *
+	 * Тот же класс, что и `Frontend\InternalLinks::SWITCHER_CLASS` — они
+	 * стоят по разные стороны одной задачи. Там он значит «не добавляй
+	 * этой ссылке языковой префикс, она уже ведёт куда надо», здесь —
+	 * «не заводи для неё строку словаря»: адрес переключателя на английскую
+	 * версию страницы посчитан `UrlConverter::localize()` заново для КАЖДОЙ
+	 * страницы, он не то, что человек станет переводить руками, и хранить
+	 * его как «адрес ссылки, доступный для правки» бессмысленно — а на
+	 * многоязычном сайте таких ссылок сотни, по три-четыре на каждую
+	 * страницу, и они захлестнули бы вкладку «Ссылки» шумом.
+	 *
+	 * Константа продублирована, а не переиспользована: `Rendering` ниже
+	 * `Frontend` по слоям, и ссылка в обратную сторону создала бы цикл.
+	 */
+	private const SWITCHER_CLASS = 'mlp-language-item';
+
+	/**
 	 * Типы input, у которых `value` — это надпись на кнопке, а не данные.
 	 */
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
@@ -466,7 +485,7 @@ final class Extractor {
 				 * поведёт на другую страницу. Набор gettext здесь тоже ни
 				 * при чём: языковые пакеты адресов не отдают.
 				 */
-				if ( ! LinkTarget::isTranslatable( $raw ) ) {
+				if ( ! LinkTarget::isTranslatable( $raw ) || $this->hasClass( $element, self::SWITCHER_CLASS ) ) {
 					continue;
 				}
 
@@ -521,6 +540,24 @@ final class Extractor {
 		}
 
 		return $segments;
+	}
+
+	/**
+	 * Несёт ли элемент указанный класс. Точное совпадение токена, а не
+	 * поиск подстроки: `mlp-language-item` не должен сработать на
+	 * `mlp-language-items-wrapper`.
+	 *
+	 * @param object $element Элемент DOM.
+	 * @param string $class   Искомый класс.
+	 */
+	private function hasClass( object $element, string $class ): bool {
+		if ( ! $element->hasAttribute( 'class' ) ) {
+			return false;
+		}
+
+		$classes = preg_split( '/\s+/', trim( (string) $element->getAttribute( 'class' ) ) );
+
+		return in_array( $class, $classes ?: array(), true );
 	}
 
 	/**
