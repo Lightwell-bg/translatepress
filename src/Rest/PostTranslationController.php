@@ -259,6 +259,20 @@ final class PostTranslationController implements Hookable {
 		$toSend = array();
 
 		foreach ( $toTranslate as $hash ) {
+			if ( self::isLinkTarget( $unique[ $hash ]->segment ) ) {
+				/*
+				 * Второй рубеж: сюда адреса и так не доходят, их отсекает
+				 * PostContentExtractor::withoutLinkTargets(). Проверка
+				 * оставлена на самой границе с языковой моделью намеренно —
+				 * цена пропуска несимметрично высока. Модель переводит
+				 * строку, которую видит: `/o-nas/` станет `/about-us/`,
+				 * параметры запроса перемешаются, и ссылка молча поведёт в
+				 * никуда, причём перевод внешне будет выглядеть успешным.
+				 * Тот же приём, что и с ShortcodeGuard.
+				 */
+				continue;
+			}
+
 			$toSend[ $hash ] = $unique[ $hash ]->segment->text;
 		}
 
@@ -416,6 +430,17 @@ final class PostTranslationController implements Hookable {
 	 * @param WP_REST_Request $request Запрос.
 	 * @return WP_REST_Response|WP_Error
 	 */
+	/**
+	 * Адрес ли это ссылки. Чистая функция.
+	 *
+	 * Такие строки переводит только человек: см. пояснение в prepare().
+	 *
+	 * @param Segment $segment Строка записи.
+	 */
+	private static function isLinkTarget( Segment $segment ): bool {
+		return Segment::KIND_ATTRIBUTE === $segment->kind && 'href' === $segment->attribute;
+	}
+
 	public function commit( WP_REST_Request $request ) {
 		$context = $this->resolveContext( $request );
 

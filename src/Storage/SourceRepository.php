@@ -490,6 +490,21 @@ final class SourceRepository {
 	public const TYPE_CONTENT = 'content';
 
 	/**
+	 * Тип строки: адрес ссылки (`href`).
+	 *
+	 * Живёт отдельной вкладкой, а не внутри «Контента», по объёму: ссылок
+	 * на сайте сотни, и вперемешку с текстом статей они делают список
+	 * нечитаемым. Здесь же они выстраиваются в понятный перечень «куда
+	 * ведёт эта ссылка на этом языке».
+	 */
+	public const TYPE_LINK = 'link';
+
+	/**
+	 * Имя атрибута, по которому в местах использования опознаётся ссылка.
+	 */
+	private const LINK_ATTRIBUTE = 'href';
+
+	/**
 	 * Постраничный список строк с переводом на выбранный язык — для админки.
 	 *
 	 * @param array{locale: string, status?: string, search?: string, scope?: string, object_id?: int, type?: string, page?: int, per_page?: int} $args Фильтры.
@@ -558,26 +573,40 @@ final class SourceRepository {
 			$params[] = Segment::KIND_ATTRIBUTE;
 			$params[] = 'content';
 		} elseif ( self::TYPE_ATTRIBUTE === $type ) {
-			// Meta-теги (attribute_name = content) — это TYPE_SEO, здесь их
-			// не показываем, иначе одна и та же строка встречалась бы в двух
-			// фильтрах сразу и запутывала счётчик найденных строк.
+			// Meta-теги (attribute_name = content) — это TYPE_SEO, адреса
+			// (href) — TYPE_LINK. Здесь их не показываем, иначе одна и та же
+			// строка встречалась бы в двух фильтрах сразу и запутывала
+			// счётчик найденных строк.
 			$where[] = '(s.kind = %s AND NOT EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name = %s"
+				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name IN (%s, %s)"
 				. '))';
 			$params[] = Segment::KIND_ATTRIBUTE;
 			$params[] = 'content';
+			$params[] = self::LINK_ATTRIBUTE;
 		} elseif ( in_array( $type, array( self::TYPE_TEXT, self::TYPE_BLOCK ), true ) ) {
 			$where[]  = 's.kind = %s';
 			$params[] = $type;
 		} elseif ( self::TYPE_CONTENT === $type ) {
-			// Содержимое сайта: виды из DOM, минус meta-теги (они SEO/GEO).
+			/*
+			 * Содержимое сайта: виды из DOM, минус meta-теги (они SEO/GEO)
+			 * и минус адреса ссылок (они TYPE_LINK). Без второго исключения
+			 * сотни адресов утопили бы текст статей — ровно ради этого
+			 * ссылки и вынесены на свою вкладку.
+			 */
 			$where[] = '(s.kind IN (%s, %s, %s) AND NOT EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o5 WHERE o5.source_id = s.id AND o5.attribute_name = %s"
+				. "SELECT 1 FROM {$occurrences} o5 WHERE o5.source_id = s.id AND o5.attribute_name IN (%s, %s)"
 				. '))';
 			$params[] = self::TYPE_TEXT;
 			$params[] = self::TYPE_ATTRIBUTE;
 			$params[] = self::TYPE_BLOCK;
 			$params[] = 'content';
+			$params[] = self::LINK_ATTRIBUTE;
+		} elseif ( self::TYPE_LINK === $type ) {
+			$where[] = '(s.kind = %s AND EXISTS ('
+				. "SELECT 1 FROM {$occurrences} o6 WHERE o6.source_id = s.id AND o6.attribute_name = %s"
+				. '))';
+			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = self::LINK_ATTRIBUTE;
 		}
 
 		if ( '' !== $search ) {

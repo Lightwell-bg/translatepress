@@ -62,6 +62,16 @@ final class Extractor {
 	private const GLOBAL_ATTRIBUTES = array( 'title', 'alt', 'placeholder', 'aria-label' );
 
 	/**
+	 * Адрес ссылки. Собирается только у `<a>` и по своим правилам.
+	 *
+	 * Нужен, чтобы ссылку можно было направить в разное место на разных
+	 * языках: болгарскую кнопку — на болгарский лендинг, английскую — на
+	 * английский. Без этого перевести можно было только НАДПИСЬ ссылки, а
+	 * вёл бы он всё равно на одну и ту же страницу.
+	 */
+	private const LINK_ATTRIBUTE = 'href';
+
+	/**
 	 * Типы input, у которых `value` — это надпись на кнопке, а не данные.
 	 */
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
@@ -446,7 +456,35 @@ final class Extractor {
 				continue;
 			}
 
-			$normalized = Text::normalize( (string) $element->getAttribute( $attribute ) );
+			$raw = (string) $element->getAttribute( $attribute );
+
+			if ( self::LINK_ATTRIBUTE === $attribute ) {
+				/*
+				 * Адрес ссылки живёт по своим правилам: у него своя
+				 * проверка (см. LinkTarget) и только обрезка краёв вместо
+				 * нормализации — схлопни в адресе хоть один символ, и он
+				 * поведёт на другую страницу. Набор gettext здесь тоже ни
+				 * при чём: языковые пакеты адресов не отдают.
+				 */
+				if ( ! LinkTarget::isTranslatable( $raw ) ) {
+					continue;
+				}
+
+				$segments[] = $this->makeSegment(
+					$element,
+					Segment::KIND_ATTRIBUTE,
+					$attribute,
+					LinkTarget::normalize( $raw ),
+					'',
+					'',
+					$locale,
+					$contextHash
+				);
+
+				continue;
+			}
+
+			$normalized = Text::normalize( $raw );
 
 			/*
 			 * Атрибуты отсеиваются по тому же набору, что и текстовые узлы:
@@ -513,6 +551,10 @@ final class Extractor {
 			&& in_array( strtolower( (string) $element->getAttribute( 'type' ) ), self::BUTTON_TYPES, true )
 		) {
 			$attributes[] = 'value';
+		}
+
+		if ( 'a' === $tag ) {
+			$attributes[] = self::LINK_ATTRIBUTE;
 		}
 
 		if ( 'meta' === $tag && $this->isTranslatableMeta( $element ) ) {

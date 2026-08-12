@@ -57,6 +57,11 @@ final class StringTranslationPage implements Hookable {
 	 */
 	public const TAB_INTERFACE = 'interface';
 
+	/**
+	 * Вкладка «Ссылки» — адреса, куда ведут ссылки на каждом языке.
+	 */
+	public const TAB_LINKS = 'links';
+
 	private const PER_PAGE = 20;
 
 	/**
@@ -331,9 +336,13 @@ final class StringTranslationPage implements Hookable {
 		 * SEO/GEO и строки интерфейса живут на своих экранах, и «все типы»
 		 * на вкладке «Контент» означает «всё содержимое», а не буквально всё.
 		 */
-		$type = self::TAB_SEO === $tab
-			? SourceRepository::TYPE_SEO
-			: ( '' !== $filters['type'] ? $filters['type'] : SourceRepository::TYPE_CONTENT );
+		if ( self::TAB_SEO === $tab ) {
+			$type = SourceRepository::TYPE_SEO;
+		} elseif ( self::TAB_LINKS === $tab ) {
+			$type = SourceRepository::TYPE_LINK;
+		} else {
+			$type = '' !== $filters['type'] ? $filters['type'] : SourceRepository::TYPE_CONTENT;
+		}
 
 		$result = $this->sources->paginate(
 			array(
@@ -354,6 +363,10 @@ final class StringTranslationPage implements Hookable {
 				<?php esc_html_e( 'Поля для поисковиков и превью в соцсетях: meta description, Open Graph, Twitter Card и текстовые поля JSON-LD. На самой странице они не видны — их читают Google и мессенджеры, когда кто-то делится ссылкой.', 'wp-mlp' ); ?>
 				<br>
 				<?php esc_html_e( 'Заголовок записи переводить здесь не нужно: он общий с H1 и переводится один раз во вкладке «Контент».', 'wp-mlp' ); ?>
+			<?php elseif ( self::TAB_LINKS === $tab ) : ?>
+				<?php esc_html_e( 'Куда ведут ссылки на этом языке. Слева — адрес из оригинала, справа можно указать другой: например, направить болгарскую кнопку на болгарский лендинг, а английскую — на английский.', 'wp-mlp' ); ?>
+				<br>
+				<?php esc_html_e( 'Оставьте поле пустым — ссылка останется прежней и получит языковой префикс автоматически, как раньше. Заполняйте только там, где адрес должен отличаться.', 'wp-mlp' ); ?>
 			<?php else : ?>
 				<?php esc_html_e( 'То, что вы написали сами: текст записей и страниц, заголовки, пункты меню, подписи к картинкам, тексты в виджетах. Это основная вкладка — с неё и начинайте.', 'wp-mlp' ); ?>
 				<br>
@@ -455,6 +468,7 @@ final class StringTranslationPage implements Hookable {
 			self::TAB_CONTENT   => __( 'Контент', 'wp-mlp' ),
 			self::TAB_SEO       => __( 'SEO/GEO', 'wp-mlp' ),
 			self::TAB_INTERFACE => __( 'Интерфейс', 'wp-mlp' ),
+			self::TAB_LINKS     => __( 'Ссылки', 'wp-mlp' ),
 		);
 
 		echo '<nav class="nav-tab-wrapper wp-clearfix">';
@@ -494,7 +508,7 @@ final class StringTranslationPage implements Hookable {
 	 * @param string $value Сырое значение параметра.
 	 */
 	public static function parseTab( string $value ): string {
-		$allowed = array( self::TAB_CONTENT, self::TAB_SEO, self::TAB_INTERFACE );
+		$allowed = array( self::TAB_CONTENT, self::TAB_SEO, self::TAB_INTERFACE, self::TAB_LINKS );
 
 		return in_array( $value, $allowed, true ) ? $value : self::TAB_CONTENT;
 	}

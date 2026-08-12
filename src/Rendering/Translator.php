@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+use WpMlp\Frontend\InternalLinks;
 use WpMlp\I18n\GettextRegistry;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
@@ -113,10 +114,12 @@ final class Translator {
 
 			if ( is_string( $translation ) && '' !== $translation ) {
 				$segment->apply( $translation, $document );
+				$this->markSubstitutedLink( $segment );
 			}
 		}
 
 		$this->runFilters( $document, $target );
+		$this->clearLinkMarks( $document );
 
 		if ( $editorMode ) {
 			$ids = array();
@@ -187,6 +190,44 @@ final class Translator {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Помечает ссылку, адрес которой пришёл из словаря.
+	 *
+	 * Без пометки правка не доживает до посетителя: сразу за подстановкой
+	 * по документу идёт локализатор внутренних ссылок и добавляет префикс
+	 * текущего языка — то есть затирает ровно тот адрес, который владелец
+	 * сайта задал вручную для этого языка. Ситуация та же, что была с
+	 * переключателем языков, и решается так же — признаком «эту ссылку не
+	 * трогать» (см. InternalLinks::TRANSLATED_ATTRIBUTE).
+	 *
+	 * @param Segment $segment Применённая строка.
+	 */
+	private function markSubstitutedLink( Segment $segment ): void {
+		if ( Segment::KIND_ATTRIBUTE !== $segment->kind || 'href' !== $segment->attribute ) {
+			return;
+		}
+
+		$segment->node->setAttribute( InternalLinks::TRANSLATED_ATTRIBUTE, '1' );
+	}
+
+	/**
+	 * Убирает служебные пометки, чтобы они не ушли в разметку страницы.
+	 *
+	 * Чистит именно Translator, а не сам локализатор: тот может не
+	 * запуститься вовсе (например, его убрали из списка пост-обработчиков),
+	 * и тогда служебный атрибут утёк бы в готовый HTML.
+	 *
+	 * @param HtmlDocument $document Разобранный документ.
+	 */
+	private function clearLinkMarks( HtmlDocument $document ): void {
+		$links = $document->document()->getElementsByTagName( 'a' );
+
+		// Список живой: снимая атрибут, идём с конца, чтобы не пропускать узлы.
+		for ( $i = $links->length - 1; $i >= 0; $i-- ) {
+			$links->item( $i )->removeAttribute( InternalLinks::TRANSLATED_ATTRIBUTE );
+		}
 	}
 
 	/**

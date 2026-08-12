@@ -24,6 +24,7 @@
 	var kindLabel = root.querySelector( '.wp-mlp-editor__kind' );
 	var statusLine = root.querySelector( '.wp-mlp-editor__status' );
 	var blockBox = root.querySelector( '.wp-mlp-editor__block' );
+	var aiButton = document.getElementById( 'mlp-editor-translate' );
 	var linksBox = document.getElementById( 'mlp-editor-links' );
 	var linksList = linksBox ? linksBox.querySelector( '.wp-mlp-editor__links-list' ) : null;
 	var sourceField = document.getElementById( 'mlp-editor-source' );
@@ -187,6 +188,15 @@
 
 		var isBlock = current && 'html_block' === current.kind;
 		var links = isBlock ? findLinks( targetField.value ) : [];
+
+		/*
+		 * Адрес ссылки языковой модели не показываем: она переводит то, что
+		 * видит, — `/o-nas/` станет `/about-us/`, параметры перемешаются, и
+		 * ссылка молча поведёт в никуда. Адреса правит человек.
+		 */
+		if ( aiButton ) {
+			aiButton.hidden = !! ( current && 'attribute' === current.kind && 'href' === current.attribute );
+		}
 
 		linksList.textContent = '';
 		linksBox.hidden = 0 === links.length;

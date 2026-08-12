@@ -11,9 +11,13 @@ namespace WpMlp\Tests\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use WpMlp\Frontend\InternalLinks;
+use WpMlp\Rendering\HtmlDocument;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
+use WpMlp\Settings\Language;
+use WpMlp\Settings\Settings;
 
 #[CoversClass( LanguageResolver::class )]
 #[CoversClass( UrlConverter::class )]
@@ -207,6 +211,75 @@ final class RoutingTest extends TestCase {
 			'/blog/bg/',
 			UrlConverter::withLanguagePrefix( '/blog/ru/', '/blog', 'bg', $slugs )
 		);
+	}
+
+	/**
+	 * Адрес, заданный вручную для этого языка, локализатор трогать не
+	 * должен. Без пометки правка не доживает до посетителя: сразу за
+	 * подстановкой идёт этот проход и добавляет префикс текущего языка —
+	 * то есть затирает ровно то, что владелец сайта задал намеренно.
+	 */
+	public function testManuallyTranslatedLinkIsNotPrefixedAgain(): void {
+		/*
+		 * Адрес взят такой, который локализатор ГАРАНТИРОВАННО переписал бы
+		 * без пометки: ссылка с болгарской страницы на русскую версию —
+		 * `ru` сменилось бы на `bg`. Первая версия этого теста брала адрес,
+		 * уже содержавший нужный префикс, и потому проходила даже с
+		 * отключённой защитой, то есть не проверяла ничего.
+		 */
+		$html = '<!DOCTYPE html><html><body>'
+			. '<a ' . InternalLinks::TRANSLATED_ATTRIBUTE . '="1" href="/blog/ru/special/">на русскую версию</a>'
+			. '<a href="/blog/other/">обычная</a>'
+			. '</body></html>';
+
+		$hrefs = $this->localizedHrefs( $html );
+
+		$this->assertSame( '/blog/ru/special/', $hrefs[0], 'Заданный вручную адрес изменился.' );
+		$this->assertSame( '/blog/bg/other/', $hrefs[1], 'Обычная ссылка перестала локализоваться.' );
+	}
+
+	/**
+	 * Прогоняет документ через локализатор и возвращает адреса ссылок.
+	 *
+	 * @param string $html Разметка страницы.
+	 * @return list<string>
+	 */
+	private function localizedHrefs( string $html ): array {
+		wp_mlp_test_options(
+			array(
+				Settings::OPTION => array(
+					'default_locale' => 'ru',
+					'languages'      => array(
+						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
+						'bg' => array( 'locale' => 'bg', 'slug' => 'bg', 'status' => 'published' ),
+					),
+				),
+				'home'           => 'https://centerai.eu/blog',
+			)
+		);
+
+		$_SERVER['REQUEST_URI'] = '/blog/bg/x/';
+
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$settings = new Settings();
+		$target   = new Language( 'bg', 'bg', 'BG', Language::STATUS_PUBLISHED, false, '', 'bg_BG' );
+
+		( new InternalLinks( new UrlConverter( $settings, new LanguageResolver( $settings ) ) ) )
+			->apply( $document, $target );
+
+		$hrefs = array();
+
+		foreach ( $document->document()->getElementsByTagName( 'a' ) as $link ) {
+			$hrefs[] = (string) $link->getAttribute( 'href' );
+		}
+
+		wp_mlp_test_options( array() );
+		unset( $_SERVER['REQUEST_URI'] );
+
+		return $hrefs;
 	}
 
 	/**

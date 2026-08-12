@@ -43,6 +43,20 @@ final class InternalLinks implements DocumentFilter {
 	private const SWITCHER_CLASS = 'mlp-language-item';
 
 	/**
+	 * Пометка, которую ставит Translator на ссылку с переведённым адресом.
+	 *
+	 * Такой адрес владелец сайта задал вручную ИМЕННО для этого языка —
+	 * например, направил болгарскую кнопку на болгарский лендинг. Добавить
+	 * к нему языковой префикс значит отправить посетителя не туда, куда
+	 * его послали намеренно. Причина та же, что и у SWITCHER_CLASS выше:
+	 * ссылка уже ведёт куда надо, и общий проход ей только навредит.
+	 *
+	 * Атрибут служебный и до разметки не доходит — Translator снимает его
+	 * сразу после пост-обработчиков.
+	 */
+	public const TRANSLATED_ATTRIBUTE = 'data-mlp-translated-href';
+
+	/**
 	 * @param UrlConverter $urls Построение языковых адресов.
 	 */
 	public function __construct( private readonly UrlConverter $urls ) {
@@ -66,6 +80,11 @@ final class InternalLinks implements DocumentFilter {
 			}
 
 			if ( self::hasClass( $link, self::SWITCHER_CLASS ) ) {
+				continue;
+			}
+
+			if ( $link->hasAttribute( self::TRANSLATED_ATTRIBUTE ) ) {
+				// Адрес задан вручную для этого языка — он уже ведёт куда надо.
 				continue;
 			}
 

@@ -98,7 +98,7 @@ final class PostContentExtractor {
 
 		$segments = array_map(
 			static fn( Segment $segment ): PostSegment => new PostSegment( $field, $segment ),
-			$this->extractor->extract( $document, $locale, $blockHashes )
+			self::withoutLinkTargets( $this->extractor->extract( $document, $locale, $blockHashes ) )
 		);
 
 		return array( $segments, $document );
@@ -125,10 +125,37 @@ final class PostContentExtractor {
 
 		$segments = array_map(
 			static fn( Segment $segment ): PostSegment => new PostSegment( PostSegment::FIELD_CONTENT, $segment ),
-			$this->extractor->extract( $document, $locale, $blockHashes )
+			self::withoutLinkTargets( $this->extractor->extract( $document, $locale, $blockHashes ) )
 		);
 
 		return array( $segments, $document );
+	}
+
+	/**
+	 * Убирает адреса ссылок из набора строк записи. Чистая функция.
+	 *
+	 * Массовый перевод записи — про её текст: заголовок, анонс, абзацы. Он
+	 * показывает список на проверку и отправляет его языковой модели, а
+	 * адресу там делать нечего — модель его переписывает, и ссылка молча
+	 * ведёт в никуда.
+	 *
+	 * Возможность править адрес при этом не теряется: страница, отрисованная
+	 * в визуальном редакторе, отдаёт ту же самую ссылку тем же самым видом
+	 * строки, и правится она там же или во вкладке «Ссылки». Строка словаря
+	 * получается одна и та же — идентичность считается от самого адреса, а
+	 * не от того, каким путём его нашли.
+	 *
+	 * @param list<Segment> $segments Найденные строки.
+	 * @return list<Segment>
+	 */
+	private static function withoutLinkTargets( array $segments ): array {
+		return array_values(
+			array_filter(
+				$segments,
+				static fn( Segment $segment ): bool =>
+					Segment::KIND_ATTRIBUTE !== $segment->kind || 'href' !== $segment->attribute
+			)
+		);
 	}
 
 	/**
