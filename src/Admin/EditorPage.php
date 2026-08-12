@@ -129,6 +129,8 @@ final class EditorPage implements Hookable {
 					'blockCreated'      => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
 					/* translators: %s: text domain, e.g. woocommerce */
 				'gettextNotice'     => __( 'Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс».', 'wp-mlp' ),
+				/* translators: %d: link number inside the block */
+				'linkLabel'         => __( 'Ссылка №%d', 'wp-mlp' ),
 				'collapsePanel'     => __( 'Свернуть панель', 'wp-mlp' ),
 				'expandPanel'       => __( 'Развернуть панель', 'wp-mlp' ),
 				'attribute'         => __( 'Атрибут', 'wp-mlp' ),
@@ -360,6 +362,23 @@ final class EditorPage implements Hookable {
 							<button type="button" class="button" id="mlp-editor-delete">
 								<?php esc_html_e( 'Удалить перевод', 'wp-mlp' ); ?>
 							</button>
+						</div>
+
+						<?php
+						/*
+						 * Ссылки блока отдельными полями. Своего хранилища у
+						 * них нет и не нужно: адрес и так лежит внутри HTML
+						 * этого перевода, а поле — только вид на него, чтобы
+						 * не искать `href` глазами среди тегов и не сломать
+						 * разметку, правя её руками.
+						 */
+						?>
+						<div class="wp-mlp-editor__links" id="mlp-editor-links" hidden>
+							<hr>
+							<p class="description">
+								<?php esc_html_e( 'Ссылки в этом блоке. Адрес относится только к текущему языку — на других языках он свой.', 'wp-mlp' ); ?>
+							</p>
+							<div class="wp-mlp-editor__links-list"></div>
 						</div>
 
 						<div class="wp-mlp-editor__block" hidden>

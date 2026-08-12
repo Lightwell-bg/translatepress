@@ -24,6 +24,8 @@
 	var kindLabel = root.querySelector( '.wp-mlp-editor__kind' );
 	var statusLine = root.querySelector( '.wp-mlp-editor__status' );
 	var blockBox = root.querySelector( '.wp-mlp-editor__block' );
+	var linksBox = document.getElementById( 'mlp-editor-links' );
+	var linksList = linksBox ? linksBox.querySelector( '.wp-mlp-editor__links-list' ) : null;
 	var sourceField = document.getElementById( 'mlp-editor-source' );
 	var targetField = document.getElementById( 'mlp-editor-target' );
 	var statusField = document.getElementById( 'mlp-editor-status' );
@@ -103,12 +105,126 @@
 				statusField.value = translation.status;
 				current.kind = data.kind;
 				kindLabel.textContent = kindTitle( current );
+				renderLinks();
 				say( '' );
 				targetField.focus();
 			} )
 			.catch( function () {
 				say( settings.i18n.failed, 'error' );
 			} );
+	}
+
+	/**
+	 * Находит все значения href в разметке, по порядку.
+	 *
+	 * Регулярным выражением, а не разбором в DOM: разобранный и собранный
+	 * заново HTML возвращается не байт-в-байт — меняются кавычки атрибутов,
+	 * самозакрывающиеся теги, порядок. Перевод блока хранится как есть, и
+	 * молча переписывать его ради показа одного поля нельзя.
+	 *
+	 * @param {string} html Разметка перевода.
+	 * @return {Array} Совпадения: значение и границы внутри строки.
+	 */
+	function findLinks( html ) {
+		var pattern = /href\s*=\s*("([^"]*)"|'([^']*)')/gi;
+		var found = [];
+		var match;
+
+		while ( ( match = pattern.exec( html ) ) !== null ) {
+			var quoted = match[ 1 ];
+			var value = undefined !== match[ 2 ] ? match[ 2 ] : match[ 3 ];
+
+			found.push( {
+				value: value,
+				// Границы самого значения, без кавычек: заменять будем только его.
+				start: match.index + match[ 0 ].length - quoted.length + 1,
+				end: match.index + match[ 0 ].length - 1
+			} );
+		}
+
+		return found;
+	}
+
+	/**
+	 * Превращает HTML-сущности в обычные символы — для показа в поле.
+	 *
+	 * @param {string} value Значение атрибута как оно записано в разметке.
+	 * @return {string}
+	 */
+	function decodeAttribute( value ) {
+		var area = document.createElement( 'textarea' );
+
+		area.innerHTML = value;
+
+		return area.value;
+	}
+
+	/**
+	 * Обратно: экранирует то, что нельзя оставить в значении атрибута.
+	 *
+	 * @param {string} value Значение из поля.
+	 * @return {string}
+	 */
+	function encodeAttribute( value ) {
+		return value
+			.replace( /&/g, '&amp;' )
+			.replace( /"/g, '&quot;' )
+			.replace( /</g, '&lt;' )
+			.replace( />/g, '&gt;' );
+	}
+
+	/**
+	 * Перерисовывает поля ссылок по текущему содержимому перевода.
+	 *
+	 * Поля — только вид на разметку, своего состояния у них нет: правка
+	 * тут же уходит обратно в тот же HTML, и второго места, где хранится
+	 * адрес, не появляется.
+	 */
+	function renderLinks() {
+		if ( ! linksBox ) {
+			return;
+		}
+
+		var isBlock = current && 'html_block' === current.kind;
+		var links = isBlock ? findLinks( targetField.value ) : [];
+
+		linksList.textContent = '';
+		linksBox.hidden = 0 === links.length;
+
+		links.forEach( function ( link, index ) {
+			var field = document.createElement( 'input' );
+
+			field.type = 'text';
+			field.className = 'widefat code';
+			field.value = decodeAttribute( link.value );
+
+			field.addEventListener( 'change', function () {
+				/*
+				 * Границы берутся заново: пока поле правили, разметку могли
+				 * поменять в соседнем поле или прямо в textarea, и старые
+				 * позиции указывали бы уже не туда.
+				 */
+				var fresh = findLinks( targetField.value )[ index ];
+
+				if ( ! fresh ) {
+					return;
+				}
+
+				targetField.value = targetField.value.slice( 0, fresh.start )
+					+ encodeAttribute( field.value )
+					+ targetField.value.slice( fresh.end );
+
+				renderLinks();
+			} );
+
+			var label = document.createElement( 'label' );
+
+			label.className = 'wp-mlp-editor__link';
+			label.appendChild( document.createTextNode( settings.i18n.linkLabel.replace( '%d', index + 1 ) ) );
+			label.appendChild( field );
+
+			linksList.appendChild( label );
+		} );
 	}
 
 	/**
@@ -143,6 +259,8 @@
 			.then( function ( data ) {
 				targetField.value = data.translated_text;
 				statusField.value = data.status;
+				// Сервер чистит разметку блока — ссылки могли измениться.
+				renderLinks();
 				say( settings.i18n.saved, 'ok' );
 
 				toPreview( {
@@ -609,6 +727,13 @@
 		 * уже порога мобильной вёрстки темы, и её выезжающее меню
 		 * накрывает всё превью целиком.
 		 */
+		/*
+		 * Правку прямо в разметке поля ссылок тоже должны видеть: иначе
+		 * после ручного изменения href поле показывало бы старый адрес и
+		 * при следующей правке вернуло бы его обратно.
+		 */
+		targetField.addEventListener( 'input', renderLinks );
+
 		onClick( 'mlp-editor-toggle-panel', function () {
 			var button = document.getElementById( 'mlp-editor-toggle-panel' );
 			var collapsed = root.classList.toggle( 'is-panel-collapsed' );
@@ -645,6 +770,11 @@
 		if ( 'gettext' === event.data.type ) {
 			current = null;
 			form.hidden = true;
+
+			if ( linksBox ) {
+				linksBox.hidden = true;
+			}
+
 			hint.hidden = false;
 			hint.textContent = settings.i18n.gettextNotice.replace( '%s', event.data.domain );
 
