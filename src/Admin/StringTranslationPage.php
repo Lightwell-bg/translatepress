@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace WpMlp\Admin;
 
+use WpMlp\I18n\GettextKey;
 use WpMlp\Rendering\Segment;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
@@ -35,6 +37,26 @@ final class StringTranslationPage implements Hookable {
 	public const CAPABILITY  = 'manage_options';
 	public const ACTION_PURGE = 'mlp_purge_translations';
 
+	/**
+	 * Чистка собранных строк интерфейса без перевода.
+	 */
+	public const ACTION_CLEAN_GETTEXT = 'mlp_clean_gettext';
+
+	/**
+	 * Вкладка «Контент» — тексты сайта: записи, страницы, меню, виджеты.
+	 */
+	public const TAB_CONTENT = 'content';
+
+	/**
+	 * Вкладка «SEO/GEO» — meta description, Open Graph, Twitter, JSON-LD.
+	 */
+	public const TAB_SEO = 'seo';
+
+	/**
+	 * Вкладка «Интерфейс» — строки WordPress, темы и плагинов (gettext).
+	 */
+	public const TAB_INTERFACE = 'interface';
+
 	private const PER_PAGE = 20;
 
 	/**
@@ -42,8 +64,10 @@ final class StringTranslationPage implements Hookable {
 	 * @param SourceRepository      $sources      Исходные строки.
 	 * @param TranslationRepository $translations Переводы.
 	 * @param TranslationCache      $cache        Кэш переводов.
-	 * @param ProviderFactory       $providers    Доступы к провайдеру перевода.
-	 * @param OccurrenceRepository  $occurrences  Места использования строк.
+	 * @param ProviderFactory        $providers    Доступы к провайдеру перевода.
+	 * @param OccurrenceRepository   $occurrences  Места использования строк.
+	 * @param InterfaceStringsScreen $interface    Вкладка «Интерфейс».
+	 * @param GettextRepository      $gettext      Gettext-часть словаря.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
@@ -51,7 +75,9 @@ final class StringTranslationPage implements Hookable {
 		private readonly TranslationRepository $translations,
 		private readonly TranslationCache $cache,
 		private readonly ProviderFactory $providers,
-		private readonly OccurrenceRepository $occurrences
+		private readonly OccurrenceRepository $occurrences,
+		private readonly InterfaceStringsScreen $interface,
+		private readonly GettextRepository $gettext
 	) {
 	}
 
@@ -62,6 +88,7 @@ final class StringTranslationPage implements Hookable {
 		add_action( 'admin_menu', array( $this, 'addMenu' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_post_' . self::ACTION_PURGE, array( $this, 'handlePurge' ) );
+		add_action( 'admin_post_' . self::ACTION_CLEAN_GETTEXT, array( $this, 'handleCleanGettext' ) );
 	}
 
 	/**
@@ -99,6 +126,78 @@ final class StringTranslationPage implements Hookable {
 			)
 		);
 		exit;
+	}
+
+	/**
+	 * Убирает собранные строки интерфейса, которые никто не переводил.
+	 *
+	 * Отдельно от «удалить все переводы»: там удаляются переводы и
+	 * остаются исходные строки, а здесь наоборот — уходят сами строки,
+	 * но только те, что никто не трогал руками. Для gettext это
+	 * безопасно: они собираются заново сами при следующем показе страницы.
+	 */
+	public function handleCleanGettext(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( self::ACTION_CLEAN_GETTEXT );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		$locale = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
+		$tab    = self::parseTab( isset( $_POST['mlp_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['mlp_tab'] ) ) : '' );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		/*
+		 * Чистим ровно то, что показано на этой вкладке. Иначе кнопка на
+		 * «Контенте» молча снесла бы и SEO-строки — а это разные списки с
+		 * разной ценой ошибки.
+		 */
+		if ( self::TAB_INTERFACE === $tab ) {
+			$deleted = $this->gettext->deleteUntranslated();
+		} else {
+			$deleted = $this->sources->deleteUntranslated( self::cleanableKinds( $tab ) );
+		}
+
+		$this->cache->flush();
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => self::MENU_SLUG,
+					'mlp_tab'     => $tab,
+					'mlp_locale'  => $locale,
+					'mlp-cleaned' => (string) $deleted,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Какие виды строк чистит кнопка на этой вкладке. Чистая функция.
+	 *
+	 * SEO-строки и контент лежат в одних и тех же `kind`, различает их
+	 * только `attribute_name = 'content'` в местах использования, поэтому
+	 * «почистить только SEO» отдельным запросом не выйдет — и обе вкладки
+	 * чистят один и тот же набор видов. Это честнее, чем делать вид, что
+	 * кнопка на «SEO/GEO» трогает только его.
+	 *
+	 * @param string $tab Текущая вкладка.
+	 * @return list<string>
+	 */
+	public static function cleanableKinds( string $tab ): array {
+		if ( self::TAB_INTERFACE === $tab ) {
+			return array( GettextKey::KIND );
+		}
+
+		return array(
+			SourceRepository::TYPE_TEXT,
+			SourceRepository::TYPE_ATTRIBUTE,
+			SourceRepository::TYPE_BLOCK,
+			SourceRepository::TYPE_SEO,
+		);
 	}
 
 	/**
@@ -169,57 +268,235 @@ final class StringTranslationPage implements Hookable {
 		}
 
 		$filters = $this->readFilters( $secondary );
-		$result  = $this->sources->paginate(
+		$tab     = self::parseTab( $this->rawTab() );
+
+		?>
+		<div class="wrap wp-mlp-strings">
+			<h1><?php esc_html_e( 'Перевод строк', 'wp-mlp' ); ?></h1>
+
+			<?php $this->renderTabs( $tab, $filters['locale'] ); ?>
+			<?php $this->renderPurgeNotice(); ?>
+			<?php $this->renderAiNotice(); ?>
+
+			<?php $this->renderCleanNotice(); ?>
+
+			<?php if ( self::TAB_INTERFACE === $tab ) : ?>
+				<?php $this->renderInterfaceTab( $secondary[ $filters['locale'] ], $secondary, $filters ); ?>
+			<?php else : ?>
+				<?php $this->renderStringsTab( $tab, $secondary, $filters ); ?>
+			<?php endif; ?>
+
+			<?php $this->renderCleanForm( $tab, $filters['locale'] ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Вкладка «Интерфейс» — делегируется отдельному экрану: у gettext-строк
+	 * свои колонки (домен, контекст, официальный перевод) и свои фильтры.
+	 *
+	 * @param Language                                                                                     $language Целевой язык.
+	 * @param array{locale: string, status: string, search: string, domain: string, page: int} $filters  Текущие фильтры.
+	 */
+	private function renderInterfaceTab( Language $language, array $secondary, array $filters ): void {
+		$this->interface->render(
+			$language,
+			$secondary,
+			array(
+				'domain' => $filters['domain'],
+				'status' => $filters['status'],
+				'search' => $filters['search'],
+				'page'   => $filters['page'],
+			),
+			self::PER_PAGE,
+			function ( int $total, int $page ) use ( $filters ): void {
+				$filters['page'] = $page;
+
+				$this->renderTableNav( $total, $filters, 'top' );
+			}
+		);
+	}
+
+	/**
+	 * Вкладки «Контент» и «SEO/GEO» — один и тот же список строк из DOM,
+	 * отличается только тем, какие виды строк в него попадают.
+	 *
+	 * @param string                                                                                       $tab       Текущая вкладка.
+	 * @param array<string, Language>                                                                      $secondary Дополнительные языки.
+	 * @param array{locale: string, status: string, search: string, scope: string, object_id: int, type: string, page: int} $filters Текущие фильтры.
+	 */
+	private function renderStringsTab( string $tab, array $secondary, array $filters ): void {
+		/*
+		 * Вкладка решает, какие виды строк показывать, а не пользователь:
+		 * SEO/GEO и строки интерфейса живут на своих экранах, и «все типы»
+		 * на вкладке «Контент» означает «всё содержимое», а не буквально всё.
+		 */
+		$type = self::TAB_SEO === $tab
+			? SourceRepository::TYPE_SEO
+			: ( '' !== $filters['type'] ? $filters['type'] : SourceRepository::TYPE_CONTENT );
+
+		$result = $this->sources->paginate(
 			array(
 				'locale'    => $filters['locale'],
 				'status'    => $filters['status'],
 				'search'    => $filters['search'],
 				'scope'     => $filters['scope'],
 				'object_id' => $filters['object_id'],
-				'type'      => $filters['type'],
+				'type'      => $type,
 				'page'      => $filters['page'],
 				'per_page'  => self::PER_PAGE,
 			)
 		);
 
 		?>
-		<div class="wrap wp-mlp-strings">
-			<h1><?php esc_html_e( 'Перевод строк', 'wp-mlp' ); ?></h1>
+		<p class="description">
+			<?php if ( self::TAB_SEO === $tab ) : ?>
+				<?php esc_html_e( 'Поля для поисковиков и превью в соцсетях: meta description, Open Graph, Twitter Card и текстовые поля JSON-LD. На самой странице они не видны — их читают Google и мессенджеры, когда кто-то делится ссылкой.', 'wp-mlp' ); ?>
+				<br>
+				<?php esc_html_e( 'Заголовок записи переводить здесь не нужно: он общий с H1 и переводится один раз во вкладке «Контент».', 'wp-mlp' ); ?>
+			<?php else : ?>
+				<?php esc_html_e( 'То, что вы написали сами: текст записей и страниц, заголовки, пункты меню, подписи к картинкам, тексты в виджетах. Это основная вкладка — с неё и начинайте.', 'wp-mlp' ); ?>
+				<br>
+				<?php esc_html_e( 'Строки появляются здесь не сразу: плагин узнаёт текст страницы только когда она реально показана. Откройте страницу на дополнительном языке — и её строки окажутся в списке.', 'wp-mlp' ); ?>
+			<?php endif; ?>
+		</p>
 
-			<p class="description">
-				<?php esc_html_e( 'Строки появляются здесь после того, как вы откроете страницу на дополнительном языке: плагин запоминает всё, что реально показала тема — тексты, пункты меню, подписи к картинкам и кнопки.', 'wp-mlp' ); ?>
-			</p>
+		<?php $this->renderFilters( $secondary, $filters, $result['total'], $tab ); ?>
+		<?php $this->renderTableNav( $result['total'], $filters, 'top' ); ?>
 
-			<?php $this->renderPurgeNotice(); ?>
-			<?php $this->renderAiNotice(); ?>
-			<?php $this->renderFilters( $secondary, $filters, $result['total'] ); ?>
-			<?php $this->renderTableNav( $result['total'], $filters, 'top' ); ?>
-
-			<table class="widefat striped wp-mlp-table">
-				<thead>
+		<table class="widefat striped wp-mlp-table">
+			<thead>
+				<tr>
+					<th scope="col" class="wp-mlp-col-source"><?php esc_html_e( 'Исходная строка', 'wp-mlp' ); ?></th>
+					<th scope="col" class="wp-mlp-col-kind"><?php esc_html_e( 'Тип', 'wp-mlp' ); ?></th>
+					<th scope="col" class="wp-mlp-col-translation"><?php esc_html_e( 'Перевод', 'wp-mlp' ); ?></th>
+					<th scope="col" class="wp-mlp-col-status"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( array() === $result['items'] ) : ?>
 					<tr>
-						<th scope="col" class="wp-mlp-col-source"><?php esc_html_e( 'Исходная строка', 'wp-mlp' ); ?></th>
-						<th scope="col" class="wp-mlp-col-kind"><?php esc_html_e( 'Тип', 'wp-mlp' ); ?></th>
-						<th scope="col" class="wp-mlp-col-translation"><?php esc_html_e( 'Перевод', 'wp-mlp' ); ?></th>
-						<th scope="col" class="wp-mlp-col-status"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
+						<td colspan="4"><?php esc_html_e( 'Строк не найдено.', 'wp-mlp' ); ?></td>
 					</tr>
-				</thead>
-				<tbody>
-					<?php if ( array() === $result['items'] ) : ?>
-						<tr>
-							<td colspan="4"><?php esc_html_e( 'Строк не найдено.', 'wp-mlp' ); ?></td>
-						</tr>
-					<?php endif; ?>
+				<?php endif; ?>
 
-					<?php foreach ( $result['items'] as $row ) : ?>
-						<?php $this->renderRow( $row, $filters['locale'] ); ?>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
+				<?php foreach ( $result['items'] as $row ) : ?>
+					<?php $this->renderRow( $row, $filters['locale'] ); ?>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
 
-			<?php $this->renderTableNav( $result['total'], $filters, 'bottom' ); ?>
-		</div>
+		<?php $this->renderTableNav( $result['total'], $filters, 'bottom' ); ?>
 		<?php
+	}
+
+	/**
+	 * Кнопка чистки собранных строк интерфейса.
+	 *
+	 * @param string $locale Текущий язык — вернуться на ту же вкладку.
+	 */
+	private function renderCleanForm( string $tab, string $locale ): void {
+		$isInterface = self::TAB_INTERFACE === $tab;
+
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
+			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_CLEAN_GETTEXT ); ?>">
+			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $locale ); ?>">
+			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
+			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
+
+			<button type="submit" class="button"
+				data-mlp-confirm="<?php esc_attr_e( 'Убрать найденные строки, у которых нет ни одного перевода? Всё переведённое останется, а нужные строки соберутся заново при следующем показе страниц.', 'wp-mlp' ); ?>">
+				<?php esc_html_e( 'Очистить строки без перевода', 'wp-mlp' ); ?>
+			</button>
+			<span class="description">
+				<?php if ( $isInterface ) : ?>
+					<?php esc_html_e( 'Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются.', 'wp-mlp' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Чистит «Контент» и «SEO/GEO» разом — они лежат в одной таблице. Полезно, если в список попали строки интерфейса, собранные до появления вкладки «Интерфейс». Переведённое не удаляется, остальное соберётся заново.', 'wp-mlp' ); ?>
+				<?php endif; ?>
+			</span>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Сообщение о результате чистки.
+	 */
+	private function renderCleanNotice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение счётчика из URL.
+		if ( ! isset( $_GET['mlp-cleaned'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение приводится к целому.
+		$deleted = absint( $_GET['mlp-cleaned'] );
+
+		printf(
+			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: number of deleted strings */
+					__( 'Убрано строк интерфейса: %s.', 'wp-mlp' ),
+					number_format_i18n( $deleted )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Переключатель вкладок в оформлении ядра WordPress.
+	 *
+	 * @param string $current Текущая вкладка.
+	 * @param string $locale  Выбранный язык — переносится между вкладками.
+	 */
+	private function renderTabs( string $current, string $locale ): void {
+		$tabs = array(
+			self::TAB_CONTENT   => __( 'Контент', 'wp-mlp' ),
+			self::TAB_SEO       => __( 'SEO/GEO', 'wp-mlp' ),
+			self::TAB_INTERFACE => __( 'Интерфейс', 'wp-mlp' ),
+		);
+
+		echo '<nav class="nav-tab-wrapper wp-clearfix">';
+
+		foreach ( $tabs as $tab => $label ) {
+			printf(
+				'<a href="%s" class="nav-tab%s">%s</a>',
+				esc_url(
+					add_query_arg(
+						array(
+							'page'       => self::MENU_SLUG,
+							'mlp_tab'    => $tab,
+							'mlp_locale' => $locale,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				$tab === $current ? ' nav-tab-active' : '',
+				esc_html( $label )
+			);
+		}
+
+		echo '</nav>';
+	}
+
+	/**
+	 * Сырое значение вкладки из адресной строки.
+	 */
+	private function rawTab(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение проходит через allowlist.
+		return isset( $_GET['mlp_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_tab'] ) ) : '';
+	}
+
+	/**
+	 * Проверяет значение вкладки по allowlist. Чистая функция.
+	 *
+	 * @param string $value Сырое значение параметра.
+	 */
+	public static function parseTab( string $value ): string {
+		$allowed = array( self::TAB_CONTENT, self::TAB_SEO, self::TAB_INTERFACE );
+
+		return in_array( $value, $allowed, true ) ? $value : self::TAB_CONTENT;
 	}
 
 	/**
@@ -291,10 +568,11 @@ final class StringTranslationPage implements Hookable {
 	 * @param array{locale: string, status: string, search: string, page: int} $filters Текущие фильтры.
 	 * @param int                                                         $total     Всего строк.
 	 */
-	private function renderFilters( array $secondary, array $filters, int $total ): void {
+	private function renderFilters( array $secondary, array $filters, int $total, string $tab = self::TAB_CONTENT ): void {
 		?>
 		<form method="get" class="wp-mlp-filters">
 			<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
+			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
 
 			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Язык', 'wp-mlp' ); ?></label>
 			<select name="mlp_locale" id="mlp-locale">
@@ -331,22 +609,22 @@ final class StringTranslationPage implements Hookable {
 				</optgroup>
 			</select>
 
-			<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'Тип строки', 'wp-mlp' ); ?></label>
-			<select name="mlp_type" id="mlp-type">
-				<option value=""><?php esc_html_e( 'Все типы', 'wp-mlp' ); ?></option>
-				<option value="<?php echo esc_attr( SourceRepository::TYPE_SEO ); ?>" <?php selected( SourceRepository::TYPE_SEO, $filters['type'] ); ?>>
-					<?php esc_html_e( 'SEO/GEO (meta, OG/Twitter, JSON-LD)', 'wp-mlp' ); ?>
-				</option>
-				<option value="<?php echo esc_attr( SourceRepository::TYPE_TEXT ); ?>" <?php selected( SourceRepository::TYPE_TEXT, $filters['type'] ); ?>>
-					<?php esc_html_e( 'Текст', 'wp-mlp' ); ?>
-				</option>
-				<option value="<?php echo esc_attr( SourceRepository::TYPE_ATTRIBUTE ); ?>" <?php selected( SourceRepository::TYPE_ATTRIBUTE, $filters['type'] ); ?>>
-					<?php esc_html_e( 'Атрибут (alt, title, placeholder)', 'wp-mlp' ); ?>
-				</option>
-				<option value="<?php echo esc_attr( SourceRepository::TYPE_BLOCK ); ?>" <?php selected( SourceRepository::TYPE_BLOCK, $filters['type'] ); ?>>
-					<?php esc_html_e( 'Блок (абзац с разметкой)', 'wp-mlp' ); ?>
-				</option>
-			</select>
+			<?php if ( self::TAB_SEO !== $tab ) : ?>
+				<?php /* На вкладке SEO/GEO выбирать нечего: она сама и есть тип. */ ?>
+				<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'Тип строки', 'wp-mlp' ); ?></label>
+				<select name="mlp_type" id="mlp-type">
+					<option value=""><?php esc_html_e( 'Всё содержимое', 'wp-mlp' ); ?></option>
+					<option value="<?php echo esc_attr( SourceRepository::TYPE_TEXT ); ?>" <?php selected( SourceRepository::TYPE_TEXT, $filters['type'] ); ?>>
+						<?php esc_html_e( 'Текст', 'wp-mlp' ); ?>
+					</option>
+					<option value="<?php echo esc_attr( SourceRepository::TYPE_ATTRIBUTE ); ?>" <?php selected( SourceRepository::TYPE_ATTRIBUTE, $filters['type'] ); ?>>
+						<?php esc_html_e( 'Атрибут (alt, title, placeholder)', 'wp-mlp' ); ?>
+					</option>
+					<option value="<?php echo esc_attr( SourceRepository::TYPE_BLOCK ); ?>" <?php selected( SourceRepository::TYPE_BLOCK, $filters['type'] ); ?>>
+						<?php esc_html_e( 'Блок (абзац с разметкой)', 'wp-mlp' ); ?>
+					</option>
+				</select>
+			<?php endif; ?>
 
 			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Поиск', 'wp-mlp' ); ?></label>
 			<input type="search" name="s" id="mlp-search" value="<?php echo esc_attr( $filters['search'] ); ?>"
@@ -570,10 +848,12 @@ final class StringTranslationPage implements Hookable {
 		return add_query_arg(
 			array(
 				'page'       => self::MENU_SLUG,
+				'mlp_tab'    => self::parseTab( $this->rawTab() ),
 				'mlp_locale' => $filters['locale'],
 				'mlp_status' => $filters['status'],
 				'mlp_scope'  => self::scopeValue( $filters ),
 				'mlp_type'   => $filters['type'],
+				'mlp_domain' => $filters['domain'] ?? '',
 				's'          => $filters['search'],
 				'paged'      => (string) max( 1, $page ),
 			),
@@ -628,10 +908,12 @@ final class StringTranslationPage implements Hookable {
 	private function renderHiddenFilters( array $filters ): void {
 		$fields = array(
 			'page'       => self::MENU_SLUG,
+			'mlp_tab'    => self::parseTab( $this->rawTab() ),
 			'mlp_locale' => $filters['locale'],
 			'mlp_status' => $filters['status'],
 			'mlp_scope'  => self::scopeValue( $filters ),
 			'mlp_type'   => $filters['type'],
+			'mlp_domain' => $filters['domain'] ?? '',
 			's'          => $filters['search'],
 		);
 
@@ -657,6 +939,7 @@ final class StringTranslationPage implements Hookable {
 		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['s'] ) ) : '';
 		$scope  = isset( $_GET['mlp_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_scope'] ) ) : '';
 		$type   = isset( $_GET['mlp_type'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_type'] ) ) : '';
+		$domain = isset( $_GET['mlp_domain'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_domain'] ) ) : '';
 		$page   = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -666,15 +949,39 @@ final class StringTranslationPage implements Hookable {
 
 		list( $scopeName, $objectId ) = self::parseScope( $scope );
 
+		/*
+		 * Статус на вкладке «Интерфейс» свой: там фильтруют не по стадии
+		 * готовности перевода, а по тому, есть ли вообще наше
+		 * переопределение поверх языкового пакета.
+		 */
+		$isInterface = self::TAB_INTERFACE === self::parseTab( $this->rawTab() );
+
 		return array(
 			'locale'    => $locale,
-			'status'    => TranslationStatus::isValid( $status ) ? $status : '',
+			'status'    => $this->parseStatus( $status, $isInterface ),
 			'search'    => $search,
 			'scope'     => $scopeName,
 			'object_id' => $objectId,
 			'type'      => self::parseType( $type ),
+			'domain'    => $domain,
 			'page'      => max( 1, $page ),
 		);
+	}
+
+	/**
+	 * Проверяет значение фильтра статуса по allowlist нужной вкладки.
+	 *
+	 * @param string $value       Сырое значение параметра.
+	 * @param bool   $isInterface Вкладка «Интерфейс» — у неё свои статусы.
+	 */
+	private function parseStatus( string $value, bool $isInterface ): string {
+		if ( $isInterface ) {
+			$allowed = array( GettextRepository::STATUS_MISSING, GettextRepository::STATUS_OVERRIDDEN );
+
+			return in_array( $value, $allowed, true ) ? $value : '';
+		}
+
+		return TranslationStatus::isValid( $value ) ? $value : '';
 	}
 
 	/**

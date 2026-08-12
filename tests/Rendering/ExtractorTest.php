@@ -280,6 +280,118 @@ final class ExtractorTest extends TestCase {
 	}
 
 	/**
+	 * `title` у `<link>` — подпись для агрегатора лент, а не текст для
+	 * посетителя. Таких строк на сайте десятки (по одной на рубрику, метку
+	 * и запись), они лезли в «Контент» наравне с настоящим текстом, а их
+	 * перевод не менял ничего ни на экране, ни в выдаче.
+	 */
+	public function testLinkTitleIsNotExtracted(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><head>'
+			. '<link rel="alternate" type="application/rss+xml" title="CenterAI » Лента комментариев">'
+			. '</head><body><p>Настоящий текст</p></body></html>'
+		);
+
+		$this->assertSame( array( 'Настоящий текст' ), $texts );
+	}
+
+	/**
+	 * А `title` у обычной ссылки — наоборот, всплывающая подсказка, её
+	 * посетитель видит: отсекать заодно с метаданными нельзя.
+	 */
+	public function testAnchorTitleIsStillExtracted(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><body><a href="/x" title="Записи автора">ссылка</a></body></html>'
+		);
+
+		$this->assertContains( 'Записи автора', $texts );
+	}
+
+	/**
+	 * Строка, которую на этом же запросе уже отдал gettext-контур, не
+	 * должна заводиться в словарь второй раз: иначе «Ответить» окажется и
+	 * в «Интерфейсе», и в «Контенте», и переводить её придётся дважды, в
+	 * двух разных экранах (п. 5.4 задания).
+	 */
+	public function testTextAlreadyServedByGettextIsSkipped(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Ответить</p><p>Обычный текст</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$texts = array_map(
+			static fn( Segment $segment ): string => $segment->text,
+			( new Extractor() )->extract( $document, 'ru', array(), false, array( 'Ответить' => true ) )
+		);
+
+		$this->assertSame( array( 'Обычный текст' ), $texts );
+	}
+
+	/**
+	 * Сравнение идёт по нормализованному тексту — тому же виду, в каком
+	 * строка попадает в словарь. Иначе лишние пробелы и переносы строк в
+	 * разметке темы ломали бы совпадение.
+	 */
+	public function testGettextSkipMatchesNormalizedText(): void {
+		$document = HtmlDocument::parse(
+			"<!DOCTYPE html><html><body><p>  Оставить\n  комментарий  </p></body></html>"
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract(
+			$document,
+			'ru',
+			array(),
+			false,
+			array( 'Оставить комментарий' => true )
+		);
+
+		$this->assertSame( array(), $segments );
+	}
+
+	/**
+	 * Атрибуты отсеиваются по тому же набору: `placeholder` и `aria-label`
+	 * сплошь и рядом выводятся через esc_attr_e(), то есть это такие же
+	 * gettext-строки, и дубль в «Контенте» получился бы точно так же.
+	 */
+	public function testAttributeAlreadyServedByGettextIsSkipped(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body>'
+			. '<input type="search" placeholder="Поиск">'
+			. '<img src="a.png" alt="Своя картинка">'
+			. '</body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$texts = array_map(
+			static fn( Segment $segment ): string => $segment->text,
+			( new Extractor() )->extract( $document, 'ru', array(), false, array( 'Поиск' => true ) )
+		);
+
+		$this->assertSame( array( 'Своя картинка' ), $texts );
+	}
+
+	/**
+	 * Пустой набор — прежнее поведение без единого изменения: этот путь
+	 * проходят массовый перевод записи и все существующие вызовы.
+	 */
+	public function testEmptySkipListChangesNothing(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Ответить</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru', array(), false, array() );
+
+		$this->assertCount( 1, $segments );
+		$this->assertSame( 'Ответить', $segments[0]->text );
+	}
+
+	/**
 	 * Находит сегмент с точным (не нормализованным-обрезанным) текстом.
 	 *
 	 * @param list<Segment> $segments Найденные сегменты.

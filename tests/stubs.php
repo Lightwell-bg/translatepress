@@ -181,6 +181,38 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_action' ) ) {
+	/**
+	 * Заглушка регистрации хука: тесты вызывают обработчики напрямую, а
+	 * не через диспетчер WordPress, поэтому регистрацию достаточно принять
+	 * и забыть. Возвращаемое значение совпадает с настоящим.
+	 *
+	 * @param string $tag      Имя хука.
+	 * @param mixed  $callback Обработчик.
+	 * @param int    $priority Приоритет.
+	 * @param int    $args     Число аргументов.
+	 */
+	function add_action( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
+		unset( $tag, $callback, $priority, $args );
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * @param string $tag      Имя фильтра.
+	 * @param mixed  $callback Обработчик.
+	 * @param int    $priority Приоритет.
+	 * @param int    $args     Число аргументов.
+	 */
+	function add_filter( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
+		unset( $tag, $callback, $priority, $args );
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_unslash' ) ) {
 	/**
 	 * @param mixed $value Значение.
@@ -245,6 +277,57 @@ if ( ! function_exists( 'get_option' ) ) {
 		$options = wp_mlp_test_options();
 
 		return array_key_exists( $name, $options ) ? $options[ $name ] : $default;
+	}
+}
+
+/**
+ * Тип текущего запроса — на время одного теста.
+ *
+ * Константы REST_REQUEST/XMLRPC_REQUEST/WP_CLI сюда не входят намеренно:
+ * определённую константу нельзя вернуть обратно в пределах процесса, а
+ * запускать ради трёх однострочных проверок отдельный процесс дороже, чем
+ * они стоят. Проверяются функции, которые действительно можно подменить.
+ *
+ * @param array<string, bool>|null $reset Если передан массив, контекст им заменяется.
+ * @return array<string, bool>
+ */
+function wp_mlp_test_request( ?array $reset = null ): array {
+	static $context = array();
+
+	if ( null !== $reset ) {
+		$context = $reset;
+	}
+
+	return $context;
+}
+
+if ( ! function_exists( 'is_admin' ) ) {
+	function is_admin(): bool {
+		return (bool) ( wp_mlp_test_request()['is_admin'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'wp_doing_ajax' ) ) {
+	function wp_doing_ajax(): bool {
+		return (bool) ( wp_mlp_test_request()['ajax'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'wp_doing_cron' ) ) {
+	function wp_doing_cron(): bool {
+		return (bool) ( wp_mlp_test_request()['cron'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'get_available_languages' ) ) {
+	/**
+	 * Установленные языковые пакеты. Настоящая функция сканирует
+	 * `wp-content/languages`; в тестах список задаётся контекстом запроса.
+	 *
+	 * @return list<string>
+	 */
+	function get_available_languages(): array {
+		return (array) ( wp_mlp_test_request()['languages'] ?? array() );
 	}
 }
 

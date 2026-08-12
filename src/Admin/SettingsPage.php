@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace WpMlp\Admin;
 
 use WpMlp\Frontend\Sitemap;
+use WpMlp\I18n\LanguagePacks;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
+use WpMlp\Support\Locale;
 
 /**
  * Список языков сайта: код, URL-слаг, название, статус, язык по умолчанию.
@@ -25,9 +27,24 @@ final class SettingsPage implements Hookable {
 	public const ACTION_SAVE = 'mlp_save_settings';
 
 	/**
-	 * @param Settings $settings Настройки плагина.
+	 * Имя submit-кнопки «Скачать языковой пакет»; её значение — локаль.
+	 *
+	 * Кнопка живёт внутри той же формы настроек, а не в отдельном
+	 * admin-post: так она бесплатно получает и проверку прав, и nonce, и —
+	 * главное — сохранение только что введённой локали ДО попытки скачать
+	 * для неё пакет. Отдельным действием пришлось бы либо дублировать всё
+	 * это, либо качать пакет для старого, ещё не сохранённого значения.
 	 */
-	public function __construct( private readonly Settings $settings ) {
+	private const FIELD_DOWNLOAD_PACK = 'mlp_download_pack';
+
+	/**
+	 * @param Settings      $settings Настройки плагина.
+	 * @param LanguagePacks $packs    Языковые пакеты WordPress.
+	 */
+	public function __construct(
+		private readonly Settings $settings,
+		private readonly LanguagePacks $packs
+	) {
 	}
 
 	/**
@@ -106,6 +123,19 @@ final class SettingsPage implements Hookable {
 
 		$query = array( 'page' => self::MENU_SLUG );
 
+		/*
+		 * Пакет качается уже ПОСЛЕ сохранения: локаль могли ввести прямо
+		 * сейчас, в этой же отправке формы, и качать нужно именно её.
+		 */
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		$requestedPack = isset( $input[ self::FIELD_DOWNLOAD_PACK ] )
+			? Locale::sanitizeWpLocale( (string) $input[ self::FIELD_DOWNLOAD_PACK ] )
+			: '';
+
+		if ( '' !== $requestedPack ) {
+			$query['mlp-pack'] = $this->packs->install( $requestedPack ) ? 'ok' : 'failed';
+		}
+
 		if ( array() === $result['errors'] ) {
 			$query['mlp-updated'] = '1';
 		} else {
@@ -139,6 +169,11 @@ final class SettingsPage implements Hookable {
 				<?php esc_html_e( 'Язык по умолчанию отдаётся по обычным адресам сайта, без префикса. Остальные языки живут на своём префиксе, например /en/. Черновой язык недоступен посетителям и не попадает в hreflang.', 'wp-mlp' ); ?>
 			</p>
 
+			<p class="description">
+				<strong><?php esc_html_e( 'Что в какой колонке:', 'wp-mlp' ); ?></strong>
+				<?php esc_html_e( '«Код языка» — короткое имя внутри плагина. «URL-слаг» — то, что появится в адресе: /bg/статья/. «Название» и «Флаг» видит посетитель в переключателе языков. «Локаль WordPress» — имя, под которым WordPress ищет переводы своего интерфейса (bg_BG, en_US); именно благодаря ей «Reply» становится «Отговор» без вашего участия.', 'wp-mlp' ); ?>
+			</p>
+
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_SAVE ); ?>">
 				<?php wp_nonce_field( self::ACTION_SAVE ); ?>
@@ -150,6 +185,11 @@ final class SettingsPage implements Hookable {
 							<th scope="col"><?php esc_html_e( 'URL-слаг', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Название', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Флаг', 'wp-mlp' ); ?></th>
+							<th scope="col">
+								<?php esc_html_e( 'Локаль WordPress', 'wp-mlp' ); ?>
+								<span class="dashicons dashicons-editor-help"
+									title="<?php esc_attr_e( 'Имя, под которым WordPress хранит переводы своего интерфейса: en_US, bg_BG, ru_RU. По нему ядро, тема и плагины находят свои файлы перевода и сами отдают «Ответить» вместо «Reply». Не путать с кодом языка слева — тот идёт в адрес страницы.', 'wp-mlp' ); ?>"></span>
+							</th>
 							<th scope="col"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Удалить', 'wp-mlp' ); ?></th>
 						</tr>
@@ -185,7 +225,12 @@ final class SettingsPage implements Hookable {
 								<input type="checkbox" name="discover_strings" value="1" <?php checked( ! empty( $raw['discover_strings'] ) ); ?>>
 								<?php esc_html_e( 'Запоминать новые строки при открытии переведённых страниц', 'wp-mlp' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'Словарь пополняется по мере посещения страниц на дополнительном языке. Если выключить, новые строки перестанут появляться в разделе «Перевод строк».', 'wp-mlp' ); ?></p>
+							<p class="description">
+								<?php esc_html_e( 'Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк».', 'wp-mlp' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Держите включённым. Выключать имеет смысл, только когда сайт полностью переведён и вы не хотите, чтобы список пополнялся дальше.', 'wp-mlp' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>
@@ -386,6 +431,13 @@ final class SettingsPage implements Hookable {
 					title="<?php esc_attr_e( 'Emoji-флаг для переключателя языков, необязательно', 'wp-mlp' ); ?>">
 			</td>
 			<td>
+				<input type="text" name="<?php echo esc_attr( $name . '[wp_locale]' ); ?>"
+					value="<?php echo esc_attr( $language->wpLocale ?? '' ); ?>"
+					placeholder="en_US" size="10"
+					title="<?php esc_attr_e( 'Локаль WordPress: под этим именем ядро, тема и плагины ищут свои переводы', 'wp-mlp' ); ?>">
+				<?php $this->renderLanguagePackStatus( $language ); ?>
+			</td>
+			<td>
 				<?php if ( null !== $language && $language->isDefault ) : ?>
 					<input type="hidden" name="<?php echo esc_attr( $name . '[status]' ); ?>" value="<?php echo esc_attr( Language::STATUS_PUBLISHED ); ?>">
 					<em><?php esc_html_e( 'по умолчанию', 'wp-mlp' ); ?></em>
@@ -413,6 +465,60 @@ final class SettingsPage implements Hookable {
 	}
 
 	/**
+	 * Показывает, установлен ли языковой пакет, и предлагает скачать его.
+	 *
+	 * Без пакета подмена локали (LocaleSwitcher) внешне «не работает»:
+	 * ядро и тема возвращают английские оригиналы, а причину по фронтенду
+	 * не увидеть — поэтому состояние показывается явно, рядом с полем.
+	 *
+	 * @param Language|null $language Существующий язык или null для пустой строки формы.
+	 */
+	private function renderLanguagePackStatus( ?Language $language ): void {
+		if ( null === $language || '' === $language->wpLocale ) {
+			return;
+		}
+
+		if ( ! LanguagePacks::needsPack( $language->wpLocale ) ) {
+			printf(
+				'<p class="description">%s</p>',
+				esc_html__( 'Встроенная локаль — пакет не нужен.', 'wp-mlp' )
+			);
+
+			return;
+		}
+
+		if ( $this->packs->isInstalled( $language->wpLocale ) ) {
+			printf(
+				'<p class="description" style="color:#007017;">%s</p>',
+				esc_html__( 'Языковой пакет установлен.', 'wp-mlp' )
+			);
+
+			return;
+		}
+
+		printf(
+			'<p class="description" style="color:#b32d2e;">%s</p>',
+			esc_html__( 'Языкового пакета нет — строки интерфейса останутся на английском.', 'wp-mlp' )
+		);
+
+		if ( ! $this->packs->canInstall() ) {
+			printf(
+				'<p class="description">%s</p>',
+				esc_html__( 'Автоматическая установка недоступна: нет прав на запись в wp-content/languages или закрыт доступ к api.wordpress.org. Загрузите файлы перевода вручную.', 'wp-mlp' )
+			);
+
+			return;
+		}
+
+		printf(
+			'<button type="submit" class="button button-secondary" name="%s" value="%s">%s</button>',
+			esc_attr( self::FIELD_DOWNLOAD_PACK ),
+			esc_attr( $language->wpLocale ),
+			esc_html__( 'Скачать языковой пакет', 'wp-mlp' )
+		);
+	}
+
+	/**
 	 * Сообщения после сохранения.
 	 */
 	private function renderNotices(): void {
@@ -421,6 +527,20 @@ final class SettingsPage implements Hookable {
 			printf(
 				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
 				esc_html__( 'Настройки сохранены.', 'wp-mlp' )
+			);
+		}
+
+		if ( isset( $_GET['mlp-pack'] ) ) {
+			$installed = 'ok' === sanitize_text_field( wp_unslash( (string) $_GET['mlp-pack'] ) );
+
+			printf(
+				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+				$installed ? 'success' : 'error',
+				esc_html(
+					$installed
+						? __( 'Языковой пакет установлен.', 'wp-mlp' )
+						: __( 'Не удалось скачать языковой пакет. Проверьте, что для этой локали существует перевод на translate.wordpress.org и что сайту разрешён доступ к api.wordpress.org.', 'wp-mlp' )
+				)
 			);
 		}
 

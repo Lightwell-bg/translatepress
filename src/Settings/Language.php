@@ -36,6 +36,11 @@ final class Language {
 	 * @param string $status    STATUS_PUBLISHED или STATUS_DRAFT.
 	 * @param bool   $isDefault Язык по умолчанию (отдаётся без префикса).
 	 * @param string $flag      Emoji-флаг для переключателя, вводится вручную.
+	 * @param string $wpLocale  Локаль WordPress (`en_US`) — та, под которой
+	 *                          ядро, тема и плагины ищут свои файлы перевода.
+	 *                          Пустая строка означает «вывести из кода языка»
+	 *                          (см. fromArray()), в готовом объекте она уже
+	 *                          всегда заполнена.
 	 */
 	public function __construct(
 		public readonly string $locale,
@@ -43,7 +48,8 @@ final class Language {
 		public readonly string $label,
 		public readonly string $status,
 		public readonly bool $isDefault,
-		public readonly string $flag = ''
+		public readonly string $flag = '',
+		public readonly string $wpLocale = ''
 	) {
 	}
 
@@ -61,6 +67,19 @@ final class Language {
 			? self::STATUS_DRAFT
 			: self::STATUS_PUBLISHED;
 
+		/*
+		 * Локаль WordPress выводится из кода языка, только если её нет в
+		 * настройках вовсе — то есть у языков, заведённых до появления
+		 * этого поля. Так обновление плагина ничего не перезаписывает
+		 * молча: сохранённое значение всегда сильнее вычисленного, а у
+		 * кого его нет, тот получает разумный дефолт вместо пустоты.
+		 */
+		$wpLocale = Locale::sanitizeWpLocale( (string) ( $data['wp_locale'] ?? '' ) );
+
+		if ( ! Locale::isValidWpLocale( $wpLocale ) ) {
+			$wpLocale = Locale::toWpLocale( $locale );
+		}
+
 		return new self(
 			$locale,
 			'' !== $slug ? $slug : $locale,
@@ -68,7 +87,8 @@ final class Language {
 			// Язык по умолчанию всегда доступен: черновиком он быть не может.
 			$isDefault ? self::STATUS_PUBLISHED : $status,
 			$isDefault,
-			self::sanitizeFlag( (string) ( $data['flag'] ?? '' ) )
+			self::sanitizeFlag( (string) ( $data['flag'] ?? '' ) ),
+			$wpLocale
 		);
 	}
 
@@ -117,11 +137,12 @@ final class Language {
 	 */
 	public function toArray(): array {
 		return array(
-			'locale' => $this->locale,
-			'slug'   => $this->slug,
-			'label'  => $this->label,
-			'status' => $this->status,
-			'flag'   => $this->flag,
+			'locale'    => $this->locale,
+			'slug'      => $this->slug,
+			'label'     => $this->label,
+			'status'    => $this->status,
+			'flag'      => $this->flag,
+			'wp_locale' => $this->wpLocale,
 		);
 	}
 }

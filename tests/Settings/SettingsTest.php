@@ -139,6 +139,125 @@ final class SettingsTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Самое важное для обновления плагина: у языков, заведённых ДО
+	 * появления поля «Локаль WordPress», в настройках его нет вовсе.
+	 * Такой язык обязан получить разумную локаль сам, а не пустую строку —
+	 * иначе подмена локали (LocaleSwitcher) на нём просто не сработает,
+	 * причём молча.
+	 */
+	public function testLanguageWithoutStoredWpLocaleDerivesItFromTheCode(): void {
+		wp_mlp_test_options(
+			array(
+				Settings::OPTION => array(
+					'default_locale' => 'ru',
+					'languages'      => array(
+						// Ровно то, что лежит в БД у существующих установок:
+						// ни ключа wp_locale, ни его значения.
+						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
+						'bg' => array( 'locale' => 'bg', 'slug' => 'bg', 'status' => 'published' ),
+					),
+				),
+			)
+		);
+
+		$settings = new Settings();
+
+		$this->assertSame( 'ru_RU', $settings->get( 'ru' )->wpLocale );
+		$this->assertSame( 'bg_BG', $settings->get( 'bg' )->wpLocale );
+	}
+
+	/**
+	 * Сохранённое значение всегда сильнее вычисленного: обновление плагина
+	 * не должно молча перетирать локаль, которую владелец сайта поправил
+	 * руками (например `en_GB` вместо угаданного `en_US`).
+	 */
+	public function testStoredWpLocaleWinsOverTheDerivedDefault(): void {
+		wp_mlp_test_options(
+			array(
+				Settings::OPTION => array(
+					'default_locale' => 'ru',
+					'languages'      => array(
+						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
+						'en' => array(
+							'locale'    => 'en',
+							'slug'      => 'en',
+							'status'    => 'published',
+							'wp_locale' => 'en_GB',
+						),
+					),
+				),
+			)
+		);
+
+		$this->assertSame( 'en_GB', ( new Settings() )->get( 'en' )->wpLocale );
+	}
+
+	public function testWpLocaleSurvivesRoundTrip(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array(
+						'locale'    => 'ru',
+						'slug'      => 'ru',
+						'wp_locale' => 'ru_RU',
+					),
+				),
+			)
+		);
+
+		$this->assertSame( 'ru_RU', $result['settings']['languages']['ru']['wp_locale'] );
+	}
+
+	/**
+	 * Пустое поле — не ошибка, а «выведи сама»: у существующих языков его
+	 * ещё не заполняли, и сохранение других настроек не должно падать.
+	 */
+	public function testBlankWpLocaleIsAcceptedAndDerivedLater(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array(
+						'locale'    => 'ru',
+						'slug'      => 'ru',
+						'wp_locale' => '',
+					),
+				),
+			)
+		);
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( '', $result['settings']['languages']['ru']['wp_locale'] );
+		// …а на чтении пустое значение превращается в выведенное.
+		$this->assertSame( 'ru_RU', Language::fromArray( $result['settings']['languages']['ru'], true )->wpLocale );
+	}
+
+	public function testInvalidWpLocaleIsRejectedWithAnError(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array(
+						'locale'    => 'ru',
+						'slug'      => 'ru',
+						'wp_locale' => '1',
+					),
+				),
+			)
+		);
+
+		$this->assertNotEmpty( $result['errors'] );
+		$this->assertSame( '', $result['settings']['languages']['ru']['wp_locale'] );
+	}
+
 	public function testLabelWithFlagPrependsFlagWhenPresent(): void {
 		$withFlag = new Language( 'en', 'en', 'English', Language::STATUS_PUBLISHED, false, '🇬🇧' );
 		$noFlag   = new Language( 'en', 'en', 'English', Language::STATUS_PUBLISHED, false );

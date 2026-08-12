@@ -33,7 +33,24 @@ final class TranslationStatus {
 	public const REJECTED = 'rejected';
 
 	/**
-	 * Allowlist для REST и админки.
+	 * Перевод пришёл из языкового пакета WordPress (ТЗ 4.5, код 4).
+	 *
+	 * Статус ВЫЧИСЛЯЕМЫЙ, а не хранимый: строк, переведённых официальным
+	 * пакетом, в нашей базе нет вовсе (см. I18n\GettextRegistry — их туда
+	 * намеренно не пишут, иначе словарь распух бы на тысячи строк ядра).
+	 * Значит и записать этот статус некуда: он появляется только в
+	 * интерфейсе «Перевода строк», чтобы отличить «перевод есть, но не
+	 * наш» от «перевода нет вовсе».
+	 *
+	 * Поэтому его нет в {@see all()}: тот список — allowlist для записи
+	 * через REST, и принимать `locale_file` на запись нельзя.
+	 */
+	public const LOCALE_FILE = 'locale_file';
+
+	/**
+	 * Allowlist статусов, ДОПУСТИМЫХ К ЗАПИСИ.
+	 *
+	 * Вычисляемый LOCALE_FILE сюда не входит намеренно — см. его докблок.
 	 *
 	 * @return list<string>
 	 */
@@ -64,12 +81,13 @@ final class TranslationStatus {
 	 */
 	public static function label( string $status ): string {
 		$labels = array(
-			self::MISSING  => __( 'Нет перевода', 'wp-mlp' ),
-			self::MACHINE  => __( 'Машинный', 'wp-mlp' ),
-			self::REVIEW   => __( 'На проверке', 'wp-mlp' ),
-			self::APPROVED => __( 'Готов', 'wp-mlp' ),
-			self::STALE    => __( 'Устарел', 'wp-mlp' ),
-			self::REJECTED => __( 'Отклонён', 'wp-mlp' ),
+			self::MISSING     => __( 'Нет перевода', 'wp-mlp' ),
+			self::MACHINE     => __( 'Машинный', 'wp-mlp' ),
+			self::REVIEW      => __( 'На проверке', 'wp-mlp' ),
+			self::APPROVED    => __( 'Готов', 'wp-mlp' ),
+			self::STALE       => __( 'Устарел', 'wp-mlp' ),
+			self::REJECTED    => __( 'Отклонён', 'wp-mlp' ),
+			self::LOCALE_FILE => __( 'Из языкового пакета', 'wp-mlp' ),
 		);
 
 		return $labels[ $status ] ?? $status;

@@ -603,6 +603,21 @@
 			bulkPanel.hidden = true;
 		} );
 		onClick( 'mlp-editor-bulk-start', bulkStart );
+
+		/*
+		 * Сворачивание панели. Иначе на обычном ноутбуке превью остаётся
+		 * уже порога мобильной вёрстки темы, и её выезжающее меню
+		 * накрывает всё превью целиком.
+		 */
+		onClick( 'mlp-editor-toggle-panel', function () {
+			var button = document.getElementById( 'mlp-editor-toggle-panel' );
+			var collapsed = root.classList.toggle( 'is-panel-collapsed' );
+
+			button.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
+			button.textContent = collapsed
+				? settings.i18n.expandPanel
+				: settings.i18n.collapsePanel;
+		} );
 		onClick( 'mlp-editor-bulk-save', bulkSaveAll );
 	}
 
@@ -617,6 +632,21 @@
 
 		if ( 'navigate' === event.data.type ) {
 			frame.src = event.data.url;
+
+			return;
+		}
+
+		/*
+		 * Строка интерфейса: поля перевода не показываем вовсе — её нельзя
+		 * перевести здесь, она живёт во вкладке «Интерфейс». Молча
+		 * игнорировать клик нельзя: пользователь решил бы, что редактор
+		 * сломан, и жал бы снова.
+		 */
+		if ( 'gettext' === event.data.type ) {
+			current = null;
+			form.hidden = true;
+			hint.hidden = false;
+			hint.textContent = settings.i18n.gettextNotice.replace( '%s', event.data.domain );
 
 			return;
 		}

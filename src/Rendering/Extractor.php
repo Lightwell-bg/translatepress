@@ -67,6 +67,16 @@ final class Extractor {
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
 
 	/**
+	 * Теги служебных данных: их атрибуты адресованы машине, а не человеку.
+	 *
+	 * `<link>` и `<base>` ничего не показывают на странице вовсе — их
+	 * `title` читают агрегаторы лент и браузер, но не посетитель. `<meta>`
+	 * сюда не входит: его `content` — это как раз человекочитаемые
+	 * описания и заголовки для соцсетей, за них отвечает TRANSLATABLE_META.
+	 */
+	private const METADATA_TAGS = array( 'link', 'base' );
+
+	/**
 	 * Значения `name`/`property` тегов `<meta>`, чьё содержимое переводится.
 	 *
 	 * Точный список, без масок вида `twitter:*`: сравнение ниже — строгий
@@ -153,13 +163,17 @@ final class Extractor {
 	 * @param array<string, true> $blockHashes Хеши известных translation blocks.
 	 * @param bool                $markBlockCandidates Помечать ли кандидатов в блоки
 	 *                                                 (только для предпросмотра).
+	 * @param array<string, true> $skipTexts   Нормализованные тексты, которые уже
+	 *                                         обслужил gettext-контур: их нельзя
+	 *                                         заводить второй раз (см. skips()).
 	 * @return list<Segment>
 	 */
 	public function extract(
 		HtmlDocument $document,
 		string $locale,
 		array $blockHashes = array(),
-		bool $markBlockCandidates = false
+		bool $markBlockCandidates = false,
+		array $skipTexts = array()
 	): array {
 		$root = $document->root();
 
@@ -175,7 +189,7 @@ final class Extractor {
 			$node = array_pop( $stack );
 
 			if ( self::NODE_TEXT === $node->nodeType ) {
-				$segment = $this->textSegment( $node, $locale, $contextHash );
+				$segment = $this->textSegment( $node, $locale, $contextHash, $skipTexts );
 
 				if ( null !== $segment ) {
 					$segments[] = $segment;
@@ -192,7 +206,7 @@ final class Extractor {
 				continue;
 			}
 
-			foreach ( $this->attributeSegments( $node, $locale, $contextHash ) as $segment ) {
+			foreach ( $this->attributeSegments( $node, $locale, $contextHash, $skipTexts ) as $segment ) {
 				$segments[] = $segment;
 			}
 
@@ -391,11 +405,12 @@ final class Extractor {
 	/**
 	 * Строит сегмент для текстового узла.
 	 *
-	 * @param object $node        Текстовый узел.
-	 * @param string $locale      Исходный язык.
-	 * @param string $contextHash Хеш контекста.
+	 * @param object              $node        Текстовый узел.
+	 * @param string              $locale      Исходный язык.
+	 * @param string              $contextHash Хеш контекста.
+	 * @param array<string, true> $skipTexts   Уже обслуженные gettext-контуром.
 	 */
-	private function textSegment( object $node, string $locale, string $contextHash ): ?Segment {
+	private function textSegment( object $node, string $locale, string $contextHash, array $skipTexts = array() ): ?Segment {
 		$raw = (string) $node->nodeValue;
 
 		if ( '' === trim( $raw ) ) {
@@ -406,7 +421,7 @@ final class Extractor {
 
 		$normalized = Text::normalize( $core );
 
-		if ( ! Text::isTranslatable( $normalized ) ) {
+		if ( ! Text::isTranslatable( $normalized ) || isset( $skipTexts[ $normalized ] ) ) {
 			return null;
 		}
 
@@ -416,12 +431,13 @@ final class Extractor {
 	/**
 	 * Строит сегменты для переводимых атрибутов элемента.
 	 *
-	 * @param object $element     Элемент DOM.
-	 * @param string $locale      Исходный язык.
-	 * @param string $contextHash Хеш контекста.
+	 * @param object              $element     Элемент DOM.
+	 * @param string              $locale      Исходный язык.
+	 * @param string              $contextHash Хеш контекста.
+	 * @param array<string, true> $skipTexts   Уже обслуженные gettext-контуром.
 	 * @return list<Segment>
 	 */
-	private function attributeSegments( object $element, string $locale, string $contextHash ): array {
+	private function attributeSegments( object $element, string $locale, string $contextHash, array $skipTexts = array() ): array {
 		$segments = array();
 		$isMeta   = 'meta' === strtolower( (string) $element->nodeName );
 
@@ -432,7 +448,13 @@ final class Extractor {
 
 			$normalized = Text::normalize( (string) $element->getAttribute( $attribute ) );
 
-			if ( ! Text::isTranslatable( $normalized ) ) {
+			/*
+			 * Атрибуты отсеиваются по тому же набору, что и текстовые узлы:
+			 * `placeholder` и `aria-label` сплошь и рядом выводятся через
+			 * esc_attr_e(), то есть это ровно такие же gettext-строки, и
+			 * дубль в «Контенте» получился бы точно так же.
+			 */
+			if ( ! Text::isTranslatable( $normalized ) || isset( $skipTexts[ $normalized ] ) ) {
 				continue;
 			}
 
@@ -472,6 +494,19 @@ final class Extractor {
 	private function translatableAttributes( object $element ): array {
 		$attributes = self::GLOBAL_ATTRIBUTES;
 		$tag        = strtolower( (string) $element->nodeName );
+
+		if ( in_array( $tag, self::METADATA_TAGS, true ) ) {
+			/*
+			 * У `<link>` собственного текста нет вовсе, а `title` — это
+			 * подпись для машины: `<link rel="alternate" type="application/
+			 * rss+xml" title="CenterAI » Feed">` читает агрегатор, а не
+			 * посетитель. В словаре такие строки только мешают: их десятки
+			 * (по одной на каждую рубрику, метку и запись), они лезут в
+			 * список наравне с настоящим текстом страницы, а перевод
+			 * ничего не меняет ни на экране, ни в выдаче.
+			 */
+			return array();
+		}
 
 		// `value` — надпись только у кнопок; у текстовых полей это данные посетителя.
 		if ( 'input' === $tag

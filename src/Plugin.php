@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp;
 
 use WpMlp\Admin\EditorPage;
+use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\InternalLinks;
@@ -19,6 +20,9 @@ use WpMlp\Frontend\SeoMeta;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Frontend\Sitemap;
 use WpMlp\Frontend\UntranslatedFilter;
+use WpMlp\I18n\GettextRegistry;
+use WpMlp\I18n\LanguagePacks;
+use WpMlp\I18n\LocaleSwitcher;
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rendering\EditorMarkers;
 use WpMlp\Rendering\Extractor;
@@ -33,6 +37,7 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\Rewrites;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\PostTranslationSnapshot;
 use WpMlp\Storage\Schema;
@@ -223,6 +228,7 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( EditorContext::class ),
 				$c->get( EditorMarkers::class ),
+				$c->get( GettextRegistry::class ),
 				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ), $c->get( InternalLinks::class ) )
 			)
 		);
@@ -299,9 +305,40 @@ final class Plugin {
 			)
 		);
 
+		$c->set( LanguagePacks::class, static fn(): LanguagePacks => new LanguagePacks() );
+
+		$c->set(
+			LocaleSwitcher::class,
+			static fn( Container $c ): LocaleSwitcher => new LocaleSwitcher( $c->get( LanguageResolver::class ) )
+		);
+
+		$c->set( GettextRepository::class, static fn(): GettextRepository => new GettextRepository() );
+
+		$c->set(
+			GettextRegistry::class,
+			static fn( Container $c ): GettextRegistry => new GettextRegistry(
+				$c->get( LocaleSwitcher::class ),
+				$c->get( GettextRepository::class ),
+				$c->get( TranslationCache::class ),
+				$c->get( Settings::class ),
+				$c->get( LanguagePacks::class )
+			)
+		);
+
 		$c->set(
 			SettingsPage::class,
-			static fn( Container $c ): SettingsPage => new SettingsPage( $c->get( Settings::class ) )
+			static fn( Container $c ): SettingsPage => new SettingsPage(
+				$c->get( Settings::class ),
+				$c->get( LanguagePacks::class )
+			)
+		);
+
+		$c->set(
+			InterfaceStringsScreen::class,
+			static fn( Container $c ): InterfaceStringsScreen => new InterfaceStringsScreen(
+				$c->get( GettextRepository::class ),
+				$c->get( LanguagePacks::class )
+			)
 		);
 
 		$c->set(
@@ -312,7 +349,9 @@ final class Plugin {
 				$c->get( TranslationRepository::class ),
 				$c->get( TranslationCache::class ),
 				$c->get( ProviderFactory::class ),
-				$c->get( OccurrenceRepository::class )
+				$c->get( OccurrenceRepository::class ),
+				$c->get( InterfaceStringsScreen::class ),
+				$c->get( GettextRepository::class )
 			)
 		);
 
@@ -371,6 +410,19 @@ final class Plugin {
 	 */
 	private static function hookableServices(): array {
 		$services = array(
+			/*
+			 * Подмена локали — самой первой: её фильтры обязаны стоять
+			 * раньше, чем ядро, тема и плагины начнут грузить свои файлы
+			 * перевода (это происходит уже после `plugins_loaded`). Всё
+			 * остальное в списке к этому моменту нечувствительно.
+			 */
+			LocaleSwitcher::class,
+			/*
+			 * Сразу за ней — gettext-контур: он тоже вешает фильтры,
+			 * которые обязаны стоять до загрузки файлов перевода, и сам
+			 * решает по LocaleSwitcher, нужно ли вообще включаться.
+			 */
+			GettextRegistry::class,
 			// Rewrites нужен и в админке: правила пересобираются при flush.
 			Rewrites::class,
 			UrlConverter::class,
