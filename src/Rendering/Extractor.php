@@ -67,6 +67,16 @@ final class Extractor {
 	private const BUTTON_TYPES = array( 'submit', 'button', 'reset' );
 
 	/**
+	 * Теги служебных данных: их атрибуты адресованы машине, а не человеку.
+	 *
+	 * `<link>` и `<base>` ничего не показывают на странице вовсе — их
+	 * `title` читают агрегаторы лент и браузер, но не посетитель. `<meta>`
+	 * сюда не входит: его `content` — это как раз человекочитаемые
+	 * описания и заголовки для соцсетей, за них отвечает TRANSLATABLE_META.
+	 */
+	private const METADATA_TAGS = array( 'link', 'base' );
+
+	/**
 	 * Значения `name`/`property` тегов `<meta>`, чьё содержимое переводится.
 	 *
 	 * Точный список, без масок вида `twitter:*`: сравнение ниже — строгий
@@ -484,6 +494,19 @@ final class Extractor {
 	private function translatableAttributes( object $element ): array {
 		$attributes = self::GLOBAL_ATTRIBUTES;
 		$tag        = strtolower( (string) $element->nodeName );
+
+		if ( in_array( $tag, self::METADATA_TAGS, true ) ) {
+			/*
+			 * У `<link>` собственного текста нет вовсе, а `title` — это
+			 * подпись для машины: `<link rel="alternate" type="application/
+			 * rss+xml" title="CenterAI » Feed">` читает агрегатор, а не
+			 * посетитель. В словаре такие строки только мешают: их десятки
+			 * (по одной на каждую рубрику, метку и запись), они лезут в
+			 * список наравне с настоящим текстом страницы, а перевод
+			 * ничего не меняет ни на экране, ни в выдаче.
+			 */
+			return array();
+		}
 
 		// `value` — надпись только у кнопок; у текстовых полей это данные посетителя.
 		if ( 'input' === $tag

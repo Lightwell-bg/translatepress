@@ -280,6 +280,34 @@ final class ExtractorTest extends TestCase {
 	}
 
 	/**
+	 * `title` у `<link>` — подпись для агрегатора лент, а не текст для
+	 * посетителя. Таких строк на сайте десятки (по одной на рубрику, метку
+	 * и запись), они лезли в «Контент» наравне с настоящим текстом, а их
+	 * перевод не менял ничего ни на экране, ни в выдаче.
+	 */
+	public function testLinkTitleIsNotExtracted(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><head>'
+			. '<link rel="alternate" type="application/rss+xml" title="CenterAI » Лента комментариев">'
+			. '</head><body><p>Настоящий текст</p></body></html>'
+		);
+
+		$this->assertSame( array( 'Настоящий текст' ), $texts );
+	}
+
+	/**
+	 * А `title` у обычной ссылки — наоборот, всплывающая подсказка, её
+	 * посетитель видит: отсекать заодно с метаданными нельзя.
+	 */
+	public function testAnchorTitleIsStillExtracted(): void {
+		$texts = $this->texts(
+			'<!DOCTYPE html><html><body><a href="/x" title="Записи автора">ссылка</a></body></html>'
+		);
+
+		$this->assertContains( 'Записи автора', $texts );
+	}
+
+	/**
 	 * Строка, которую на этом же запросе уже отдал gettext-контур, не
 	 * должна заводиться в словарь второй раз: иначе «Ответить» окажется и
 	 * в «Интерфейсе», и в «Контенте», и переводить её придётся дважды, в
