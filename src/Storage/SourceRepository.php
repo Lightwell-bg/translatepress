@@ -662,37 +662,28 @@ final class SourceRepository {
 			$params[] = self::LINK_ATTRIBUTE;
 		}
 
-		if ( '' !== $search ) {
-			$like     = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[]  = '(s.source_text LIKE %s OR t.translated_text LIKE %s)';
-			$params[] = $like;
-			$params[] = $like;
-		}
-
 		$whereSql = implode( ' AND ', $where );
+		$select   = "s.id, s.kind, s.source_text, s.last_seen_at,
+						t.translated_text, t.status, t.updated_at,
+						(SELECT o4.attribute_name FROM {$occurrences} o4
+						 WHERE o4.source_id = s.id AND o4.attribute_name IS NOT NULL LIMIT 1) AS attribute_name";
+		$from     = "FROM {$sources} s LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s";
+
+		if ( '' !== $search ) {
+			return $this->paginateBySearchPhrase( $select, $from, $whereSql, $params, $search, $perPage, $offset );
+		}
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*)
-				 FROM {$sources} s
-				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
-				 WHERE {$whereSql}",
+				"SELECT COUNT(*) {$from} WHERE {$whereSql}",
 				$params
 			)
 		);
 
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT s.id, s.kind, s.source_text, s.last_seen_at,
-						t.translated_text, t.status, t.updated_at,
-						(SELECT o4.attribute_name FROM {$occurrences} o4
-						 WHERE o4.source_id = s.id AND o4.attribute_name IS NOT NULL LIMIT 1) AS attribute_name
-				 FROM {$sources} s
-				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
-				 WHERE {$whereSql}
-				 ORDER BY s.id DESC
-				 LIMIT %d OFFSET %d",
+				"SELECT {$select} {$from} WHERE {$whereSql} ORDER BY s.id DESC LIMIT %d OFFSET %d",
 				array_merge( $params, array( $perPage, $offset ) )
 			),
 			ARRAY_A
@@ -703,6 +694,98 @@ final class SourceRepository {
 			'items' => is_array( $items ) ? $items : array(),
 			'total' => $total,
 		);
+	}
+
+	/**
+	 * Поиск по фразе с границами слова, а не по произвольной подстроке.
+	 *
+	 * `LIKE '%текст%'` считает совпадением любое вхождение — на сайте про
+	 * AI поиск «AI» находил бы её и внутри «det**ai**l», «dom**ai**n»,
+	 * «expl**ai**n»: список результатов тонул в строках, где искомой фразы
+	 * на самом деле нет, только случайные буквы совпали. Нужна фраза как
+	 * таковая, ограниченная не-буквами по краям (пробел, знак препинания,
+	 * начало/конец строки) — «AI» находит «AI Act», но не «domain».
+	 *
+	 * SQL для этого не подходит переносимо: `\b` в MySQL REGEXP по
+	 * умолчанию понимает границу слова только для латиницы и цифр
+	 * (`[A-Za-z0-9_]`), а сайт в основном на кириллице — «плагин» вообще
+	 * не нашёл бы собственных границ. Правильная Unicode-граница есть у
+	 * MySQL 8 (движок ICU), но не гарантирована на MariaDB и старых 5.x,
+	 * которые всё ещё держат часть хостингов, — а PHP даёт то же самое
+	 * через `\p{L}`/`\p{N}` в PCRE везде одинаково, без сюрпризов между
+	 * версиями сервера БД.
+	 *
+	 * Поэтому остальные фильтры (статус, где встречается, тип) по-прежнему
+	 * работают в SQL, а фразу проверяет уже PHP — ценой того, что весь
+	 * отфильтрованный по остальным условиям набор строк приходится
+	 * прочитать целиком, без `LIMIT`. Для масштаба этого экрана (сотни,
+	 * не миллионы строк на язык) это дешевле, чем кажется, и надёжнее,
+	 * чем гадать, на какой версии MySQL окажется конкретный хостинг.
+	 *
+	 * @param string               $select   Список колонок `SELECT`.
+	 * @param string               $from     `FROM ... LEFT JOIN ...` с одним `%s` под локаль.
+	 * @param string               $whereSql Условие `WHERE` без фразы поиска.
+	 * @param list<string|int>     $params   Параметры под `$whereSql` (локаль первой).
+	 * @param string               $search   Искомая фраза.
+	 * @param int                  $perPage  Строк на странице.
+	 * @param int                  $offset   Смещение страницы.
+	 * @return array{items: list<array<string, mixed>>, total: int}
+	 */
+	private function paginateBySearchPhrase(
+		string $select,
+		string $from,
+		string $whereSql,
+		array $params,
+		string $search,
+		int $perPage,
+		int $offset
+	): array {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$candidates = $wpdb->get_results(
+			$wpdb->prepare( "SELECT {$select} {$from} WHERE {$whereSql} ORDER BY s.id DESC", $params ),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		$matching = array_values(
+			array_filter(
+				is_array( $candidates ) ? $candidates : array(),
+				static fn( array $row ): bool =>
+					self::matchesSearchPhrase( (string) $row['source_text'], $search )
+					|| self::matchesSearchPhrase( (string) ( $row['translated_text'] ?? '' ), $search )
+			)
+		);
+
+		return array(
+			'items' => array_slice( $matching, $offset, $perPage ),
+			'total' => count( $matching ),
+		);
+	}
+
+	/**
+	 * Содержит ли строка искомую фразу как таковую — не как часть другого
+	 * слова. Чистая функция.
+	 *
+	 * `\p{L}`/`\p{N}` — буква или цифра ЛЮБОГО алфавита в Unicode, не
+	 * только латиница: граница проверяется одинаково что для «AI», что
+	 * для «плагин».
+	 *
+	 * Публичная — не ради вызова снаружи, а чтобы саму логику границы
+	 * можно было проверить тестом напрямую, без `$wpdb`.
+	 *
+	 * @param string $haystack Текст, в котором ищем.
+	 * @param string $search   Искомая фраза.
+	 */
+	public static function matchesSearchPhrase( string $haystack, string $search ): bool {
+		if ( '' === $haystack ) {
+			return false;
+		}
+
+		$pattern = '/(?<![\p{L}\p{N}])' . preg_quote( $search, '/' ) . '(?![\p{L}\p{N}])/iu';
+
+		return 1 === preg_match( $pattern, $haystack );
 	}
 
 	/**
