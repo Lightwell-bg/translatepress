@@ -772,6 +772,16 @@ final class SourceRepository {
 	 * только латиница: граница проверяется одинаково что для «AI», что
 	 * для «плагин».
 	 *
+	 * Граница нужна только с той стороны, где сама искомая фраза
+	 * заканчивается буквой или цифрой. Без этого уточнения поиск адреса
+	 * `/blog/en/` не находил ничего: фраза начинается на `/`, и слева от
+	 * этого слэша в `centerai.eu/blog/en/…` стоит буква «u» — формально
+	 * требование «перед фразой не буква» не выполнялось, хотя сама фраза
+	 * никакой буквой не начинается и защищать её край было не от чего.
+	 * Граница защищает СЛОВО от слияния с соседними буквами — у фразы,
+	 * которая сама начинается или кончается знаком препинания, сливаться
+	 * попросту не с чем.
+	 *
 	 * Публичная — не ради вызова снаружи, а чтобы саму логику границы
 	 * можно было проверить тестом напрямую, без `$wpdb`.
 	 *
@@ -779,13 +789,15 @@ final class SourceRepository {
 	 * @param string $search   Искомая фраза.
 	 */
 	public static function matchesSearchPhrase( string $haystack, string $search ): bool {
-		if ( '' === $haystack ) {
+		if ( '' === $haystack || '' === $search ) {
 			return false;
 		}
 
-		$pattern = '/(?<![\p{L}\p{N}])' . preg_quote( $search, '/' ) . '(?![\p{L}\p{N}])/iu';
+		$quoted = preg_quote( $search, '/' );
+		$before = 1 === preg_match( '/^[\p{L}\p{N}]/u', $search ) ? '(?<![\p{L}\p{N}])' : '';
+		$after  = 1 === preg_match( '/[\p{L}\p{N}]$/u', $search ) ? '(?![\p{L}\p{N}])' : '';
 
-		return 1 === preg_match( $pattern, $haystack );
+		return 1 === preg_match( "/{$before}{$quoted}{$after}/iu", $haystack );
 	}
 
 	/**
