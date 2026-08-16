@@ -77,6 +77,59 @@ final class RoutingTest extends TestCase {
 	}
 
 	/**
+	 * Живой баг: WordPress стоит в `/blog`, а на корне домена — отдельный,
+	 * не-WordPress раздел сайта со своими собственными `/ru/`, `/en/`,
+	 * `/bg/`. Автор написал в тексте статьи `href="/ru/"`, имея в виду
+	 * именно его — ведущий слеш в браузере всегда означает корень домена.
+	 * Замена по слагу считала «ru» своим языковым сегментом и переписывала
+	 * путь в `/blog/en/» — адрес внутри блога вместо корня домена.
+	 */
+	public function testBareLanguageSegmentOutsideInstallStaysAtDomainRoot(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame( '/en/', UrlConverter::addPrefixToPath( '/ru/', '/blog', 'en', $slugs ) );
+		$this->assertSame( '/bg/', UrlConverter::addPrefixToPath( '/ru/', '/blog', 'bg', $slugs ) );
+		// Без хвостового слеша — то же самое: splitFirstSegment() его не требует.
+		$this->assertSame( '/en/', UrlConverter::addPrefixToPath( '/ru', '/blog', 'en', $slugs ) );
+	}
+
+	/**
+	 * Тот же голый языковой сегмент, но WordPress стоит в корне домена
+	 * (`$basePath` пуст) — там «снаружи установки» просто не существует,
+	 * и поведение остаётся прежним: путь получает язык напрямую.
+	 */
+	public function testBareLanguageSegmentAtDomainRootInstallIsUnaffected(): void {
+		$this->assertSame(
+			'/en/',
+			UrlConverter::addPrefixToPath( '/ru/', '', 'en', array( 'ru', 'bg', 'en' ) )
+		);
+	}
+
+	/**
+	 * Два легаси-сценария, ради которых замену по слагу вообще сделали, —
+	 * оба должны остаться нетронутыми моей правкой:
+	 *
+	 * 1. Ссылка на реальную страницу ВНУТРИ установки, написанная без
+	 *    базового пути (`/ru/discuss-the-task/`) — у неё есть хвост после
+	 *    языка, значит это не корень домена, а страница по слагу.
+	 * 2. Ссылка, где базовый путь уже стоит явно (`/blog/ru/`), просто с
+	 *    устаревшим языком, — раз путь и так начинается с `/blog`, о корне
+	 *    домена речи нет вообще.
+	 */
+	public function testLegacyInstallLinksWithKnownSlugAreStillRewrittenWithBasePath(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'/blog/en/discuss-the-task/',
+			UrlConverter::addPrefixToPath( '/ru/discuss-the-task/', '/blog', 'en', $slugs )
+		);
+		$this->assertSame(
+			'/blog/bg/',
+			UrlConverter::addPrefixToPath( '/blog/ru/', '/blog', 'bg', $slugs )
+		);
+	}
+
+	/**
 	 * Подменять путь поиском по строке нельзя: в `https://site.ru/` первый
 	 * найденный слеш принадлежит схеме, а не пути.
 	 */
