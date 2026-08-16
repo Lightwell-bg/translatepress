@@ -85,6 +85,48 @@ final class SourceRepositoryTest extends TestCase {
 	}
 
 	/**
+	 * Жалоба, из-за которой появилась маска: `/blog/en/` как обычная фраза
+	 * находит подстроку ГДЕ УГОДНО, в том числе посередине более длинного
+	 * пути. Владельцу сайта был нужен именно КОНЕЦ строки, а этого граница
+	 * слова в принципе не различает — оба места на странице выглядят для
+	 * неё как «слово».
+	 */
+	#[DataProvider( 'wildcardCases' )]
+	public function testWildcardAnchorsToStringEdges( string $haystack, string $search, bool $expected ): void {
+		$this->assertSame( $expected, SourceRepository::matchesSearchPhrase( $haystack, $search ) );
+	}
+
+	/**
+	 * @return list<array{string, string, bool}>
+	 */
+	public static function wildcardCases(): array {
+		return array(
+			// * в начале — «кончается на»: то, ради чего маска и появилась.
+			array( 'https://centerai.eu/blog/en/', '*blog/en/', true ),
+			array( 'https://centerai.eu/blog/en/incident-aisi-ai-agenty-bezopasnost/', '*blog/en/', false ),
+			array( 'https://centerai.eu/blog/bg/x/', '*blog/en/', false ),
+
+			// * в конце — «начинается с»: поле хранит адрес целиком, включая
+			// схему и домен, поэтому префикс проверяется на реальном начале
+			// строки, а не на куске из середины пути.
+			array( 'https://centerai.eu/blog/en/incident/', 'https://centerai.eu/blog/en/*', true ),
+			array( 'https://centerai.eu/blog/bg/incident/', 'https://centerai.eu/blog/en/*', false ),
+
+			// * с обеих сторон — просто «содержит», уже без границы слова:
+			// осознанный обход защиты от AI/domain для тех, кому он нужен.
+			array( 'Список плагинов', '*плагин*', true ),
+			array( 'Список плагинов', 'плагин', false ),
+
+			// Несколько * — маска разворачивается по всем сегментам сразу.
+			array( 'https://centerai.eu/blog/en/topics/ai-agents/', '*blog/en/*ai-agents*', true ),
+			array( 'https://centerai.eu/blog/en/topics/case-studies/', '*blog/en/*ai-agents*', false ),
+
+			// Один «*» без текста вокруг — совпадает с чем угодно непустым.
+			array( 'что угодно', '*', true ),
+		);
+	}
+
+	/**
 	 * Живой случай, который и был жалобой: поиск «AI» на сайте про
 	 * AI-автоматизацию раньше находил её внутри «domain», «detail»,
 	 * «explain» — десятки посторонних совпадений на одно нужное.

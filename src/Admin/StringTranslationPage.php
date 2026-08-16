@@ -668,7 +668,8 @@ final class StringTranslationPage implements Hookable {
 
 			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Поиск', 'wp-mlp' ); ?></label>
 			<input type="search" name="s" id="mlp-search" value="<?php echo esc_attr( $filters['search'] ); ?>"
-				placeholder="<?php esc_attr_e( 'Поиск по исходнику и переводу', 'wp-mlp' ); ?>">
+				placeholder="<?php esc_attr_e( 'Поиск по исходнику и переводу', 'wp-mlp' ); ?>"
+				title="<?php esc_attr_e( '* — любые символы: *blog/en/ значит «кончается на», blog/en/* — «начинается с». Подробнее — в «Помощь» справа вверху.', 'wp-mlp' ); ?>">
 
 			<?php submit_button( __( 'Показать', 'wp-mlp' ), 'secondary', '', false ); ?>
 
