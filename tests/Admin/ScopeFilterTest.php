@@ -97,4 +97,36 @@ final class ScopeFilterTest extends TestCase {
 			array( 'text; DROP TABLE wp_mlp_sources' ),
 		);
 	}
+
+	/**
+	 * Живой баг: выпадающий список «Где встречается» показывал вложения
+	 * (`cropped-logo.png`), служебный тип `wp_global_styles` («Custom
+	 * Styles» — так WordPress называет его всегда) и черновые ревизии
+	 * статей — все они были собраны как «страницы», хотя ни одна из них
+	 * не то место, где владелец сайта пишет текст.
+	 */
+	public function testAttachmentIsExcludedFromScopeDropdown(): void {
+		$publicTypes = array( 'post', 'page', 'attachment', 'download' );
+
+		$this->assertSame(
+			array( 'post', 'page', 'download' ),
+			StringTranslationPage::scopeDropdownPostTypes( $publicTypes )
+		);
+	}
+
+	/**
+	 * Служебные типы (ревизии, `wp_global_styles`, пункты меню) сюда
+	 * никогда не попадают: WordPress регистрирует их с `public => false`,
+	 * значит их нет и во ВХОДНОМ списке — фильтровать нечего, но и
+	 * пропускать лишнее эта функция не должна.
+	 */
+	public function testOnlyAttachmentIsRemovedNothingElseInvented(): void {
+		$publicTypes = array( 'post', 'page' );
+
+		$this->assertSame( $publicTypes, StringTranslationPage::scopeDropdownPostTypes( $publicTypes ) );
+	}
+
+	public function testEmptyListStaysEmpty(): void {
+		$this->assertSame( array(), StringTranslationPage::scopeDropdownPostTypes( array() ) );
+	}
 }

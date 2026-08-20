@@ -921,12 +921,42 @@ final class StringTranslationPage implements Hookable {
 	/**
 	 * Записи и страницы, на которых плагин находил строки.
 	 *
+	 * Найдено на живом сайте: `object_id` в местах использования — это то,
+	 * что `get_queried_object_id()` вернул в момент показа страницы,
+	 * причём для ЛЮБОЙ страницы, какую бы WordPress ни отдал по ссылке.
+	 * Ссылка вида `?p=39`, которую никто в здравом уме не наберёт, но
+	 * может дёрнуть бездумный обход ID подряд, вполне может указывать на
+	 * черновую ревизию статьи (`post_type = revision`) — а `get_the_title()`
+	 * у ревизии возвращает тот же заголовок, что и у самой статьи. Отсюда
+	 * учетверённое «Как подготовить AI-проект…» в списке: 36 — сама
+	 * запись, 39/40/42 — три её ревизии, случайно попавшие в базу как
+	 * отдельные «страницы». Туда же утекают вложения (`cropped-logo.png`)
+	 * и служебный тип `wp_global_styles` («Custom Styles» — так WordPress
+	 * называет его ВСЕГДА, у любой темы) — их тоже видел
+	 * `get_queried_object_id()` на каком-то показе.
+	 *
+	 * Список для выпадающего меню должен остаться допустимым, только когда
+	 * `get_post_types(['public' => true])` минус `attachment` — то есть
+	 * ровно то, для чего WordPress вообще строит отдельные адреса
+	 * страниц: записи, страницы и настоящие пользовательские типы (товары
+	 * магазина и подобное). Ревизии, стили, вложения регистрируются с
+	 * `public => false` или, как вложения, публичны, но страницей в
+	 * привычном смысле не являются, — их такой allowlist отсекает без
+	 * необходимости перечислять служебные типы по имени: список новых
+	 * внутренних типов WordPress не наш, а его, и перечислять их вручную
+	 * значило бы вечно догонять.
+	 *
 	 * @return array<int, string> Идентификатор записи => заголовок для списка.
 	 */
 	private function translatedObjects(): array {
-		$titles = array();
+		$allowedTypes = self::scopeDropdownPostTypes( get_post_types( array( 'public' => true ) ) );
+		$titles       = array();
 
 		foreach ( $this->occurrences->objectIds() as $id ) {
+			if ( ! in_array( get_post_type( $id ), $allowedTypes, true ) ) {
+				continue;
+			}
+
 			$title = get_the_title( $id );
 
 			if ( '' === trim( (string) $title ) ) {
@@ -939,6 +969,22 @@ final class StringTranslationPage implements Hookable {
 		asort( $titles, SORT_NATURAL | SORT_FLAG_CASE );
 
 		return $titles;
+	}
+
+	/**
+	 * Из публичных типов записей — те, что достойны своей строки в списке
+	 * «Где встречается». Чистая функция.
+	 *
+	 * `attachment` — единственное системное исключение: вложения
+	 * зарегистрированы публичными (у них есть собственный адрес страницы),
+	 * но выбирать медиафайл как «запись, где искать строки» не имеет
+	 * смысла — там нет вашего текста, только файл.
+	 *
+	 * @param list<string> $publicPostTypes Результат `get_post_types(['public' => true])`.
+	 * @return list<string>
+	 */
+	public static function scopeDropdownPostTypes( array $publicPostTypes ): array {
+		return array_values( array_diff( $publicPostTypes, array( 'attachment' ) ) );
 	}
 
 	/**
