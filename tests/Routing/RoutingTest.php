@@ -232,6 +232,37 @@ final class RoutingTest extends TestCase {
 	}
 
 	/**
+	 * Живой баг: тот же голый языковой сегмент на корне домена
+	 * (`addPrefixToPath()` уже умеет его распознавать, см.
+	 * `testBareLanguageSegmentOutsideInstallStaysAtDomainRoot`), но автор
+	 * написал ссылку не относительным путём, а ПОЛНЫМ адресом —
+	 * `href="https://centerai.eu/ru/#services"`. `isOutsideInstallation()`
+	 * смотрит только на то, начинается ли путь с `$basePath`, и отсекает
+	 * такой адрес как «чужой домен» ещё до того, как `addPrefixToPath()`
+	 * получает шанс распознать в нём корень домена другого языка — то есть
+	 * ветка в `addPrefixToPath()` для этого написания попросту недостижима,
+	 * и такие ссылки застревают на исходном языке навсегда.
+	 */
+	public function testAbsoluteLinkToBareLanguageSegmentIsRewrittenAtDomainRoot(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'https://centerai.eu/en/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/ru/', '/blog', 'en', $slugs )
+		);
+		$this->assertSame(
+			'https://centerai.eu/en/#services',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/ru/#services', '/blog', 'en', $slugs )
+		);
+
+		// А реальная страница на корне домена (не голый сегмент) — как и раньше, не трогается.
+		$this->assertSame(
+			'https://centerai.eu/ru/o-nas/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/ru/o-nas/', '/blog', 'en', $slugs )
+		);
+	}
+
+	/**
 	 * А внутри установки всё работает как раньше — иначе «починка»
 	 * отключила бы перевод ссылок вообще.
 	 */

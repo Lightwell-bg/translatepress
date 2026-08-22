@@ -196,7 +196,7 @@ final class UrlConverter implements Hookable {
 
 		$path = (string) ( $parts['path'] ?? '/' );
 
-		if ( self::isOutsideInstallation( $parts, $path, $basePath ) ) {
+		if ( self::isOutsideInstallation( $parts, $path, $basePath, $knownSlugs ) ) {
 			return $url;
 		}
 
@@ -228,17 +228,45 @@ final class UrlConverter implements Hookable {
 	 * нельзя. А написав адрес целиком, автор указал место точно — и его
 	 * нужно уважать.
 	 *
-	 * @param array<string, mixed> $parts    Результат wp_parse_url().
-	 * @param string               $path     Путь из адреса.
-	 * @param string               $basePath Базовый путь установки, `` для корня домена.
+	 * Исключение — голый языковой сегмент без хвоста, но записанный ПОЛНЫМ
+	 * адресом (`https://site.ru/ru/#services`, а не относительным `/ru/`).
+	 * Живой баг: та же ситуация, что и в addPrefixToPath() (см. её
+	 * докблок) — автор имел в виду корень домена другого языка, просто
+	 * указал схему и хост явно. Без этого исключения проверка отсекала
+	 * такую ссылку как «чужой домен» раньше, чем addPrefixToPath() успевал
+	 * распознать в ней домен-root случай, — то есть его ветка для полных
+	 * адресов была попросту недостижима, и `href="https://site.ru/ru/..."`
+	 * так и оставался на исходном языке навсегда.
+	 *
+	 * @param array<string, mixed> $parts      Результат wp_parse_url().
+	 * @param string               $path       Путь из адреса.
+	 * @param string               $basePath   Базовый путь установки, `` для корня домена.
+	 * @param list<string>         $knownSlugs Слаги всех языков сайта, в нижнем регистре.
 	 */
-	private static function isOutsideInstallation( array $parts, string $path, string $basePath ): bool {
+	private static function isOutsideInstallation( array $parts, string $path, string $basePath, array $knownSlugs ): bool {
 		if ( '' === $basePath || ! isset( $parts['host'] ) ) {
 			// WordPress в корне домена — «снаружи» просто нет.
 			return false;
 		}
 
-		return $path !== $basePath && ! str_starts_with( $path, $basePath . '/' );
+		if ( $path === $basePath || str_starts_with( $path, $basePath . '/' ) ) {
+			return false;
+		}
+
+		return ! self::isBareLanguageSegment( $path, $knownSlugs );
+	}
+
+	/**
+	 * Путь — голый языковой сегмент без хвоста (`/ru/`), а не что-то ещё
+	 * за пределами установки. Чистая функция.
+	 *
+	 * @param string       $path       Путь из адреса.
+	 * @param list<string> $knownSlugs Слаги всех языков сайта, в нижнем регистре.
+	 */
+	private static function isBareLanguageSegment( string $path, array $knownSlugs ): bool {
+		list( $segment, $rest ) = LanguageResolver::splitFirstSegment( $path );
+
+		return '/' === $rest && in_array( strtolower( $segment ), $knownSlugs, true );
 	}
 
 	/**
