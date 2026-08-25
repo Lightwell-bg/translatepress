@@ -1,0 +1,24 @@
+# Каталог плагина лежит в веб-корне, а рядом с кодом может лежать .env с
+# ключом OpenAI (см. README, раздел про ключи). Apache по умолчанию
+# закрывает только .ht*, всё остальное отдаёт как текст, поэтому
+# https://сайт/wp-content/plugins/wp-mlp/.env без этого правила вернул бы
+# ключ любому желающему.
+#
+# Правило нужно и там, где сервер уже закрывает точечные файлы сам:
+# полагаться на чужую настройку нельзя, плагин ставят на разные хостинги.
+#
+# ВАЖНО для nginx: .htaccess он не читает вовсе. Там же нужно правило
+# уровня сервера, например:
+#     location ~ /\. { deny all; }
+
+<FilesMatch "^\.">
+	# Apache 2.4+
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	# Apache 2.2
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
