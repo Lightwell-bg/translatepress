@@ -101,7 +101,7 @@ final class InternalLinks implements DocumentFilter {
 				continue;
 			}
 
-			$localized = UrlConverter::withLanguagePrefix( $href, $basePath, $target->slug, $slugs );
+			$localized = UrlConverter::withLanguagePrefix( $href, $basePath, $target->slug, $slugs, $homeHost );
 
 			if ( $localized !== $href ) {
 				$link->setAttribute( 'href', $localized );

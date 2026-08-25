@@ -130,6 +130,79 @@ final class RoutingTest extends TestCase {
 	}
 
 	/**
+	 * Куда ведёт ссылка — свойство самой ссылки, а не языка страницы, на
+	 * которой её встретили. Проверка «первый сегмент совпал с целевым
+	 * слагом» стояла ВЫШЕ разбора происхождения и ломала это: `/en/o-nas/`
+	 * на болгарской странице считалась легаси-ссылкой внутрь установки и
+	 * ехала в `/blog/bg/o-nas/`, а на английской — досрочно возвращалась
+	 * как есть и оставалась на корне домена, то есть на ДРУГОМ сайте.
+	 * Один и тот же `href` уводил посетителя в два разных места.
+	 */
+	public function testLinkDestinationDoesNotDependOnPageLanguage(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+
+		$this->assertSame(
+			'/blog/bg/o-nas/',
+			UrlConverter::addPrefixToPath( '/en/o-nas/', '/blog', 'bg', $slugs )
+		);
+		$this->assertSame(
+			'/blog/en/o-nas/',
+			UrlConverter::addPrefixToPath( '/en/o-nas/', '/blog', 'en', $slugs ),
+			'Та же ссылка на другом языке уехала на другой сайт.'
+		);
+	}
+
+	/**
+	 * `isOutsideInstallation()` смотрела только на путь, вопреки своему
+	 * имени: чужой домен считался «внутри установки», если его путь
+	 * случайно начинался с `/blog`. Защита держалась исключительно на том,
+	 * что вызывающие сверяют хост сами.
+	 */
+	public function testForeignHostIsNeverRewritten(): void {
+		$slugs = array( 'ru', 'bg', 'en' );
+		$home  = 'centerai.eu';
+
+		$this->assertSame(
+			'https://other.com/blog/post/',
+			UrlConverter::withLanguagePrefix( 'https://other.com/blog/post/', '/blog', 'en', $slugs, $home )
+		);
+		$this->assertSame(
+			'https://other.com/ru/',
+			UrlConverter::withLanguagePrefix( 'https://other.com/ru/', '/blog', 'en', $slugs, $home )
+		);
+		$this->assertSame(
+			'//evil.example/ru/',
+			UrlConverter::withLanguagePrefix( '//evil.example/ru/', '/blog', 'en', $slugs, $home )
+		);
+
+		// Свой хост при этом обрабатывается как обычно.
+		$this->assertSame(
+			'https://centerai.eu/blog/en/post/',
+			UrlConverter::withLanguagePrefix( 'https://centerai.eu/blog/post/', '/blog', 'en', $slugs, $home )
+		);
+	}
+
+	/**
+	 * Двойной слеш приходит из конкатенации в темах. Две независимые
+	 * реализации понятия «голый языковой сегмент» расходились на нём:
+	 * одна разбирала сырой путь и говорила «это корень домена», вторая
+	 * сравнивала с уже нормализованным и говорила «нет, это ссылка внутрь
+	 * установки», — и адрес уезжал в блог вместо корня домена.
+	 */
+	public function testDoubleSlashIsClassifiedConsistently(): void {
+		$this->assertSame(
+			'https://centerai.eu/en/',
+			UrlConverter::withLanguagePrefix(
+				'https://centerai.eu//ru/',
+				'/blog',
+				'en',
+				array( 'ru', 'bg', 'en' ),
+				'centerai.eu'
+			)
+		);
+	}
+
+	/**
 	 * Подменять путь поиском по строке нельзя: в `https://site.ru/` первый
 	 * найденный слеш принадлежит схеме, а не пути.
 	 */

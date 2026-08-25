@@ -255,7 +255,7 @@ final class SeoMeta implements DocumentFilter {
 			}
 
 			if ( ! $target->isDefault && JsonLdRules::isPageScopedEntityType( $types ) ) {
-				$localized = UrlConverter::withLanguagePrefix( $id, $basePath, $target->slug, $slugs );
+				$localized = UrlConverter::withLanguagePrefix( $id, $basePath, $target->slug, $slugs, UrlConverter::homeHost() );
 
 				if ( $localized !== $id ) {
 					$idMap[ $id ] = $localized;
@@ -319,7 +319,7 @@ final class SeoMeta implements DocumentFilter {
 				continue;
 			}
 
-			$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug, $slugs );
+			$localized = UrlConverter::withLanguagePrefix( $url, $basePath, $target->slug, $slugs, UrlConverter::homeHost() );
 
 			if ( $localized !== $url ) {
 				$json->setByEncodedPath( $path, $localized );

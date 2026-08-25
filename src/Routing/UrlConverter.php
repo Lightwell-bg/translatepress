@@ -176,7 +176,17 @@ final class UrlConverter implements Hookable {
 	 * @param string $slug Слаг языка.
 	 */
 	private function addPrefixToUrl( string $url, string $slug ): string {
-		return self::withLanguagePrefix( $url, LanguageResolver::basePath(), $slug, $this->knownSlugs() );
+		return self::withLanguagePrefix( $url, LanguageResolver::basePath(), $slug, $this->knownSlugs(), self::homeHost() );
+	}
+
+	/**
+	 * Хост самого сайта — чтобы чужие домены не получали языковой префикс.
+	 *
+	 * Берётся из `get_option('home')`, а не из `home_url()`: последний мы
+	 * сами же и фильтруем, вызов отсюда замкнул бы рекурсию.
+	 */
+	public static function homeHost(): string {
+		return (string) ( wp_parse_url( (string) get_option( 'home' ), PHP_URL_HOST ) ?? '' );
 	}
 
 	/**
@@ -186,17 +196,26 @@ final class UrlConverter implements Hookable {
 	 * @param string       $basePath   Базовый путь установки WordPress.
 	 * @param string       $slug       Слаг целевого языка.
 	 * @param list<string> $knownSlugs Слаги всех языков сайта — см. addPrefixToPath().
+	 * @param string       $homeHost   Хост самого сайта; пустая строка отключает проверку.
 	 */
-	public static function withLanguagePrefix( string $url, string $basePath, string $slug, array $knownSlugs = array() ): string {
+	public static function withLanguagePrefix( string $url, string $basePath, string $slug, array $knownSlugs = array(), string $homeHost = '' ): string {
 		$parts = wp_parse_url( $url );
 
 		if ( ! is_array( $parts ) ) {
 			return $url;
 		}
 
-		$path = (string) ( $parts['path'] ?? '/' );
+		/*
+		 * Схлопываем повторяющиеся ведущие слеши: они приезжают из
+		 * конкатенации в темах (`$base . '/' . $path`). Оставить их
+		 * нельзя — весь разбор пути ниже идёт через `relativePath()`, а
+		 * та зовёт `wp_parse_url()`, для которой `//ru/` это уже не путь,
+		 * а протокол-относительный адрес с ХОСТОМ `ru` и пустым путём.
+		 * Классификация в этом месте молча теряла и язык, и хвост пути.
+		 */
+		$path = '/' . ltrim( (string) ( $parts['path'] ?? '/' ), '/' );
 
-		if ( self::isOutsideInstallation( $parts, $path, $basePath, $knownSlugs ) ) {
+		if ( self::isOutsideInstallation( $parts, $path, $basePath, $knownSlugs, $homeHost ) ) {
 			return $url;
 		}
 
@@ -242,9 +261,26 @@ final class UrlConverter implements Hookable {
 	 * @param string               $path       Путь из адреса.
 	 * @param string               $basePath   Базовый путь установки, `` для корня домена.
 	 * @param list<string>         $knownSlugs Слаги всех языков сайта, в нижнем регистре.
+	 * @param string               $homeHost   Хост самого сайта; пустая строка отключает проверку.
 	 */
-	private static function isOutsideInstallation( array $parts, string $path, string $basePath, array $knownSlugs ): bool {
-		if ( '' === $basePath || ! isset( $parts['host'] ) ) {
+	private static function isOutsideInstallation( array $parts, string $path, string $basePath, array $knownSlugs, string $homeHost = '' ): bool {
+		$host = isset( $parts['host'] ) ? strtolower( (string) $parts['host'] ) : '';
+
+		/*
+		 * Чужой домен — всегда «снаружи», какой бы у него ни был путь.
+		 * Без этой проверки функция отвечала на вопрос из своего имени
+		 * только по пути: адрес `https://other.com/blog/post/` считался
+		 * ссылкой ВНУТРЬ нашей установки просто потому, что его путь
+		 * случайно начинается с `/blog`, — и уезжал в
+		 * `https://other.com/blog/en/post/`. Спасало лишь то, что
+		 * вызывающие сверяют хост сами; здесь защита перестаёт зависеть
+		 * от их дисциплины.
+		 */
+		if ( '' !== $host && '' !== $homeHost && $host !== strtolower( $homeHost ) ) {
+			return true;
+		}
+
+		if ( '' === $basePath || '' === $host ) {
 			// WordPress в корне домена — «снаружи» просто нет.
 			return false;
 		}
@@ -253,18 +289,27 @@ final class UrlConverter implements Hookable {
 			return false;
 		}
 
-		return ! self::isBareLanguageSegment( $path, $knownSlugs );
+		return ! self::isBareLanguageSegment( $path, $basePath, $knownSlugs );
 	}
 
 	/**
 	 * Путь — голый языковой сегмент без хвоста (`/ru/`), а не что-то ещё
 	 * за пределами установки. Чистая функция.
 	 *
+	 * Путь прогоняется через `relativePath()` ровно так же, как это делает
+	 * `addPrefixToPath()`. Иначе две функции судят об одном и том же по
+	 * разным строкам и расходятся: на `//ru/` (двойной слеш приезжает из
+	 * конкатенации в темах) эта говорила «корень домена», а та —
+	 * «легаси-ссылка внутрь установки», и адрес уходил в блог.
+	 *
 	 * @param string       $path       Путь из адреса.
+	 * @param string       $basePath   Базовый путь установки.
 	 * @param list<string> $knownSlugs Слаги всех языков сайта, в нижнем регистре.
 	 */
-	private static function isBareLanguageSegment( string $path, array $knownSlugs ): bool {
-		list( $segment, $rest ) = LanguageResolver::splitFirstSegment( $path );
+	private static function isBareLanguageSegment( string $path, string $basePath, array $knownSlugs ): bool {
+		list( $segment, $rest ) = LanguageResolver::splitFirstSegment(
+			LanguageResolver::relativePath( $path, $basePath )
+		);
 
 		return '/' === $rest && in_array( strtolower( $segment ), $knownSlugs, true );
 	}
@@ -389,14 +434,18 @@ final class UrlConverter implements Hookable {
 	 * @param list<string> $knownSlugs Слаги всех языков сайта, в нижнем регистре.
 	 */
 	public static function addPrefixToPath( string $path, string $basePath, string $slug, array $knownSlugs = array() ): string {
+		/*
+		 * Целевой слаг по определению один из слагов сайта. Вносим его
+		 * явно, иначе при неполном списке путь, уже содержащий этот язык,
+		 * получил бы префикс поверх — ту самую патологию `/en/en/...`,
+		 * ради которой список слагов и заведён.
+		 */
+		$knownSlugs[] = strtolower( $slug );
+
 		$relative = LanguageResolver::relativePath( $path, $basePath );
 
 		list( $segment, $rest ) = LanguageResolver::splitFirstSegment( $relative );
 		$normalizedSegment      = strtolower( $segment );
-
-		if ( $normalizedSegment === $slug ) {
-			return $path;
-		}
 
 		if ( in_array( $normalizedSegment, self::RESERVED_SEGMENTS, true ) ) {
 			return $path;
