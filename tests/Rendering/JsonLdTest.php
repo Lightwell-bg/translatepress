@@ -182,6 +182,48 @@ final class JsonLdTest extends TestCase {
 		$this->assertSame( 'Иван', $decoded['author']['name'] );
 	}
 
+	/**
+	 * Текст внутри `<script>` сериализатор отдаёт СЫРЫМ — так требует
+	 * спецификация HTML5, и ни libxml, ни `\Dom\HTMLDocument` его не
+	 * экранируют. Значит закрывающий тег, попавший в перевод, дошёл бы до
+	 * разметки буквально и оборвал бы блок структурированных данных
+	 * посреди JSON: поисковик отбросил бы всю разметку, а хвост JSON
+	 * вывалился бы в текст страницы.
+	 *
+	 * Сейчас от этого спасает `wp_strip_all_tags()` на путях записи
+	 * перевода, но защита лежит ВНЕ сериализатора: любой новый путь
+	 * (импорт, WP-CLI, миграция) снял бы её молча. Кодирование `<` и `>`
+	 * прямо при сборке JSON делает строку безопасной независимо от того,
+	 * кто и как её туда положил.
+	 */
+	public function testTranslationCannotCloseTheScriptTag(): void {
+		$result = $this->extract( '{"@type":"Article","headline":"Заголовок"}' );
+
+		foreach ( $result['segments'] as $segment ) {
+			if ( Segment::KIND_SEO === $segment->kind ) {
+				$segment->apply( 'Hi</script><img src=x onerror=alert(1)>' );
+			}
+		}
+
+		$html = $result['document']->html();
+
+		$this->assertStringNotContainsString( '</script><img', $html );
+
+		// Блок остаётся ровно одним script-узлом с разбираемым JSON внутри.
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$scripts = $document->document()->getElementsByTagName( 'script' );
+
+		$this->assertSame( 1, $scripts->count() );
+
+		$decoded = json_decode( trim( (string) $scripts->item( 0 )->textContent ), true );
+
+		$this->assertIsArray( $decoded, 'Содержимое тега перестало быть JSON.' );
+		$this->assertSame( 'Hi</script><img src=x onerror=alert(1)>', $decoded['headline'] );
+	}
+
 	public function testBrokenJsonIsLeftAlone(): void {
 		$result = $this->extract( '{ это не json }' );
 
