@@ -7,6 +7,7 @@ composer.lock
 
 # PHP / инструменты
 .phpunit.result.cache
+/.phpunit.cache/
 .php-cs-fixer.cache
 /build/
 /coverage/
