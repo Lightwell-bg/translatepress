@@ -41,6 +41,32 @@
 	 * @param {string} text  Текст.
 	 * @param {string} state Модификатор класса.
 	 */
+	/**
+	 * Не увела бы этот адрес привилегированный iframe превью за пределы
+	 * установки. Зеркало серверной проверки в UrlConverter::isOutsideInstallation():
+	 * тот же хост и путь либо совпадает с `homeUrl`, либо начинается с
+	 * `homeUrl + '/'`.
+	 *
+	 * @param {string} url Адрес, на который щёлкнули внутри превью.
+	 * @return {boolean}
+	 */
+	function withinInstall( url ) {
+		try {
+			var target = new URL( url, window.location.href );
+			var home = new URL( settings.homeUrl );
+		} catch ( error ) {
+			return false;
+		}
+
+		if ( target.origin !== home.origin ) {
+			return false;
+		}
+
+		var base = home.pathname.replace( /\/$/, '' );
+
+		return '' === base || target.pathname === base || 0 === target.pathname.indexOf( base + '/' );
+	}
+
 	function say( text, state ) {
 		statusLine.textContent = text || '';
 		statusLine.className = 'wp-mlp-editor__status' + ( state ? ' is-' + state : '' );
@@ -766,7 +792,18 @@
 		}
 
 		if ( 'navigate' === event.data.type ) {
-			frame.src = event.data.url;
+			/*
+			 * Превью — тот же самый iframe, что несёт REST-nonce в своём
+			 * родителе (см. EditorPage.php). Пустить его по чужому адресу
+			 * значило бы отдать этот nonce коду, который мы не писали и не
+			 * проверяли. Ссылка за пределами установки открывается в новой
+			 * вкладке — обычным окном браузера, без доступа к wpMlpEditor.
+			 */
+			if ( withinInstall( event.data.url ) ) {
+				frame.src = event.data.url;
+			} else {
+				window.open( event.data.url, '_blank', 'noopener,noreferrer' );
+			}
 
 			return;
 		}
