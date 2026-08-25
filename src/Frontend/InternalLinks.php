@@ -94,13 +94,16 @@ final class InternalLinks implements DocumentFilter {
 				continue;
 			}
 
-			$host = (string) ( wp_parse_url( $href, PHP_URL_HOST ) ?? '' );
-
-			// Внешний домен трогать нельзя: языковой префикс есть только у нас.
-			if ( '' !== $host && '' !== $homeHost && $host !== $homeHost ) {
-				continue;
-			}
-
+			/*
+			 * Проверку «внешний домен» раньше дублировали здесь ещё до
+			 * вызова withLanguagePrefix() — своей, регистрозависимой
+			 * версией. Домен в DNS регистронезависим, а `withLanguagePrefix()`
+			 * получает `$homeHost` и сама сравнивает его без учёта регистра
+			 * (см. UrlConverter::isOutsideInstallation()); вторая, более
+			 * грубая реализация того же правила только создавала третий
+			 * источник расхождений — как уже разошлись между собой
+			 * InternalLinks и SeoMeta до этой правки.
+			 */
 			$localized = UrlConverter::withLanguagePrefix( $href, $basePath, $target->slug, $slugs, $homeHost );
 
 			if ( $localized !== $href ) {

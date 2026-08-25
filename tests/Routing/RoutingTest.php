@@ -396,6 +396,26 @@ final class RoutingTest extends TestCase {
 	}
 
 	/**
+	 * `InternalLinks` держала СВОЙ, регистрозависимый предохранитель
+	 * «чужой хост» ещё до вызова `UrlConverter::withLanguagePrefix()` —
+	 * хотя та уже получает `$homeHost` и сама делает эту проверку
+	 * регистронезависимо. Домен в DNS регистронезависим, а ссылка с
+	 * заглавными буквами в хосте — обычное дело (автозамена в Word,
+	 * скопированное из письма, вставленное вручную). Такая ссылка молча
+	 * оставалась без языкового префикса, хотя вела ровно на свою же
+	 * установку.
+	 */
+	public function testHostComparisonIsNotCaseSensitive(): void {
+		$html = '<!DOCTYPE html><html><body>'
+			. '<a href="https://CENTERAI.EU/blog/other/">другой регистр хоста</a>'
+			. '</body></html>';
+
+		$hrefs = $this->localizedHrefs( $html );
+
+		$this->assertSame( 'https://CENTERAI.EU/blog/bg/other/', $hrefs[0] );
+	}
+
+	/**
 	 * Прогоняет документ через локализатор и возвращает адреса ссылок.
 	 *
 	 * @param string $html Разметка страницы.
