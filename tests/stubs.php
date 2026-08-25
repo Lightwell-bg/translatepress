@@ -440,6 +440,20 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 	}
 }
 
+if ( ! function_exists( '_prime_post_caches' ) ) {
+	/**
+	 * Прогрев кэша записей. Без WordPress кэшировать нечего, но функция
+	 * должна существовать: Sitemap зовёт её перед обходом списка id.
+	 *
+	 * @param list<int> $ids      Идентификаторы записей.
+	 * @param bool      $terms    Прогреть таксономии.
+	 * @param bool      $metaData Прогреть метаполя.
+	 */
+	function _prime_post_caches( array $ids, bool $terms = true, bool $metaData = true ): void {
+		unset( $ids, $terms, $metaData );
+	}
+}
+
 if ( ! function_exists( 'update_post_meta' ) ) {
 	/**
 	 * @param int    $postId Идентификатор записи.

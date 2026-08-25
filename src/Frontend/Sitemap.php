@@ -361,6 +361,19 @@ final class Sitemap implements Hookable {
 		);
 
 		$ids = is_array( $ids ) ? array_map( 'intval', $ids ) : array();
+
+		/*
+		 * Выборка идёт с `fields => ids` и `suppress_filters`, поэтому ни
+		 * записи, ни их метаданные в кэш не попадают. Дальше по каждому id
+		 * идут `get_post()`, три `get_post_meta()`, `get_post_ancestors()`
+		 * и `get_permalink()` — то есть примерно пять отдельных запросов
+		 * НА КАЖДУЮ запись, и всё это на неавторизованный GET карты сайта.
+		 * Прогрев берёт всё двумя запросами разом.
+		 */
+		if ( array() !== $ids ) {
+			_prime_post_caches( $ids, true, true );
+		}
+
 		$ids = $this->withoutServicePages( $ids );
 
 		/**
