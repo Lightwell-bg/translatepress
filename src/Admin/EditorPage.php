@@ -199,6 +199,51 @@ final class EditorPage implements Hookable {
 	}
 
 	/**
+	 * Превращает адрес страницы в путь для `mlp_path`. Чистая функция.
+	 *
+	 * Клик по ссылке внутри предпросмотра присылает адрес целиком, а
+	 * редактору нужен путь без базового пути установки и без языкового
+	 * префикса. Разбор живёт здесь, на сервере, а не в JS, по той же
+	 * причине, по которой три копии проверки хоста разошлись между собой:
+	 * второе воплощение одного правила рано или поздно начинает отвечать
+	 * иначе, чем первое.
+	 *
+	 * Всё, что за пределами установки, схлопывается в `/`: на корне этого
+	 * домена живёт отдельный сайт со своими `/ru/`, `/en/`, `/bg/`, и его
+	 * страницы редактор открыть не может — показать вместо них главную
+	 * честнее, чем случайный путь.
+	 *
+	 * @param string       $url      Адрес, по которому щёлкнули.
+	 * @param string       $basePath Базовый путь установки, `` для корня домена.
+	 * @param list<string> $slugs    Слаги всех языков сайта.
+	 * @param string       $homeHost Хост самого сайта.
+	 */
+	public static function pathFromUrl( string $url, string $basePath, array $slugs, string $homeHost ): string {
+		$parts = wp_parse_url( $url );
+
+		if ( ! is_array( $parts ) || isset( $parts['scheme'] ) && ! in_array( strtolower( (string) $parts['scheme'] ), array( 'http', 'https' ), true ) ) {
+			return '/';
+		}
+
+		$host = isset( $parts['host'] ) ? strtolower( (string) $parts['host'] ) : '';
+
+		if ( '' !== $host && '' !== $homeHost && $host !== strtolower( $homeHost ) ) {
+			return '/';
+		}
+
+		$path = '/' . ltrim( (string) ( $parts['path'] ?? '/' ), '/' );
+
+		// Вне установки: адрес соседнего сайта на том же домене.
+		if ( '' !== $basePath && $path !== $basePath && ! str_starts_with( $path, $basePath . '/' ) ) {
+			return '/';
+		}
+
+		$relative = LanguageResolver::relativePath( $path, $basePath );
+
+		return '/' . ltrim( UrlConverter::removePrefixFromPath( $relative, '', $slugs ), '/' );
+	}
+
+	/**
 	 * Секрет канала для этой загрузки страницы редактора.
 	 *
 	 * Только буквы и цифры: значение уходит в адрес предпросмотра, и
@@ -225,6 +270,22 @@ final class EditorPage implements Hookable {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
 		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
 		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
+
+		/*
+		 * Переход по ссылке внутри предпросмотра: адрес приходит целиком и
+		 * перекрывает `mlp_path`. Страница редактора при этом загружается
+		 * заново целиком — иначе `postId` и список строк остались бы от
+		 * предыдущей страницы, и «Перевести весь материал» ушло бы не в ту
+		 * запись, молча.
+		 */
+		if ( isset( $_GET['mlp_url'] ) ) {
+			$path = self::pathFromUrl(
+				sanitize_text_field( wp_unslash( (string) $_GET['mlp_url'] ) ),
+				LanguageResolver::basePath(),
+				$this->urls->knownSlugs(),
+				UrlConverter::homeHost()
+			);
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! isset( $secondary[ $locale ] ) ) {
