@@ -30,6 +30,17 @@ final class EditorContext implements Hookable {
 	public const CAPABILITY   = 'manage_options';
 
 	/**
+	 * Общий секрет панели и предпросмотра на одну загрузку редактора.
+	 *
+	 * Обе стороны сверяют его в каждом сообщении postMessage. Проверять
+	 * только `event.origin` и строку-метку вида `wp-mlp-preview` мало:
+	 * метка не секрет, её знает кто угодно, прочитавший этот файл, а
+	 * происхождение у любого скрипта на той же странице админки такое же,
+	 * как у нас. Токен же знают только те двое, между кем идёт разговор.
+	 */
+	public const QUERY_CHANNEL = 'mlp_channel';
+
+	/**
 	 * Мемоизированный ответ isActive().
 	 */
 	private ?bool $active = null;
@@ -102,9 +113,10 @@ final class EditorContext implements Hookable {
 			'wp-mlp-editor-preview',
 			'wpMlpPreview',
 			array(
-				'flag'   => self::QUERY_FLAG,
-				'nonce'  => self::QUERY_NONCE,
-				'locale' => $this->resolver->currentLocale(),
+				'flag'    => self::QUERY_FLAG,
+				'nonce'   => self::QUERY_NONCE,
+				'channel' => self::channelFromRequest(),
+				'locale'  => $this->resolver->currentLocale(),
 				'i18n'   => array(
 					'blockHint' => __( 'Перевести абзац целиком', 'wp-mlp' ),
 				),
@@ -117,14 +129,34 @@ final class EditorContext implements Hookable {
 	 *
 	 * @param string $url Обычный языковой адрес страницы.
 	 */
-	public static function previewUrl( string $url ): string {
-		return add_query_arg(
-			array(
-				self::QUERY_FLAG  => '1',
-				self::QUERY_NONCE => wp_create_nonce( self::NONCE_ACTION ),
-			),
-			$url
+	public static function previewUrl( string $url, string $channel = '' ): string {
+		$args = array(
+			self::QUERY_FLAG  => '1',
+			self::QUERY_NONCE => wp_create_nonce( self::NONCE_ACTION ),
 		);
+
+		if ( '' !== $channel ) {
+			$args[ self::QUERY_CHANNEL ] = $channel;
+		}
+
+		return add_query_arg( $args, $url );
+	}
+
+	/**
+	 * Токен канала, с которым открыт этот предпросмотр.
+	 *
+	 * Значение приходит из адресной строки, поэтому пропускается только
+	 * то, что могло быть выдано нами: буквы и цифры нужной длины. Всё
+	 * остальное схлопывается в пустую строку — с ней предпросмотр просто
+	 * не пройдёт сверку и промолчит, а не отправит сообщение с мусором.
+	 */
+	public static function channelFromRequest(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce режима редактора проверяется в detect().
+		$raw = isset( $_GET[ self::QUERY_CHANNEL ] )
+			? sanitize_text_field( wp_unslash( (string) $_GET[ self::QUERY_CHANNEL ] ) )
+			: '';
+
+		return 1 === preg_match( '/^[A-Za-z0-9]{16,64}$/', $raw ) ? $raw : '';
 	}
 
 	/**

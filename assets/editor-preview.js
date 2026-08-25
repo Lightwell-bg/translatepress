@@ -138,7 +138,10 @@
 	 */
 	function notify( type, data ) {
 		window.parent.postMessage(
-			Object.assign( { source: 'wp-mlp-preview', type: type }, data || {} ),
+			Object.assign(
+				{ source: 'wp-mlp-preview', type: type, channel: settings.channel },
+				data || {}
+			),
 			window.location.origin
 		);
 	}
@@ -289,7 +292,17 @@
 			return;
 		}
 
+		// Команды приходят только от окна, которое нас открыло.
+		if ( event.source !== window.parent ) {
+			return;
+		}
+
 		if ( 'wp-mlp-editor' !== event.data.source ) {
+			return;
+		}
+
+		// Тот же общий секрет, что и в notify(): метки `source` мало.
+		if ( settings.channel && event.data.channel !== settings.channel ) {
 			return;
 		}
 

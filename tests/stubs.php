@@ -440,6 +440,40 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_create_nonce' ) ) {
+	/**
+	 * Одноразовый ключ. Без WordPress проверять нечего, поэтому значение
+	 * предсказуемое: тестам важно, что оно попало в адрес, а не какое оно.
+	 *
+	 * @param string $action Имя действия.
+	 */
+	function wp_create_nonce( string $action = '-1' ): string {
+		return 'nonce-' . md5( $action );
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Добавляет параметры к адресу. Упрощённая версия: покрывает только ту
+	 * форму вызова, что использует плагин, — массив параметров и адрес.
+	 *
+	 * @param array<string, string|int> $args Параметры.
+	 * @param string                    $url  Исходный адрес.
+	 */
+	function add_query_arg( array $args, string $url ): string {
+		$parts = explode( '#', $url, 2 );
+		$base  = $parts[0];
+		$hash  = isset( $parts[1] ) ? '#' . $parts[1] : '';
+
+		foreach ( $args as $key => $value ) {
+			$base .= ( str_contains( $base, '?' ) ? '&' : '?' )
+				. rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value );
+		}
+
+		return $base . $hash;
+	}
+}
+
 if ( ! function_exists( '_prime_post_caches' ) ) {
 	/**
 	 * Прогрев кэша записей. Без WordPress кэшировать нечего, но функция

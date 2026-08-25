@@ -94,7 +94,7 @@
 	function toPreview( data ) {
 		if ( frame && frame.contentWindow ) {
 			frame.contentWindow.postMessage(
-				Object.assign( { source: 'wp-mlp-editor' }, data ),
+				Object.assign( { source: 'wp-mlp-editor', channel: settings.channel }, data ),
 				window.location.origin
 			);
 		}
@@ -787,7 +787,26 @@
 			return;
 		}
 
+		/*
+		 * Сообщение обязано прийти именно из НАШЕГО фрейма, а не из любого
+		 * другого окна с тем же происхождением: на странице админки живут
+		 * скрипты чужих плагинов, и каждый из них проходит проверку
+		 * `event.origin` наравне с нами.
+		 */
+		if ( ! frame || event.source !== frame.contentWindow ) {
+			return;
+		}
+
 		if ( 'wp-mlp-preview' !== event.data.source ) {
+			return;
+		}
+
+		/*
+		 * Метка `source` выше — не секрет, её знает всякий, кто открыл этот
+		 * файл. Секрет — токен: он выдан на одну загрузку страницы и известен
+		 * только панели и предпросмотру, который мы сами открыли.
+		 */
+		if ( settings.channel && event.data.channel !== settings.channel ) {
 			return;
 		}
 

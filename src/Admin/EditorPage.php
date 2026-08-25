@@ -45,6 +45,17 @@ final class EditorPage implements Hookable {
 	public const CAPABILITY = 'manage_options';
 
 	/**
+	 * Секрет канала panel↔предпросмотр, общий на одну загрузку страницы.
+	 *
+	 * Считается лениво и запоминается, потому что нужен дважды и в разные
+	 * моменты запроса: сначала в enqueue() — панели, потом в render() — в
+	 * адресе предпросмотра. Сгенерируй его в каждом месте отдельно, и
+	 * стороны получили бы РАЗНЫЕ значения, то есть не смогли бы говорить
+	 * друг с другом вовсе.
+	 */
+	private ?string $channelToken = null;
+
+	/**
 	 * @param Settings          $settings Настройки плагина.
 	 * @param UrlConverter      $urls     Построение языковых адресов.
 	 * @param ProviderFactory   $providers Доступы к провайдеру перевода.
@@ -137,6 +148,7 @@ final class EditorPage implements Hookable {
 				 * пределы плагина.
 				 */
 				'homeUrl'      => esc_url_raw( untrailingslashit( (string) get_option( 'home' ) ) ),
+				'channel'      => $this->channelToken(),
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'statuses'     => $this->statusLabels(),
 				'i18n'         => array(
@@ -184,6 +196,20 @@ final class EditorPage implements Hookable {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Секрет канала для этой загрузки страницы редактора.
+	 *
+	 * Только буквы и цифры: значение уходит в адрес предпросмотра, и
+	 * экранировать его там не придётся.
+	 */
+	private function channelToken(): string {
+		if ( null === $this->channelToken ) {
+			$this->channelToken = wp_generate_password( 32, false );
+		}
+
+		return $this->channelToken;
 	}
 
 	/**
@@ -248,7 +274,7 @@ final class EditorPage implements Hookable {
 		$selection = $this->currentSelection();
 		$locale    = $selection['locale'];
 		$path      = $selection['path'];
-		$previewer = EditorContext::previewUrl( $this->urls->absolute( $path, $secondary[ $locale ] ) );
+		$previewer = EditorContext::previewUrl( $this->urls->absolute( $path, $secondary[ $locale ] ), $this->channelToken() );
 		$postId    = $this->resolvePostId( $path );
 
 		?>
