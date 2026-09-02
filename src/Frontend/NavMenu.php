@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WpMlp\Frontend;
 
+use WpMlp\Frontend\Flags;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
@@ -186,7 +187,7 @@ final class NavMenu implements Hookable {
 			}
 
 			if ( 'dropdown' === $marker ) {
-				$result[] = $this->prepareDropdownTrigger( $item );
+				$result[] = $this->prepareDropdownTrigger( $item, $current );
 
 				foreach ( $languages as $index => $language ) {
 					$result[] = $this->buildItem( $item, $language, $current, (int) $item->db_id, $index );
@@ -263,10 +264,34 @@ final class NavMenu implements Hookable {
 	 * а помечается как имеющий дочерние пункты — так тема покажет подменю
 	 * своими же стилями, ничего кроме класса ей для этого не нужно.
 	 *
-	 * @param object $item Пункт-маркер.
+	 * @param object   $item    Пункт-маркер.
+	 * @param Language $current Язык текущей страницы.
 	 */
-	private function prepareDropdownTrigger( object $item ): object {
+	private function prepareDropdownTrigger( object $item, Language $current ): object {
 		$item->url = '#';
+
+		/**
+		 * Подпись пункта, открывающего список языков.
+		 *
+		 * По умолчанию — текущий язык в том же виде, что и остальные пункты
+		 * (флаг, код, название — как выбрано в настройках). Статичная
+		 * надпись вроде «Язык» на этом месте сообщает посетителю ровно
+		 * ничего: он и так видит, что это переключатель языков, а вот на
+		 * каком языке страница сейчас — не видит, пока не откроет список.
+		 *
+		 * Название пункта, заданное в «Внешний вид → Меню», при этом
+		 * теряется. Кому нужно именно оно — возвращает его этим фильтром.
+		 *
+		 * @param string   $title   Подпись по умолчанию (может быть разметкой).
+		 * @param Language $current Язык текущей страницы.
+		 * @param object   $item    Сам пункт-маркер, с исходным `title`.
+		 */
+		$item->title = (string) apply_filters(
+			'mlp_nav_menu_trigger_title',
+			Flags::switcherMarkup( $current, $this->settings->switcherDisplay() ),
+			$current,
+			$item
+		);
 
 		/**
 		 * Классы триггера выпадающего списка.
@@ -340,8 +365,15 @@ final class NavMenu implements Hookable {
 	 * @param Language $current  Язык текущего запроса.
 	 */
 	private function applyLanguageToItem( object $item, Language $language, Language $current ): void {
-		$item->url   = $this->urls->switchUrlFor( $language );
-		$item->title = $language->labelWithFlag();
+		$item->url = $this->urls->switchUrlFor( $language );
+
+		/*
+		 * Подпись собирается там же, где и для шорткода-переключателя,
+		 * иначе меню и переключатель показывали бы языки по-разному.
+		 * WordPress выводит название пункта меню без экранирования, так
+		 * что картинка флага сюда доходит как разметка.
+		 */
+		$item->title = Flags::switcherMarkup( $language, $this->settings->switcherDisplay() );
 
 		$classes = array( 'mlp-language-item', 'mlp-language-item-' . $language->locale );
 

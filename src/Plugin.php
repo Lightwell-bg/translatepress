@@ -14,6 +14,7 @@ use WpMlp\Admin\HelpTabs;
 use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
+use WpMlp\Frontend\CommentsFeedTitle;
 use WpMlp\Frontend\InternalLinks;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\NavMenu;
@@ -220,6 +221,14 @@ final class Plugin {
 		);
 
 		$c->set(
+			CommentsFeedTitle::class,
+			static fn( Container $c ): CommentsFeedTitle => new CommentsFeedTitle(
+				$c->get( Settings::class ),
+				$c->get( SourceRepository::class )
+			)
+		);
+
+		$c->set(
 			Translator::class,
 			static fn( Container $c ): Translator => new Translator(
 				$c->get( Extractor::class ),
@@ -230,7 +239,7 @@ final class Plugin {
 				$c->get( EditorContext::class ),
 				$c->get( EditorMarkers::class ),
 				$c->get( GettextRegistry::class ),
-				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ), $c->get( InternalLinks::class ) )
+				array( $c->get( SeoTags::class ), $c->get( SeoMeta::class ), $c->get( InternalLinks::class ), $c->get( CommentsFeedTitle::class ) )
 			)
 		);
 

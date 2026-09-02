@@ -15,6 +15,7 @@ use WpMlp\Frontend\NavMenu;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
+use WpMlp\Settings\SwitcherDisplay;
 
 /**
  * Полноценный `WP_Query`/`wp_nav_menu()` в юнит-тестах недоступен, поэтому
@@ -100,6 +101,52 @@ final class NavMenuTest extends TestCase {
 		$result = $this->navMenu()->injectLanguages( array( $marker ) );
 
 		$this->assertContains( 'menu-item-has-children', $result[0]->classes );
+	}
+
+	/**
+	 * Пункт, открывающий список, показывает ТЕКУЩИЙ язык, а не своё
+	 * название из меню. Статичная надпись вроде «Язык» посетителю ничего
+	 * не сообщает: что это переключатель, видно и так, а вот на каком
+	 * языке страница сейчас — не видно, пока список не открыт.
+	 */
+	public function testDropdownTriggerShowsTheCurrentLanguage(): void {
+		$marker = $this->marker( '#mlp-language-switcher-dropdown' );
+
+		$this->assertSame( 'Marker', $marker->title );
+
+		$result = $this->navMenu()->injectLanguages( array( $marker ) );
+
+		// Запрос идёт на `/`, то есть на языке по умолчанию.
+		$this->assertSame( 'Русский', $result[0]->title );
+	}
+
+	/**
+	 * Подпись триггера подчиняется общей настройке — как и все остальные
+	 * пункты переключателя.
+	 */
+	public function testDropdownTriggerFollowsTheDisplaySetting(): void {
+		$raw                     = wp_mlp_test_options()[ Settings::OPTION ];
+		$raw['switcher_display'] = SwitcherDisplay::CODE;
+
+		wp_mlp_test_options( array( Settings::OPTION => $raw ) );
+
+		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
+
+		$this->assertSame( 'RU', $result[0]->title );
+	}
+
+	/**
+	 * Название пункта из «Внешний вид → Меню» при этом теряется, поэтому
+	 * есть фильтр — вернуть его обратно.
+	 */
+	public function testTriggerTitleCanBeOverriddenByFilter(): void {
+		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', static fn(): string => 'Язык' );
+
+		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
+
+		$this->assertSame( 'Язык', $result[0]->title );
+
+		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', null );
 	}
 
 	public function testDropdownDoesNotIncludeDraftLanguage(): void {

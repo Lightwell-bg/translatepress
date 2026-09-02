@@ -26,11 +26,60 @@ final class SettingsTest extends TestCase {
 		wp_mlp_test_options( array() );
 	}
 
-	public function testDefaultLanguageComesFirst(): void {
+	public function testDefaultLanguageIsFoundByItsFlagNotByPosition(): void {
 		$settings = new Settings();
 
 		$this->assertSame( 'ru', $settings->defaultLanguage()->locale );
-		$this->assertSame( 'ru', (string) array_key_first( $settings->all() ) );
+	}
+
+	/**
+	 * Порядок языков задаёт владелец сайта — стрелками в таблице настроек,
+	 * а хранится он самим порядком записей в опции. Раньше здесь стояла
+	 * жёсткая сортировка (сначала язык по умолчанию, дальше по алфавиту
+	 * кода), и переставить языки в переключателе было нельзя вовсе.
+	 */
+	public function testLanguageOrderFollowsSettings(): void {
+		$raw              = Settings::defaults();
+		$raw['languages'] = array(
+			'en' => $raw['languages']['en'],
+			'ru' => $raw['languages']['ru'],
+		);
+
+		wp_mlp_test_options( array( Settings::OPTION => $raw ) );
+
+		$settings = new Settings();
+
+		$this->assertSame( array( 'en', 'ru' ), array_keys( $settings->all() ) );
+
+		// Язык по умолчанию остаётся собой, где бы ни стоял.
+		$this->assertSame( 'ru', $settings->defaultLanguage()->locale );
+		$this->assertSame( array( 'en' ), array_keys( $settings->secondary() ) );
+	}
+
+	/**
+	 * Порядок переживает сохранение формы: sanitize() складывает языки в
+	 * том порядке, в каком их прислал браузер, а он идёт по порядку строк
+	 * таблицы.
+	 */
+	public function testSanitizeKeepsTheSubmittedOrder(): void {
+		$settings = new Settings();
+
+		$result = $settings->sanitize(
+			array(
+				'default_locale' => 'ru',
+				'languages'      => array(
+					array( 'locale' => 'bg', 'slug' => 'bg', 'label' => 'Bulgarian' ),
+					array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский' ),
+					array( 'locale' => 'en', 'slug' => 'en', 'label' => 'English' ),
+				),
+			)
+		);
+
+		$this->assertSame(
+			array( 'bg', 'ru', 'en' ),
+			array_keys( $result['settings']['languages'] )
+		);
+		$this->assertSame( array(), $result['errors'] );
 	}
 
 	public function testSecondaryExcludesDefault(): void {

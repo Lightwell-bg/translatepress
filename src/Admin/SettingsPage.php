@@ -9,10 +9,13 @@ declare(strict_types=1);
 
 namespace WpMlp\Admin;
 
+use WpMlp\Frontend\Flags;
 use WpMlp\Frontend\Sitemap;
 use WpMlp\I18n\LanguagePacks;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Settings\SwitcherDisplay;
+use WpMlp\Support\Assets;
 use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
@@ -54,6 +57,125 @@ final class SettingsPage implements Hookable {
 		add_action( 'admin_menu', array( $this, 'addMenu' ) );
 		add_action( 'admin_post_' . self::ACTION_SAVE, array( $this, 'handleSave' ) );
 		add_action( 'admin_notices', array( $this, 'maybeShowPermalinkNotice' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+	}
+
+	/**
+	 * Сохраняет и удаляет картинки флагов по данным отправленной формы.
+	 *
+	 * Строки формы пронумерованы, и номер связывает файл (`flag_file_3`) с
+	 * языком (`languages[3]`). Брать код языка из имени файла нельзя: файл
+	 * называется как угодно, а нужен именно тот язык, в чьей строке его
+	 * выбрали.
+	 *
+	 * @param array<string, mixed> $input Данные формы (уже без слешей).
+	 * @return list<string> Сообщения об ошибках.
+	 */
+	private function handleFlagFiles( array $input ): array {
+		$languages = is_array( $input['languages'] ?? null ) ? $input['languages'] : array();
+		$errors    = array();
+
+		foreach ( $languages as $index => $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$locale = Locale::normalize( (string) ( $row['locale'] ?? '' ) );
+
+			if ( ! Locale::isValid( $locale ) ) {
+				continue;
+			}
+
+			// Язык удаляют — вместе с ним уходит и его картинка.
+			if ( ! empty( $row['delete'] ) ) {
+				FlagUpload::remove( $locale );
+
+				continue;
+			}
+
+			if ( ! empty( $row['flag_remove'] ) ) {
+				FlagUpload::remove( $locale );
+			}
+
+			$field = 'flag_file_' . $index;
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен в handleSave().
+			$file = $_FILES[ $field ] ?? null;
+
+			if ( ! is_array( $file ) || UPLOAD_ERR_NO_FILE === ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+				continue;
+			}
+
+			$errors = array_merge( $errors, $this->storeFlagFile( $locale, $file ) );
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Кладёт один загруженный файл флага.
+	 *
+	 * @param string              $locale Код языка.
+	 * @param array<string, mixed> $file   Элемент $_FILES.
+	 * @return list<string> Сообщения об ошибках.
+	 */
+	private function storeFlagFile( string $locale, array $file ): array {
+		if ( UPLOAD_ERR_OK !== ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			/* translators: %s: language code */
+			return array( sprintf( __( 'Файл флага для языка «%s» не загрузился — попробуйте ещё раз.', 'wp-mlp' ), $locale ) );
+		}
+
+		$path = (string) ( $file['tmp_name'] ?? '' );
+
+		/*
+		 * is_uploaded_file() отсекает попытку подсунуть путь к любому файлу
+		 * сервера вместо загруженного — без неё содержимое чужого файла
+		 * можно было бы переписать в картинку флага.
+		 */
+		if ( '' === $path || ! is_uploaded_file( $path ) ) {
+			/* translators: %s: language code */
+			return array( sprintf( __( 'Файл флага для языка «%s» не загрузился — попробуйте ещё раз.', 'wp-mlp' ), $locale ) );
+		}
+
+		$content = (string) file_get_contents( $path );
+
+		if ( FlagUpload::store( $locale, $content ) ) {
+			return array();
+		}
+
+		return array(
+			sprintf(
+				/* translators: 1: language code, 2: maximum file size in kilobytes */
+				__( 'Флаг для языка «%1$s» не сохранён: нужен файл SVG размером до %2$d КБ. Другие форматы плагин не принимает.', 'wp-mlp' ),
+				$locale,
+				(int) ( FlagUpload::MAX_BYTES / 1000 )
+			),
+		);
+	}
+
+	/**
+	 * Подключает скрипт перестановки языков.
+	 *
+	 * @param string $hook Идентификатор текущего экрана.
+	 */
+	public function enqueue( $hook ): void {
+		if ( ! is_string( $hook ) || ! str_contains( $hook, self::MENU_SLUG ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'wp-mlp-settings',
+			Assets::url( 'assets/settings.css' ),
+			array(),
+			Assets::version( 'assets/settings.css' )
+		);
+		wp_enqueue_script(
+			'wp-mlp-settings',
+			Assets::url( 'assets/settings.js' ),
+			array(),
+			Assets::version( 'assets/settings.js' ),
+			true
+		);
 	}
 
 	/**
@@ -118,8 +240,17 @@ final class SettingsPage implements Hookable {
 
 		$this->settings->save( $result['settings'] );
 
+		/*
+		 * Флаги обрабатываются ПОСЛЕ сохранения языков: имя файла — это код
+		 * языка, а его могли ввести или поправить прямо сейчас, этой же
+		 * отправкой формы.
+		 */
+		$flagErrors = $this->handleFlagFiles( is_array( $input ) ? $input : array() );
+
 		// Слаги языков входят в rewrite-правила — их нужно пересобрать.
 		flush_rewrite_rules();
+
+		$result['errors'] = array_merge( $result['errors'], $flagErrors );
 
 		$query = array( 'page' => self::MENU_SLUG );
 
@@ -174,13 +305,17 @@ final class SettingsPage implements Hookable {
 				<?php esc_html_e( '«Код языка» — короткое имя внутри плагина. «URL-слаг» — то, что появится в адресе: /bg/статья/. «Название» и «Флаг» видит посетитель в переключателе языков. «Локаль WordPress» — имя, под которым WordPress ищет переводы своего интерфейса (bg_BG, en_US); именно благодаря ей «Reply» становится «Отговор» без вашего участия.', 'wp-mlp' ); ?>
 			</p>
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php // enctype нужен для загрузки картинок флагов в таблице ниже. ?>
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_SAVE ); ?>">
 				<?php wp_nonce_field( self::ACTION_SAVE ); ?>
 
-				<table class="widefat striped" style="max-width:60em;margin-bottom:1em;">
+				<table class="widefat striped mlp-languages-table" style="max-width:60em;margin-bottom:1em;">
 					<thead>
 						<tr>
+							<th scope="col" class="mlp-order-column">
+								<span class="screen-reader-text"><?php esc_html_e( 'Порядок', 'wp-mlp' ); ?></span>
+							</th>
 							<th scope="col"><?php esc_html_e( 'Код языка', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'URL-слаг', 'wp-mlp' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Название', 'wp-mlp' ); ?></th>
@@ -216,6 +351,37 @@ final class SettingsPage implements Hookable {
 								<?php endforeach; ?>
 							</select>
 							<p class="description"><?php esc_html_e( 'Язык, на котором вы пишете контент в WordPress. Новый язык сначала добавьте и сохраните, только потом его можно выбрать здесь.', 'wp-mlp' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mlp-switcher-display"><?php esc_html_e( 'Показывать в переключателе', 'wp-mlp' ); ?></label></th>
+						<td>
+							<?php $display = $this->settings->switcherDisplay(); ?>
+							<select name="switcher_display" id="mlp-switcher-display">
+								<option value="<?php echo esc_attr( SwitcherDisplay::LABEL ); ?>" <?php selected( SwitcherDisplay::LABEL, $display ); ?>>
+									<?php esc_html_e( 'Название языка', 'wp-mlp' ); ?>
+								</option>
+								<option value="<?php echo esc_attr( SwitcherDisplay::CODE ); ?>" <?php selected( SwitcherDisplay::CODE, $display ); ?>>
+									<?php esc_html_e( 'Код языка (RU, EN)', 'wp-mlp' ); ?>
+								</option>
+								<option value="<?php echo esc_attr( SwitcherDisplay::FLAG ); ?>" <?php selected( SwitcherDisplay::FLAG, $display ); ?>>
+									<?php esc_html_e( 'Только флаг', 'wp-mlp' ); ?>
+								</option>
+								<option value="<?php echo esc_attr( SwitcherDisplay::FLAG_CODE ); ?>" <?php selected( SwitcherDisplay::FLAG_CODE, $display ); ?>>
+									<?php esc_html_e( 'Флаг и код языка', 'wp-mlp' ); ?>
+								</option>
+							</select>
+							<p class="description">
+								<?php esc_html_e( 'Порядок языков в переключателе задаётся порядком строк в таблице выше — переставьте их стрелками слева.', 'wp-mlp' ); ?>
+								<br>
+								<?php
+								printf(
+									/* translators: %s: path to the flags directory */
+									esc_html__( 'Флаг берётся из файла %s — по коду языка из первой колонки. Если файла нет, показывается вписанный вручную emoji, а если нет и его — код языка. Подробнее о флагах — в «Помощь» справа вверху.', 'wp-mlp' ),
+									'<code>' . esc_html( 'wp-content/uploads/' . Flags::DIRECTORY . '/<код>.svg' ) . '</code>'
+								);
+								?>
+							</p>
 						</td>
 					</tr>
 					<tr>
@@ -409,6 +575,34 @@ final class SettingsPage implements Hookable {
 
 		?>
 		<tr>
+			<td class="mlp-order-column">
+				<?php if ( null !== $language ) : ?>
+					<?php
+					/*
+					 * Порядок строк здесь и есть порядок языков в
+					 * переключателе: браузер отправляет поля формы в том
+					 * порядке, в каком они стоят в разметке, а sanitize()
+					 * складывает языки в том порядке, в каком их получил.
+					 * Отдельного поля с номером поэтому не нужно.
+					 *
+					 * Кнопки без JS ничего не делают, и это осознанно: без
+					 * скриптов строку всё равно некуда переставить, а
+					 * неработающая кнопка честнее скрыта, чем показана
+					 * (см. wp-mlp-order в admin.js).
+					 */
+					?>
+					<button type="button" class="button-link mlp-order-up" hidden
+						title="<?php esc_attr_e( 'Выше', 'wp-mlp' ); ?>">
+						<span class="dashicons dashicons-arrow-up-alt2"></span>
+						<span class="screen-reader-text"><?php esc_html_e( 'Переместить язык выше', 'wp-mlp' ); ?></span>
+					</button>
+					<button type="button" class="button-link mlp-order-down" hidden
+						title="<?php esc_attr_e( 'Ниже', 'wp-mlp' ); ?>">
+						<span class="dashicons dashicons-arrow-down-alt2"></span>
+						<span class="screen-reader-text"><?php esc_html_e( 'Переместить язык ниже', 'wp-mlp' ); ?></span>
+					</button>
+				<?php endif; ?>
+			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[locale]' ); ?>"
 					value="<?php echo esc_attr( $language->locale ?? '' ); ?>"
@@ -424,11 +618,36 @@ final class SettingsPage implements Hookable {
 					value="<?php echo esc_attr( $language->label ?? '' ); ?>"
 					placeholder="English">
 			</td>
-			<td>
+			<td class="mlp-flag-cell">
+				<?php $flagUrl = null !== $language ? Flags::url( $language->locale ) : ''; ?>
+
+				<?php if ( '' !== $flagUrl ) : ?>
+					<?php
+					/*
+					 * Отметка времени в адресе — чтобы после замены файла
+					 * браузер показал новую картинку, а не ту же из кэша:
+					 * имя файла при замене не меняется.
+					 */
+					$version = (string) @filemtime( Flags::directoryPath() . '/' . Flags::fileName( $language->locale ) );
+					?>
+					<img class="mlp-flag-preview" src="<?php echo esc_url( add_query_arg( 'v', $version, $flagUrl ) ); ?>"
+						alt="" width="24" height="18">
+					<label class="mlp-flag-remove">
+						<input type="checkbox" name="<?php echo esc_attr( $name . '[flag_remove]' ); ?>" value="1">
+						<?php esc_html_e( 'убрать', 'wp-mlp' ); ?>
+					</label>
+				<?php endif; ?>
+
+				<?php if ( null !== $language ) : ?>
+					<input type="file" name="<?php echo esc_attr( 'flag_file_' . $index ); ?>"
+						accept=".svg,image/svg+xml" class="mlp-flag-file"
+						title="<?php esc_attr_e( 'Картинка флага (SVG). Загрузится под кодом языка из первой колонки.', 'wp-mlp' ); ?>">
+				<?php endif; ?>
+
 				<input type="text" name="<?php echo esc_attr( $name . '[flag]' ); ?>"
 					value="<?php echo esc_attr( $language->flag ?? '' ); ?>"
 					placeholder="🇬🇧" size="4" maxlength="16"
-					title="<?php esc_attr_e( 'Emoji-флаг для переключателя языков, необязательно', 'wp-mlp' ); ?>">
+					title="<?php esc_attr_e( 'Запасной вариант: emoji-флаг. Показывается, если картинка не загружена. На Windows emoji-флаги не отображаются — там будут видны буквы.', 'wp-mlp' ); ?>">
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[wp_locale]' ); ?>"

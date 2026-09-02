@@ -12,6 +12,7 @@ namespace WpMlp\Frontend;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
+use WpMlp\Settings\SwitcherDisplay;
 use WpMlp\Support\Hookable;
 
 /**
@@ -87,6 +88,7 @@ final class LanguageSwitcher implements Hookable {
 		}
 
 		$current = $this->resolver->current();
+		$mode    = $this->settings->switcherDisplay();
 		$items   = array();
 
 		foreach ( $languages as $language ) {
@@ -98,7 +100,9 @@ final class LanguageSwitcher implements Hookable {
 
 			$items[] = array(
 				'url'     => $this->urls->switchUrlFor( $language ),
-				'label'   => $language->labelWithFlag(),
+				'markup'  => Flags::switcherMarkup( $language, $mode ),
+				'text'    => Flags::switcherText( $language, $mode ),
+				'name'    => $language->label,
 				'lang'    => $language->bcp47(),
 				'current' => $isCurrent,
 			);
@@ -114,7 +118,7 @@ final class LanguageSwitcher implements Hookable {
 	/**
 	 * Список ссылок.
 	 *
-	 * @param list<array{url: string, label: string, lang: string, current: bool}> $items Языки.
+	 * @param list<array{url: string, markup: string, text: string, name: string, lang: string, current: bool}> $items Языки.
 	 */
 	private function renderList( array $items ): string {
 		$html = '<ul class="mlp-language-switcher">';
@@ -126,13 +130,18 @@ final class LanguageSwitcher implements Hookable {
 				 * это маркер для InternalLinks::apply(): каждая ссылка здесь уже
 				 * ведёт на свой язык, второй, независимый проход не должен её
 				 * трогать (см. InternalLinks::SWITCHER_CLASS).
+				 *
+				 * `title` с названием языка стоит всегда: в режиме «только
+				 * флаг» подпись состоит из одной картинки, и без него
+				 * переключатель пришлось бы разгадывать по флажкам.
 				 */
-				'<li class="mlp-language-switcher__item%1$s"><a href="%2$s" class="mlp-language-item" lang="%3$s" hreflang="%3$s"%4$s>%5$s</a></li>',
+				'<li class="mlp-language-switcher__item%1$s"><a href="%2$s" class="mlp-language-item" lang="%3$s" hreflang="%3$s" title="%4$s"%5$s>%6$s</a></li>',
 				$item['current'] ? ' is-current' : '',
 				esc_url( $item['url'] ),
 				esc_attr( $item['lang'] ),
+				esc_attr( $item['name'] ),
 				$item['current'] ? ' aria-current="true"' : '',
-				esc_html( $item['label'] )
+				$item['markup']
 			);
 		}
 
@@ -151,12 +160,17 @@ final class LanguageSwitcher implements Hookable {
 		);
 
 		foreach ( $items as $item ) {
+			/*
+			 * Внутрь `<option>` разметка не вставляется — там может быть
+			 * только текст, картинке места нет. Поэтому в выпадающем списке
+			 * флаг всегда текстовый: вписанный emoji или код языка.
+			 */
 			$html .= sprintf(
 				'<option value="%s" lang="%s"%s>%s</option>',
 				esc_url( $item['url'] ),
 				esc_attr( $item['lang'] ),
 				$item['current'] ? ' selected' : '',
-				esc_html( $item['label'] )
+				esc_html( $item['text'] )
 			);
 		}
 

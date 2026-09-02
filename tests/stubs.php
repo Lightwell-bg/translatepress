@@ -165,19 +165,51 @@ if ( ! function_exists( 'has_action' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_mlp_test_filter' ) ) {
+	/**
+	 * Подменяет обработчик фильтра на время теста.
+	 *
+	 * Полноценной системы хуков здесь нет и не нужно: фильтров у плагина
+	 * единицы, и проверять требуется ровно одно — что значение проходит
+	 * через них и его можно заменить.
+	 *
+	 * @param string        $tag      Имя фильтра.
+	 * @param callable|null $callback Обработчик, либо null — снять.
+	 * @return array<string, callable>
+	 */
+	function wp_mlp_test_filter( string $tag = '', ?callable $callback = null ): array {
+		static $filters = array();
+
+		if ( '' === $tag ) {
+			return $filters;
+		}
+
+		if ( null === $callback ) {
+			unset( $filters[ $tag ] );
+		} else {
+			$filters[ $tag ] = $callback;
+		}
+
+		return $filters;
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
-	 * Без реальной системы хуков: тесты не регистрируют фильтры, поэтому
-	 * значение просто возвращается без изменений.
+	 * Прогоняет значение через обработчик, если тест его подменил.
 	 *
 	 * @param string $tag   Имя фильтра.
 	 * @param mixed  $value Значение.
 	 * @param mixed  ...$args Остальные аргументы фильтра.
 	 */
 	function apply_filters( string $tag, $value, ...$args ) {
-		unset( $tag, $args );
+		$filters = wp_mlp_test_filter();
 
-		return $value;
+		if ( ! isset( $filters[ $tag ] ) ) {
+			return $value;
+		}
+
+		return $filters[ $tag ]( $value, ...$args );
 	}
 }
 
@@ -437,6 +469,40 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 		$value = $store[ $postId ][ $key ] ?? ( $single ? '' : array() );
 
 		return $single ? $value : array( $value );
+	}
+}
+
+if ( ! function_exists( 'wp_upload_dir' ) ) {
+	/**
+	 * Каталог загрузок. Тест подменяет его через wp_mlp_test_uploads(),
+	 * чтобы проверять поиск файла флага на настоящей файловой системе.
+	 *
+	 * @return array{basedir: string, baseurl: string}
+	 */
+	function wp_upload_dir(): array {
+		$dir = wp_mlp_test_uploads();
+
+		return array(
+			'basedir' => $dir,
+			'baseurl' => 'https://example.test/wp-content/uploads',
+		);
+	}
+}
+
+if ( ! function_exists( 'wp_mlp_test_uploads' ) ) {
+	/**
+	 * Каталог, который стаб wp_upload_dir() выдаёт за папку загрузок.
+	 *
+	 * @param string|null $set Новое значение, либо null — только прочитать.
+	 */
+	function wp_mlp_test_uploads( ?string $set = null ): string {
+		static $dir = '';
+
+		if ( null !== $set ) {
+			$dir = $set;
+		}
+
+		return '' !== $dir ? $dir : sys_get_temp_dir() . '/wp-mlp-uploads';
 	}
 }
 

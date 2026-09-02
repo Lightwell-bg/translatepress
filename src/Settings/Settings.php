@@ -64,6 +64,7 @@ final class Settings {
 					'status'    => Language::STATUS_PUBLISHED,
 				),
 			),
+			'switcher_display'         => SwitcherDisplay::LABEL,
 			'discover_strings'         => true,
 			'delete_data_on_uninstall' => false,
 			'openai_daily_char_limit'  => 100000,
@@ -132,13 +133,15 @@ final class Settings {
 			);
 		}
 
-		// Сначала язык по умолчанию — от этого зависит порядок в переключателе.
-		uasort(
-			$languages,
-			static fn( Language $a, Language $b ): int => ( $b->isDefault <=> $a->isDefault )
-				?: strcmp( $a->locale, $b->locale )
-		);
-
+		/*
+		 * Порядок НЕ трогаем: он и есть порядок языков в переключателе, и
+		 * задаёт его владелец сайта стрелками в таблице настроек. Раньше
+		 * здесь стояла жёсткая сортировка — язык по умолчанию первым, дальше
+		 * по алфавиту кода, — из-за которой поменять порядок было нельзя
+		 * вовсе. Позиция языка по умолчанию тоже больше ничего не значит:
+		 * defaultLanguage() ищет его по собственному признаку, а не по месту
+		 * в списке.
+		 */
 		$this->languages = $languages;
 
 		return $this->languages;
@@ -221,6 +224,17 @@ final class Settings {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Что переключатель языков показывает посетителю.
+	 *
+	 * Пустое или незнакомое значение означает `label` — вид, который был у
+	 * переключателя до появления этой настройки. Так сайт, где её ни разу
+	 * не сохраняли, выглядит после обновления плагина ровно как прежде.
+	 */
+	public function switcherDisplay(): string {
+		return SwitcherDisplay::sanitize( (string) ( $this->raw()['switcher_display'] ?? '' ) );
 	}
 
 	/**
@@ -419,6 +433,7 @@ final class Settings {
 			'settings' => array(
 				'default_locale'           => $defaultLocale,
 				'languages'                => $languages,
+				'switcher_display'         => SwitcherDisplay::sanitize( (string) ( $input['switcher_display'] ?? '' ) ),
 				'discover_strings'         => ! empty( $input['discover_strings'] ),
 				'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 				'hide_untranslated_posts'  => ! empty( $input['hide_untranslated_posts'] ),
