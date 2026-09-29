@@ -215,6 +215,61 @@
 	display: none;
 }
 
+/* Выбор страницы: поле поиска с выпадающим списком. */
+.wp-mlp-editor-picker {
+	position: relative;
+	display: inline-block;
+	min-width: 320px;
+}
+
+.wp-mlp-editor-picker input[type="text"] {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.wp-mlp-editor-picker__list {
+	position: absolute;
+	z-index: 10000;
+	top: 100%;
+	left: 0;
+	right: 0;
+	max-height: 340px;
+	overflow-y: auto;
+	margin: 2px 0 0;
+	padding: 0;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wp-mlp-editor-picker__option {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 6px 10px;
+	cursor: pointer;
+}
+
+.wp-mlp-editor-picker__option.is-active {
+	background: #f0f6fc;
+	outline: 1px solid #2271b1;
+}
+
+.wp-mlp-editor-picker__meta {
+	color: #646970;
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.wp-mlp-editor-picker__message {
+	margin: 0;
+	padding: 8px 10px;
+	color: #646970;
+}
+
 .wp-mlp-editor-toolbar__aside {
 	margin: 8px 0 12px;
 	display: flex;

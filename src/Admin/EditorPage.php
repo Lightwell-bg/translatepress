@@ -11,6 +11,7 @@ namespace WpMlp\Admin;
 
 use WpMlp\Rendering\EditorContext;
 use WpMlp\Rest\BlocksController;
+use WpMlp\Rest\EditorPagesController;
 use WpMlp\Rest\PostTranslationController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Translation\BulkTranslationMode;
@@ -56,6 +57,11 @@ final class EditorPage implements Hookable {
 	private ?string $channelToken = null;
 
 	/**
+	 * Построение адресов редактора — общее с REST-поиском и ссылками в админке.
+	 */
+	private readonly EditorLink $link;
+
+	/**
 	 * @param Settings          $settings Настройки плагина.
 	 * @param UrlConverter      $urls     Построение языковых адресов.
 	 * @param ProviderFactory   $providers Доступы к провайдеру перевода.
@@ -65,6 +71,7 @@ final class EditorPage implements Hookable {
 		private readonly UrlConverter $urls,
 		private readonly ProviderFactory $providers
 	) {
+		$this->link = new EditorLink( $settings, $urls );
 	}
 
 	/**
@@ -133,8 +140,11 @@ final class EditorPage implements Hookable {
 				'saveRoot'     => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
 				'blocks'       => esc_url_raw( rest_url( BlocksController::NAMESPACE . '/blocks' ) ),
 				'postRoot'     => esc_url_raw( rest_url( PostTranslationController::NAMESPACE . '/posts/' ) ),
+				'pagesRoot'    => esc_url_raw( rest_url( EditorPagesController::NAMESPACE . '/editor/pages' ) ),
 				'postId'       => $postId,
-				'modeEmpty'    => BulkTranslationMode::EMPTY,
+					// Название открытой записи для поля выбора страницы; не запись — пусто, и поле покажет путь.
+					'currentTitle' => $postId > 0 ? wp_strip_all_tags( get_the_title( $postId ) ) : '',
+				'modeEmpty'   => BulkTranslationMode::EMPTY,
 				'modeAll'      => BulkTranslationMode::ALL,
 				/*
 				 * Граница, за которую превью не должно уводить: клик по
@@ -186,13 +196,19 @@ final class EditorPage implements Hookable {
 					'bulkSaving'        => __( 'Сохраняю всё…', 'wp-mlp' ),
 					'bulkSaved'         => __( 'Материал сохранён и обновлён в превью.', 'wp-mlp' ),
 					'bulkFailed'        => __( 'Не удалось перевести', 'wp-mlp' ),
+				'bulkPartialFailed' => __( 'Успели перевести не всё: {reason}. Уже готовое — ниже: сохраните его кнопкой «Сохранить всё», а затем нажмите «Начать» ещё раз — при режиме «Только пустые сегменты» заново переведётся только то, что осталось, без повторной оплаты уже переведённого.', 'wp-mlp' ),
 					'bulkCommitFailed'  => __( 'Не удалось сохранить — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
 					'bulkRejected'      => __( 'ИИ не смог безопасно перевести {count} строк(и), не повредив шорткод — переведите их вручную ниже.', 'wp-mlp' ),
 					'bulkChanged'       => __( 'изменилось с прошлого перевода', 'wp-mlp' ),
 					'bulkFieldTitle'    => __( 'Заголовок', 'wp-mlp' ),
 					'bulkFieldExcerpt'  => __( 'Анонс', 'wp-mlp' ),
 					'bulkFieldContent'  => __( 'Текст записи', 'wp-mlp' ),
+					'bulkFieldThumbnailAlt' => __( 'Alt миниатюры', 'wp-mlp' ),
 					'bulkClose'         => __( 'Закрыть', 'wp-mlp' ),
+					'pickerPlaceholder' => __( 'Найти страницу по названию или вставить адрес', 'wp-mlp' ),
+					'pickerLoading'     => __( 'Загрузка…', 'wp-mlp' ),
+					'pickerEmpty'       => __( 'Ничего не найдено', 'wp-mlp' ),
+					'pickerError'       => __( 'Не удалось загрузить список страниц', 'wp-mlp' ),
 				),
 			)
 		);
@@ -270,6 +286,9 @@ final class EditorPage implements Hookable {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
 		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
 		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
+
+		// Вставленный адрес или путь с языковым префиксом приводим к виду «без префикса»: единственное место правила.
+		$path = $this->link->normalizeInput( $path );
 
 		/*
 		 * Переход по ссылке внутри предпросмотра: адрес приходит целиком и
@@ -356,7 +375,7 @@ final class EditorPage implements Hookable {
 
 				<label for="mlp-editor-path"><?php esc_html_e( 'Страница:', 'wp-mlp' ); ?></label>
 				<input type="text" name="mlp_path" id="mlp-editor-path" class="regular-text"
-					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/">
+					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/" autocomplete="off">
 
 				<?php submit_button( __( 'Открыть', 'wp-mlp' ), 'secondary', '', false ); ?>
 			</form>
@@ -532,16 +551,7 @@ final class EditorPage implements Hookable {
 	 * @param string $path Путь без языкового префикса.
 	 */
 	private function editorUrl( string $path ): string {
-		$secondary = $this->settings->secondary();
-
-		return add_query_arg(
-			array(
-				'page'       => self::MENU_SLUG,
-				'mlp_locale' => (string) array_key_first( $secondary ),
-				'mlp_path'   => $path,
-			),
-			admin_url( 'admin.php' )
-		);
+		return $this->link->urlForPath( $path );
 	}
 
 	/**
@@ -552,6 +562,6 @@ final class EditorPage implements Hookable {
 		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
 		$path = (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '/' );
 
-		return $this->urls->stripPrefix( LanguageResolver::relativePath( $path, LanguageResolver::basePath() ) );
+		return $this->link->relativePath( $path );
 	}
 }

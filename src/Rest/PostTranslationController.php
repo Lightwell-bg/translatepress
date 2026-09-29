@@ -186,6 +186,21 @@ final class PostTranslationController implements Hookable {
 	}
 
 	/**
+	 * Alt-текст миниатюры записи из мета вложения.
+	 *
+	 * Он не входит ни в одно поле записи, поэтому достаётся отдельно и
+	 * передаётся в экстрактор готовой строкой.
+	 *
+	 * @param object $post Запись.
+	 * @return string Пусто, если миниатюры или alt нет.
+	 */
+	private function thumbnailAlt( object $post ): string {
+		$thumbnailId = (int) get_post_thumbnail_id( $post );
+
+		return $thumbnailId > 0 ? (string) get_post_meta( $thumbnailId, '_wp_attachment_image_alt', true ) : '';
+	}
+
+	/**
 	 * Шаг 1: разбирает запись, заводит недостающие строки, возвращает
 	 * полный список сегментов и границы чанков для шага 2.
 	 *
@@ -204,7 +219,7 @@ final class PostTranslationController implements Hookable {
 		$mode         = (string) $request->get_param( 'mode' );
 		$sourceLocale = $this->settings->defaultLanguage()->locale;
 
-		$result = $this->extractor->extract( $post, $sourceLocale, $this->sources->blockHashes() );
+		$result = $this->extractor->extract( $post, $sourceLocale, $this->sources->blockHashes(), $this->thumbnailAlt( $post ) );
 
 		// Одна и та же фраза в заголовке и в тексте — одна строка словаря:
 		// в ИИ и в отклик она идёт один раз, а не по разу на каждое появление.

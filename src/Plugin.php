@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace WpMlp;
 
+use WpMlp\Admin\EditorLink;
 use WpMlp\Admin\EditorPage;
+use WpMlp\Admin\EditorPostLinks;
 use WpMlp\Admin\HelpTabs;
 use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
@@ -32,6 +34,7 @@ use WpMlp\Rendering\OutputBuffer;
 use WpMlp\Rendering\PostContentExtractor;
 use WpMlp\Rendering\Translator;
 use WpMlp\Rest\BlocksController;
+use WpMlp\Rest\EditorPagesController;
 use WpMlp\Rest\PostTranslationController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\CanonicalRedirect;
@@ -368,6 +371,31 @@ final class Plugin {
 		);
 
 		$c->set(
+			EditorLink::class,
+			static fn( Container $c ): EditorLink => new EditorLink(
+				$c->get( Settings::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
+			EditorPostLinks::class,
+			static fn( Container $c ): EditorPostLinks => new EditorPostLinks(
+				$c->get( Settings::class ),
+				$c->get( EditorLink::class )
+			)
+		);
+
+		$c->set(
+			EditorPagesController::class,
+			static fn( Container $c ): EditorPagesController => new EditorPagesController(
+				$c->get( Settings::class ),
+				$c->get( UrlConverter::class ),
+				$c->get( EditorLink::class )
+			)
+		);
+
+		$c->set(
 			EditorPage::class,
 			static fn( Container $c ): EditorPage => new EditorPage(
 				$c->get( Settings::class ),
@@ -442,6 +470,7 @@ final class Plugin {
 			TranslationsController::class,
 			BlocksController::class,
 			PostTranslationController::class,
+			EditorPagesController::class,
 			// Ссылка «Перевести страницу» живёт в админ-баре на фронтенде.
 			EditorPage::class,
 			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
@@ -454,6 +483,7 @@ final class Plugin {
 			// Админские сервисы не нужны фронтенду: не создаём их лишний раз.
 			$services[] = SettingsPage::class;
 			$services[] = HelpTabs::class;
+			$services[] = EditorPostLinks::class;
 			$services[] = StringTranslationPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;

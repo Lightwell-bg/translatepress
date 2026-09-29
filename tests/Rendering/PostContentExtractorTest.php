@@ -98,6 +98,89 @@ final class PostContentExtractorTest extends TestCase {
 		$this->assertContains( PostSegment::FIELD_EXCERPT, $fields );
 	}
 
+	/**
+	 * @param PostContentExtractor $extractor Экстрактор.
+	 * @param string               $alt       Alt миниатюры.
+	 * @return list<PostSegment>
+	 */
+	private function thumbnailSegments( string $alt ): array {
+		$result = $this->extractor()->extract( $this->post(), 'ru', array(), $alt );
+
+		return $this->fieldSegments( $result->segments, PostSegment::FIELD_THUMBNAIL_ALT );
+	}
+
+	public function testThumbnailAltYieldsOneAttributeSegment(): void {
+		$segments = $this->thumbnailSegments( "  Кот   на\nдиване " );
+
+		$this->assertCount( 1, $segments );
+		$this->assertSame( Segment::KIND_ATTRIBUTE, $segments[0]->segment->kind );
+		$this->assertSame( 'alt', $segments[0]->segment->attribute );
+		$this->assertSame( 'Кот на диване', $segments[0]->segment->text );
+	}
+
+	public function testThumbnailAltHashMatchesFrontendExtraction(): void {
+		$alt      = 'Кот на диване';
+		$document = \WpMlp\Rendering\HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><img src="x.jpg" alt="' . $alt . '"></body></html>'
+		);
+		$this->assertNotNull( $document );
+
+		$frontend = array_values(
+			array_filter(
+				( new Extractor() )->extract( $document, 'ru' ),
+				static fn( Segment $s ): bool => 'alt' === $s->attribute
+			)
+		);
+
+		$this->assertCount( 1, $frontend );
+		$this->assertSame( $frontend[0]->uniqHash, $this->thumbnailSegments( $alt )[0]->segment->uniqHash );
+	}
+
+	/**
+	 * Хеш alt миниатюры совпадает с фронтом, где alt проходит через esc_attr()
+	 * (уже закодированные сущности не кодируются повторно).
+	 */
+	public function testThumbnailAltWithEntitiesHashMatchesEscAttrOutput(): void {
+		foreach ( array( 'Кот &amp; собака', 'Say &quot;hi&quot;', 'Caf&#233; menu' ) as $alt ) {
+			$escaped  = htmlspecialchars( $alt, ENT_QUOTES, 'UTF-8', false );
+			$document = \WpMlp\Rendering\HtmlDocument::parse(
+				'<!DOCTYPE html><html><body><img src="x.jpg" alt="' . $escaped . '"></body></html>'
+			);
+			$this->assertNotNull( $document );
+
+			$frontend = array_values(
+				array_filter(
+					( new Extractor() )->extract( $document, 'ru' ),
+					static fn( Segment $s ): bool => 'alt' === $s->attribute
+				)
+			);
+
+			$thumb = $this->thumbnailSegments( $alt );
+			$this->assertCount( 1, $frontend, "alt: $alt" );
+			$this->assertCount( 1, $thumb, "alt: $alt" );
+			$this->assertSame( $frontend[0]->uniqHash, $thumb[0]->segment->uniqHash, "alt: $alt" );
+		}
+	}
+
+	public function testEmptyOrNonTranslatableThumbnailAltYieldsNothing(): void {
+		foreach ( array( '', '   ', "\n\t", '2024', 'photo.jpg' ) as $alt ) {
+			$this->assertSame( array(), $this->thumbnailSegments( $alt ), "alt: \"$alt\"" );
+		}
+	}
+
+	public function testThumbnailAltStripsTagsAndKeepsQuotesAndAmpersand(): void {
+		$segments = $this->thumbnailSegments( 'Кот <b>"Барсик"</b> & собака' );
+
+		$this->assertCount( 1, $segments );
+		$this->assertSame( 'Кот "Барсик" & собака', $segments[0]->segment->text );
+	}
+
+	public function testDefaultCallHasNoThumbnailSegments(): void {
+		$result = $this->extractor()->extract( $this->post( 'Заголовок', 'Анонс записи' ) );
+
+		$this->assertSame( array(), $this->fieldSegments( $result->segments, PostSegment::FIELD_THUMBNAIL_ALT ) );
+	}
+
 	public function testEmptyExcerptProducesNoExcerptSegment(): void {
 		$result = $this->extractor()->extract( $this->post( 'Заголовок', '' ) );
 

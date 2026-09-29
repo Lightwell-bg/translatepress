@@ -463,6 +463,10 @@
 			return settings.i18n.bulkFieldTitle;
 		}
 
+		if ( 'thumbnail_alt' === field ) {
+			return settings.i18n.bulkFieldThumbnailAlt;
+		}
+
 		return 'excerpt' === field ? settings.i18n.bulkFieldExcerpt : settings.i18n.bulkFieldContent;
 	}
 
@@ -553,23 +557,40 @@
 	 * @param {Function} onDone Вызывается после последнего чанка.
 	 */
 	function bulkRunChunks( chunks, onDone ) {
-		var index         = 0;
+		var index           = 0;
 		var unresolvedTotal = 0;
+		var succeededChunks = 0;
 
 		/**
-		 * Останавливает всё на ошибке одного чанка. Сегменты, накопленные
-		 * из УЖЕ успешных чанков, намеренно отбрасываются вместе с ними:
-		 * список проверки и кнопка «Сохранить всё» так и остаются скрытыми
-		 * (обе показывает только bulkRenderList(), а её здесь не вызвать),
-		 * значит сохранить частично переведённый материал через обычное
-		 * взаимодействие с панелью нельзя — ни один chunk не сорвёт commit
-		 * молча, только явным «Начать» заново.
+		 * Останавливает всё на ошибке одного чанка.
+		 *
+		 * Перевод из УЖЕ успешных чанков раньше отбрасывался вместе с
+		 * ошибкой — молчаливая защита от частичного commit ценой полной
+		 * потери прогресса и повторной оплаты токенов за то же самое при
+		 * следующей попытке. Оказалось хуже самой ошибки: чанк большой
+		 * записи иногда не укладывается в таймаут OpenAI (см. докблок
+		 * BatchChunker::DEFAULT_MAX_CHARS), и на многочастевом материале
+		 * это не редкость.
+		 *
+		 * Теперь то, что успело перевестись, остаётся в bulkSegments и
+		 * показывается через bulkRenderList() — ровно так же, как уже
+		 * показываются строки, отклонённые ИИ из-за разошедшегося шорткода
+		 * (см. bulkRejected ниже): смешанный список «часть переведена,
+		 * часть — нет» — это не новое состояние для commit, а то же самое,
+		 * что он и сегодня умеет сохранять частично успешным прогоном.
+		 * Молчаливого автосохранения по-прежнему нет — нажать «Сохранить
+		 * всё» должен человек.
 		 *
 		 * @param {string} message Текст ошибки.
 		 */
 		function abort( message ) {
-			bulkSegments = [];
-			bulkSay( message, 'error' );
+			bulkSay(
+				succeededChunks > 0
+					? settings.i18n.bulkPartialFailed.replace( '{reason}', message )
+					: message,
+				'error'
+			);
+			bulkRenderList();
 			bulkBusy = false;
 			bulkStartBtn.disabled = false;
 		}
@@ -611,6 +632,7 @@
 					// панели не важна, важно, что ЭТИ строки нужно доперевести
 					// вручную.
 					unresolvedTotal += ( data.rejected || [] ).length + ( data.missing || [] ).length;
+					succeededChunks++;
 
 					bulkSegments.forEach( function ( row ) {
 						if ( Object.prototype.hasOwnProperty.call( data.translations || {}, row.uniq_hash ) ) {
@@ -906,4 +928,292 @@
 			save();
 		}
 	} );
+}() );
+
+/**
+ * Выбор страницы в шапке редактора: combobox с поиском по названию.
+ *
+ * Без JS форма работает как раньше: обычное поле `mlp_path` с путём. С JS
+ * оригинальное поле становится скрытым и хранит путь, а видимое поле — только
+ * строка поиска. Данные сервера выводятся исключительно через textContent.
+ */
+( function () {
+	'use strict';
+
+	var settings = window.wpMlpEditor;
+	var pathField = document.getElementById( 'mlp-editor-path' );
+	var localeField = document.getElementById( 'mlp-editor-locale' );
+	var form = pathField ? pathField.form : null;
+
+	if ( ! settings || ! settings.pagesRoot || ! pathField || ! form ) {
+		return;
+	}
+
+	var i18n = settings.i18n || {};
+	var currentPath = pathField.value;
+	var options = [];
+	var active = -1;
+	var timer = null;
+	var controller = null;
+	var requestId = 0;
+
+	// Видимое поле поиска: забирает id (для label) и стили оригинала.
+	var input = document.createElement( 'input' );
+	input.type = 'text';
+	input.id = 'mlp-editor-path';
+	input.className = pathField.className;
+	input.placeholder = i18n.pickerPlaceholder || '';
+	input.value = settings.currentTitle || currentPath;
+	input.setAttribute( 'autocomplete', 'off' );
+	input.setAttribute( 'role', 'combobox' );
+	input.setAttribute( 'aria-autocomplete', 'list' );
+	input.setAttribute( 'aria-expanded', 'false' );
+	input.setAttribute( 'aria-controls', 'mlp-editor-path-list' );
+
+	pathField.id = 'mlp-editor-path-value';
+	pathField.type = 'hidden';
+
+	var list = document.createElement( 'ul' );
+	list.id = 'mlp-editor-path-list';
+	list.className = 'wp-mlp-editor-picker__list';
+	list.setAttribute( 'role', 'listbox' );
+	list.hidden = true;
+
+	var wrap = document.createElement( 'span' );
+	wrap.className = 'wp-mlp-editor-picker';
+	pathField.parentNode.insertBefore( wrap, pathField );
+	wrap.appendChild( input );
+	wrap.appendChild( list );
+
+	function submit() {
+		if ( typeof form.requestSubmit === 'function' ) {
+			form.requestSubmit();
+		} else {
+			form.submit();
+		}
+	}
+
+	function looksLikePath( text ) {
+		return /^(\/|https?:\/\/)/i.test( text );
+	}
+
+	function close() {
+		list.hidden = true;
+		active = -1;
+		input.setAttribute( 'aria-expanded', 'false' );
+		input.removeAttribute( 'aria-activedescendant' );
+	}
+
+	function open() {
+		list.hidden = false;
+		input.setAttribute( 'aria-expanded', 'true' );
+	}
+
+	function choose( item ) {
+		pathField.value = item.path;
+		input.value = item.title || item.path;
+		close();
+		submit();
+	}
+
+	function highlight( index ) {
+		var nodes = list.querySelectorAll( '[role="option"]' );
+
+		if ( active >= 0 && nodes[ active ] ) {
+			nodes[ active ].setAttribute( 'aria-selected', 'false' );
+			nodes[ active ].classList.remove( 'is-active' );
+		}
+
+		active = index;
+
+		if ( active >= 0 && nodes[ active ] ) {
+			nodes[ active ].setAttribute( 'aria-selected', 'true' );
+			nodes[ active ].classList.add( 'is-active' );
+			input.setAttribute( 'aria-activedescendant', nodes[ active ].id );
+			nodes[ active ].scrollIntoView( { block: 'nearest' } );
+		} else {
+			input.removeAttribute( 'aria-activedescendant' );
+		}
+	}
+
+	function message( text ) {
+		options = [];
+		list.textContent = '';
+
+		var li = document.createElement( 'li' );
+		li.className = 'wp-mlp-editor-picker__message';
+		li.setAttribute( 'role', 'presentation' );
+		li.textContent = text;
+		list.appendChild( li );
+		active = -1;
+		input.removeAttribute( 'aria-activedescendant' );
+		open();
+	}
+
+	function render( items ) {
+		options = items;
+		list.textContent = '';
+		active = -1;
+		input.removeAttribute( 'aria-activedescendant' );
+
+		if ( ! items.length ) {
+			message( i18n.pickerEmpty || '' );
+
+			return;
+		}
+
+		items.forEach( function ( item, index ) {
+			var li = document.createElement( 'li' );
+			var title = document.createElement( 'strong' );
+			var meta = document.createElement( 'span' );
+
+			li.id = 'mlp-editor-path-option-' + index;
+			li.className = 'wp-mlp-editor-picker__option';
+			li.setAttribute( 'role', 'option' );
+			li.setAttribute( 'aria-selected', 'false' );
+			title.className = 'wp-mlp-editor-picker__title';
+			title.textContent = item.title || item.path;
+			meta.className = 'wp-mlp-editor-picker__meta';
+			meta.textContent = ( item.type_label ? item.type_label + ' · ' : '' ) + item.path;
+			li.appendChild( title );
+			li.appendChild( meta );
+
+			// mousedown, а не click: иначе blur поля закроет список раньше клика.
+			li.addEventListener( 'mousedown', function ( event ) {
+				event.preventDefault();
+				choose( item );
+			} );
+			li.addEventListener( 'mousemove', function () {
+				if ( active !== index ) {
+					highlight( index );
+				}
+			} );
+			list.appendChild( li );
+		} );
+
+		open();
+	}
+
+	function search( query ) {
+		var id = ++requestId;
+
+		if ( controller ) {
+			controller.abort();
+		}
+
+		controller = typeof AbortController === 'function' ? new AbortController() : null;
+		message( i18n.pickerLoading || '' );
+
+		var init = { credentials: 'same-origin', headers: { 'X-WP-Nonce': settings.nonce } };
+
+		if ( controller ) {
+			init.signal = controller.signal;
+		}
+
+		fetch( settings.pagesRoot + '?search=' + encodeURIComponent( query ), init )
+			.then( function ( response ) {
+				if ( ! response.ok ) {
+					throw new Error( 'http ' + response.status );
+				}
+
+				return response.json();
+			} )
+			.then( function ( items ) {
+				if ( id !== requestId ) {
+					return;
+				}
+
+				render( Array.isArray( items ) ? items : [] );
+			} )
+			.catch( function ( error ) {
+				if ( id !== requestId || ( error && 'AbortError' === error.name ) ) {
+					return;
+				}
+
+				message( i18n.pickerError || '' );
+			} );
+	}
+
+	input.addEventListener( 'focus', function () {
+		input.select();
+		search( '' );
+	} );
+
+	input.addEventListener( 'input', function () {
+		window.clearTimeout( timer );
+
+		// Старый список и запрос к новому тексту уже не относятся: без этого
+		// Enter выбрал бы устаревшую подсветку, а поздний ответ перерисовал бы список.
+		if ( controller ) {
+			controller.abort();
+			controller = null;
+		}
+
+		requestId++;
+		message( i18n.pickerLoading || '' );
+		timer = window.setTimeout( function () {
+			search( input.value.trim() );
+		}, 250 );
+	} );
+
+	input.addEventListener( 'keydown', function ( event ) {
+		var count = options.length;
+
+		if ( 'ArrowDown' === event.key || 'ArrowUp' === event.key ) {
+			event.preventDefault();
+
+			if ( list.hidden ) {
+				search( input.value.trim() );
+
+				return;
+			}
+
+			if ( count ) {
+				var step = 'ArrowDown' === event.key ? 1 : -1;
+				highlight( ( active + step + count ) % count );
+			}
+		} else if ( 'Enter' === event.key ) {
+			// Ввод не должен отправлять форму с названием вместо пути.
+			event.preventDefault();
+
+			if ( active >= 0 && options[ active ] ) {
+				choose( options[ active ] );
+			} else if ( looksLikePath( input.value.trim() ) ) {
+				window.clearTimeout( timer );
+				pathField.value = input.value.trim();
+				close();
+				submit();
+			} else {
+				// Подсветки нет (поиск ещё идёт): ищем сразу, форму не отправляем.
+				window.clearTimeout( timer );
+				search( input.value.trim() );
+			}
+		} else if ( 'Escape' === event.key ) {
+			window.clearTimeout( timer );
+			requestId++;
+			close();
+		}
+	} );
+
+	document.addEventListener( 'mousedown', function ( event ) {
+		if ( ! wrap.contains( event.target ) ) {
+			window.clearTimeout( timer );
+			requestId++;
+			close();
+			input.value = settings.currentTitle || currentPath;
+		}
+	} );
+
+	// Кнопка «Открыть» без выбора из списка: отправляем то, что похоже на путь.
+	form.addEventListener( 'submit', function () {
+		var typed = input.value.trim();
+
+		if ( looksLikePath( typed ) ) {
+			pathField.value = typed;
+		}
+	} );
+
+	if ( localeField ) {
+		localeField.addEventListener( 'change', submit );
+	}
 }() );

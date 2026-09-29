@@ -569,3 +569,261 @@ if ( ! function_exists( 'update_post_meta' ) ) {
 		return true;
 	}
 }
+
+/*
+ * Заглушки ядра WordPress для ссылок на редактор и REST-поиска страниц.
+ * Всё состояние живёт в одном хранилище, которое тест заполняет сам.
+ */
+
+if ( ! class_exists( 'WP_Post' ) ) {
+	/**
+	 * Урезанная запись: только поля, которые читает плагин.
+	 */
+	class WP_Post { // phpcs:ignore
+		public int $ID          = 0;
+		public string $post_status = 'publish';
+		public string $post_type   = 'post';
+		public string $post_title  = '';
+		public string $post_name   = '';
+
+		/**
+		 * @param array<string, mixed> $data Поля записи.
+		 */
+		public function __construct( array $data = array() ) {
+			foreach ( $data as $key => $value ) {
+				$this->$key = $value;
+			}
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_Query' ) ) {
+	/**
+	 * Запрос без БД: результат отдаёт колбэк `query` из хранилища теста.
+	 */
+	class WP_Query { // phpcs:ignore
+		/** @var list<array<string, mixed>> */
+		public static array $calls = array();
+
+		/** @var list<WP_Post> */
+		public array $posts = array();
+
+		/**
+		 * @param array<string, mixed> $args Параметры запроса.
+		 */
+		public function __construct( array $args = array() ) {
+			self::$calls[] = $args;
+			$callback      = wp_mlp_test_wp()['query'] ?? null;
+			$this->posts   = is_callable( $callback ) ? (array) $callback( $args ) : array();
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Request' ) ) {
+	class WP_REST_Request { // phpcs:ignore
+		/**
+		 * @param array<string, mixed> $params Параметры запроса.
+		 */
+		public function __construct( private array $params = array() ) {
+		}
+
+		/**
+		 * @param string $key Имя параметра.
+		 * @return mixed
+		 */
+		public function get_param( string $key ) {
+			return $this->params[ $key ] ?? null;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Response' ) ) {
+	class WP_REST_Response { // phpcs:ignore
+		/**
+		 * @param mixed $data   Тело ответа.
+		 * @param int   $status Код ответа.
+		 */
+		public function __construct( private $data = null, private int $status = 200 ) {
+		}
+
+		/**
+		 * @return mixed
+		 */
+		public function get_data() {
+			return $this->data;
+		}
+
+		public function get_status(): int {
+			return $this->status;
+		}
+	}
+}
+
+/**
+ * Хранилище заглушек: `posts` (id => WP_Post), `permalinks` (id => адрес),
+ * `types` (тип => [название, публичный]), `caps` (право => bool, по
+ * умолчанию разрешено всё), `url_to_id` (адрес => id), `query` (колбэк WP_Query).
+ *
+ * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
+ * @return array<string, mixed>
+ */
+function wp_mlp_test_wp( ?array $reset = null ): array {
+	static $store = array();
+
+	if ( null !== $reset ) {
+		$store = $reset;
+	}
+
+	return $store;
+}
+
+if ( ! function_exists( 'get_post' ) ) {
+	/**
+	 * @param int|WP_Post $post Запись или id.
+	 */
+	function get_post( $post ): ?WP_Post {
+		if ( $post instanceof WP_Post ) {
+			return $post;
+		}
+
+		return wp_mlp_test_wp()['posts'][ (int) $post ] ?? null;
+	}
+}
+
+if ( ! function_exists( 'get_permalink' ) ) {
+	/**
+	 * @param int|WP_Post $post Запись или id.
+	 */
+	function get_permalink( $post ) {
+		$post = get_post( $post );
+
+		if ( null === $post ) {
+			return false;
+		}
+
+		return wp_mlp_test_wp()['permalinks'][ $post->ID ] ?? 'https://example.test/' . $post->post_name . '/';
+	}
+}
+
+if ( ! function_exists( 'get_post_type_object' ) ) {
+	/**
+	 * @param string $type Тип записи.
+	 */
+	function get_post_type_object( string $type ): ?object {
+		$types = wp_mlp_test_wp()['types'] ?? array(
+			'post'       => array( 'Запись', true ),
+			'page'       => array( 'Страница', true ),
+			'attachment' => array( 'Медиафайл', true ),
+			'secret'     => array( 'Секрет', false ),
+		);
+
+		if ( ! isset( $types[ $type ] ) ) {
+			return null;
+		}
+
+		return (object) array(
+			'public' => $types[ $type ][1],
+			'labels' => (object) array( 'singular_name' => $types[ $type ][0] ),
+		);
+	}
+}
+
+if ( ! function_exists( 'get_post_types' ) ) {
+	/**
+	 * @param array<string, mixed> $args Фильтр (учитывается только `public`).
+	 * @return list<string>
+	 */
+	function get_post_types( array $args = array() ): array {
+		unset( $args );
+
+		$types = wp_mlp_test_wp()['types'] ?? array(
+			'post'       => array( 'Запись', true ),
+			'page'       => array( 'Страница', true ),
+			'attachment' => array( 'Медиафайл', true ),
+			'secret'     => array( 'Секрет', false ),
+		);
+
+		return array_keys( array_filter( $types, static fn( array $type ): bool => $type[1] ) );
+	}
+}
+
+if ( ! function_exists( 'get_the_title' ) ) {
+	/**
+	 * @param WP_Post $post Запись.
+	 */
+	function get_the_title( $post ): string {
+		return $post->post_title;
+	}
+}
+
+if ( ! function_exists( 'wp_specialchars_decode' ) ) {
+	/**
+	 * @param string $text  Строка.
+	 * @param int    $flags Флаги.
+	 */
+	function wp_specialchars_decode( string $text, int $flags = ENT_NOQUOTES ): string {
+		return htmlspecialchars_decode( $text, $flags );
+	}
+}
+
+if ( ! function_exists( 'url_to_postid' ) ) {
+	/**
+	 * @param string $url Адрес.
+	 */
+	function url_to_postid( string $url ): int {
+		return (int) ( wp_mlp_test_wp()['url_to_id'][ $url ] ?? 0 );
+	}
+}
+
+if ( ! function_exists( 'current_user_can' ) ) {
+	/**
+	 * @param string $cap Право.
+	 */
+	function current_user_can( string $cap, ...$args ): bool {
+		unset( $args );
+
+		return (bool) ( wp_mlp_test_wp()['caps'][ $cap ] ?? true );
+	}
+}
+
+if ( ! function_exists( 'admin_url' ) ) {
+	/**
+	 * @param string $path Путь внутри админки.
+	 */
+	function admin_url( string $path = '' ): string {
+		return 'https://example.test/wp-admin/' . ltrim( $path, '/' );
+	}
+}
+
+if ( ! function_exists( 'get_edit_post_link' ) ) {
+	/**
+	 * @param int    $id      Идентификатор записи.
+	 * @param string $context Контекст.
+	 */
+	function get_edit_post_link( int $id, string $context = 'display' ): string {
+		unset( $context );
+
+		return 'https://example.test/wp-admin/post.php?post=' . $id . '&action=edit';
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * @param string $url Адрес.
+	 */
+	function esc_url( string $url ): string {
+		return htmlspecialchars( $url, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	/**
+	 * @param string $text   Строка.
+	 * @param string $domain Текстовый домен.
+	 */
+	function esc_html__( string $text, string $domain = 'default' ): string {
+		unset( $domain );
+
+		return esc_html( $text );
+	}
+}

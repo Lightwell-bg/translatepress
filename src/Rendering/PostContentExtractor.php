@@ -21,6 +21,13 @@ namespace WpMlp\Rendering;
  * поля разбираются как есть через тот же {@see Extractor}, что и обычная
  * страница, — значит те же правила «что вообще переводимо», тот же способ
  * посчитать `uniq_hash`, и один и тот же словарь строк с остальным плагином.
+ *
+ * Четвёртый источник строк — alt-текст миниатюры записи. Он лежит не в
+ * полях записи, а в мета вложения (`_wp_attachment_image_alt`), поэтому
+ * приходит готовой строкой снаружи: сам класс остаётся свободным от
+ * вызовов WordPress. На странице миниатюра выводится как `<img alt="…">`,
+ * и обычный {@see Extractor} находит этот alt как атрибутный сегмент —
+ * здесь строка проходит через тот же путь, чтобы `uniq_hash` совпал.
  */
 final class PostContentExtractor {
 
@@ -39,8 +46,9 @@ final class PostContentExtractor {
 	 *                                         так класс проверяется без WordPress).
 	 * @param string              $locale      Исходный язык сайта.
 	 * @param array<string, true> $blockHashes Хеши уже заведённых translation blocks.
+	 * @param string              $thumbnailAlt Alt-текст миниатюры записи (пусто — нет миниатюры или alt).
 	 */
-	public function extract( object $post, string $locale = 'ru', array $blockHashes = array() ): PostExtractionResult {
+	public function extract( object $post, string $locale = 'ru', array $blockHashes = array(), string $thumbnailAlt = '' ): PostExtractionResult {
 		$segments = array();
 
 		list( $titleSegments, $titleDocument ) = $this->extractField(
@@ -63,7 +71,9 @@ final class PostContentExtractor {
 			$blockHashes
 		);
 
-		foreach ( array( $titleSegments, $excerptSegments, $contentSegments ) as $group ) {
+		$thumbnailSegments = $this->extractThumbnailAlt( $thumbnailAlt, $locale );
+
+		foreach ( array( $titleSegments, $excerptSegments, $contentSegments, $thumbnailSegments ) as $group ) {
 			foreach ( $group as $segment ) {
 				$segments[] = $segment;
 			}
@@ -129,6 +139,48 @@ final class PostContentExtractor {
 		);
 
 		return array( $segments, $document );
+	}
+
+	/**
+	 * Alt-текст миниатюры записи.
+	 *
+	 * Ядро WordPress при выводе миниатюры отдаёт alt как
+	 * `trim( strip_tags( $alt ) )` — здесь то же самое, затем alt оборачивается
+	 * в `<img>` и разбирается общим {@see Extractor}: нормализация, отсев
+	 * непереводимого и `uniq_hash` те же, что у страницы на фронтенде.
+	 *
+	 * @param string $alt    Значение `_wp_attachment_image_alt`.
+	 * @param string $locale Исходный язык.
+	 * @return list<PostSegment>
+	 */
+	private function extractThumbnailAlt( string $alt, string $locale ): array {
+		$alt = trim( strip_tags( $alt ) );
+
+		if ( '' === $alt ) {
+			return array();
+		}
+
+		// double_encode = false: как esc_attr() в WordPress, уже закодированные сущности не кодируются повторно.
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><img alt="' . htmlspecialchars( $alt, ENT_QUOTES, 'UTF-8', false ) . '"></body></html>'
+		);
+
+		if ( null === $document ) {
+			return array();
+		}
+
+		$segments = array_filter(
+			$this->extractor->extract( $document, $locale ),
+			static fn( Segment $segment ): bool =>
+				Segment::KIND_ATTRIBUTE === $segment->kind && 'alt' === $segment->attribute
+		);
+
+		return array_values(
+			array_map(
+				static fn( Segment $segment ): PostSegment => new PostSegment( PostSegment::FIELD_THUMBNAIL_ALT, $segment ),
+				$segments
+			)
+		);
 	}
 
 	/**

@@ -28,6 +28,9 @@ final class PostSegment {
 	/** Сегмент из тела записи. */
 	public const FIELD_CONTENT = 'content';
 
+	/** Alt-текст изображения записи (миниатюры), хранится в мета вложения. */
+	public const FIELD_THUMBNAIL_ALT = 'thumbnail_alt';
+
 	/**
 	 * @param string  $field   FIELD_* — где на странице встретилась строка.
 	 * @param Segment $segment Извлечённый сегмент — тот же класс, что и для
