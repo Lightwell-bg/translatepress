@@ -427,6 +427,41 @@ final class GettextRegistryTest extends TestCase {
 	}
 
 	/**
+	 * По умолчанию строки собираются только со страниц, которые открыл
+	 * администратор: посетитель без прав ничего в словарь не пишет.
+	 */
+	public function testVisitorDoesNotFeedTheDictionary(): void {
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
+		$registry->flush();
+
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array() ) ) );
+
+		$this->assertSame( array(), $store->inserted );
+	}
+
+	public function testVisitorFeedsTheDictionaryWhenAllowed(): void {
+		$options = wp_mlp_test_options();
+		$options[ Settings::OPTION ]['discover_from_visitors'] = true;
+		wp_mlp_test_options( $options );
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+
+		$store    = new InMemoryGettextStore();
+		$registry = $this->registry( $store );
+
+		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
+		$registry->flush();
+
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array() ) ) );
+
+		$this->assertNotSame( array(), $store->inserted );
+	}
+
+	/**
 	 * Контур запоминает, что уже отдал, — по этому списку Extractor
 	 * пропускает строку и не заводит её второй раз как обычный текст
 	 * (см. следующий коммит).

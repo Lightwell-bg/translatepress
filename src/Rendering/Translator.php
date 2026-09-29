@@ -273,7 +273,8 @@ final class Translator {
 	 * @param string                                                        $locale Исходный язык.
 	 */
 	private function scheduleDiscovery( array $unique, array $found, string $locale ): void {
-		if ( ! $this->settings->isDiscoveryEnabled() || $this->isCrawler() ) {
+		// Вызывается при выводе страницы, после `init`, — пользователь уже известен.
+		if ( ! $this->settings->shouldDiscoverForCurrentUser() || $this->isCrawler() ) {
 			return;
 		}
 

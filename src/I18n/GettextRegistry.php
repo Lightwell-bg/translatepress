@@ -408,6 +408,15 @@ final class GettextRegistry implements Hookable {
 		$rows             = array_values( $this->discovered );
 		$this->discovered = array();
 
+		/*
+		 * Кто открыл страницу, проверяем здесь, на shutdown, а не при сборе:
+		 * gettext срабатывает уже на ранних хуках, когда пользователь ещё
+		 * не загружен и current_user_can() отвечает неверно.
+		 */
+		if ( ! $this->settings->shouldDiscoverForCurrentUser() ) {
+			return;
+		}
+
 		$this->repository->insertMissing( $rows );
 	}
 

@@ -414,6 +414,9 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function renderCleanForm( string $tab, string $locale ): void {
 		$isInterface = self::TAB_INTERFACE === $tab;
+		$count       = $isInterface
+			? $this->gettext->countUntranslated()
+			: $this->sources->countUntranslated( self::cleanableKinds( $tab ) );
 
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
@@ -422,9 +425,9 @@ final class StringTranslationPage implements Hookable {
 			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
 			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
 
-			<button type="submit" class="button"
-				data-mlp-confirm="<?php esc_attr_e( 'Убрать найденные строки, у которых нет ни одного перевода? Всё переведённое останется, а нужные строки соберутся заново при следующем показе страниц.', 'wp-mlp' ); ?>">
-				<?php esc_html_e( 'Очистить строки без перевода', 'wp-mlp' ); ?>
+			<button type="submit" class="button" <?php disabled( 0 === $count ); ?>
+				data-mlp-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of strings */ __( 'Удалить %s строк без перевода? Переводы не пострадают; строки вернутся, если вы снова откроете эти страницы.', 'wp-mlp' ), number_format_i18n( $count ) ) ); ?>">
+				<?php echo esc_html( sprintf( /* translators: %s: number of strings */ __( 'Удалить строки без перевода (%s)', 'wp-mlp' ), number_format_i18n( $count ) ) ); ?>
 			</button>
 			<span class="description">
 				<?php if ( $isInterface ) : ?>
@@ -456,7 +459,7 @@ final class StringTranslationPage implements Hookable {
 			esc_html(
 				sprintf(
 					/* translators: %s: number of deleted strings */
-					__( 'Убрано строк интерфейса: %s.', 'wp-mlp' ),
+					__( 'Удалено строк: %s.', 'wp-mlp' ),
 					number_format_i18n( $deleted )
 				)
 			)

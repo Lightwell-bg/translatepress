@@ -24,6 +24,7 @@ use WpMlp\Support\Hash;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\OpenAiProvider;
+use WpMlp\Translation\ProviderFactory;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
@@ -46,6 +47,7 @@ final class TranslationsController implements Hookable {
 	 * @param Settings              $settings     Настройки плагина.
 	 * @param ProviderInterface     $provider     Провайдер машинного перевода.
 	 * @param UsageTracker          $usage        Дневной бюджет символов.
+	 * @param ProviderFactory|null  $providers    Доступы к OpenAI (для точного текста ошибки).
 	 */
 	public function __construct(
 		private readonly SourceRepository $sources,
@@ -53,7 +55,8 @@ final class TranslationsController implements Hookable {
 		private readonly TranslationCache $cache,
 		private readonly Settings $settings,
 		private readonly ProviderInterface $provider,
-		private readonly UsageTracker $usage
+		private readonly UsageTracker $usage,
+		private readonly ?ProviderFactory $providers = null
 	) {
 	}
 
@@ -250,7 +253,9 @@ final class TranslationsController implements Hookable {
 		if ( ! $this->provider->supports( $sourceLocale, $language->locale ) ) {
 			return new WP_Error(
 				'mlp_provider_unavailable',
-				__( 'Перевод с ИИ не настроен: заполните OPENAI_API_KEY в .env.', 'wp-mlp' ),
+				null !== $this->providers
+					? ProviderFactory::unavailableMessage( $this->providers->missing() )
+					: __( 'Перевод с ИИ не настроен: укажите ключ в настройках плагина.', 'wp-mlp' ),
 				array( 'status' => 400 )
 			);
 		}

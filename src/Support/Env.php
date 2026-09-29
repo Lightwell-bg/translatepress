@@ -1,6 +1,6 @@
 <?php
 /**
- * Чтение переменных окружения из .env.
+ * Чтение переменных окружения из .env-файлов.
  *
  * @package WpMlp
  */
@@ -20,12 +20,14 @@ namespace WpMlp\Support;
 final class Env {
 
 	/**
-	 * Загружен ли файл в этом запросе.
+	 * Уже прочитанные файлы (путь => true): один и тот же файл читается однажды.
+	 *
+	 * @var array<string, true>
 	 */
-	private static bool $loaded = false;
+	private static array $loaded = array();
 
 	/**
-	 * Значения, прочитанные из файла.
+	 * Значения, прочитанные из файлов.
 	 *
 	 * Собственное хранилище, а не только `putenv()`: на многих shared-хостингах
 	 * `putenv` отключён через `disable_functions`, и тогда `getenv()` вернул бы
@@ -37,19 +39,42 @@ final class Env {
 	private static array $values = array();
 
 	/**
+	 * Из какого файла пришло каждое значение (имя переменной => путь к файлу).
+	 *
+	 * @var array<string, string>
+	 */
+	private static array $sources = array();
+
+	/**
+	 * Защитная первая строка PHP-файла с секретами.
+	 */
+	public const GUARD = '<?php exit; ?>';
+
+	/**
+	 * Защищаемые файлы, у которых защитной строки нет (пропущены).
+	 *
+	 * @var list<string>
+	 */
+	private static array $unguarded = array();
+
+	/**
 	 * Читает файл и запоминает значения.
 	 *
-	 * Значения, уже заданные на уровне сервера (реальный environment
-	 * хостинга), не перезаписываются: серверная переменная приоритетнее файла.
+	 * Можно вызывать несколько раз с разными файлами: побеждает тот файл, что
+	 * загружен раньше, — уже заданное непустое значение не перезаписывается.
+	 * Так же не перезаписываются значения, заданные на уровне сервера (реальный
+	 * environment хостинга): серверная переменная приоритетнее любого файла.
+	 * Пустые значения (`KEY=`) пропускаются, чтобы пустая строка в первом файле
+	 * не скрывала настоящее значение из следующего.
 	 *
 	 * @param string $path Путь к файлу `.env`.
 	 */
 	public static function load( string $path ): void {
-		if ( self::$loaded ) {
+		if ( isset( self::$loaded[ $path ] ) ) {
 			return;
 		}
 
-		self::$loaded = true;
+		self::$loaded[ $path ] = true;
 
 		if ( ! is_readable( $path ) ) {
 			return;
@@ -62,11 +87,12 @@ final class Env {
 		}
 
 		foreach ( self::parse( $contents ) as $key => $value ) {
-			if ( false !== getenv( $key ) ) {
+			if ( '' === $value || '' !== self::get( $key ) ) {
 				continue;
 			}
 
-			self::$values[ $key ] = $value;
+			self::$values[ $key ]  = $value;
+			self::$sources[ $key ] = $path;
 
 			// Дублируем в окружение процесса, если хостинг это позволяет:
 			// так значение увидит и сторонний код, читающий getenv() напрямую.
@@ -74,6 +100,79 @@ final class Env {
 				putenv( $key . '=' . $value );
 			}
 		}
+	}
+
+	/**
+	 * Откуда взято значение переменной.
+	 *
+	 * @param string $key Имя переменной.
+	 * @return string|null Путь к файлу, `'process'` для переменной окружения
+	 *                     сервера или null, если значения нет.
+	 */
+	public static function sourceOf( string $key ): ?string {
+		if ( isset( self::$sources[ $key ] ) ) {
+			// Если кто-то подменил значение в окружении процесса (putenv из другого
+			// плагина), get() вернёт уже его — источник должен это отражать.
+			$current = getenv( $key );
+
+			if ( is_string( $current ) && '' !== $current && ( self::$values[ $key ] ?? '' ) !== $current ) {
+				return 'process';
+			}
+
+			return self::$sources[ $key ];
+		}
+
+		return '' !== self::get( $key ) ? 'process' : null;
+	}
+
+	/**
+	 * Читает PHP-файл с защитной первой строкой (`<?php exit; ?>`).
+	 *
+	 * Файл внутри веб-корня (wp-content) доступен по прямой ссылке, поэтому его
+	 * первая строка обязана прерывать выполнение: тогда запрос к файлу вернёт
+	 * пустую страницу, а не секреты. Файл без такой строки не используется —
+	 * он запоминается, чтобы страница настроек могла предупредить владельца.
+	 *
+	 * @param string $path Путь к файлу `wp-mlp.env.php`.
+	 */
+	public static function loadGuarded( string $path ): void {
+		if ( isset( self::$loaded[ $path ] ) ) {
+			return;
+		}
+
+		if ( ! is_readable( $path ) ) {
+			self::$loaded[ $path ] = true;
+
+			return;
+		}
+
+		$contents = file_get_contents( $path );
+
+		if ( false === $contents ) {
+			self::$loaded[ $path ] = true;
+
+			return;
+		}
+
+		$firstLine = preg_split( '/\R/', ltrim( $contents, "\xEF\xBB\xBF" ), 2 );
+
+		if ( ! is_array( $firstLine ) || self::GUARD !== trim( $firstLine[0] ) ) {
+			self::$loaded[ $path ] = true;
+			self::$unguarded[]     = $path;
+
+			return;
+		}
+
+		self::load( $path );
+	}
+
+	/**
+	 * Файлы `wp-mlp.env.php`, пропущенные из-за отсутствия защитной строки.
+	 *
+	 * @return list<string>
+	 */
+	public static function unguardedFiles(): array {
+		return self::$unguarded;
 	}
 
 	/**
@@ -108,8 +207,10 @@ final class Env {
 			}
 		}
 
-		self::$loaded = false;
-		self::$values = array();
+		self::$loaded  = array();
+		self::$values  = array();
+		self::$sources = array();
+		self::$unguarded = array();
 	}
 
 	/**
@@ -128,7 +229,8 @@ final class Env {
 		foreach ( preg_split( '/\R/', $contents ) ?: array() as $line ) {
 			$line = trim( $line );
 
-			if ( '' === $line || str_starts_with( $line, '#' ) ) {
+			// Строки `<?php …` — защитная шапка файла wp-mlp.env.php, не данные.
+			if ( '' === $line || str_starts_with( $line, '#' ) || str_starts_with( $line, '<?php' ) ) {
 				continue;
 			}
 
@@ -164,9 +266,9 @@ final class Env {
 		$last  = $value[ strlen( $value ) - 1 ];
 
 		if ( strlen( $value ) >= 2 && $first === $last && ( '"' === $first || "'" === $first ) ) {
-			return substr( $value, 1, -1 );
+			return trim( substr( $value, 1, -1 ) );
 		}
 
-		return $value;
+		return trim( $value );
 	}
 }

@@ -19,6 +19,7 @@ use WpMlp\Support\Assets;
 use WpMlp\Support\Env;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
+use WpMlp\Translation\ProviderFactory;
 
 /**
  * Список языков сайта: код, URL-слаг, название, статус, язык по умолчанию.
@@ -43,10 +44,12 @@ final class SettingsPage implements Hookable {
 	/**
 	 * @param Settings      $settings Настройки плагина.
 	 * @param LanguagePacks $packs    Языковые пакеты WordPress.
+	 * @param ProviderFactory $providers Откуда берутся доступы к OpenAI.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
-		private readonly LanguagePacks $packs
+		private readonly LanguagePacks $packs,
+		private readonly ProviderFactory $providers
 	) {
 	}
 
@@ -389,13 +392,22 @@ final class SettingsPage implements Hookable {
 						<td>
 							<label>
 								<input type="checkbox" name="discover_strings" value="1" <?php checked( ! empty( $raw['discover_strings'] ) ); ?>>
-								<?php esc_html_e( 'Запоминать новые строки при открытии переведённых страниц', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Запоминать новые строки, когда я (администратор) открываю страницу на дополнительном языке', 'wp-mlp' ); ?>
 							</label>
 							<p class="description">
-								<?php esc_html_e( 'Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк».', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы, войдя в админку, открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк». Так в список попадает только то, что вы сами решили открыть.', 'wp-mlp' ); ?>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Держите включённым. Выключать имеет смысл, только когда сайт полностью переведён и вы не хотите, чтобы список пополнялся дальше.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Если сайт стоит за плагином кэша страниц, администраторы обычно его обходят, поэтому сбор работает. Выключать имеет смысл, только когда сайт полностью переведён.', 'wp-mlp' ); ?>
+								</p>
+								<p>
+									<label>
+										<input type="checkbox" name="discover_from_visitors" value="1" <?php checked( ! empty( $raw['discover_from_visitors'] ) ); ?>>
+										<?php esc_html_e( 'Также запоминать строки со страниц, которые открывают посетители', 'wp-mlp' ); ?>
+									</label>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'Обычно не нужно: список наполнится текстом всех страниц, которые кто-то открыл, даже если вы не собирались их переводить.', 'wp-mlp' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -460,6 +472,7 @@ final class SettingsPage implements Hookable {
 							<?php $this->renderOpenAiKeyStatus(); ?>
 							<input type="password" name="openai_api_key" id="mlp-openai-key"
 								class="regular-text" autocomplete="off"
+								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_API_KEY ) ? 'readonly' : ''; ?>
 								placeholder="<?php echo esc_attr( $this->settings->openAiApiKey() !== '' ? '••••••••  (оставьте пустым, чтобы не менять)' : 'sk-...' ); ?>">
 							<?php if ( $this->settings->openAiApiKey() !== '' ) : ?>
 								<label>
@@ -491,8 +504,11 @@ final class SettingsPage implements Hookable {
 						<th scope="row"><label for="mlp-openai-model"><?php esc_html_e( 'Модель OpenAI', 'wp-mlp' ); ?></label></th>
 						<td>
 							<input type="text" name="openai_model" id="mlp-openai-model" class="regular-text"
+								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_MODEL ) ? 'readonly' : ''; ?>
 								value="<?php echo esc_attr( $this->settings->openAiModel() ); ?>" placeholder="gpt-4o-mini">
-							<?php if ( '' === trim( $this->settings->openAiModel() ) ) : ?>
+							<?php if ( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_MODEL ) ) : ?>
+								<p class="description"><?php echo esc_html( $this->overriddenNote( ProviderFactory::CONST_MODEL ) ); ?></p>
+							<?php elseif ( '' === trim( $this->providers->model() ) ) : ?>
 								<p class="description" style="color:#b32d2e;">
 									<?php esc_html_e( 'Поле пустое — без него кнопка «Перевести с ИИ» не появится, даже если ключ сохранён.', 'wp-mlp' ); ?>
 								</p>
@@ -504,7 +520,12 @@ final class SettingsPage implements Hookable {
 						<th scope="row"><label for="mlp-openai-base"><?php esc_html_e( 'Адрес API', 'wp-mlp' ); ?></label></th>
 						<td>
 							<input type="text" name="openai_base_url" id="mlp-openai-base" class="regular-text"
-								value="<?php echo esc_attr( $this->settings->openAiBaseUrl() ); ?>">
+								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ? 'readonly' : ''; ?>
+								value="<?php echo esc_attr( $this->settings->openAiBaseUrlExplicit() ); ?>"
+								placeholder="<?php echo esc_attr( Settings::DEFAULT_OPENAI_BASE_URL ); ?>">
+							<?php if ( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ) : ?>
+								<p class="description"><?php echo esc_html( $this->overriddenNote( ProviderFactory::CONST_BASE_URL ) ); ?></p>
+							<?php endif; ?>
 							<p class="description"><?php esc_html_e( 'Меняйте только для своего прокси или совместимого шлюза вместо api.openai.com.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
@@ -526,42 +547,87 @@ final class SettingsPage implements Hookable {
 	}
 
 	/**
-	 * Показывает, сохранён ли ключ — без единого лишнего символа самого ключа.
+	 * Текст «поле перекрыто константой» для модели и адреса API.
 	 *
-	 * В HTML попадают только последние 4 символа для подтверждения «это тот
-	 * ключ, что я вводил» — этого недостаточно, чтобы восстановить ключ
-	 * целиком, но достаточно, чтобы отличить его от чужого (ТЗ 13).
+	 * @param string $constName Одна из ProviderFactory::CONST_*.
+	 */
+	private function overriddenNote( string $constName ): string {
+		return sprintf(
+			/* translators: %s: constant name */
+			__( 'Значение задано в wp-config.php (%s) — поле выше не используется.', 'wp-mlp' ),
+			$constName
+		);
+	}
+
+	/**
+	 * Показывает, откуда взят ключ, — без самого ключа.
 	 */
 	private function renderOpenAiKeyStatus(): void {
-		$key = $this->settings->openAiApiKey();
+		echo $this->keyStatusHtml(); // phpcs:ignore WordPress.Security.EscapeOutput -- собрано из esc_html.
+	}
 
-		if ( '' === $key ) {
-			// Ключ мог остаться настроенным через .env — это резервный способ
-			// для тех, кто предпочитает его файлам БД. Приоритет всегда у БД.
-			if ( '' !== Env::get( 'OPENAI_API_KEY' ) ) {
-				printf(
-					'<p class="description">%s</p>',
-					esc_html__( 'Ключ сейчас берётся из .env — заполните поле ниже, чтобы хранить его в базе данных вместо файла.', 'wp-mlp' )
+	/**
+	 * HTML строки статуса ключа OpenAI. Весь вывод экранирован.
+	 *
+	 * В HTML попадают только последние 4 символа сохранённого в БД ключа для
+	 * подтверждения «это тот ключ, что я вводил» — этого недостаточно, чтобы
+	 * восстановить ключ целиком, но достаточно, чтобы отличить его от чужого
+	 * (ТЗ 13). Для остальных источников ключ не показывается вовсе.
+	 */
+	public function keyStatusHtml(): string {
+		$plain = static fn( string $text ): string => sprintf( '<p class="description">%s</p>', esc_html( $text ) );
+
+		switch ( $this->providers->apiKeySource() ) {
+			case ProviderFactory::SOURCE_CONSTANT:
+				return $plain(
+					sprintf(
+						/* translators: %s: constant name */
+						__( 'Ключ задан в wp-config.php (%s) — поле ниже не используется.', 'wp-mlp' ),
+						ProviderFactory::CONST_API_KEY
+					)
 				);
 
-				return;
-			}
+			case ProviderFactory::SOURCE_DATABASE:
+				return $plain(
+					sprintf(
+						/* translators: %s: last 4 characters of the saved key */
+						__( 'Ключ хранится в базе данных — переживает обновление плагина. Заканчивается на «%s».', 'wp-mlp' ),
+						substr( $this->settings->openAiApiKey(), -4 )
+					)
+				);
 
-			printf( '<p class="description">%s</p>', esc_html__( 'Ключ не сохранён.', 'wp-mlp' ) );
+			case ProviderFactory::SOURCE_CONTENT_ENV:
+				$html = $plain( __( 'Ключ берётся из wp-content/wp-mlp.env.php — переживает обновление плагина.', 'wp-mlp' ) );
+				break;
 
-			return;
+			case ProviderFactory::SOURCE_PARENT_ENV:
+				$html = $plain( __( 'Ключ берётся из файла wp-mlp.env выше корня WordPress — переживает обновление плагина.', 'wp-mlp' ) );
+				break;
+
+			case ProviderFactory::SOURCE_PLUGIN_ENV:
+				$html = sprintf(
+					'<div class="notice notice-warning inline"><p>%s</p></div>',
+					esc_html__( 'Ключ берётся из .env в папке плагина — он будет удалён при замене плагина через ZIP. Вставьте ключ в поле ниже или перенесите его в wp-content/wp-mlp.env.php.', 'wp-mlp' )
+				);
+				break;
+
+			case ProviderFactory::SOURCE_PROCESS_ENV:
+				$html = $plain( __( 'Ключ задан переменной окружения сервера.', 'wp-mlp' ) );
+				break;
+
+			default:
+				$html = $plain( __( 'Ключ не сохранён.', 'wp-mlp' ) );
 		}
 
-		printf(
-			'<p class="description">%s</p>',
-			esc_html(
-				sprintf(
-					/* translators: %s: last 4 characters of the saved key */
-					__( 'Ключ сохранён, заканчивается на «%s».', 'wp-mlp' ),
-					substr( $key, -4 )
-				)
-			)
-		);
+		// Файл в wp-content без защитной строки читался бы по прямой ссылке — не используем.
+		if ( array() !== Env::unguardedFiles() ) {
+			$html .= sprintf(
+				'<div class="notice notice-error inline"><p>%s</p></div>',
+				esc_html__( 'Файл wp-mlp.env.php без защитной первой строки — не используется. Первой строкой должно быть: <?php exit; ?>', 'wp-mlp' )
+			);
+		}
+
+		return $html;
 	}
 
 	/**

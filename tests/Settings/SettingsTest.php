@@ -375,7 +375,7 @@ final class SettingsTest extends TestCase {
 		$this->assertSame( '', $result['settings']['openai_api_key'] );
 	}
 
-	public function testBaseUrlFallsBackToDefaultWhenBlankOrInvalid(): void {
+	public function testBaseUrlIsEmptyAndNotExplicitWhenBlankOrInvalid(): void {
 		$settings = new Settings();
 
 		$blank = $settings->sanitize(
@@ -394,8 +394,23 @@ final class SettingsTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( Settings::DEFAULT_OPENAI_BASE_URL, $blank['settings']['openai_base_url'] );
-		$this->assertSame( Settings::DEFAULT_OPENAI_BASE_URL, $invalid['settings']['openai_base_url'] );
+		$this->assertSame( '', $blank['settings']['openai_base_url'] );
+		$this->assertFalse( $blank['settings']['openai_base_url_explicit'] );
+		$this->assertSame( '', $invalid['settings']['openai_base_url'] );
+		$this->assertFalse( $invalid['settings']['openai_base_url_explicit'] );
+	}
+
+	public function testNonEmptyBaseUrlIsMarkedExplicitEvenWhenDefault(): void {
+		$result = ( new Settings() )->sanitize(
+			array(
+				'default_locale'  => 'ru',
+				'openai_base_url' => Settings::DEFAULT_OPENAI_BASE_URL,
+				'languages'       => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+			)
+		);
+
+		$this->assertSame( Settings::DEFAULT_OPENAI_BASE_URL, $result['settings']['openai_base_url'] );
+		$this->assertTrue( $result['settings']['openai_base_url_explicit'] );
 	}
 
 	public function testBaseUrlTrailingSlashIsRemoved(): void {

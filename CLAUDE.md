@@ -169,3 +169,6 @@ log line).
 <!-- Rules specific to this project. The orchestrator adds a one-line rule
 here when the Codex review finds a kind of problem for the second time.
 Keep this section when you update the Orchestration workflow block above. -->
+
+- Never write the PHP close tag `?>` inside a `//` or `#` comment (it ends PHP mode mid-comment and dumps the rest of the file into the page — this took the live site down in 0.3.2). Use `/* */` or don't spell the tag; `tests/NoCloseTagInCommentsTest.php` guards it.
+- Upload ZIP replaces the plugin folder: anything the site needs at runtime (keys, config) must never live only inside the plugin directory.

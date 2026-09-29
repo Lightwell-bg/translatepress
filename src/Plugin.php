@@ -342,7 +342,8 @@ final class Plugin {
 			SettingsPage::class,
 			static fn( Container $c ): SettingsPage => new SettingsPage(
 				$c->get( Settings::class ),
-				$c->get( LanguagePacks::class )
+				$c->get( LanguagePacks::class ),
+				$c->get( ProviderFactory::class )
 			)
 		);
 
@@ -421,7 +422,8 @@ final class Plugin {
 				$c->get( TranslationCache::class ),
 				$c->get( Settings::class ),
 				$c->get( ProviderInterface::class ),
-				$c->get( UsageTracker::class )
+				$c->get( UsageTracker::class ),
+				$c->get( ProviderFactory::class )
 			)
 		);
 

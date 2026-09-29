@@ -101,4 +101,149 @@ final class EnvTest extends TestCase {
 
 		Env::reset();
 	}
+
+	/**
+	 * @param string $contents Содержимое временного файла.
+	 */
+	private function tempEnv( string $contents ): string {
+		$path = tempnam( sys_get_temp_dir(), 'mlp' );
+		file_put_contents( $path, $contents );
+
+		return $path;
+	}
+
+	public function testFirstLoadedFileWins(): void {
+		$first  = $this->tempEnv( "MLP_TEST_ORDER=from-first\n" );
+		$second = $this->tempEnv( "MLP_TEST_ORDER=from-second\nMLP_TEST_ONLY_SECOND=two\n" );
+
+		Env::reset();
+		Env::load( $first );
+		Env::load( $second );
+
+		$this->assertSame( 'from-first', Env::get( 'MLP_TEST_ORDER' ) );
+		$this->assertSame( 'two', Env::get( 'MLP_TEST_ONLY_SECOND' ) );
+		$this->assertSame( $first, Env::sourceOf( 'MLP_TEST_ORDER' ) );
+		$this->assertSame( $second, Env::sourceOf( 'MLP_TEST_ONLY_SECOND' ) );
+
+		Env::reset();
+		unlink( $first );
+		unlink( $second );
+	}
+
+	public function testEmptyValueInFirstFileDoesNotShadowSecond(): void {
+		$first  = $this->tempEnv( "MLP_TEST_EMPTY=\n" );
+		$second = $this->tempEnv( "MLP_TEST_EMPTY=real\n" );
+
+		Env::reset();
+		Env::load( $first );
+		Env::load( $second );
+
+		$this->assertSame( 'real', Env::get( 'MLP_TEST_EMPTY' ) );
+
+		Env::reset();
+		unlink( $first );
+		unlink( $second );
+	}
+
+	public function testProcessEnvironmentWinsAndIsReportedAsProcess(): void {
+		$path = $this->tempEnv( "MLP_TEST_PROC=from-file\n" );
+
+		putenv( 'MLP_TEST_PROC=from-process' );
+		Env::reset();
+		Env::load( $path );
+
+		$this->assertSame( 'from-process', Env::get( 'MLP_TEST_PROC' ) );
+		$this->assertSame( 'process', Env::sourceOf( 'MLP_TEST_PROC' ) );
+
+		putenv( 'MLP_TEST_PROC' );
+		Env::reset();
+		unlink( $path );
+	}
+
+	public function testSourceOfUnknownKeyIsNull(): void {
+		Env::reset();
+
+		$this->assertNull( Env::sourceOf( 'MLP_TEST_NEVER_SET' ) );
+	}
+
+	public function testParseIgnoresPhpGuardLineAndTrimsValues(): void {
+		$values = Env::parse( "<?php exit; ?>\nA=  spaced  \nB=\" quoted \"\nC=   \n" );
+
+		$this->assertSame( array( 'A' => 'spaced', 'B' => 'quoted', 'C' => '' ), $values );
+	}
+
+	public function testGuardedFileIsLoadedWhenFirstLineIsExitGuard(): void {
+		$path = $this->tempEnv( "<?php exit; ?>\nMLP_TEST_GUARDED=ok\n" );
+
+		Env::reset();
+		Env::loadGuarded( $path );
+
+		$this->assertSame( 'ok', Env::get( 'MLP_TEST_GUARDED' ) );
+		$this->assertSame( array(), Env::unguardedFiles() );
+
+		Env::reset();
+		unlink( $path );
+	}
+
+	public function testUnguardedFileIsSkippedAndFlagged(): void {
+		$path = $this->tempEnv( "MLP_TEST_UNGUARDED=leak\n<?php exit; ?>\n" );
+
+		Env::reset();
+		Env::loadGuarded( $path );
+
+		$this->assertSame( '', Env::get( 'MLP_TEST_UNGUARDED' ) );
+		$this->assertSame( array( $path ), Env::unguardedFiles() );
+
+		Env::reset();
+		$this->assertSame( array(), Env::unguardedFiles() );
+		unlink( $path );
+	}
+
+	public function testFileOutsideWebRootIsLoadedPlain(): void {
+		$dir = sys_get_temp_dir() . '/mlp-' . uniqid();
+		mkdir( $dir );
+		file_put_contents( $dir . '/wp-mlp.env', "MLP_TEST_OUTSIDE=yes\n" );
+
+		Env::reset();
+		Env::load( $dir . '/wp-mlp.env' );
+
+		$this->assertSame( 'yes', Env::get( 'MLP_TEST_OUTSIDE' ) );
+
+		Env::reset();
+		unlink( $dir . '/wp-mlp.env' );
+		rmdir( $dir );
+	}
+
+	public function testWhitespaceOnlyValueDoesNotBlockNextFile(): void {
+		$first  = $this->tempEnv( "MLP_TEST_WS=   \n" );
+		$second = $this->tempEnv( "MLP_TEST_WS= real \n" );
+
+		Env::reset();
+		Env::load( $first );
+		Env::load( $second );
+
+		$this->assertSame( 'real', Env::get( 'MLP_TEST_WS' ) );
+		$this->assertSame( $second, Env::sourceOf( 'MLP_TEST_WS' ) );
+
+		Env::reset();
+		unlink( $first );
+		unlink( $second );
+	}
+
+	public function testSourceOfReportsProcessWhenEnvironmentWasOverriddenAfterLoad(): void {
+		$path = $this->tempEnv( "MLP_TEST_OVR=from-file\n" );
+
+		Env::reset();
+		Env::load( $path );
+		$this->assertSame( $path, Env::sourceOf( 'MLP_TEST_OVR' ) );
+
+		putenv( 'MLP_TEST_OVR=from-other-plugin' );
+
+		$this->assertSame( 'from-other-plugin', Env::get( 'MLP_TEST_OVR' ) );
+		$this->assertSame( 'process', Env::sourceOf( 'MLP_TEST_OVR' ) );
+
+		putenv( 'MLP_TEST_OVR' );
+		Env::reset();
+		unlink( $path );
+	}
 }

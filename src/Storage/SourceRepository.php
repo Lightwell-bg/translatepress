@@ -30,6 +30,11 @@ final class SourceRepository {
 	private const CHUNK = 200;
 
 	/**
+	 * Сколько строк удаляет за один проход чистка непереведённых.
+	 */
+	private const DELETE_BATCH = 500;
+
+	/**
 	 * Опция со списком хешей translation blocks.
 	 *
 	 * Именно опция, а не транзиент: транзиент с временем жизни не попадает в
@@ -322,31 +327,101 @@ final class SourceRepository {
 			)
 		);
 
-		// Места использования — следом за строками, иначе останутся сироты.
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE o FROM {$occurrences} o
-				 INNER JOIN {$sources} s ON s.id = o.source_id
-				 WHERE ({$whereSql})
-					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				$params
-			)
-		);
+		/*
+		 * Дальше — пачками по DELETE_BATCH id: один DELETE на тысячи строк
+		 * держит блокировку таблицы и упирается в таймаут на слабом хостинге.
+		 * Каждый проход заново выбирает id (удалённые уже не попадут), а
+		 * счётчик нулевой пачки прерывает цикл.
+		 */
+		$deleted = 0;
 
-		$deleted = $wpdb->query(
-			$wpdb->prepare(
-				"DELETE s FROM {$sources} s
-				 WHERE ({$whereSql})
-					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				$params
-			)
-		);
+		do {
+			$ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT s.id FROM {$sources} s
+					 WHERE ({$whereSql})
+						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)
+					 LIMIT " . self::DELETE_BATCH,
+					$params
+				)
+			);
+			$ids = array_values( array_filter( array_map( 'intval', is_array( $ids ) ? $ids : array() ) ) );
+
+			if ( array() === $ids ) {
+				break;
+			}
+
+			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
+			/*
+			 * Места использования — вместе со строками, иначе останутся сироты.
+			 * Условие «перевода нет» повторено в самих DELETE: между SELECT и
+			 * DELETE кто-то мог сохранить перевод, и такая строка не должна
+			 * пропасть. Считаем реально удалённые строки, а не размер пачки.
+			 */
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE o FROM {$occurrences} o
+					 WHERE o.source_id IN ({$placeholders})
+						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = o.source_id)",
+					$ids
+				)
+			);
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE s FROM {$sources} s
+					 WHERE s.id IN ({$placeholders})
+						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
+					$ids
+				)
+			);
+			$removed = (int) $wpdb->rows_affected;
+
+			$deleted += $removed;
+		} while ( count( $ids ) >= self::DELETE_BATCH && $removed > 0 );
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 
 		// Список translation blocks кэшируется в опции — он мог измениться.
 		$this->flushBlockHashes();
 
-		return max( 0, (int) $deleted );
+		return max( 0, $deleted );
+	}
+
+	/**
+	 * Сколько строк удалит deleteUntranslated() с теми же видами. Один COUNT.
+	 *
+	 * Считаются строки, у которых нет ни одного непустого перевода (пустые
+	 * записи deleteUntranslated() сначала стирает).
+	 *
+	 * @param list<string> $kinds Виды из cleanableKinds().
+	 */
+	public function countUntranslated( array $kinds ): int {
+		global $wpdb;
+
+		$kinds = array_values( array_filter( $kinds, 'is_string' ) );
+
+		if ( array() === $kinds ) {
+			return 0;
+		}
+
+		$sources      = Schema::table( 'sources' );
+		$translations = Schema::table( 'translations' );
+
+		list( $whereSql, $params ) = $this->cleanableWhere( $kinds, Schema::table( 'occurrences' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$sources} s
+				 WHERE ({$whereSql})
+					AND NOT EXISTS (
+						SELECT 1 FROM {$translations} t
+						WHERE t.source_id = s.id AND t.translated_text IS NOT NULL AND t.translated_text <> ''
+					)",
+				$params
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

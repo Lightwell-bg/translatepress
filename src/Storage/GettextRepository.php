@@ -271,6 +271,30 @@ final class GettextRepository implements GettextStore {
 	}
 
 	/**
+	 * Сколько строк удалит deleteUntranslated(). Один COUNT.
+	 */
+	public function countUntranslated(): int {
+		global $wpdb;
+
+		$sources      = Schema::table( 'sources' );
+		$translations = Schema::table( 'translations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$sources} s
+				 WHERE s.kind = %s
+					AND NOT EXISTS (
+						SELECT 1 FROM {$translations} t
+						WHERE t.source_id = s.id AND t.translated_text IS NOT NULL AND t.translated_text <> ''
+					)",
+				GettextKey::KIND
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
 	 * Фильтр «есть наше переопределение».
 	 */
 	public const STATUS_OVERRIDDEN = 'overridden';

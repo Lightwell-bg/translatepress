@@ -8,8 +8,9 @@
  *    WP_MLP_VERSION); `--no-bump` пропускает этот шаг.
  * 2. Берёт следующий номер N после максимального `_<N>wp-mlp.zip` в dist/.
  * 3. Кладёт в архив `wp-mlp/` только рантайм: wp-mlp.php, uninstall.php,
- *    README.md, src/, assets/, languages/. Ни tests, docs, bin, vendor
- *    (у плагина свой PSR-4 автозагрузчик), ни dotfiles.
+ *    README.md, .env.example (только шаблон), src/, assets/, languages/.
+ *    Ни tests, docs, bin, vendor (у плагина свой PSR-4 автозагрузчик), ни
+ *    dotfiles; настоящий .env не включается никогда.
  *
  * `--dry-run` только печатает список файлов: ничего не пишет и не меняет версию.
  * Существующий архив никогда не перезаписывается.
@@ -53,7 +54,7 @@ if ( ! $noBump ) {
 // Файлы рантайма: относительный путь => абсолютный.
 $files = array();
 
-foreach ( array( 'wp-mlp.php', 'uninstall.php', 'README.md' ) as $name ) {
+foreach ( array( 'wp-mlp.php', 'uninstall.php', 'README.md', '.env.example' ) as $name ) {
 	if ( is_file( $root . '/' . $name ) ) {
 		$files[ $name ] = $root . '/' . $name;
 	}
@@ -76,6 +77,17 @@ foreach ( array( 'src', 'assets', 'languages' ) as $dir ) {
 
 		$relative           = $dir . '/' . str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root . '/' . $dir ) + 1 ) );
 		$files[ $relative ] = $file->getPathname();
+	}
+}
+
+// Защита от утечки секретов: настоящий .env в архив не попадает никогда.
+unset( $files['.env'] );
+
+foreach ( array_keys( $files ) as $relative ) {
+	if ( '.env' === basename( (string) $relative ) ) {
+		fwrite( STDERR, "В архив попал .env ({$relative}) — сборка прервана.
+" );
+		exit( 1 );
 	}
 }
 
@@ -181,3 +193,6 @@ printf(
 	count( $files ),
 	filesize( $target ) / 1024
 );
+
+echo "Внимание: .env в папке плагина на сервере будет удалён при замене через ZIP — ключ храните в настройках, wp-config.php, wp-content/wp-mlp.env.php (первая строка <?php exit; ?>) или wp-mlp.env выше корня WordPress.
+";

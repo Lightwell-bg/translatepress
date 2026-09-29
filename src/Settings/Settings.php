@@ -66,12 +66,14 @@ final class Settings {
 			),
 			'switcher_display'         => SwitcherDisplay::LABEL,
 			'discover_strings'         => true,
+			'discover_from_visitors'   => false,
 			'delete_data_on_uninstall' => false,
 			'openai_daily_char_limit'  => 100000,
 			'hide_untranslated_posts'  => true,
 			'openai_api_key'           => '',
 			'openai_model'             => '',
-			'openai_base_url'          => self::DEFAULT_OPENAI_BASE_URL,
+			'openai_base_url'          => '',
+			'openai_base_url_explicit' => false,
 			'sitemap_excluded_slugs'   => array(),
 		);
 	}
@@ -245,6 +247,30 @@ final class Settings {
 	}
 
 	/**
+	 * Собирать ли строки со страниц, которые открывают посетители, а не владелец.
+	 *
+	 * По умолчанию нет: иначе список наполнится текстом всех страниц, которые
+	 * кто-то открыл, даже если переводить их никто не собирался.
+	 */
+	public function isDiscoveryFromVisitorsEnabled(): bool {
+		return (bool) ( $this->raw()['discover_from_visitors'] ?? false );
+	}
+
+	/**
+	 * Нужно ли запоминать строки для текущего пользователя.
+	 *
+	 * Вызывать только когда пользователь уже определён (после `init`):
+	 * до этого `current_user_can()` даёт неверный ответ.
+	 */
+	public function shouldDiscoverForCurrentUser(): bool {
+		if ( ! $this->isDiscoveryEnabled() ) {
+			return false;
+		}
+
+		return $this->isDiscoveryFromVisitorsEnabled() || current_user_can( 'manage_options' );
+	}
+
+	/**
 	 * Удалять ли таблицы и опции при удалении плагина (критерий приёмки 16).
 	 */
 	public function shouldDeleteDataOnUninstall(): bool {
@@ -294,6 +320,30 @@ final class Settings {
 		$url = trim( (string) ( $this->raw()['openai_base_url'] ?? '' ) );
 
 		return '' !== $url ? $url : self::DEFAULT_OPENAI_BASE_URL;
+	}
+
+	/**
+	 * Адрес API, который владелец сайта задал сам, или пустая строка, если не задан.
+	 *
+	 * Пустое поле в форме сохраняется как '' — «не задан», тогда действует адрес
+	 * из окружения или значение по умолчанию. Непустое значение (в том числе
+	 * ровно api.openai.com/v1) — явное и приоритетнее окружения. Совместимость:
+	 * до появления флага `openai_base_url_explicit` в базе лежало значение по
+	 * умолчанию у всех сайтов; без флага оно по-прежнему считается «не задан».
+	 */
+	public function openAiBaseUrlExplicit(): string {
+		$raw = $this->raw();
+		$url = trim( (string) ( $raw['openai_base_url'] ?? '' ) );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( self::DEFAULT_OPENAI_BASE_URL === $url && true !== ( $raw['openai_base_url_explicit'] ?? false ) ) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	/**
@@ -428,6 +478,7 @@ final class Settings {
 		$languages[ $defaultLocale ]['status'] = Language::STATUS_PUBLISHED;
 
 		$dailyLimit = isset( $input['openai_daily_char_limit'] ) ? (int) $input['openai_daily_char_limit'] : $this->openAiDailyCharLimit();
+		$baseUrl    = $this->sanitizeBaseUrl( $input );
 
 		return array(
 			'settings' => array(
@@ -435,12 +486,15 @@ final class Settings {
 				'languages'                => $languages,
 				'switcher_display'         => SwitcherDisplay::sanitize( (string) ( $input['switcher_display'] ?? '' ) ),
 				'discover_strings'         => ! empty( $input['discover_strings'] ),
+				'discover_from_visitors'   => ! empty( $input['discover_from_visitors'] ),
 				'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 				'hide_untranslated_posts'  => ! empty( $input['hide_untranslated_posts'] ),
 				'openai_daily_char_limit'  => max( 0, min( 10000000, $dailyLimit ) ),
 				'openai_api_key'           => $this->sanitizeApiKey( $input ),
 				'openai_model'             => sanitize_text_field( (string) ( $input['openai_model'] ?? $this->openAiModel() ) ),
-				'openai_base_url'          => $this->sanitizeBaseUrl( $input ),
+				'openai_base_url'          => $baseUrl,
+				// Непустое значение из формы — явный выбор владельца, он бьёт окружение.
+				'openai_base_url_explicit' => '' !== $baseUrl,
 				'sitemap_excluded_slugs'   => $this->sanitizeSitemapExcludedSlugs( $input ),
 			),
 			'errors'   => $errors,
@@ -507,11 +561,11 @@ final class Settings {
 		$url = isset( $input['openai_base_url'] ) ? trim( (string) $input['openai_base_url'] ) : '';
 
 		if ( '' === $url ) {
-			return self::DEFAULT_OPENAI_BASE_URL;
+			return '';
 		}
 
 		$sanitized = esc_url_raw( $url );
 
-		return '' !== $sanitized ? untrailingslashit( $sanitized ) : self::DEFAULT_OPENAI_BASE_URL;
+		return '' !== $sanitized ? untrailingslashit( $sanitized ) : '';
 	}
 }

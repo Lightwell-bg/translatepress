@@ -378,6 +378,20 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'delete_option' ) ) {
+	/**
+	 * @param string $name Ключ.
+	 */
+	function delete_option( string $name ): bool {
+		$options = wp_mlp_test_options();
+		unset( $options[ $name ] );
+
+		wp_mlp_test_options( $options );
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'user_trailingslashit' ) ) {
 	/**
 	 * @param string $value Строка.

@@ -29,3 +29,6 @@ desktop.ini
 # Артефакты сборки релиза
 /dist/
 *.zip
+
+# Локальные настройки Claude Code
+.claude/settings.local.json
