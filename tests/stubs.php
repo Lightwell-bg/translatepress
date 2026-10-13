@@ -378,6 +378,28 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_option' ) ) {
+	/**
+	 * Как в WordPress: false, если опция уже существует.
+	 *
+	 * @param string $name  Ключ.
+	 * @param mixed  $value Значение.
+	 */
+	function add_option( string $name, $value = '', string $deprecated = '', $autoload = 'yes' ): bool {
+		$options = wp_mlp_test_options();
+
+		if ( array_key_exists( $name, $options ) ) {
+			return false;
+		}
+
+		$options[ $name ] = $value;
+
+		wp_mlp_test_options( $options );
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'delete_option' ) ) {
 	/**
 	 * @param string $name Ключ.

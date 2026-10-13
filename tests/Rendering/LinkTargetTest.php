@@ -111,6 +111,67 @@ final class LinkTargetTest extends TestCase {
 	}
 
 	/**
+	 * @return list<array{string, string}>
+	 */
+	public static function editorArgs(): array {
+		return array(
+			'all three' => array(
+				'https://centerai.eu/blog/en/page/2/?mlp_editor=1&mlp_nonce=f5b3290520&mlp_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO',
+				'https://centerai.eu/blog/en/page/2/',
+			),
+			'only editor args, no dangling ?' => array( '/page/2/?mlp_editor=1&mlp_nonce=x', '/page/2/' ),
+			'other args kept' => array( '/s/?q=a&mlp_editor=1&page=2&mlp_nonce=x', '/s/?q=a&page=2' ),
+			'fragment kept' => array( '/p/?mlp_editor=1#comments', '/p/#comments' ),
+			'fragment and other args' => array( '/p/?a=1&mlp_channel=zz#top', '/p/?a=1#top' ),
+			'relative url' => array( 'page/2/?mlp_nonce=abc', 'page/2/' ),
+			'untouched without editor args' => array( '/p/?q=a%20b&x=', '/p/?q=a%20b&x=' ),
+			'similar name is not stripped' => array( '/p/?mlp_editor_x=1', '/p/?mlp_editor_x=1' ),
+			'question mark inside fragment' => array( '/p/#a?mlp_editor=1', '/p/#a?mlp_editor=1' ),
+		);
+	}
+
+	#[DataProvider( 'editorArgs' )]
+	public function testNormalizeStripsEditorPreviewArgs( string $href, string $expected ): void {
+		$this->assertSame( $expected, LinkTarget::normalize( $href ) );
+	}
+
+	/**
+	 * Ссылка, от которой после очистки ничего не осталось, адресом страницы
+	 * не является и в словарь не попадает.
+	 */
+	public function testHrefThatBecomesEmptyIsNotCollected(): void {
+		$segments = $this->segments(
+			'<!DOCTYPE html><html><body><a href="?mlp_editor=1&mlp_nonce=x">Наверх</a>'
+			. '<a href="?mlp_editor=1#top">Якорь</a></body></html>'
+		);
+
+		foreach ( $segments as $segment ) {
+			$this->assertNotSame( 'href', $segment->attribute );
+		}
+	}
+
+	/**
+	 * Ссылка пагинации в предпросмотре: в словарь идёт адрес без параметров
+	 * редактора, а непереведённая ссылка в DOM остаётся прежней — иначе
+	 * навигация внутри предпросмотра потеряла бы режим редактора.
+	 */
+	public function testPreviewPaginationHrefIsCollectedWithoutEditorArgs(): void {
+		$html     = '<!DOCTYPE html><html><body><a href="https://centerai.eu/blog/en/page/2/?mlp_editor=1&amp;mlp_nonce=f5b3290520&amp;mlp_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO">2</a></body></html>';
+		$document = HtmlDocument::parse( $html );
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$hrefs    = array_values(
+			array_filter( $segments, static fn( Segment $s ): bool => 'href' === $s->attribute )
+		);
+
+		$this->assertCount( 1, $hrefs );
+		$this->assertSame( 'https://centerai.eu/blog/en/page/2/', $hrefs[0]->text );
+		$this->assertStringContainsString( 'mlp_editor=1', $document->html() );
+	}
+
+	/**
 	 * Ровно случай с живого сайта: ссылка занимает абзац целиком, поэтому
 	 * блоком не становится, и адрес нужно достать отдельной строкой —
 	 * иначе перевести можно только надпись, а вёл бы он всё равно туда же.

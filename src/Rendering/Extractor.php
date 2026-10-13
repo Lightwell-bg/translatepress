@@ -185,6 +185,13 @@ final class Extractor {
 	);
 
 	/**
+	 * Нормализованные тексты текущего документа; заполняется в extract().
+	 *
+	 * @var array<string, true>|null
+	 */
+	private ?array $pageTexts = null;
+
+	/**
 	 * Собирает переводимые единицы документа.
 	 *
 	 * @param HtmlDocument        $document    Разобранный документ.
@@ -210,9 +217,10 @@ final class Extractor {
 			return array();
 		}
 
-		$contextHash = Hash::of( '' );
-		$segments    = array();
-		$stack       = array( $root );
+		$contextHash     = Hash::of( '' );
+		$segments        = array();
+		$stack           = array( $root );
+		$this->pageTexts = $this->collectPageTexts( $root );
 
 		while ( array() !== $stack ) {
 			$node = array_pop( $stack );
@@ -485,7 +493,11 @@ final class Extractor {
 				 * поведёт на другую страницу. Набор gettext здесь тоже ни
 				 * при чём: языковые пакеты адресов не отдают.
 				 */
-				if ( ! LinkTarget::isTranslatable( $raw ) || $this->hasClass( $element, self::SWITCHER_CLASS ) ) {
+				$href = LinkTarget::normalize( $raw );
+
+				// Проверяется уже очищенный адрес: ссылка, от которой после
+				// удаления параметров редактора ничего не осталось, не страница.
+				if ( ! LinkTarget::isTranslatable( $href ) ||$this->hasClass( $element, self::SWITCHER_CLASS ) ) {
 					continue;
 				}
 
@@ -493,7 +505,7 @@ final class Extractor {
 					$element,
 					Segment::KIND_ATTRIBUTE,
 					$attribute,
-					LinkTarget::normalize( $raw ),
+					$href,
 					'',
 					'',
 					$locale,
@@ -526,6 +538,23 @@ final class Extractor {
 				? Segment::KIND_TEXT
 				: '';
 
+			/*
+			 * `title` ссылки/картинки в карточке темы повторяет заголовок записи,
+			 * но тема дописывает к нему номер карточки в списке («MCP … 10»).
+			 * Такой атрибут иначе оседал бы в словаре отдельной непереведённой
+			 * строкой-«дублем с цифрой на конце». Если очищенный от номера
+			 * текст есть на самой странице (H1, карточка), атрибут становится
+			 * тем же текстом и делит с ним перевод, как og:title.
+			 */
+			if ( 'title' === $attribute ) {
+				$shared = $this->sharedPageText( $normalized, $skipTexts );
+
+				if ( null !== $shared ) {
+					$normalized = $shared;
+					$hashKind   = Segment::KIND_TEXT;
+				}
+			}
+
 			$segments[] = $this->makeSegment(
 				$element,
 				Segment::KIND_ATTRIBUTE,
@@ -540,6 +569,77 @@ final class Extractor {
 		}
 
 		return $segments;
+	}
+
+	/**
+	 * Текст страницы, с которым совпадает значение `title` (с точностью до
+	 * хвостового номера), либо null, если совпадения нет.
+	 *
+	 * Если на странице нет подходящего текста, null: настоящее «Windows 11»
+	 * в `title` остаётся как есть.
+	 *
+	 * @param string              $title     Нормализованное значение `title`.
+	 * @param array<string, true> $skipTexts Уже обслуженные gettext-контуром.
+	 */
+	private function sharedPageText( string $title, array $skipTexts ): ?string {
+		$texts = $this->pageTexts ?? array();
+
+		if ( isset( $texts[ $title ] ) ) {
+			return $title;
+		}
+
+		if ( 1 !== preg_match( '/^(.+?)\s+\d+$/u', $title, $match ) ) {
+			return null;
+		}
+
+		$base = $match[1];
+
+		return isset( $texts[ $base ] ) && ! isset( $skipTexts[ $base ] ) ? $base : null;
+	}
+
+	/**
+	 * Множество нормализованных текстов страницы — один проход на документ.
+	 *
+	 * Обход повторяет основной (те же пропуски поддеревьев), поэтому в
+	 * множество попадает ровно то, что станет текстовыми сегментами или
+	 * частью блока, — но без построения самих сегментов.
+	 *
+	 * @param object $root Корень документа.
+	 * @return array<string, true>
+	 */
+	private function collectPageTexts( object $root ): array {
+		$texts = array();
+		$stack = array( $root );
+
+		while ( array() !== $stack ) {
+			$node = array_pop( $stack );
+
+			if ( self::NODE_TEXT === $node->nodeType ) {
+				list( , $core ) = Text::splitEdges( (string) $node->nodeValue );
+
+				$normalized = Text::normalize( $core );
+
+				if ( Text::isTranslatable( $normalized ) ) {
+					$texts[ $normalized ] = true;
+				}
+
+				continue;
+			}
+
+			if ( self::NODE_ELEMENT !== $node->nodeType || $this->isSkipped( $node ) ) {
+				continue;
+			}
+
+			if ( in_array( strtolower( (string) $node->nodeName ), self::SKIP_SUBTREE, true ) ) {
+				continue;
+			}
+
+			foreach ( $node->childNodes as $child ) {
+				$stack[] = $child;
+			}
+		}
+
+		return $texts;
 	}
 
 	/**

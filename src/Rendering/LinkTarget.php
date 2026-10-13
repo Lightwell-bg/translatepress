@@ -94,14 +94,79 @@ final class LinkTarget {
 	/**
 	 * Приводит адрес к виду, в котором он ложится в словарь.
 	 *
-	 * Только обрезка краёв: внутри адреса пробелов быть не должно, а
-	 * схлопывать что-либо ещё (как делает Text::normalize() с прозой)
-	 * нельзя — любой изменённый символ ведёт уже на другую страницу.
+	 * Обрезка краёв и удаление служебных параметров предпросмотра: внутри
+	 * адреса пробелов быть не должно, а схлопывать что-либо ещё (как делает
+	 * Text::normalize() с прозой) нельзя — любой изменённый символ ведёт уже
+	 * на другую страницу.
+	 *
+	 * Параметры редактора (`mlp_editor`, `mlp_nonce`, `mlp_channel`) убираются
+	 * потому, что страница в iframe предпросмотра получает их от самой темы:
+	 * `paginate_links()` и подобные функции переносят текущий query-string в
+	 * каждую ссылку, и без этого в словарь попадал бы одноразовый адрес с
+	 * чужим nonce, разный для каждого сеанса. Остальные параметры и якорь
+	 * остаются как были.
 	 *
 	 * @param string $href Значение атрибута `href`.
 	 */
 	public static function normalize( string $href ): string {
-		return trim( $href );
+		return self::stripEditorArgs( trim( $href ) );
+	}
+
+	/**
+	 * Вырезает из адреса параметры визуального редактора.
+	 *
+	 * Если ни одного такого параметра нет, адрес возвращается байт в байт.
+	 * Разбор ручной (по `?`, `&`, `#`), а не через `wp_parse_url()`/
+	 * `add_query_arg()`: те перекодируют параметры и могут изменить адрес,
+	 * а менять его нельзя.
+	 *
+	 * @param string $href Уже обрезанный адрес.
+	 */
+	private static function stripEditorArgs( string $href ): string {
+		$names = array( EditorContext::QUERY_FLAG, EditorContext::QUERY_NONCE, EditorContext::QUERY_CHANNEL );
+		$mark  = strpos( $href, '?' );
+
+		if ( false === $mark ) {
+			return $href;
+		}
+
+		$hash     = strpos( $href, '#' );
+		$fragment = '';
+
+		if ( false !== $hash ) {
+			if ( $hash < $mark ) {
+				// `?` внутри якоря — это уже не query-string.
+				return $href;
+			}
+
+			$fragment = substr( $href, $hash );
+			$href     = substr( $href, 0, $hash );
+		}
+
+		$base    = substr( $href, 0, $mark );
+		$query   = substr( $href, $mark + 1 );
+		$kept    = array();
+		$removed = false;
+
+		foreach ( explode( '&', $query ) as $part ) {
+			$name = rawurldecode( (string) strstr( $part . '=', '=', true ) );
+
+			if ( in_array( $name, $names, true ) ) {
+				$removed = true;
+
+				continue;
+			}
+
+			if ( '' !== $part ) {
+				$kept[] = $part;
+			}
+		}
+
+		if ( ! $removed ) {
+			return $base . '?' . $query . $fragment;
+		}
+
+		return $base . ( array() !== $kept ? '?' . implode( '&', $kept ) : '' ) . $fragment;
 	}
 
 	/**

@@ -54,11 +54,12 @@ final class Schema {
 	 * Создаёт или обновляет таблицы, если версия схемы изменилась.
 	 */
 	public static function maybeUpgrade(): void {
-		if ( (int) get_option( self::OPTION_VERSION, 0 ) === self::VERSION ) {
-			return;
+		if ( (int) get_option( self::OPTION_VERSION, 0 ) !== self::VERSION ) {
+			self::install();
 		}
 
-		self::install();
+		// Разовая чистка мусора прошлых версий: у неё своя опция, не версия схемы.
+		StaleStringsCleanup::maybeRun();
 	}
 
 	/**

@@ -519,6 +519,88 @@ final class ExtractorTest extends TestCase {
 	}
 
 	/**
+	 * С живого сайта: тема выводит у миниатюры `title` вложения, а WordPress
+	 * называет вложение по записи с номером («… 10»). Если текст без номера
+	 * есть на странице, это тот же текст и тот же перевод, а не новая строка.
+	 */
+	public function testNumberedImageTitleSharesHashWithPageText(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><h1>MCP простыми словами</h1>'
+			. '<img class="wp-post-image" src="/a.jpg" title="MCP простыми словами 10">'
+			. '</body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'MCP простыми словами' === $s->text ) );
+
+		$this->assertCount( 2, $matching );
+		$this->assertSame( $matching[0]->uniqHash, $matching[1]->uniqHash );
+		$this->assertSame( Segment::KIND_ATTRIBUTE, $matching[1]->kind );
+		$this->assertSame( 'title', $matching[1]->attribute );
+
+		foreach ( $segments as $segment ) {
+			$this->assertNotSame( 'MCP простыми словами 10', $segment->text );
+		}
+	}
+
+	public function testImageTitleEqualToPageTextSharesHash(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><h2>Пять советов</h2><img src="/a.jpg" title="Пять советов"></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$matching = array_values( array_filter( $segments, static fn( Segment $s ): bool => 'Пять советов' === $s->text ) );
+
+		$this->assertCount( 2, $matching );
+		$this->assertSame( $matching[0]->uniqHash, $matching[1]->uniqHash );
+	}
+
+	/**
+	 * Номер без совпадения на странице — часть настоящего названия
+	 * («Windows 11»), такой атрибут остаётся обычной строкой атрибута.
+	 */
+	public function testNumberedTitleWithoutMatchingPageTextIsUnchanged(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><h1>Другой заголовок</h1><img src="/a.jpg" title="Обзор Windows 11"></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+		$title    = $this->segmentWithText( $segments, 'Обзор Windows 11' );
+
+		$this->assertNotNull( $title );
+		$this->assertSame( Segment::KIND_ATTRIBUTE, $title->kind );
+
+		$plain = \WpMlp\Support\Hash::ofParts(
+			array( 'ru', Segment::KIND_ATTRIBUTE, \WpMlp\Support\Hash::of( 'Обзор Windows 11' ), \WpMlp\Support\Hash::of( '' ), '', '', '' )
+		);
+
+		$this->assertSame( $plain, $title->uniqHash );
+	}
+
+	/**
+	 * Текст внутри пропускаемого поддерева (script, data-no-translation) —
+	 * не «текст страницы»: сегментом он не станет, и делить перевод не с чем.
+	 */
+	public function testSkippedSubtreeTextDoesNotCountAsPageText(): void {
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><div data-no-translation="1"><p>Секрет</p></div>'
+			. '<img src="/a.jpg" title="Секрет 3"></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$segments = ( new Extractor() )->extract( $document, 'ru' );
+
+		$this->assertNotNull( $this->segmentWithText( $segments, 'Секрет 3' ) );
+	}
+
+	/**
 	 * Когда текст правда разный (например, у `<title>` есть суффикс с именем
 	 * сайта, которого нет в H1), хеши остаются разными — общий хеш-вид не
 	 * заставляет РАЗНЫЙ текст притворяться одинаковым, он лишь снимает

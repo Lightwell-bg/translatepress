@@ -28,6 +28,10 @@ require_once __DIR__ . '/src/Storage/Schema.php';
 
 delete_option( 'mlp_settings' );
 delete_option( 'mlp_cache_version' );
+delete_option( 'mlp_cleanup_version' );
+delete_option( 'mlp_cleanup_cursor' );
+delete_option( 'mlp_cleanup_cursor_v2' );
+delete_option( 'mlp_cleanup_lock' );
 delete_option( 'mlp_block_hashes' );
 
 global $wpdb;

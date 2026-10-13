@@ -78,11 +78,12 @@
 ```
 .
 ├── README.md
-├── PROMPTS.md              # этот файл + будущие промпты следующих этапов
+├── README_RU.md
 ├── .env.example
 ├── .gitignore
 ├── composer.json
 ├── docs/
+│   ├── PROMPTS.md          # этот файл + будущие промпты следующих этапов
 │   └── technical-spec.md
 ├── <plugin-slug>.php       # bootstrap, plugin header
 └── src/
