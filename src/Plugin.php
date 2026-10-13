@@ -12,18 +12,21 @@ namespace WpMlp;
 use WpMlp\Admin\EditorLink;
 use WpMlp\Admin\EditorPage;
 use WpMlp\Admin\EditorPostLinks;
+use WpMlp\Admin\PostListLanguages;
 use WpMlp\Admin\HelpTabs;
 use WpMlp\Admin\InterfaceStringsScreen;
 use WpMlp\Admin\SettingsPage;
 use WpMlp\Admin\StringTranslationPage;
 use WpMlp\Frontend\CommentsFeedTitle;
+use WpMlp\Frontend\CurrentPageLanguages;
 use WpMlp\Frontend\InternalLinks;
 use WpMlp\Frontend\LanguageSwitcher;
 use WpMlp\Frontend\NavMenu;
+use WpMlp\Frontend\PostVisibilityGate;
 use WpMlp\Frontend\SeoMeta;
 use WpMlp\Frontend\SeoTags;
 use WpMlp\Frontend\Sitemap;
-use WpMlp\Frontend\UntranslatedFilter;
+use WpMlp\Frontend\VisibilityAdminBar;
 use WpMlp\I18n\GettextRegistry;
 use WpMlp\I18n\LanguagePacks;
 use WpMlp\I18n\LocaleSwitcher;
@@ -35,7 +38,9 @@ use WpMlp\Rendering\PostContentExtractor;
 use WpMlp\Rendering\Translator;
 use WpMlp\Rest\BlocksController;
 use WpMlp\Rest\EditorPagesController;
+use WpMlp\Rest\OpenAiModelsController;
 use WpMlp\Rest\PostTranslationController;
+use WpMlp\Rest\PostVisibilityController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Routing\CanonicalRedirect;
 use WpMlp\Routing\LanguageResolver;
@@ -44,6 +49,7 @@ use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Storage\PostTranslationSnapshot;
 use WpMlp\Storage\Schema;
 use WpMlp\Storage\SourceRepository;
@@ -163,6 +169,22 @@ final class Plugin {
 		$c->set( TranslationRepository::class, static fn(): TranslationRepository => new TranslationRepository() );
 		$c->set( OccurrenceRepository::class, static fn(): OccurrenceRepository => new OccurrenceRepository() );
 		$c->set( TranslationCache::class, static fn(): TranslationCache => new TranslationCache() );
+
+		$c->set(
+			PostLanguageVisibility::class,
+			static fn( Container $c ): PostLanguageVisibility => new PostLanguageVisibility(
+				$c->get( TranslationCache::class ),
+				$c->get( OccurrenceRepository::class )
+			)
+		);
+
+		$c->set(
+			CurrentPageLanguages::class,
+			static fn( Container $c ): CurrentPageLanguages => new CurrentPageLanguages(
+				$c->get( Settings::class ),
+				$c->get( PostLanguageVisibility::class )
+			)
+		);
 		$c->set( Extractor::class, static fn(): Extractor => new Extractor() );
 
 		$c->set(
@@ -198,7 +220,8 @@ final class Plugin {
 			static fn( Container $c ): SeoTags => new SeoTags(
 				$c->get( Settings::class ),
 				$c->get( LanguageResolver::class ),
-				$c->get( UrlConverter::class )
+				$c->get( UrlConverter::class ),
+				$c->get( CurrentPageLanguages::class )
 			)
 		);
 
@@ -285,7 +308,8 @@ final class Plugin {
 			static fn( Container $c ): LanguageSwitcher => new LanguageSwitcher(
 				$c->get( Settings::class ),
 				$c->get( LanguageResolver::class ),
-				$c->get( UrlConverter::class )
+				$c->get( UrlConverter::class ),
+				$c->get( CurrentPageLanguages::class )
 			)
 		);
 
@@ -294,7 +318,8 @@ final class Plugin {
 			static fn( Container $c ): NavMenu => new NavMenu(
 				$c->get( Settings::class ),
 				$c->get( LanguageResolver::class ),
-				$c->get( UrlConverter::class )
+				$c->get( UrlConverter::class ),
+				$c->get( CurrentPageLanguages::class )
 			)
 		);
 
@@ -304,17 +329,36 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( UrlConverter::class ),
 				$c->get( OccurrenceRepository::class ),
-				$c->get( TranslationCache::class )
+				$c->get( TranslationCache::class ),
+				$c->get( PostLanguageVisibility::class )
 			)
 		);
 
 		$c->set(
-			UntranslatedFilter::class,
-			static fn( Container $c ): UntranslatedFilter => new UntranslatedFilter(
+			PostVisibilityGate::class,
+			static fn( Container $c ): PostVisibilityGate => new PostVisibilityGate(
 				$c->get( Settings::class ),
 				$c->get( LanguageResolver::class ),
-				$c->get( OccurrenceRepository::class ),
-				$c->get( TranslationCache::class )
+				$c->get( PostLanguageVisibility::class ),
+				$c->get( EditorContext::class ),
+				$c->get( UrlConverter::class )
+			)
+		);
+
+		$c->set(
+			VisibilityAdminBar::class,
+			static fn( Container $c ): VisibilityAdminBar => new VisibilityAdminBar(
+				$c->get( Settings::class ),
+				$c->get( LanguageResolver::class ),
+				$c->get( PostLanguageVisibility::class )
+			)
+		);
+
+		$c->set(
+			PostVisibilityController::class,
+			static fn( Container $c ): PostVisibilityController => new PostVisibilityController(
+				$c->get( Settings::class ),
+				$c->get( PostLanguageVisibility::class )
 			)
 		);
 
@@ -343,7 +387,8 @@ final class Plugin {
 			static fn( Container $c ): SettingsPage => new SettingsPage(
 				$c->get( Settings::class ),
 				$c->get( LanguagePacks::class ),
-				$c->get( ProviderFactory::class )
+				$c->get( ProviderFactory::class ),
+				$c->get( PostLanguageVisibility::class )
 			)
 		);
 
@@ -383,7 +428,17 @@ final class Plugin {
 			EditorPostLinks::class,
 			static fn( Container $c ): EditorPostLinks => new EditorPostLinks(
 				$c->get( Settings::class ),
-				$c->get( EditorLink::class )
+				$c->get( EditorLink::class ),
+				$c->get( PostLanguageVisibility::class )
+			)
+		);
+
+		$c->set(
+			PostListLanguages::class,
+			static fn( Container $c ): PostListLanguages => new PostListLanguages(
+				$c->get( Settings::class ),
+				$c->get( EditorLink::class ),
+				$c->get( PostLanguageVisibility::class )
 			)
 		);
 
@@ -397,11 +452,20 @@ final class Plugin {
 		);
 
 		$c->set(
+			OpenAiModelsController::class,
+			static fn( Container $c ): OpenAiModelsController => new OpenAiModelsController(
+				$c->get( ProviderFactory::class )
+			)
+		);
+
+		$c->set(
 			EditorPage::class,
 			static fn( Container $c ): EditorPage => new EditorPage(
 				$c->get( Settings::class ),
 				$c->get( UrlConverter::class ),
-				$c->get( ProviderFactory::class )
+				$c->get( ProviderFactory::class ),
+				$c->get( PostLanguageVisibility::class ),
+				$c->get( OccurrenceRepository::class )
 			)
 		);
 
@@ -473,6 +537,8 @@ final class Plugin {
 			BlocksController::class,
 			PostTranslationController::class,
 			EditorPagesController::class,
+			OpenAiModelsController::class,
+			PostVisibilityController::class,
 			// Ссылка «Перевести страницу» живёт в админ-баре на фронтенде.
 			EditorPage::class,
 			// Шорткод и виджет нужны и в админке: превью виджетов, редактор.
@@ -486,12 +552,14 @@ final class Plugin {
 			$services[] = SettingsPage::class;
 			$services[] = HelpTabs::class;
 			$services[] = EditorPostLinks::class;
+			$services[] = PostListLanguages::class;
 			$services[] = StringTranslationPage::class;
 		} else {
 			$services[] = CanonicalRedirect::class;
 			$services[] = SeoTags::class;
 			$services[] = EditorContext::class;
-			$services[] = UntranslatedFilter::class;
+			$services[] = PostVisibilityGate::class;
+			$services[] = VisibilityAdminBar::class;
 			$services[] = Sitemap::class;
 			$services[] = OutputBuffer::class;
 		}

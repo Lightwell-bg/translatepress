@@ -59,7 +59,8 @@ final class NavMenu implements Hookable {
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly LanguageResolver $resolver,
-		private readonly UrlConverter $urls
+		private readonly UrlConverter $urls,
+		private readonly ?CurrentPageLanguages $pageLanguages = null
 	) {
 	}
 
@@ -365,7 +366,10 @@ final class NavMenu implements Hookable {
 	 * @param Language $current  Язык текущего запроса.
 	 */
 	private function applyLanguageToItem( object $item, Language $language, Language $current ): void {
-		$item->url = $this->urls->switchUrlFor( $language );
+		// Страница скрыта на этом языке — ведём на его главную (см. LanguageSwitcher::urlFor()).
+		$item->url = null !== $this->pageLanguages && $this->pageLanguages->isHiddenOn( $language )
+			? $this->urls->homeFor( $language )
+			: $this->urls->switchUrlFor( $language );
 
 		/*
 		 * Подпись собирается там же, где и для шорткода-переключателя,

@@ -38,7 +38,8 @@ final class SeoTags implements Hookable, DocumentFilter {
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly LanguageResolver $resolver,
-		private readonly UrlConverter $urls
+		private readonly UrlConverter $urls,
+		private readonly ?CurrentPageLanguages $pageLanguages = null
 	) {
 	}
 
@@ -59,6 +60,15 @@ final class SeoTags implements Hookable, DocumentFilter {
 		}
 
 		$languages = $this->settings->published();
+
+		/*
+		 * Язык, на котором эту запись владелец не включил, версии страницы не
+		 * имеет (там редирект на исходный язык): alternate на него был бы
+		 * обещанием, которого нет. x-default (исходный язык) остаётся всегда.
+		 */
+		if ( null !== $this->pageLanguages ) {
+			$languages = array_filter( $languages, fn( Language $language ): bool => ! $this->pageLanguages->isHiddenOn( $language ) );
+		}
 
 		if ( count( $languages ) < 2 ) {
 			return;

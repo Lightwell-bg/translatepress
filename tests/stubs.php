@@ -606,6 +606,147 @@ if ( ! function_exists( 'update_post_meta' ) ) {
 	}
 }
 
+if ( ! function_exists( 'delete_post_meta' ) ) {
+	/**
+	 * @param int    $postId Идентификатор записи.
+	 * @param string $key    Ключ метаполя.
+	 */
+	function delete_post_meta( int $postId, string $key ): bool {
+		$store = wp_mlp_test_postmeta();
+		unset( $store[ $postId ][ $key ] );
+
+		wp_mlp_test_postmeta( $store );
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'update_meta_cache' ) ) {
+	/**
+	 * Прогрев метаполей. Считает вызовы, чтобы тест мог проверить «одним запросом».
+	 *
+	 * @param string    $type Тип объекта.
+	 * @param list<int> $ids  Идентификаторы.
+	 * @return array<int, mixed>
+	 */
+	function update_meta_cache( string $type, array $ids ): array {
+		$GLOBALS['wp_mlp_test_meta_primed'][] = array( $type, $ids );
+
+		return array();
+	}
+}
+
+if ( ! function_exists( 'did_action' ) ) {
+	/**
+	 * Все хуки считаются уже отработавшими, пока тест не скажет обратное
+	 * через `wp_mlp_test_wp()['did_action'][ $tag ]`.
+	 *
+	 * @param string $tag Имя хука.
+	 */
+	function did_action( string $tag ): int {
+		return (int) ( wp_mlp_test_wp()['did_action'][ $tag ] ?? 1 );
+	}
+}
+
+if ( ! function_exists( 'get_posts' ) ) {
+	/**
+	 * Результат задаёт тест: `wp_mlp_test_wp()['get_posts']` (список id или колбэк).
+	 *
+	 * @param array<string, mixed> $args Параметры.
+	 * @return list<int>
+	 */
+	function get_posts( array $args = array() ): array {
+		$result = wp_mlp_test_wp()['get_posts'] ?? array();
+
+		return is_callable( $result ) ? (array) $result( $args ) : (array) $result;
+	}
+}
+
+if ( ! function_exists( 'get_post_modified_time' ) ) {
+	/**
+	 * @param string $format Формат.
+	 * @param bool   $gmt    В GMT.
+	 * @param int    $post   Запись.
+	 */
+	function get_post_modified_time( string $format = 'U', bool $gmt = false, $post = null ) {
+		unset( $format, $gmt, $post );
+
+		return '2026-01-01T00:00:00+00:00';
+	}
+}
+
+if ( ! function_exists( 'wp_verify_nonce' ) ) {
+	/**
+	 * Совпадает с заглушкой wp_create_nonce(): верен только выданный ею ключ.
+	 *
+	 * @param string $nonce  Ключ.
+	 * @param string $action Действие.
+	 * @return int|false
+	 */
+	function wp_verify_nonce( string $nonce, string $action = '-1' ) {
+		return wp_create_nonce( $action ) === $nonce ? 1 : false;
+	}
+}
+
+if ( ! function_exists( 'is_404' ) ) {
+	function is_404(): bool {
+		return (bool) ( wp_mlp_test_wp()['is_404'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'is_singular' ) ) {
+	/**
+	 * Одиночная ли страница: тест задаёт `wp_mlp_test_wp()['is_singular']`.
+	 */
+	function is_singular(): bool {
+		return (bool) ( wp_mlp_test_wp()['is_singular'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'get_queried_object' ) ) {
+	/**
+	 * Объект запроса: тест задаёт `wp_mlp_test_wp()['queried_object']` (WP_Post, WP_Term и т. п.).
+	 *
+	 * @return object|null
+	 */
+	function get_queried_object() {
+		return wp_mlp_test_wp()['queried_object'] ?? null;
+	}
+}
+
+if ( ! function_exists( 'is_search' ) ) {
+	function is_search(): bool {
+		return (bool) ( wp_mlp_test_wp()['is_search'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'register_rest_route' ) ) {
+	/**
+	 * Запоминает маршруты: `$GLOBALS['wp_mlp_test_routes'][ namespace . route ] = args`.
+	 *
+	 * @param string               $namespace Пространство имён.
+	 * @param string               $route     Маршрут.
+	 * @param array<string, mixed> $args      Параметры.
+	 */
+	function register_rest_route( string $namespace, string $route, array $args = array() ): bool {
+		$GLOBALS['wp_mlp_test_routes'][ $namespace . $route ] = $args;
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'get_post_ancestors' ) ) {
+	/**
+	 * @param int $post Запись.
+	 * @return list<int>
+	 */
+	function get_post_ancestors( $post ): array {
+		unset( $post );
+
+		return array();
+	}
+}
+
 /*
  * Заглушки ядра WordPress для ссылок на редактор и REST-поиска страниц.
  * Всё состояние живёт в одном хранилище, которое тест заполняет сам.
@@ -621,6 +762,7 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public string $post_type   = 'post';
 		public string $post_title  = '';
 		public string $post_name   = '';
+		public string $post_password = '';
 
 		/**
 		 * @param array<string, mixed> $data Поля записи.
@@ -816,9 +958,14 @@ if ( ! function_exists( 'current_user_can' ) ) {
 	 * @param string $cap Право.
 	 */
 	function current_user_can( string $cap, ...$args ): bool {
-		unset( $args );
+		$caps = wp_mlp_test_wp()['caps'] ?? array();
 
-		return (bool) ( wp_mlp_test_wp()['caps'][ $cap ] ?? true );
+		// Право на конкретный объект: сначала ключ вида `edit_post:15`, затем общий.
+		if ( isset( $args[0] ) && array_key_exists( $cap . ':' . $args[0], $caps ) ) {
+			return (bool) $caps[ $cap . ':' . $args[0] ];
+		}
+
+		return (bool) ( $caps[ $cap ] ?? true );
 	}
 }
 
@@ -852,6 +999,18 @@ if ( ! function_exists( 'esc_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_attr__' ) ) {
+	/**
+	 * @param string $text   Строка.
+	 * @param string $domain Текстовый домен.
+	 */
+	function esc_attr__( string $text, string $domain = 'default' ): string {
+		unset( $domain );
+
+		return esc_attr( $text );
+	}
+}
+
 if ( ! function_exists( 'esc_html__' ) ) {
 	/**
 	 * @param string $text   Строка.
@@ -861,5 +1020,140 @@ if ( ! function_exists( 'esc_html__' ) ) {
 		unset( $domain );
 
 		return esc_html( $text );
+	}
+}
+
+if ( ! class_exists( 'WP_Error' ) ) {
+	class WP_Error { // phpcs:ignore
+		/**
+		 * @param string $code    Код ошибки.
+		 * @param string $message Сообщение.
+		 * @param mixed  $data    Данные (для REST — `status`).
+		 */
+		public function __construct( private string $code = '', private string $message = '', private $data = null ) {
+		}
+
+		public function get_error_code(): string {
+			return $this->code;
+		}
+
+		public function get_error_message(): string {
+			return $this->message;
+		}
+
+		/**
+		 * @return mixed
+		 */
+		public function get_error_data() {
+			return $this->data;
+		}
+	}
+}
+
+/**
+ * Хранилище HTTP-заглушек: `response` (ответ wp_remote_get или колбэк),
+ * `calls` (список [url, args]), `transients` (имя => значение), `transient_ttl`.
+ *
+ * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
+ * @return array<string, mixed>
+ */
+function wp_mlp_test_http( ?array $reset = null ): array {
+	static $store = array(
+		'calls'      => array(),
+		'transients' => array(),
+	);
+
+	if ( null !== $reset ) {
+		$store = array_merge(
+			array(
+				'calls'      => array(),
+				'transients' => array(),
+			),
+			$reset
+		);
+	}
+
+	return $store;
+}
+
+/**
+ * Запись в хранилище HTTP-заглушек (статика недоступна по ссылке из вызывающего кода).
+ *
+ * @param string $key   Ключ.
+ * @param mixed  $value Значение.
+ */
+function wp_mlp_test_http_set( string $key, $value ): void {
+	$store         = wp_mlp_test_http();
+	$store[ $key ] = $value;
+	wp_mlp_test_http( $store );
+}
+
+if ( ! function_exists( 'is_wp_error' ) ) {
+	/**
+	 * @param mixed $thing Значение.
+	 */
+	function is_wp_error( $thing ): bool {
+		return $thing instanceof WP_Error;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_get' ) ) {
+	/**
+	 * @param string               $url  Адрес.
+	 * @param array<string, mixed> $args Параметры.
+	 * @return mixed
+	 */
+	function wp_remote_get( string $url, array $args = array() ) {
+		$calls   = wp_mlp_test_http()['calls'];
+		$calls[] = array( $url, $args );
+		wp_mlp_test_http_set( 'calls', $calls );
+
+		$response = wp_mlp_test_http()['response'] ?? null;
+
+		return is_callable( $response ) ? $response( $url, $args ) : $response;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
+	/**
+	 * @param mixed $response Ответ.
+	 */
+	function wp_remote_retrieve_response_code( $response ): int {
+		return (int) ( $response['response']['code'] ?? 0 );
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
+	/**
+	 * @param mixed $response Ответ.
+	 */
+	function wp_remote_retrieve_body( $response ): string {
+		return (string) ( $response['body'] ?? '' );
+	}
+}
+
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * @param string $name Имя.
+	 * @return mixed
+	 */
+	function get_transient( string $name ) {
+		return wp_mlp_test_http()['transients'][ $name ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * @param string $name  Имя.
+	 * @param mixed  $value Значение.
+	 * @param int    $ttl   Время жизни, секунд.
+	 */
+	function set_transient( string $name, $value, int $ttl = 0 ): bool {
+		$transients          = wp_mlp_test_http()['transients'];
+		$transients[ $name ] = $value;
+		wp_mlp_test_http_set( 'transients', $transients );
+		wp_mlp_test_http_set( 'transient_ttl', $ttl );
+
+		return true;
 	}
 }

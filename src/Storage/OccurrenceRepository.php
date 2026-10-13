@@ -23,6 +23,13 @@ final class OccurrenceRepository {
 	private const CHUNK = 200;
 
 	/**
+	 * Тип места использования «страница одиночной записи»: только у таких
+	 * строк `object_id` — идентификатор записи. У остальных (`url`) он NULL,
+	 * иначе id рубрики или автора совпал бы с id какой-нибудь записи.
+	 */
+	public const OBJECT_TYPE_POST = 'post';
+
+	/**
 	 * Добавляет места использования, пропуская уже известные.
 	 *
 	 * @param list<array{source_id: int, object_type: string, object_id: ?int, url_hash: ?string, attribute_name: ?string, uniq_hash: string}> $rows Записи.
@@ -75,7 +82,9 @@ final class OccurrenceRepository {
 					"INSERT INTO {$table}
 						(source_id, object_type, object_id, url_hash, attribute_name, uniq_hash, first_seen_at, last_seen_at)
 					 VALUES {$valuesSql}
-					 ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at)",
+					 ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at),
+						object_type = VALUES(object_type),
+						object_id = VALUES(object_id)",
 					$args
 				)
 			);
@@ -102,7 +111,7 @@ final class OccurrenceRepository {
 		$rows = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT object_id FROM {$table}
-				 WHERE object_id IS NOT NULL AND object_id > 0
+				 WHERE object_type = 'post' AND object_id IS NOT NULL AND object_id > 0
 				 ORDER BY object_id DESC
 				 LIMIT %d",
 				$limit
@@ -141,7 +150,8 @@ final class OccurrenceRepository {
 				 FROM {$occurrences} o
 				 INNER JOIN {$translations} t
 					ON t.source_id = o.source_id AND t.target_locale = %s
-				 WHERE o.object_id IS NOT NULL
+				 WHERE o.object_type = 'post'
+					AND o.object_id IS NOT NULL
 					AND o.object_id > 0
 					AND t.translated_text IS NOT NULL
 					AND t.translated_text <> ''",
@@ -151,6 +161,85 @@ final class OccurrenceRepository {
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 
 		return array_map( 'intval', is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
+	 * Записи, у которых переведены ВСЕ их строки на указанный язык.
+	 *
+	 * «Строки записи» и «переведена» — те же правила, что у колонки «Языки»
+	 * (PostStringScope): строка принадлежит только этой записи, адреса ссылок
+	 * не считаются, перевод непустой. Запись без единой известной строки
+	 * «полностью переведённой» не считается: на неё ещё не заходили, и пустое
+	 * множество строк ничего не доказывает.
+	 *
+	 * @param string $locale Целевой язык.
+	 * @return list<int>
+	 */
+	public function fullyTranslatedObjectIds( string $locale ): array {
+		global $wpdb;
+
+		if ( ! Locale::isValid( $locale ) ) {
+			return array();
+		}
+
+		$translations = Schema::table( 'translations' );
+		$rows         = PostStringScope::ownRowsSql( 'o.object_id IS NOT NULL AND o.object_id > 0' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT x.object_id
+				 FROM ( {$rows} ) x
+				 LEFT JOIN {$translations} t ON t.source_id = x.source_id AND t.target_locale = %s
+				 GROUP BY x.object_id
+				 HAVING SUM(CASE WHEN t.translated_text IS NOT NULL AND t.translated_text <> '' THEN 1 ELSE 0 END) = COUNT(*)",
+				Locale::normalize( $locale )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		return array_map( 'intval', is_array( $ids ) ? $ids : array() );
+	}
+
+	/**
+	 * Сколько строк у одной записи и сколько из них переведено на язык.
+	 *
+	 * Правила — как у колонки «Языки» (PostStringScope). Нужно визуальному
+	 * редактору, чтобы рядом с переключателем показа написать «переведено на N%».
+	 *
+	 * @param int    $postId Запись.
+	 * @param string $locale Целевой язык.
+	 * @return array{0: int, 1: int} Всего строк и переведено.
+	 */
+	public function translationProgress( int $postId, string $locale ): array {
+		global $wpdb;
+
+		if ( $postId <= 0 || ! Locale::isValid( $locale ) ) {
+			return array( 0, 0 );
+		}
+
+		$translations = Schema::table( 'translations' );
+		$rows         = PostStringScope::ownRowsSql( 'o.object_id = %d' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT COUNT(*) AS total,
+					SUM(CASE WHEN t.translated_text IS NOT NULL AND t.translated_text <> '' THEN 1 ELSE 0 END) AS done
+				 FROM ( {$rows} ) x
+				 LEFT JOIN {$translations} t ON t.source_id = x.source_id AND t.target_locale = %s",
+				$postId,
+				Locale::normalize( $locale )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		if ( ! is_array( $row ) ) {
+			return array( 0, 0 );
+		}
+
+		return array( (int) ( $row['total'] ?? 0 ), (int) ( $row['done'] ?? 0 ) );
 	}
 
 	/**
@@ -184,7 +273,8 @@ final class OccurrenceRepository {
 				 FROM {$occurrences} o
 				 INNER JOIN {$translations} t
 					ON t.source_id = o.source_id AND t.target_locale = %s
-				 WHERE o.object_id IS NOT NULL
+				 WHERE o.object_type = 'post'
+					AND o.object_id IS NOT NULL
 					AND o.object_id > 0
 					AND t.translated_text IS NOT NULL
 					AND t.translated_text <> ''
@@ -224,7 +314,7 @@ final class OccurrenceRepository {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT 1 FROM {$table} WHERE source_id = %d AND object_id = %d LIMIT 1",
+				"SELECT 1 FROM {$table} WHERE source_id = %d AND object_type = 'post' AND object_id = %d LIMIT 1",
 				$sourceId,
 				$objectId
 			)

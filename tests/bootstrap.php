@@ -36,6 +36,7 @@ if ( is_readable( __DIR__ . '/../vendor/autoload.php' ) ) {
 }
 
 require_once __DIR__ . '/stubs.php';
+require_once __DIR__ . '/stubs_visibility.php';
 
 if ( ! defined( 'WP_MLP_DIR' ) ) {
 	define( 'WP_MLP_DIR', dirname( __DIR__ ) . '/' );

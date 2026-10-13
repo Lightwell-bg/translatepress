@@ -630,7 +630,7 @@ final class SourceRepository {
 	/**
 	 * Имя атрибута, по которому в местах использования опознаётся ссылка.
 	 */
-	private const LINK_ATTRIBUTE = 'href';
+	public const LINK_ATTRIBUTE = 'href';
 
 	/**
 	 * Постраничный список строк с переводом на выбранный язык — для админки.
@@ -679,14 +679,14 @@ final class SourceRepository {
 		 * где записи нет вовсе (архивы, поиск, 404), дают 0 и попадают
 		 * в общие элементы — это и есть верное для них место.
 		 */
-		$distinctObjects = "(SELECT COUNT(DISTINCT o.object_id) FROM {$occurrences} o WHERE o.source_id = s.id)";
+		$distinctObjects = "(SELECT COUNT(DISTINCT o.object_id) FROM {$occurrences} o WHERE o.source_id = s.id AND o.object_type = '" . OccurrenceRepository::OBJECT_TYPE_POST . "')";
 
 		if ( self::SCOPE_GLOBAL === $scope ) {
 			$where[] = $distinctObjects . ' <> 1';
 		} elseif ( self::SCOPE_OBJECT === $scope && $objectId > 0 ) {
 			// Только то, что принадлежит именно этой записи: общие элементы
 			// сайта показываются в своей вкладке и здесь только мешали бы.
-			$where[]  = "EXISTS (SELECT 1 FROM {$occurrences} o2 WHERE o2.source_id = s.id AND o2.object_id = %d)";
+			$where[]  = "EXISTS (SELECT 1 FROM {$occurrences} o2 WHERE o2.source_id = s.id AND o2.object_type = '" . OccurrenceRepository::OBJECT_TYPE_POST . "' AND o2.object_id = %d)";
 			$params[] = $objectId;
 			$where[]  = $distinctObjects . ' = 1';
 		}

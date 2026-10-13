@@ -17,7 +17,10 @@ use WpMlp\Rest\TranslationsController;
 use WpMlp\Translation\BulkTranslationMode;
 use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
+use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
@@ -62,14 +65,18 @@ final class EditorPage implements Hookable {
 	private readonly EditorLink $link;
 
 	/**
-	 * @param Settings          $settings Настройки плагина.
-	 * @param UrlConverter      $urls     Построение языковых адресов.
-	 * @param ProviderFactory   $providers Доступы к провайдеру перевода.
+	 * @param Settings                    $settings    Настройки плагина.
+	 * @param UrlConverter                $urls        Построение языковых адресов.
+	 * @param ProviderFactory             $providers   Доступы к провайдеру перевода.
+	 * @param PostLanguageVisibility|null $visibility  Флаги «показывать на языке»; без них переключателя в редакторе нет.
+	 * @param OccurrenceRepository|null   $occurrences Откуда берётся процент перевода страницы.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly UrlConverter $urls,
-		private readonly ProviderFactory $providers
+		private readonly ProviderFactory $providers,
+		private readonly ?PostLanguageVisibility $visibility = null,
+		private readonly ?OccurrenceRepository $occurrences = null
 	) {
 		$this->link = new EditorLink( $settings, $urls );
 	}
@@ -128,6 +135,11 @@ final class EditorPage implements Hookable {
 
 		wp_enqueue_style( 'wp-mlp-editor', Assets::url( 'assets/editor.css' ), array(), Assets::version( 'assets/editor.css' ) );
 		wp_enqueue_script( 'wp-mlp-editor', Assets::url( 'assets/editor.js' ), array(), Assets::version( 'assets/editor.js' ), true );
+
+		// Переключатель «Показывать эту страницу на …» использует общий со списком записей скрипт.
+		if ( null !== $this->visibility && $this->settings->isManualPostVisibility() ) {
+			VisibilityAssets::enqueue();
+		}
 
 		$selection = $this->currentSelection();
 		$postId    = $this->resolvePostId( $selection['path'] );
@@ -403,6 +415,7 @@ final class EditorPage implements Hookable {
 
 			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>" data-post-id="<?php echo esc_attr( (string) $postId ); ?>">
 				<div class="wp-mlp-editor__panel" id="mlp-editor-panel">
+					<?php echo $this->visibilityBlock( $postId, $secondary[ $locale ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- экранируется внутри. ?>
 					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
 						<div class="wp-mlp-editor__bulk">
 							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">
@@ -528,6 +541,65 @@ final class EditorPage implements Hookable {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Блок «Показывать эту страницу на <язык>» с процентом перевода.
+	 *
+	 * Только когда открыта запись или страница, включён ручной режим и у
+	 * пользователя есть право править эту запись. Иначе — пустая строка.
+	 *
+	 * @param int      $postId   Открытая в редакторе запись (0 — не запись).
+	 * @param Language $language Язык редактора.
+	 */
+	private function visibilityBlock( int $postId, Language $language ): string {
+		if (
+			$postId <= 0
+			|| null === $this->visibility
+			|| ! $this->settings->isManualPostVisibility()
+			|| ! $this->visibility->isEligiblePost( $postId )
+			|| ! current_user_can( 'edit_post', $postId )
+			|| ! current_user_can( self::CAPABILITY )
+		) {
+			return '';
+		}
+
+		$progress = '';
+
+		if ( null !== $this->occurrences ) {
+			list( $total, $done ) = $this->occurrences->translationProgress( $postId, $language->locale );
+			list( $state, $pct )  = PostListLanguages::classify( $total, $done );
+
+			switch ( $state ) {
+				case PostListLanguages::STATE_FULL:
+					$progress = __( 'Переведено полностью', 'wp-mlp' );
+					break;
+				case PostListLanguages::STATE_PARTIAL:
+					/* translators: %d: percent of strings translated */
+					$progress = sprintf( __( 'Переведено на %d%%', 'wp-mlp' ), $pct );
+					break;
+				case PostListLanguages::STATE_NONE:
+					$progress = __( 'Пока ничего не переведено', 'wp-mlp' );
+					break;
+				default:
+					$progress = __( 'Строк этой страницы пока нет', 'wp-mlp' );
+			}
+		}
+
+		$html = '<div class="wp-mlp-editor__visibility">'
+			. VisibilityAssets::toggleHtml(
+				$postId,
+				$language->locale,
+				$this->visibility->isVisible( $postId, $language->locale ),
+				/* translators: %s: language name */
+				sprintf( __( 'Показывать эту страницу на %s', 'wp-mlp' ), $language->label )
+			);
+
+		if ( '' !== $progress ) {
+			$html .= '<p class="description">' . esc_html( $progress ) . '</p>';
+		}
+
+		return $html . '</div><hr>';
 	}
 
 	/**

@@ -14,6 +14,7 @@ use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\OccurrenceRepository;
+use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Support\Hookable;
 
@@ -52,7 +53,8 @@ final class Sitemap implements Hookable {
 		private readonly Settings $settings,
 		private readonly UrlConverter $urls,
 		private readonly OccurrenceRepository $occurrences,
-		private readonly TranslationCache $cache
+		private readonly TranslationCache $cache,
+		private readonly ?PostLanguageVisibility $visibility = null
 	) {
 	}
 
@@ -149,20 +151,43 @@ final class Sitemap implements Hookable {
 
 		unset( $secondary[ $default->locale ] );
 
-		// Какие записи переведены на каждый из дополнительных языков и
-		// когда их перевод правили в последний раз (см. lastmodFor()).
+		$postIds = $this->publicPostIds();
+
+		/*
+		 * Какие записи есть на каждом из дополнительных языков и когда их
+		 * перевод правили в последний раз (см. lastmodFor()).
+		 *
+		 * В ручном режиме запись есть на языке, только если владелец её для
+		 * него включил (PostLanguageVisibility): страница, не включённая для
+		 * языка, отдаёт редирект на исходный, и в карте сайта ей не место.
+		 * Метаполя всех записей прогреваются одним запросом (в _prime_post_caches
+		 * они уже есть, prime() страхует выборки из чужого фильтра id).
+		 * Иначе — прежнее правило «есть хотя бы один перевод».
+		 */
+		$manual         = null !== $this->visibility && $this->settings->isManualPostVisibility();
 		$translated     = array();
 		$lastTranslated = array();
+		$candidates     = array();
+
+		if ( $manual ) {
+			$candidates = $postIds;
+			$frontId    = (int) get_option( 'page_on_front' );
+
+			if ( $frontId > 0 ) {
+				$candidates[] = $frontId;
+			}
+
+			$this->visibility->prime( $candidates );
+		}
 
 		foreach ( $secondary as $language ) {
-			$translated[ $language->locale ]     = array_fill_keys(
-				$this->occurrences->translatedObjectIds( $language->locale ),
-				true
-			);
+			$translated[ $language->locale ] = $manual
+				? array_fill_keys( $this->visibility->visibleAmong( $candidates, $language->locale ), true )
+				: array_fill_keys( $this->occurrences->translatedObjectIds( $language->locale ), true );
+
 			$lastTranslated[ $language->locale ] = $this->occurrences->lastTranslatedAt( $language->locale );
 		}
 
-		$postIds = $this->publicPostIds();
 		$entries = $this->frontPageEntries( $default, $secondary, $translated, $postIds );
 
 		foreach ( $postIds as $postId ) {
@@ -357,6 +382,8 @@ final class Sitemap implements Hookable {
 				'order'            => 'DESC',
 				'suppress_filters' => true,
 				'no_found_rows'    => true,
+				// Видимость по языкам карта сайта учитывает сама (entries()), общий фильтр запросов ей не нужен.
+				PostVisibilityGate::SKIP_QUERY_VAR => true,
 			)
 		);
 

@@ -25,6 +25,8 @@ Current state: **Stages 1, 2 and part of Stage 3**. Translations are still enter
 - Automatic string collection: pages opened in an additional language fill the dictionary.
 - **Visual editor**: page preview next to the translation panel, text picked by click, saving without a reload.
 - **"Translate the whole content with AI"**: title, excerpt, the whole post content and the thumbnail's alt text in one operation — instead of translating block by block, with automatic chunking and validation before saving.
+- **"Languages" column in the post and page lists**: for every additional language it shows whether the post is fully translated (✅), the percentage, "no translation" or "no strings yet" (the plugin has not collected the post's strings: they appear once the post is opened on the site in an additional language, or "Translate the whole content with AI" is run; the plugin never scans on its own). Link targets are not counted, SEO strings are (with a separate "SEO: N" link). Clicking a language opens the visual editor (no link for a draft language), the "strings" link opens "String translation" for that post. A "Not fully translated: language" filter sits above the list. Counts come from the same dictionary as the "String translation" screen.
+- **Manual control of which posts are visible on other languages**: in the "Languages" settings choose "only posts enabled by hand" and switch posts on per language — with a switch in the posts list, a bulk action, a filter, the edit screen box, the visual editor or the "Enable all fully translated" button. A hidden post redirects to the default language; the admin sees a "Hidden on DE" plaque in the admin bar.
 - **Translation blocks**: a paragraph broken up by `<b>` and `<a>` tags is translated as a whole, together with its markup.
 - **Interface translation without manual work**: on an additional language the plugin swaps the WordPress locale, and core, the theme and plugins serve their own strings from the official language pack — "Reply", "Leave a comment", cart buttons are translated without a single row in the database and without a single OpenAI token.
 - The "String translation" admin page: three tabs — "Content", "SEO/GEO" and "Interface", language and status filters, search, manual translation entry.
@@ -112,7 +114,7 @@ The **"Delete untranslated strings (N)"** button on each tab removes found strin
 
 ### Add a language
 
-"Multilanguage → Languages": fill in the code (`de`), the URL slug (`de`), the name (`Deutsch`), optionally an emoji flag (`🇩🇪`) and the status. Save — the URL rules are rebuilt automatically.
+"Multilanguage → Languages": use the **"Add language"** field under the table — start typing a name or locale, pick a language from the WordPress list (or type a locale such as `de_DE` by hand) and click "Add". The row comes pre-filled (code `de`, URL slug `de`, name `Deutsch`, WordPress locale `de_DE`, status Published); if the code or slug is already taken, the full locale is used (`pt-br`). The number of languages is unlimited; an unsaved row can be dropped with "Delete language". Optionally set an emoji flag (`🇩🇪`) and change the status. Save — the URL rules are rebuilt automatically. Without JavaScript one empty row is shown instead of the picker.
 
 - **Published** — the language is available to visitors and appears in `hreflang`.
 - **Draft** — the language is visible only in the admin: its URL returns 404 and it is not in `hreflang`. Handy while the translation is not ready.
@@ -330,11 +332,29 @@ Footer text (copyright, slogans, any phrases) is translated by the same common m
 
 ### Untranslated posts
 
-On by default: in an additional language the blog, categories, tags and search show only posts that have at least one translation. It is turned off in "Multilanguage → Languages".
+"Multilanguage → Languages → Untranslated posts" has two modes:
 
-An individual post stays available by direct link meanwhile — the visitor may have come from a search engine, and a 404 instead of a partly translated page would be worse.
+- **Show all posts (translated or not)** — an additional language shows every post and page of the site.
+- **Show on a language only posts enabled by hand (recommended)** — a post or page appears on an additional language (blog, categories, search, widgets, menus, previous/next links, the sitemap and its own address) only when you have switched it on for that language. A hidden post's address on the language redirects (302) to the same page in the default language.
 
-A post enters the list only after you have opened it in an additional language at least once: until then the plugin does not know which strings belong to it.
+Enabling in manual mode (a post is stored as the `_mlp_visible_<language>` meta key):
+
+- the **"on site" switch** next to each language in the "Languages" column of the posts and pages list;
+- a bulk action in the list: "Show on language: X" / "Hide on language: X";
+- the "Shown on X" / "Hidden on X" filter above the list;
+- the "Show on site" checkboxes in the post edit screen's "Translation" box;
+- the "Show this page on X" switch in the visual editor (with the translation percentage);
+- the **"Enable all fully translated on X"** button under the mode in "Languages" — it uses the same translated-strings count as the "Languages" column; the number of enabled posts per language is shown next to it.
+
+Switching a post needs both `manage_options` and the right to edit that post. Block-theme navigation links (`core/navigation-link`, `core/navigation-submenu`) to hidden posts are removed, and comments on hidden posts are left out of "Recent comments" and the comment feeds.
+
+Known limits:
+
+- category/tag post counts and `wp_get_archives()` still include hidden posts;
+- if the static front page is not enabled on a language, that language's home redirects to the default language (and the switcher's "home of the language" fallback lands there) — enable the front page first;
+- page-cache plugins with a "cache for logged-in users" option (e.g. WP Rocket) may serve the editor's view of a hidden page — keep that option off.
+
+A logged-in user who can edit a hidden post is not redirected: the admin bar shows "Hidden on DE — visitors do not see it" with a "Show on DE" button (or "Shown on DE" with "Hide on DE"). Lists and menus stay filtered for them as for visitors.
 
 ## Building the ZIP
 
@@ -351,7 +371,7 @@ The number `N` is the next one after the maximum in `dist/`; existing archives a
 Without this step the plugin works as usual — the "Translate with AI" button is simply not visible, neither in the string list nor in the editor. No access to the hosting files is needed — everything is through the admin (or, optionally, through `wp-config.php`, see below).
 
 1. "Multilanguage → Languages". In the "OpenAI key" block enter the key — <https://platform.openai.com/api-keys>. API documentation: <https://platform.openai.com/docs>.
-2. Below is "OpenAI model": the exact model identifier, check it against your account or the OpenAI documentation. Touch "API address" only for your own proxy/compatible gateway; the default is `api.openai.com`.
+2. Below is "OpenAI model": a drop-down with the models the API currently offers for your key (loaded live from `{API address}/models`, cached for 12 hours; the "Refresh list" button reloads it; "Other model…" lets you type an identifier by hand, e.g. for a proxy). The list appears once the key is saved. Touch "API address" only for your own proxy/compatible gateway; the default is `api.openai.com`.
 3. Save. In the same block "Key saved, ends with «…»" appears — the key itself is never shown again, and the field for entering a new value is always empty. To replace the key, enter a new one; to keep it as is, just do not touch the field when saving other settings; to delete it, tick "Delete the saved key".
 4. Set the daily character limit (100,000 by default) — this is protection against accidental spending, not automation: the plugin translates nothing by itself, the limit just caps the amount you can spend by pressing the button.
 
@@ -457,6 +477,8 @@ All endpoints require the `manage_options` capability and a REST nonce.
 | `POST` | `/wp-json/mlp/v1/translations/{id}/{locale}/suggest` | get a translation from AI without saving |
 | `POST` | `/wp-json/mlp/v1/blocks` | merge a paragraph into a translation block |
 | `DELETE` | `/wp-json/mlp/v1/blocks/{id}` | split a block back into parts |
+| `POST` | `/wp-json/mlp/v1/posts/visibility` | `{ids, locale, visible}` — show/hide posts on a language (`manage_options` AND the right to edit EACH post; up to 200 ids) |
+| `POST` | `/wp-json/mlp/v1/posts/visibility/enable-translated` | `{locale}` — enable all fully translated posts on a language (`manage_options`) |
 | `GET` | `/wp-json/mlp/v1/posts/{post_id}/summary` | "Translate the whole content": parse the post, create missing strings, return the segment list and chunk boundaries |
 | `POST` | `/wp-json/mlp/v1/posts/{post_id}/chunk` | translate one chunk via AI, saving nothing |
 | `POST` | `/wp-json/mlp/v1/posts/{post_id}/commit` | save the whole list as one atomic operation |

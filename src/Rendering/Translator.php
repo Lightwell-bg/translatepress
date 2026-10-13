@@ -33,6 +33,11 @@ final class Translator {
 	private const OBJECT_TYPE_URL = 'url';
 
 	/**
+	 * Тип места использования на странице одиночной записи (object_id — id записи).
+	 */
+	private const OBJECT_TYPE_POST = 'post';
+
+	/**
 	 * Как часто обновлять «строка ещё встречается» для одной и той же страницы.
 	 */
 	private const TOUCH_INTERVAL = HOUR_IN_SECONDS;
@@ -345,6 +350,7 @@ final class Translator {
 	 */
 	private function occurrenceRows( array $segments, array $ids, string $urlHash ): array {
 		$objectId = $this->currentObjectId();
+		$type     = null === $objectId ? self::OBJECT_TYPE_URL : self::OBJECT_TYPE_POST;
 		$rows     = array();
 
 		foreach ( $segments as $hash => $segment ) {
@@ -354,10 +360,11 @@ final class Translator {
 
 			$rows[] = array(
 				'source_id'      => $ids[ $hash ],
-				'object_type'    => self::OBJECT_TYPE_URL,
+				'object_type'    => $type,
 				'object_id'      => $objectId,
 				'url_hash'       => $urlHash,
 				'attribute_name' => $segment->attribute,
+				// Хеш всегда от типа «url»: идентичность строки — адрес страницы, а не её разбор.
 				'uniq_hash'      => Hash::ofParts(
 					array( $ids[ $hash ], self::OBJECT_TYPE_URL, $urlHash, (string) $segment->attribute )
 				),
@@ -368,16 +375,25 @@ final class Translator {
 	}
 
 	/**
-	 * Идентификатор текущей записи, если страница — запись WordPress.
+	 * Идентификатор текущей записи, только если страница — одиночная запись WordPress.
+	 *
+	 * Архивы рубрик, меток, авторов и поиск возвращают через
+	 * `get_queried_object_id()` идентификатор рубрики или пользователя: он
+	 * совпал бы с id какой-нибудь записи, и чужие строки оказались бы
+	 * «строками записи». Для них идентификатор не пишется (NULL).
 	 */
 	private function currentObjectId(): ?int {
-		if ( ! did_action( 'wp' ) ) {
+		if ( ! did_action( 'wp' ) || ! is_singular() ) {
 			return null;
 		}
 
-		$id = get_queried_object_id();
+		$post = get_queried_object();
 
-		return $id > 0 ? (int) $id : null;
+		if ( ! $post instanceof \WP_Post ) {
+			return null;
+		}
+
+		return $post->ID > 0 ? (int) $post->ID : null;
 	}
 
 	/**

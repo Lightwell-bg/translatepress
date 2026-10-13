@@ -22,6 +22,16 @@ final class Settings {
 	public const OPTION = 'mlp_settings';
 
 	/**
+	 * Режим показа записей на дополнительных языках: показывать все.
+	 */
+	public const POSTS_ALL = 'all';
+
+	/**
+	 * Режим показа записей на дополнительных языках: только включённые владельцем вручную.
+	 */
+	public const POSTS_MANUAL = 'manual';
+
+	/**
 	 * Адрес API по умолчанию, если владелец сайта не указал свой.
 	 */
 	public const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
@@ -69,7 +79,7 @@ final class Settings {
 			'discover_from_visitors'   => false,
 			'delete_data_on_uninstall' => false,
 			'openai_daily_char_limit'  => 100000,
-			'hide_untranslated_posts'  => true,
+			'untranslated_posts_mode'  => self::POSTS_MANUAL,
 			'openai_api_key'           => '',
 			'openai_model'             => '',
 			'openai_base_url'          => '',
@@ -87,6 +97,20 @@ final class Settings {
 		if ( null === $this->raw ) {
 			$stored    = get_option( self::OPTION, array() );
 			$this->raw = is_array( $stored ) ? array_merge( self::defaults(), $stored ) : self::defaults();
+
+			/*
+			 * Миграция со старой галочки `hide_untranslated_posts`. Сайт, у
+			 * которого настройки уже сохранены, но режима ещё нет, получает
+			 * «показывать все» — независимо от старой галочки. Режим «только
+			 * включённые вручную» по умолчанию для такого сайта мгновенно
+			 * опустошил бы /en/: ни одна запись ещё не включена. Владелец
+			 * переключает режим сам, когда отметит нужные записи. Свежая
+			 * установка (настроек в базе ещё нет, либо в них уже записан
+			 * режим) получает значение по умолчанию — «manual».
+			 */
+			if ( is_array( $stored ) && array() !== $stored && ! array_key_exists( 'untranslated_posts_mode', $stored ) ) {
+				$this->raw['untranslated_posts_mode'] = self::POSTS_ALL;
+			}
 		}
 
 		return $this->raw;
@@ -278,10 +302,32 @@ final class Settings {
 	}
 
 	/**
-	 * Прятать ли непереведённые записи из списков на дополнительных языках.
+	 * Режим показа записей на дополнительных языках: `all` или `manual`.
+	 *
+	 * Незнакомое значение (повреждённые настройки) считается `all`: лучше
+	 * показать лишнее, чем молча опустошить язык.
 	 */
-	public function hidesUntranslatedPosts(): bool {
-		return (bool) ( $this->raw()['hide_untranslated_posts'] ?? true );
+	public function untranslatedPostsMode(): string {
+		return self::sanitizePostsMode( (string) ( $this->raw()['untranslated_posts_mode'] ?? self::POSTS_ALL ), self::POSTS_ALL );
+	}
+
+	/**
+	 * Включён ли ручной режим: на дополнительном языке видны только отмеченные записи.
+	 */
+	public function isManualPostVisibility(): bool {
+		return self::POSTS_MANUAL === $this->untranslatedPostsMode();
+	}
+
+	/**
+	 * Приводит значение режима к допустимому. Чистая функция.
+	 *
+	 * @param string $value    Значение из формы или базы.
+	 * @param string $fallback Что вернуть для незнакомого значения.
+	 */
+	public static function sanitizePostsMode( string $value, string $fallback ): string {
+		$value = strtolower( trim( $value ) );
+
+		return in_array( $value, array( self::POSTS_ALL, self::POSTS_MANUAL ), true ) ? $value : $fallback;
 	}
 
 	/**
@@ -488,7 +534,8 @@ final class Settings {
 				'discover_strings'         => ! empty( $input['discover_strings'] ),
 				'discover_from_visitors'   => ! empty( $input['discover_from_visitors'] ),
 				'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
-				'hide_untranslated_posts'  => ! empty( $input['hide_untranslated_posts'] ),
+				// Нет в форме (старая форма с галочкой) — режим не меняется.
+				'untranslated_posts_mode'  => self::sanitizePostsMode( (string) ( $input['untranslated_posts_mode'] ?? '' ), $this->untranslatedPostsMode() ),
 				'openai_daily_char_limit'  => max( 0, min( 10000000, $dailyLimit ) ),
 				'openai_api_key'           => $this->sanitizeApiKey( $input ),
 				'openai_model'             => sanitize_text_field( (string) ( $input['openai_model'] ?? $this->openAiModel() ) ),

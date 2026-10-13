@@ -59,3 +59,34 @@
 	line-height: 1;
 	vertical-align: middle;
 }
+
+/* Выбор модели OpenAI: список, кнопка обновления и подсказка в одну строку. */
+.mlp-model-field [hidden] {
+	display: none !important;
+}
+
+.mlp-model-field .mlp-model-select {
+	min-width: 25em;
+	max-width: 100%;
+}
+
+.mlp-model-field .mlp-model-refresh {
+	margin-left: 6px;
+}
+
+.mlp-model-field .mlp-model-status {
+	margin-left: 8px;
+	color: #646970;
+}
+
+.mlp-language-picker {
+	margin: 0 0 1.5em;
+}
+
+.mlp-language-picker input[type="text"] {
+	margin: 0 6px;
+}
+
+.mlp-row-remove {
+	color: #b32d2e;
+}

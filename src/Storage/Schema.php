@@ -20,7 +20,7 @@ final class Schema {
 	/**
 	 * Версия схемы. Увеличивать при любом изменении CREATE TABLE.
 	 */
-	public const VERSION = 1;
+	public const VERSION = 2;
 
 	public const OPTION_VERSION = 'mlp_db_version';
 
@@ -60,6 +60,9 @@ final class Schema {
 
 		// Разовая чистка мусора прошлых версий: у неё своя опция, не версия схемы.
 		StaleStringsCleanup::maybeRun();
+
+		// Разовая починка object_type/object_id у старых мест использования строк.
+		OccurrenceObjectTypeMigration::maybeRun();
 	}
 
 	/**
@@ -167,6 +170,8 @@ final class Schema {
 				PRIMARY KEY  (id),
 				UNIQUE KEY uniq_hash (uniq_hash),
 				KEY source_id (source_id),
+				KEY object_id (object_id),
+				KEY source_object (source_id,object_id),
 				KEY url_hash (url_hash)
 			) {$charset};",
 

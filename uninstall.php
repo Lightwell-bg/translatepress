@@ -32,6 +32,9 @@ delete_option( 'mlp_cleanup_version' );
 delete_option( 'mlp_cleanup_cursor' );
 delete_option( 'mlp_cleanup_cursor_v2' );
 delete_option( 'mlp_cleanup_lock' );
+delete_option( 'mlp_objtype_version' );
+delete_option( 'mlp_objtype_cursor' );
+delete_option( 'mlp_objtype_lock' );
 delete_option( 'mlp_block_hashes' );
 
 global $wpdb;
@@ -43,6 +46,16 @@ $wpdb->query(
 		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
 		$wpdb->esc_like( '_transient_mlp_' ) . '%',
 		$wpdb->esc_like( '_transient_timeout_mlp_' ) . '%'
+	)
+);
+// phpcs:enable WordPress.DB.DirectDatabaseQuery
+
+// Флаги «запись показывается на языке» (PostLanguageVisibility::META_PREFIX) — метаполя записей.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s",
+		$wpdb->esc_like( '_mlp_visible_' ) . '%'
 	)
 );
 // phpcs:enable WordPress.DB.DirectDatabaseQuery

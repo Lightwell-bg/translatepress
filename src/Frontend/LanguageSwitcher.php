@@ -34,7 +34,8 @@ final class LanguageSwitcher implements Hookable {
 	public function __construct(
 		private readonly Settings $settings,
 		private readonly LanguageResolver $resolver,
-		private readonly UrlConverter $urls
+		private readonly UrlConverter $urls,
+		private readonly ?CurrentPageLanguages $pageLanguages = null
 	) {
 	}
 
@@ -99,7 +100,7 @@ final class LanguageSwitcher implements Hookable {
 			}
 
 			$items[] = array(
-				'url'     => $this->urls->switchUrlFor( $language ),
+				'url'     => $this->urlFor( $language ),
 				'markup'  => Flags::switcherMarkup( $language, $mode ),
 				'text'    => Flags::switcherText( $language, $mode ),
 				'name'    => $language->label,
@@ -113,6 +114,24 @@ final class LanguageSwitcher implements Hookable {
 		}
 
 		return $asDropdown ? $this->renderDropdown( $items ) : $this->renderList( $items );
+	}
+
+	/**
+	 * Адрес, на который ведёт ссылка языка.
+	 *
+	 * Если эта страница на нужном языке скрыта (владелец не включил запись
+	 * для языка), ссылка на неё привела бы к редиректу на русский — посетитель
+	 * нажал «English» и остался на русском. Вместо этого ведём на главную
+	 * нужного языка.
+	 *
+	 * @param \WpMlp\Settings\Language $language Целевой язык.
+	 */
+	private function urlFor( \WpMlp\Settings\Language $language ): string {
+		if ( null !== $this->pageLanguages && $this->pageLanguages->isHiddenOn( $language ) ) {
+			return $this->urls->homeFor( $language );
+		}
+
+		return $this->urls->switchUrlFor( $language );
 	}
 
 	/**

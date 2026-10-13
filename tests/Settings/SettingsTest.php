@@ -111,49 +111,82 @@ final class SettingsTest extends TestCase {
 		$this->assertSame( array( 'ru' ), array_keys( $settings->published() ) );
 	}
 
-	public function testHidingUntranslatedPostsIsOnByDefault(): void {
-		$this->assertTrue( ( new Settings() )->hidesUntranslatedPosts() );
+	/**
+	 * Свежая установка (в базе ещё нет настроек, плагин активируется с
+	 * Settings::defaults()) получает ручной режим показа записей.
+	 */
+	public function testFreshInstallDefaultsToManualMode(): void {
+		$this->assertSame( Settings::POSTS_MANUAL, Settings::defaults()['untranslated_posts_mode'] );
+
+		wp_mlp_test_options( array() );
+
+		$settings = new Settings();
+
+		$this->assertSame( Settings::POSTS_MANUAL, $settings->untranslatedPostsMode() );
+		$this->assertTrue( $settings->isManualPostVisibility() );
 	}
 
 	/**
-	 * Снятая галочка приходит из формы как отсутствующее поле, а не как
-	 * пустое значение — иначе выключить настройку было бы невозможно.
+	 * Миграция: у сайта со старой галочкой режима в базе нет. Что бы ни стояло
+	 * в галочке, он получает «показывать все»: ручной режим мгновенно
+	 * опустошил бы /en/, пока ни одна запись не включена.
 	 */
-	public function testUncheckedBoxTurnsHidingOff(): void {
-		$settings = new Settings();
-
-		$result = $settings->sanitize(
-			array(
-				'default_locale' => 'ru',
-				'languages'      => array(
-					array(
-						'locale' => 'ru',
-						'slug'   => 'ru',
+	public function testSiteWithOldCheckboxMigratesToShowAll(): void {
+		foreach ( array( true, false ) as $old ) {
+			wp_mlp_test_options(
+				array(
+					Settings::OPTION => array(
+						'default_locale'          => 'ru',
+						'hide_untranslated_posts' => $old,
 					),
-				),
-			)
-		);
+				)
+			);
 
-		$this->assertFalse( $result['settings']['hide_untranslated_posts'] );
+			$settings = new Settings();
+
+			$this->assertSame( Settings::POSTS_ALL, $settings->untranslatedPostsMode() );
+			$this->assertFalse( $settings->isManualPostVisibility() );
+		}
 	}
 
-	public function testCheckedBoxTurnsHidingOn(): void {
+	public function testStoredModeIsRespected(): void {
+		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'manual' ) ) );
+		$this->assertSame( Settings::POSTS_MANUAL, ( new Settings() )->untranslatedPostsMode() );
+
+		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'all' ) ) );
+		$this->assertSame( Settings::POSTS_ALL, ( new Settings() )->untranslatedPostsMode() );
+
+		// Повреждённое значение — безопасное «показывать все», а не опустошённый язык.
+		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'bogus' ) ) );
+		$this->assertSame( Settings::POSTS_ALL, ( new Settings() )->untranslatedPostsMode() );
+	}
+
+	public function testSanitizeAcceptsOnlyKnownModes(): void {
+		$base = array(
+			'default_locale' => 'ru',
+			'languages'      => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
+		);
+
 		$settings = new Settings();
 
-		$result = $settings->sanitize(
+		$this->assertSame( 'all', $settings->sanitize( $base + array( 'untranslated_posts_mode' => 'all' ) )['settings']['untranslated_posts_mode'] );
+		$this->assertSame( 'manual', $settings->sanitize( $base + array( 'untranslated_posts_mode' => ' MANUAL ' ) )['settings']['untranslated_posts_mode'] );
+
+		// Неизвестное значение и отсутствие поля (старая форма) не меняют текущий режим.
+		$this->assertSame( 'manual', $settings->sanitize( $base + array( 'untranslated_posts_mode' => 'x' ) )['settings']['untranslated_posts_mode'] );
+		$this->assertSame( 'manual', $settings->sanitize( $base )['settings']['untranslated_posts_mode'] );
+	}
+
+	public function testSanitizeNoLongerWritesOldCheckbox(): void {
+		$result = ( new Settings() )->sanitize(
 			array(
 				'default_locale'          => 'ru',
 				'hide_untranslated_posts' => '1',
-				'languages'               => array(
-					array(
-						'locale' => 'ru',
-						'slug'   => 'ru',
-					),
-				),
+				'languages'               => array( array( 'locale' => 'ru', 'slug' => 'ru' ) ),
 			)
 		);
 
-		$this->assertTrue( $result['settings']['hide_untranslated_posts'] );
+		$this->assertArrayNotHasKey( 'hide_untranslated_posts', $result['settings'] );
 	}
 
 	public function testFlagSurvivesRoundTrip(): void {

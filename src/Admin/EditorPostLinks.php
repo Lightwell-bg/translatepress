@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WpMlp\Admin;
 
 use WpMlp\Settings\Settings;
+use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Support\Hookable;
 
 /**
@@ -20,13 +21,24 @@ use WpMlp\Support\Hookable;
  */
 final class EditorPostLinks implements Hookable {
 
+	/** Действие nonce метабокса «Показывать на сайте». */
+	public const NONCE_ACTION = 'mlp_post_visibility';
+
+	/** Имя поля с nonce. */
+	public const NONCE_FIELD = 'mlp_post_visibility_nonce';
+
+	/** Имя массива чекбоксов `mlp_visible[<язык>]`. */
+	public const FIELD = 'mlp_visible';
+
 	/**
-	 * @param Settings   $settings Настройки плагина.
-	 * @param EditorLink $link     Пути и адреса редактора.
+	 * @param Settings                    $settings   Настройки плагина.
+	 * @param EditorLink                  $link       Пути и адреса редактора.
+	 * @param PostLanguageVisibility|null $visibility Флаги «показывать на языке»; без них блока показа в метабоксе нет.
 	 */
 	public function __construct(
 		private readonly Settings $settings,
-		private readonly EditorLink $link
+		private readonly EditorLink $link,
+		private readonly ?PostLanguageVisibility $visibility = null
 	) {
 	}
 
@@ -37,6 +49,55 @@ final class EditorPostLinks implements Hookable {
 		add_filter( 'post_row_actions', array( $this, 'rowActions' ), 10, 2 );
 		add_filter( 'page_row_actions', array( $this, 'rowActions' ), 10, 2 );
 		add_action( 'add_meta_boxes', array( $this, 'addMetaBox' ), 10, 2 );
+		add_action( 'save_post', array( $this, 'saveVisibility' ), 10, 2 );
+	}
+
+	/**
+	 * Сохраняет чекбоксы «Показывать на сайте» из метабокса.
+	 *
+	 * Срабатывает на любом сохранении записи, поэтому всё отсеивается заранее:
+	 * автосохранение и ревизия, отсутствие nonce метабокса (быстрое
+	 * редактирование, REST-сохранение блочного редактора, импорт), нехватка
+	 * прав, не ручной режим, неподходящий тип. Снятый чекбокс не приходит
+	 * вовсе — отсутствие языка в `mlp_visible` означает «скрыть».
+	 *
+	 * @param int|mixed      $postId Запись.
+	 * @param \WP_Post|mixed $post   Запись целиком (может не прийти).
+	 */
+	public function saveVisibility( $postId, $post = null ): void {
+		$postId = (int) $postId;
+
+		if ( $postId <= 0 || null === $this->visibility || ! $this->settings->isManualPostVisibility() ) {
+			return;
+		}
+
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_autosave( $postId ) || wp_is_post_revision( $postId ) ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce проверяется ниже, до чтения остальных полей.
+		$nonce = isset( $_POST[ self::NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( (string) $_POST[ self::NONCE_FIELD ] ) ) : '';
+
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, self::NONCE_ACTION ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $postId ) || ! current_user_can( EditorPage::CAPABILITY ) ) {
+			return;
+		}
+
+		if ( ! $this->visibility->isEligiblePost( $postId ) ) {
+			return;
+		}
+
+		$posted = isset( $_POST[ self::FIELD ] ) && is_array( $_POST[ self::FIELD ] ) ? wp_unslash( $_POST[ self::FIELD ] ) : array();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		unset( $post );
+
+		foreach ( $this->settings->secondary() as $language ) {
+			$this->visibility->set( $postId, $language->locale, ! empty( $posted[ $language->locale ] ) );
+		}
 	}
 
 	/**
@@ -102,13 +163,15 @@ final class EditorPostLinks implements Hookable {
 			return;
 		}
 
+		$secondary = $this->settings->secondary();
+
 		if ( null === $this->link->pathForPost( $post ) ) {
 			printf( '<p>%s</p>', esc_html__( 'Опубликуйте запись, чтобы перевести её в визуальном редакторе.', 'wp-mlp' ) );
 
+			$this->renderVisibility( $post );
+
 			return;
 		}
-
-		$secondary = $this->settings->secondary();
 
 		if ( array() === $secondary ) {
 			printf( '<p>%s</p>', esc_html__( 'Сначала добавьте хотя бы один дополнительный язык на странице «Языки».', 'wp-mlp' ) );
@@ -133,5 +196,49 @@ final class EditorPostLinks implements Hookable {
 		}
 
 		echo '</ul>';
+
+		$this->renderVisibility( $post );
+	}
+
+	/**
+	 * Блок «Показывать на сайте»: по чекбоксу на каждый дополнительный язык.
+	 *
+	 * Только в ручном режиме и только тем, кто может править запись. Чекбоксы
+	 * уходят обычной формой записи и обрабатываются в saveVisibility().
+	 *
+	 * @param \WP_Post $post Редактируемая запись.
+	 */
+	private function renderVisibility( \WP_Post $post ): void {
+		$secondary = $this->settings->secondary();
+
+		if (
+			null === $this->visibility
+			|| ! $this->settings->isManualPostVisibility()
+			|| array() === $secondary
+			|| ! PostLanguageVisibility::isEligibleType( (string) $post->post_type )
+			|| ! current_user_can( 'edit_post', (int) $post->ID )
+			|| ! current_user_can( EditorPage::CAPABILITY )
+		) {
+			return;
+		}
+
+		$this->visibility->prime( array( (int) $post->ID ) );
+
+		printf( '<hr><p><strong>%s</strong></p>', esc_html__( 'Показывать на сайте', 'wp-mlp' ) );
+		wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD );
+		echo '<ul>';
+
+		foreach ( $secondary as $language ) {
+			printf(
+				'<li><label><input type="checkbox" name="%1$s[%2$s]" value="1"%3$s> %4$s</label></li>',
+				esc_attr( self::FIELD ),
+				esc_attr( $language->locale ),
+				$this->visibility->isVisible( (int) $post->ID, $language->locale ) ? ' checked="checked"' : '',
+				esc_html( $language->label )
+			);
+		}
+
+		echo '</ul>';
+		printf( '<p class="description">%s</p>', esc_html__( 'Отметьте языки, на которых эта запись видна посетителям. На остальных языках она скрыта: ссылка ведёт на русскую версию.', 'wp-mlp' ) );
 	}
 }

@@ -11,6 +11,7 @@ namespace WpMlp\Admin;
 
 use WpMlp\I18n\GettextKey;
 use WpMlp\Rendering\Segment;
+use WpMlp\Rest\EditorPagesController;
 use WpMlp\Rest\TranslationsController;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
@@ -242,7 +243,11 @@ final class StringTranslationPage implements Hookable {
 			array(
 				'root'  => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
-				'i18n'  => array(
+				'pagesRoot' => esc_url_raw( rest_url( EditorPagesController::NAMESPACE . '/editor/pages' ) ),
+					'i18n'  => array(
+						'pickerLoading' => __( 'Ищу…', 'wp-mlp' ),
+						'pickerEmpty'   => __( 'Ничего не найдено', 'wp-mlp' ),
+						'pickerError'   => __( 'Не удалось выполнить поиск', 'wp-mlp' ),
 					'saving'        => __( 'Сохраняю…', 'wp-mlp' ),
 					'saved'         => __( 'Сохранено', 'wp-mlp' ),
 					'failed'        => __( 'Ошибка сохранения', 'wp-mlp' ),
@@ -636,21 +641,13 @@ final class StringTranslationPage implements Hookable {
 				<?php endforeach; ?>
 			</select>
 
-			<label for="mlp-scope" class="screen-reader-text"><?php esc_html_e( 'Где встречается', 'wp-mlp' ); ?></label>
-			<select name="mlp_scope" id="mlp-scope">
-				<option value=""><?php esc_html_e( 'Весь сайт', 'wp-mlp' ); ?></option>
-				<option value="<?php echo esc_attr( SourceRepository::SCOPE_GLOBAL ); ?>" <?php selected( SourceRepository::SCOPE_GLOBAL, $filters['scope'] ); ?>>
-					<?php esc_html_e( 'Общие элементы (меню, шапка, подвал)', 'wp-mlp' ); ?>
-				</option>
-				<optgroup label="<?php esc_attr_e( 'Отдельная запись', 'wp-mlp' ); ?>">
-					<?php foreach ( $this->translatedObjects() as $id => $title ) : ?>
-						<option value="<?php echo esc_attr( SourceRepository::SCOPE_OBJECT . ':' . $id ); ?>"
-							<?php selected( SourceRepository::SCOPE_OBJECT === $filters['scope'] && $id === $filters['object_id'] ); ?>>
-							<?php echo esc_html( $title ); ?>
-						</option>
-					<?php endforeach; ?>
-				</optgroup>
-			</select>
+			<?php
+			$scopeTitle = SourceRepository::SCOPE_OBJECT === $filters['scope'] && $filters['object_id'] > 0
+				? trim( wp_strip_all_tags( (string) get_the_title( $filters['object_id'] ) ) )
+				: '';
+			// Разметка собрана и экранирована внутри scopeControlHtml().
+			echo self::scopeControlHtml( $filters['scope'], $filters['object_id'], $scopeTitle ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			?>
 
 			<?php if ( self::TAB_SEO !== $tab && self::TAB_LINKS !== $tab ) : ?>
 				<?php /* На SEO/GEO и «Ссылках» выбирать нечего: вкладка сама и есть тип. */ ?>
@@ -922,56 +919,40 @@ final class StringTranslationPage implements Hookable {
 	}
 
 	/**
-	 * Записи и страницы, на которых плагин находил строки.
+	 * Разметка фильтра «Где встречается»: список из трёх пунктов и поле поиска записи.
 	 *
-	 * Найдено на живом сайте: `object_id` в местах использования — это то,
-	 * что `get_queried_object_id()` вернул в момент показа страницы,
-	 * причём для ЛЮБОЙ страницы, какую бы WordPress ни отдал по ссылке.
-	 * Ссылка вида `?p=39`, которую никто в здравом уме не наберёт, но
-	 * может дёрнуть бездумный обход ID подряд, вполне может указывать на
-	 * черновую ревизию статьи (`post_type = revision`) — а `get_the_title()`
-	 * у ревизии возвращает тот же заголовок, что и у самой статьи. Отсюда
-	 * учетверённое «Как подготовить AI-проект…» в списке: 36 — сама
-	 * запись, 39/40/42 — три её ревизии, случайно попавшие в базу как
-	 * отдельные «страницы». Туда же утекают вложения (`cropped-logo.png`)
-	 * и служебный тип `wp_global_styles` («Custom Styles» — так WordPress
-	 * называет его ВСЕГДА, у любой темы) — их тоже видел
-	 * `get_queried_object_id()` на каком-то показе.
+	 * Записи в список не выводятся (на сайте их могут быть тысячи): запись
+	 * ищется через REST `mlp/v1/editor/pages`, а выбранная записывается в
+	 * значение пункта «Отдельная запись…» скриптом admin.js. Так форма
+	 * отправляет один-единственный `mlp_scope`, а без JS «Весь сайт» и
+	 * «Общие элементы» работают как раньше. Чистая функция.
 	 *
-	 * Список для выпадающего меню должен остаться допустимым, только когда
-	 * `get_post_types(['public' => true])` минус `attachment` — то есть
-	 * ровно то, для чего WordPress вообще строит отдельные адреса
-	 * страниц: записи, страницы и настоящие пользовательские типы (товары
-	 * магазина и подобное). Ревизии, стили, вложения регистрируются с
-	 * `public => false` или, как вложения, публичны, но страницей в
-	 * привычном смысле не являются, — их такой allowlist отсекает без
-	 * необходимости перечислять служебные типы по имени: список новых
-	 * внутренних типов WordPress не наш, а его, и перечислять их вручную
-	 * значило бы вечно догонять.
-	 *
-	 * @return array<int, string> Идентификатор записи => заголовок для списка.
+	 * @param string $scope    Название области (`SourceRepository::SCOPE_*`).
+	 * @param int    $objectId Идентификатор записи для области «запись».
+	 * @param string $title    Заголовок выбранной записи для поля поиска.
 	 */
-	private function translatedObjects(): array {
-		$allowedTypes = self::scopeDropdownPostTypes( get_post_types( array( 'public' => true ) ) );
-		$titles       = array();
+	public static function scopeControlHtml( string $scope, int $objectId, string $title ): string {
+		$isObject    = SourceRepository::SCOPE_OBJECT === $scope && $objectId > 0;
+		$objectValue = SourceRepository::SCOPE_OBJECT . ':' . ( $isObject ? (string) $objectId : '' );
+		$selected    = static fn( bool $on ): string => $on ? ' selected="selected"' : '';
 
-		foreach ( $this->occurrences->objectIds() as $id ) {
-			if ( ! in_array( get_post_type( $id ), $allowedTypes, true ) ) {
-				continue;
-			}
+		$html  = '<label for="mlp-scope" class="screen-reader-text">' . esc_html__( 'Где встречается', 'wp-mlp' ) . '</label>';
+		$html .= '<select name="mlp_scope" id="mlp-scope">';
+		$html .= '<option value=""' . $selected( ! $isObject && SourceRepository::SCOPE_GLOBAL !== $scope ) . '>' . esc_html__( 'Весь сайт', 'wp-mlp' ) . '</option>';
+		$html .= '<option value="' . esc_attr( SourceRepository::SCOPE_GLOBAL ) . '"' . $selected( SourceRepository::SCOPE_GLOBAL === $scope ) . '>'
+			. esc_html__( 'Общие элементы (меню, шапка, подвал)', 'wp-mlp' ) . '</option>';
+		$html .= '<option value="' . esc_attr( $objectValue ) . '" data-mlp-object="1"' . $selected( $isObject ) . '>'
+			. esc_html__( 'Отдельная запись…', 'wp-mlp' ) . '</option>';
+		$html .= '</select>';
 
-			$title = get_the_title( $id );
+		$html .= '<span class="wp-mlp-scope-picker wp-mlp-editor-picker" id="mlp-scope-picker"' . ( $isObject ? '' : ' hidden' ) . '>';
+		$html .= '<input type="text" id="mlp-scope-search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="mlp-scope-list"'
+			. ' value="' . esc_attr( $isObject ? $title : '' ) . '"'
+			. ' placeholder="' . esc_attr( __( 'Начните вводить название записи', 'wp-mlp' ) ) . '">';
+		$html .= '<ul class="wp-mlp-editor-picker__list" id="mlp-scope-list" role="listbox" hidden></ul>';
+		$html .= '</span>';
 
-			if ( '' === trim( (string) $title ) ) {
-				continue;
-			}
-
-			$titles[ $id ] = (string) $title;
-		}
-
-		asort( $titles, SORT_NATURAL | SORT_FLAG_CASE );
-
-		return $titles;
+		return $html;
 	}
 
 	/**
