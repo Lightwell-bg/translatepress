@@ -259,8 +259,17 @@ msgid "Off by default: after the plugin is uninstalled, translations stay in the
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-#: src/Admin/StringTranslationPage.php
 msgid "OpenAI key"
+msgstr ""
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "OpenAI key"
+msgstr ""
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "OpenAI model"
 msgstr ""
 
 #: src/Admin/SettingsPage.php
@@ -276,7 +285,6 @@ msgid "Stored in the site database, not in files. Get a key: %s."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-#: src/Admin/StringTranslationPage.php
 msgid "OpenAI model"
 msgstr ""
 
@@ -1701,4 +1709,16 @@ msgstr ""
 
 #: src/Storage/TranslationStatus.php
 msgid "From the language pack"
+msgstr ""
+
+#: wp-mlp.php
+msgid "WP Multilang Press requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
+msgstr ""
+
+#: src/Admin/StringTranslationPage.php
+msgid "SEO/GEO"
+msgstr ""
+
+#: src/Rest/TranslationsController.php
+msgid "The link address uses a protocol that is not allowed (for example javascript: or data:)."
 msgstr ""

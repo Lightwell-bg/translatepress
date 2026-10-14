@@ -364,7 +364,9 @@ php bin/build-zip.php --no-bump  # without changing the version
 php bin/build-zip.php --dry-run  # only list files, write nothing
 ```
 
-The number `N` is the next one after the maximum in `dist/`; existing archives are never overwritten. The archive (folder `wp-mlp/`) contains only the runtime: `wp-mlp.php`, `uninstall.php`, `README.md`, `.env.example` (the template only), `src/`, `assets/`, `languages/`. The real `.env` never gets into the archive.
+The number `N` is the next one after the maximum in `dist/`; existing archives are never overwritten. The archive (folder `wp-mlp/`) contains only the runtime: `wp-mlp.php`, `uninstall.php`, `readme.txt`, `src/`, `assets/`, `languages/`. `README.md` and `.env.example` are not shipped, and the real `.env` never gets into the archive. Unless `--no-bump` is given, the build also syncs `Stable tag:` in `readme.txt` with the new plugin version and fails if they differ.
+
+`readme.txt` is the WordPress.org readme (plugin directory page); `README.md` / `README_RU.md` are the repository docs.
 
 ## Connecting OpenAI (AI translation)
 
@@ -523,6 +525,28 @@ Composer is not mandatory — tests can also be run with the PHPUnit phar:
 curl -sSLO https://phar.phpunit.de/phpunit-12.phar
 php phpunit-12.phar
 ```
+
+### Translations (`languages/`)
+
+Source strings in the code are always English. The Russian interface ships with the plugin in `languages/`: `wp-mlp-ru_RU.po` is the only file edited by hand; `.mo`, `.l10n.php` and `wp-mlp.pot` are generated from it. After editing the `.po`:
+
+```bash
+php bin/i18n-compile.php languages/wp-mlp-ru_RU.po          # .mo + .l10n.php
+php bin/i18n-compile.php --pot languages/wp-mlp-ru_RU.po    # wp-mlp.pot
+```
+
+Both commands must exit with code 0 (the compiler checks that printf placeholders in the translation match the source). A string used in the middle of a sentence where the same word is a capitalised label elsewhere gets its own entry via `_x( 'OpenAI key', 'mid-sentence', 'wp-mlp' )` and `msgctxt "mid-sentence"` in the `.po`.
+
+### Checks in real WordPress (WordPress Playground)
+
+Both scripts need Node 24 and internet on the first run (they download WordPress and the pinned Playground CLI into a scratch dir; nothing is written into the plugin tree). Run them in Git Bash:
+
+```bash
+bash bin/plugin-check.sh   # official WordPress Plugin Check (plugin_repo category), prints a summary
+bash bin/smoke-test.sh     # real WordPress 6.x + PHP 8.3 with WP_DEBUG: activation, tables, front end and /en/, REST GET routes, manual translation and unsafe-href rejection, repository queries, bundled ru_RU, uninstall, debug.log scan
+```
+
+Note: Playground runs WordPress on SQLite, so MySQL-specific behaviour (for example comparing the `BINARY` hash column with `UNHEX()`) cannot be verified there; the smoke test marks such checks as `SKIP`.
 
 The tests (`tests/`) check pure logic without loading WordPress: string normalization, hashes, language code validation, URL parsing, rewrite rule building, string extraction from the DOM, translation substitution (including the fallback libxml parser), editor markers, translation blocks, `.env` parsing and building/parsing an OpenAI request. WordPress functions are replaced by stubs in `tests/stubs.php`. The network call to OpenAI is not tested — `OpenAiRequestBuilder` (payload building, response parsing) is deliberately separated from `OpenAiProvider` (the HTTP request itself), so the logic can be checked without mocking the network.
 

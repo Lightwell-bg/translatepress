@@ -19,13 +19,27 @@
    php vendor/bin/phpunit
    ```
 
+   Необязательно, нужны Node 24 и интернет (первый запуск скачивает WordPress), Git Bash — проверки в настоящем WordPress:
+
+   ```bash
+   bash bin/plugin-check.sh
+   bash bin/smoke-test.sh
+   ```
+
+   Если правили переводы (`languages/wp-mlp-ru_RU.po`), пересоберите их:
+
+   ```bash
+   php bin/i18n-compile.php languages/wp-mlp-ru_RU.po
+   php bin/i18n-compile.php --pot languages/wp-mlp-ru_RU.po
+   ```
+
 4. Соберите установочный ZIP:
 
    ```bash
    php bin/build-zip.php
    ```
 
-   Архив появится в `dist/_<N>wp-mlp.zip` (папка внутри архива — `wp-mlp/`); путь и версия печатаются в конце вывода.
+   Архив появится в `dist/_<N>wp-mlp.zip` (папка внутри архива — `wp-mlp/`); путь и версия печатаются в конце вывода. В архив попадают `wp-mlp.php`, `uninstall.php`, `readme.txt` (readme для WordPress.org), `src/`, `assets/`, `languages/`; `Stable tag` в `readme.txt` синхронизируется с версией.
 
 5. В админке WordPress: «Плагины → Добавить новый → Загрузить плагин», выберите ZIP из `dist/` и нажмите «Установить».
 

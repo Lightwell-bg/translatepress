@@ -739,8 +739,8 @@ final class StringTranslationPage implements Hookable {
 		}
 
 		$names = array(
-			ProviderFactory::FIELD_KEY   => __( 'OpenAI key', 'wp-mlp' ),
-			ProviderFactory::FIELD_MODEL => __( 'OpenAI model', 'wp-mlp' ),
+			ProviderFactory::FIELD_KEY   => _x( 'OpenAI key', 'mid-sentence', 'wp-mlp' ),
+			ProviderFactory::FIELD_MODEL => _x( 'OpenAI model', 'mid-sentence', 'wp-mlp' ),
 		);
 
 		$labels = array();

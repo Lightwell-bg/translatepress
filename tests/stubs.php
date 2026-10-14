@@ -23,6 +23,19 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_x' ) ) {
+	/**
+	 * @param string $text    Строка.
+	 * @param string $context Контекст перевода.
+	 * @param string $domain  Текстовый домен.
+	 */
+	function _x( string $text, string $context, string $domain = 'default' ): string { // phpcs:ignore
+		unset( $context, $domain );
+
+		return $text;
+	}
+}
+
 if ( ! function_exists( '_n' ) ) {
 	/**
 	 * @param string $single Форма для 1.

@@ -172,4 +172,7 @@ no invented placeholders, and end with a verification command.
 
 - Never write the PHP close tag `?>` inside a `//` or `#` comment (it ends PHP mode mid-comment and dumps the rest of the file into the page — this took the live site down in 0.3.2). Use `/* */` or don't spell the tag; `tests/NoCloseTagInCommentsTest.php` guards it.
 - Upload ZIP replaces the plugin folder: anything the site needs at runtime (keys, config) must never live only inside the plugin directory.
+- Source strings in code are English (WordPress.org requirement). Every new or changed gettext string gets its Russian in `languages/wp-mlp-ru_RU.po`, then `php bin/i18n-compile.php languages/wp-mlp-ru_RU.po` and `--pot`. The same English msgid used in different grammatical positions (label vs mid-sentence) needs `_x` with a context.
+- SQL: table names go through `%i` in `$wpdb->prepare()`, IN() lists through generated `%d`/`%s` placeholders; no interpolated variables. `tests/Doubles/FakeWpdb.php` substitutes `%i` without backticks, so check new SQL in real WordPress too (`bash bin/smoke-test.sh`).
+- Before every release build, `bash bin/plugin-check.sh` must report 0 ERROR. Every new PHP file in `src/` starts with `defined( 'ABSPATH' ) || exit;` right after `namespace`.
 - Every new collected string source (attribute, href, meta) must be checked against editor-preview pages and theme-generated near-duplicates (e.g. attachment titles `Post title 10`) before shipping — junk rows in «Перевод строк» are a user-visible bug.

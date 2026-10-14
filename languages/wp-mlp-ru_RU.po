@@ -256,9 +256,18 @@ msgid "Off by default: after the plugin is uninstalled, translations stay in the
 msgstr "По умолчанию выключено: после удаления плагина переводы остаются в базе и восстанавливаются при повторной установке."
 
 #: src/Admin/SettingsPage.php
-#: src/Admin/StringTranslationPage.php
 msgid "OpenAI key"
 msgstr "Ключ OpenAI"
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "OpenAI key"
+msgstr "ключ OpenAI"
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "OpenAI model"
+msgstr "модель OpenAI"
 
 #: src/Admin/SettingsPage.php
 msgid "••••••••  (leave empty to keep unchanged)"
@@ -273,7 +282,6 @@ msgid "Stored in the site database, not in files. Get a key: %s."
 msgstr "Хранится в базе данных сайта, не в файлах. Взять ключ: %s."
 
 #: src/Admin/SettingsPage.php
-#: src/Admin/StringTranslationPage.php
 msgid "OpenAI model"
 msgstr "Модель OpenAI"
 
@@ -1699,3 +1707,15 @@ msgstr "Отклонён"
 #: src/Storage/TranslationStatus.php
 msgid "From the language pack"
 msgstr "Из языкового пакета"
+
+#: wp-mlp.php
+msgid "WP Multilang Press requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
+msgstr "WP Multilang Press требует PHP %1$s или новее. На сервере установлен PHP %2$s — плагин отключён."
+
+#: src/Admin/StringTranslationPage.php
+msgid "SEO/GEO"
+msgstr "SEO/GEO"
+
+#: src/Rest/TranslationsController.php
+msgid "The link address uses a protocol that is not allowed (for example javascript: or data:)."
+msgstr "Адрес ссылки использует недопустимый протокол (например, javascript: или data:)."
