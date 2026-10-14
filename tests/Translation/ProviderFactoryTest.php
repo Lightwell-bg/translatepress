@@ -200,6 +200,44 @@ final class ProviderFactoryTest extends TestCase {
 		$this->assertNotSame( LINGOCANVAS_DIR . '.env', $path );
 	}
 
+	public function testLegacyPluginDirFallsBackToWpMlp(): void {
+		wp_mlp_test_options( array() );
+		$this->assertSame( 'wp-mlp', ProviderFactory::legacyPluginDir() );
+
+		wp_mlp_test_options( array( 'lingocanvas_legacy_dir' => '../evil' ) );
+		$this->assertSame( 'wp-mlp', ProviderFactory::legacyPluginDir() );
+
+		wp_mlp_test_options( array( 'lingocanvas_legacy_dir' => '..' ) );
+		$this->assertSame( 'wp-mlp', ProviderFactory::legacyPluginDir() );
+
+		wp_mlp_test_options( array( 'lingocanvas_legacy_dir' => 'translatepress-main' ) );
+		$this->assertSame( 'translatepress-main', ProviderFactory::legacyPluginDir() );
+
+		wp_mlp_test_options( array() );
+	}
+
+	public function testIsSafeDirName(): void {
+		$this->assertTrue( ProviderFactory::isSafeDirName( 'wp-mlp' ) );
+		$this->assertTrue( ProviderFactory::isSafeDirName( 'wp_mlp.v2' ) );
+		$this->assertFalse( ProviderFactory::isSafeDirName( '' ) );
+		$this->assertFalse( ProviderFactory::isSafeDirName( '.' ) );
+		$this->assertFalse( ProviderFactory::isSafeDirName( '..' ) );
+		$this->assertFalse( ProviderFactory::isSafeDirName( 'a/b' ) );
+		$this->assertFalse( ProviderFactory::isSafeDirName( "wp-mlp\n" ) );
+	}
+
+	public function testLegacyPluginEnvPathUsesStoredFolder(): void {
+		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+			define( 'WP_PLUGIN_DIR', sys_get_temp_dir() . '/mlp-plugins' );
+		}
+
+		wp_mlp_test_options( array( 'lingocanvas_legacy_dir' => 'translatepress-main' ) );
+		$path = ProviderFactory::legacyPluginEnvPath();
+		wp_mlp_test_options( array() );
+
+		$this->assertSame( rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/translatepress-main/.env', $path );
+	}
+
 	public function testKeyFromLegacyPluginEnvIsReportedAsPluginEnv(): void {
 		$dir = sys_get_temp_dir() . '/mlp-legacy-' . uniqid();
 		mkdir( $dir . '/wp-mlp', 0777, true );

@@ -495,6 +495,11 @@ if ( ! function_exists( 'delete_option' ) ) {
 	 */
 	function delete_option( string $name ): bool {
 		$options = wp_mlp_test_options();
+
+		if ( ! array_key_exists( $name, $options ) ) {
+			return false;
+		}
+
 		unset( $options[ $name ] );
 
 		wp_mlp_test_options( $options );

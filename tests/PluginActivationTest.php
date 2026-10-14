@@ -65,6 +65,19 @@ final class PluginActivationTest extends TestCase {
 		}
 	}
 
+	/**
+	 * Если флаг уже снял другой запрос, установка не повторяется.
+	 */
+	public function testFinishPendingActivationSkipsInstallWhenFlagAlreadyClaimed(): void {
+		wp_mlp_test_options( array() );
+
+		Plugin::finishPendingActivation();
+
+		$this->assertArrayNotHasKey( Settings::OPTION, wp_mlp_test_options() );
+		$this->assertNotContains( 'dbDelta', wp_mlp_test_install_log() );
+		$this->assertNotContains( 'flush', wp_mlp_test_install_log() );
+	}
+
 	public function testActivateRunsTheSameInstallSteps(): void {
 		Plugin::activate();
 

@@ -82,6 +82,8 @@ LingoCanvas is the same code under a new name, and it **reuses all data as is**:
 6. "Settings → Permalinks → Save" once (optional, refreshes the rewrite rules).
 7. Only after checking, delete WP Multilang Press via "Plugins → Delete". This is safe: LingoCanvas keeps the shared data even if "delete data on uninstall" is ticked.
 
+Multisite: if WP Multilang Press is network-activated, network-activate LingoCanvas from Network Admin; activating it on a single site does not switch off a network-activated old plugin (LingoCanvas stays paused there).
+
 Rollback: deactivate LingoCanvas and activate WP Multilang Press again — it works with the same data.
 
 Never keep both plugins active. If they are, LingoCanvas pauses itself (loads nothing) and shows an admin notice; the old plugin keeps working.

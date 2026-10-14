@@ -1716,6 +1716,10 @@ msgid "LingoCanvas requires PHP %1$s or newer. The server runs PHP %2$s, so the 
 msgstr ""
 
 #: lingocanvas.php
+msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is network-activated. LingoCanvas must be network-activated by a network administrator (Network Admin → Plugins) to take over; activating it on a single site does not switch the old plugin off."
+msgstr ""
+
+#: lingocanvas.php
 msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active."
 msgstr ""
 

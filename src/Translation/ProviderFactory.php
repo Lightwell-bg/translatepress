@@ -91,13 +91,40 @@ final class ProviderFactory {
 			return null;
 		}
 
-		$legacy = rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/wp-mlp/.env';
+		$legacy = rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/' . self::legacyPluginDir() . '/.env';
 
 		if ( defined( 'LINGOCANVAS_DIR' ) && self::normalizePath( $legacy ) === self::normalizePath( LINGOCANVAS_DIR . '.env' ) ) {
 			return null;
 		}
 
 		return $legacy;
+	}
+
+	/**
+	 * Имя папки прежнего плагина: из опции `lingocanvas_legacy_dir` (её пишет
+	 * активация LingoCanvas) или `wp-mlp` по умолчанию.
+	 *
+	 * Значение из опции проверяется: оно попадает в путь к файлу.
+	 */
+	public static function legacyPluginDir(): string {
+		if ( function_exists( 'get_option' ) ) {
+			$stored = get_option( 'lingocanvas_legacy_dir', '' );
+
+			if ( is_string( $stored ) && self::isSafeDirName( $stored ) ) {
+				return $stored;
+			}
+		}
+
+		return 'wp-mlp';
+	}
+
+	/**
+	 * Допустимое имя папки плагина: буквы, цифры, точка, дефис, подчёркивание; не `.` и не `..`.
+	 *
+	 * @param string $name Имя папки.
+	 */
+	public static function isSafeDirName( string $name ): bool {
+		return 1 === preg_match( '/^[A-Za-z0-9._-]+$/D', $name ) && '.' !== $name && '..' !== $name;
 	}
 
 	/**

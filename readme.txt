@@ -170,7 +170,7 @@ Rollback: deactivate LingoCanvas and activate WP Multilang Press; it uses the sa
 
 = Does it work on WordPress Multisite? =
 
-Multisite has not been tested. The plugin contains no multisite-specific code.
+Multisite has not been fully tested. The migration from WP Multilang Press does handle network activation: if the old plugin is network-activated, network-activate LingoCanvas from Network Admin. Activating LingoCanvas on a single site does not switch off a network-activated old plugin.
 
 = Which PHP version is needed? =
 

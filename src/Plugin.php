@@ -144,7 +144,10 @@ final class Plugin {
 	 * Флаг снимается первым, чтобы сбой в установке не зациклил повторы.
 	 */
 	public static function finishPendingActivation(): void {
-		delete_option( self::PENDING_ACTIVATION_OPTION );
+		// delete_option() даёт false, если параллельный запрос уже снял флаг: установку делает один.
+		if ( ! delete_option( self::PENDING_ACTIVATION_OPTION ) ) {
+			return;
+		}
 
 		self::install();
 	}

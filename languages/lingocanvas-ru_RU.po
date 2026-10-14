@@ -1713,6 +1713,10 @@ msgid "LingoCanvas requires PHP %1$s or newer. The server runs PHP %2$s, so the 
 msgstr "LingoCanvas требует PHP %1$s или новее. На сервере установлен PHP %2$s — плагин отключён."
 
 #: lingocanvas.php
+msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is network-activated. LingoCanvas must be network-activated by a network administrator (Network Admin → Plugins) to take over; activating it on a single site does not switch the old plugin off."
+msgstr "LingoCanvas приостановлен, потому что прежняя версия этого плагина («WP Multilang Press») включена на всю сеть. Чтобы LingoCanvas её заменил, сетевой администратор должен включить его на всю сеть («Сетевая админка → Плагины»); включение на отдельном сайте старый плагин не выключит."
+
+#: lingocanvas.php
 msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active."
 msgstr "LingoCanvas приостановлен, потому что прежняя версия этого плагина («WP Multilang Press») всё ещё активна. Отключите «WP Multilang Press»: LingoCanvas продолжит работу с теми же переводами и настройками. Не удаляйте старый плагин, пока LingoCanvas не активен."
 

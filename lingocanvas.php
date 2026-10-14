@@ -64,6 +64,51 @@ function lingocanvas_active_legacy_plugins(): array {
 	return array_values( array_unique( $legacy ) );
 }
 
+/**
+ * Активен ли прежний плагин на всю сеть (мультисайт).
+ */
+if ( ! function_exists( 'lingocanvas_legacy_network_active' ) ) {
+	function lingocanvas_legacy_network_active(): bool {
+		if ( ! is_multisite() ) {
+			return false;
+		}
+
+		foreach ( array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) as $basename ) {
+			if ( is_string( $basename ) && 'wp-mlp.php' === basename( $basename ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
+/**
+ * Запоминает имя папки прежнего плагина (опция lingocanvas_legacy_dir): оттуда
+ * LingoCanvas читает старый .env. Имя проверяется — оно попадёт в путь к файлу.
+ * Всё это до проверки-заглушки, поэтому без классов плагина.
+ *
+ * @param list<string> $basenames Базовые имена активных копий прежнего плагина.
+ * @param bool         $overwrite Перезаписывать ли уже сохранённое значение.
+ */
+if ( ! function_exists( 'lingocanvas_remember_legacy_dir' ) ) {
+	function lingocanvas_remember_legacy_dir( array $basenames, bool $overwrite ): void {
+		if ( ! $overwrite && false !== get_option( 'lingocanvas_legacy_dir', false ) ) {
+			return;
+		}
+
+		foreach ( $basenames as $basename ) {
+			$dir = dirname( str_replace( '\\', '/', $basename ) );
+
+			if ( 1 === preg_match( '/^[A-Za-z0-9._-]+$/D', $dir ) && '.' !== $dir && '..' !== $dir ) {
+				update_option( 'lingocanvas_legacy_dir', $dir, true );
+
+				return;
+			}
+		}
+	}
+}
+
 /*
  * Удаление прежнего плагина через «Плагины → Удалить» запускает его
  * uninstall.php. Если в общих настройках включено «удалять данные при
@@ -101,17 +146,30 @@ add_action(
  */
 register_activation_hook(
 	__FILE__,
-	static function (): void {
-		$legacy = lingocanvas_active_legacy_plugins();
+	static function ( $network_wide = false ): void {
+		$network_wide = (bool) $network_wide;
+		$legacy       = lingocanvas_active_legacy_plugins();
 
 		if ( array() === $legacy && ! defined( 'WP_MLP_FILE' ) ) {
 			\WpMlp\Plugin::activate();
+			delete_option( 'lingocanvas_pending_activation' );
 
 			return;
 		}
 
+		lingocanvas_remember_legacy_dir( $legacy, true );
+
 		foreach ( $legacy as $basename ) {
 			$network = is_multisite() && is_plugin_active_for_network( $basename );
+
+			/*
+			 * Прежний плагин включён на всю сеть, а LingoCanvas — на одном сайте:
+			 * выключение затронуло бы остальные сайты сети. Оставляем как есть,
+			 * LingoCanvas остаётся на паузе (уведомление объясняет, что делать).
+			 */
+			if ( $network && ! $network_wide ) {
+				continue;
+			}
 
 			deactivate_plugins( $basename, true, $network );
 		}
@@ -129,6 +187,8 @@ if ( defined( 'WP_MLP_FILE' ) || array() !== lingocanvas_active_legacy_plugins()
 		add_option( 'lingocanvas_pending_activation', 1, '', true );
 	}
 
+	lingocanvas_remember_legacy_dir( lingocanvas_active_legacy_plugins(), false );
+
 	add_action(
 		'admin_notices',
 		static function (): void {
@@ -136,9 +196,15 @@ if ( defined( 'WP_MLP_FILE' ) || array() !== lingocanvas_active_legacy_plugins()
 				return;
 			}
 
+			if ( lingocanvas_legacy_network_active() ) {
+				$message = __( 'LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is network-activated. LingoCanvas must be network-activated by a network administrator (Network Admin → Plugins) to take over; activating it on a single site does not switch the old plugin off.', 'lingocanvas' );
+			} else {
+				$message = __( 'LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active.', 'lingocanvas' );
+			}
+
 			printf(
 				'<div class="notice notice-warning"><p>%s</p></div>',
-				esc_html__( 'LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active.', 'lingocanvas' )
+				esc_html( $message )
 			);
 		}
 	);
