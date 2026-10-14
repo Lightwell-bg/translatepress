@@ -43,13 +43,11 @@ final class DomainLabel {
 		}
 
 		if ( isset( $themes[ $domain ] ) && '' !== $themes[ $domain ] ) {
-			/* translators: %s: theme name */
-			return sprintf( __( 'Theme: %s', 'lingocanvas' ), $themes[ $domain ] );
+			return sprintf( /* translators: %s: theme name. */ __( 'Theme: %s', 'lingocanvas' ), $themes[ $domain ] );
 		}
 
 		if ( isset( $plugins[ $domain ] ) && '' !== $plugins[ $domain ] ) {
-			/* translators: %s: plugin name */
-			return sprintf( __( 'Plugin: %s', 'lingocanvas' ), $plugins[ $domain ] );
+			return sprintf( /* translators: %s: plugin name. */ __( 'Plugin: %s', 'lingocanvas' ), $plugins[ $domain ] );
 		}
 
 		/*

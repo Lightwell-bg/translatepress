@@ -174,10 +174,8 @@ final class PostListLanguages implements Hookable {
 		}
 
 		foreach ( $this->settings->secondary() as $language ) {
-			/* translators: %s: language name */
-			$actions[ self::BULK_SHOW . $language->locale ] = sprintf( __( 'Show on language: %s', 'lingocanvas' ), $language->label );
-			/* translators: %s: language name */
-			$actions[ self::BULK_HIDE . $language->locale ] = sprintf( __( 'Hide on language: %s', 'lingocanvas' ), $language->label );
+			$actions[ self::BULK_SHOW . $language->locale ] = sprintf( /* translators: %s: language name. */ __( 'Show on language: %s', 'lingocanvas' ), $language->label );
+			$actions[ self::BULK_HIDE . $language->locale ] = sprintf( /* translators: %s: language name. */ __( 'Hide on language: %s', 'lingocanvas' ), $language->label );
 		}
 
 		return $actions;
@@ -267,15 +265,14 @@ final class PostListLanguages implements Hookable {
 			$shown ? __( 'Shown', 'lingocanvas' ) : __( 'Hidden', 'lingocanvas' ),
 			strtoupper( $locale ),
 			sprintf(
-				/* translators: %d: number of posts */
+				/* translators: %d: number of posts. */
 				_n( '%d post', '%d posts', $count, 'lingocanvas' ),
 				$count
 			)
 		);
 
 		if ( $skipped > 0 ) {
-			/* translators: %d: number of skipped posts */
-			$text .= ' ' . sprintf( __( '(skipped, no permission or unsuitable post type: %d)', 'lingocanvas' ), $skipped );
+			$text .= ' ' . sprintf( /* translators: %d: number of posts that were skipped. */ __( '(skipped, no permission or unsuitable post type: %d)', 'lingocanvas' ), $skipped );
 		}
 
 		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $text ) );
@@ -445,7 +442,7 @@ final class PostListLanguages implements Hookable {
 				'<option value="%s"%s>%s</option>',
 				esc_attr( $language->locale ),
 				$current === $language->locale ? ' selected="selected"' : '',
-				esc_html( sprintf( __( 'Not fully translated: %s', 'lingocanvas' ), $language->label ) )
+				esc_html( sprintf( /* translators: %s: language name. */ __( 'Not fully translated: %s', 'lingocanvas' ), $language->label ) )
 			);
 		}
 

@@ -4,7 +4,9 @@
 #
 # Usage (Git Bash, from anywhere):  bash bin/smoke-test.sh
 #   SMOKE_SCRATCH=/some/dir     override scratch dir (default: $TMPDIR/lingocanvas-smoke-test)
-#   SMOKE_SCENARIOS="S1 S3"     run only some scenarios (default: S1 S2 S3 S4 S5)
+#   SMOKE_SCENARIOS="S1 S3"     run only some scenarios (default: S1 S2 S3 S4 S5 S6)
+#   SMOKE_WP=6.4                WordPress version of Playground (default: latest; e.g. 6.4, 6.9, latest)
+#   SMOKE_PHP=8.1               PHP version (default: 8.3)
 #   SMOKE_OLD_ZIP=/path.zip     old "WP Multilang Press" build for S2-S5 (default: dist/_19wp-mlp.zip, folder wp-mlp/)
 #
 # Every scenario runs in a FRESH Playground instance (its own blueprint run, own scratch copies
@@ -22,6 +24,11 @@
 #   S3  Both plugins active at once: old code runs, LingoCanvas is paused (notice), no duplicates.
 #   S4  Deleting the old plugin (delete_data_on_uninstall = true) keeps the data.
 #   S5  Deleting LingoCanvas while the old plugin is active keeps the data.
+#   S6  "Interface" tab: official translations of third-party gettext strings (fixture plugin
+#       lingocanvas-smoke-domain with a Russian .mo: singular, context, 3 plural forms, untranslated string),
+#       found through get_translations_for_domain() and not through the plugin's own gettext filters;
+#       a saved user override does not leak into the "Official translation" column but shows on the front end;
+#       the tab renders in en_US and ru_RU.
 #
 # What it does:
 #   1. Copies only the runtime files (lingocanvas.php, uninstall.php, readme.txt, src/, assets/,
@@ -47,7 +54,9 @@ export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
 SCRATCH="${SMOKE_SCRATCH:-${TMPDIR:-/tmp}/lingocanvas-smoke-test}"
-SCENARIOS="${SMOKE_SCENARIOS:-S1 S2 S3 S4 S5}"
+SCENARIOS="${SMOKE_SCENARIOS:-S1 S2 S3 S4 S5 S6}"
+# WordPress / PHP versions of the Playground instance (read by smoke-test-blueprint.cjs and the S1 patch below).
+export SMOKE_WP="${SMOKE_WP:-latest}" SMOKE_PHP="${SMOKE_PHP:-8.3}"
 OLD_ZIP="${SMOKE_OLD_ZIP:-$ROOT/dist/_19wp-mlp.zip}"
 mkdir -p "$SCRATCH"
 SCRATCH="$(cd "$SCRATCH" && pwd)"
@@ -90,11 +99,18 @@ run_scenario() {
 	cp -r "$SCRATCH/clean/lingocanvas" "$run/lingocanvas"
 
 	local mounts=(--mount-dir "$(win "$run/lingocanvas")" /wordpress/wp-content/plugins/lingocanvas)
+	cp "$HERE/smoke-test-s6.php" "$out/"
 	if [ "$id" = "S1" ]; then
-		blueprint="$HERE/smoke-test-blueprint.json"
+		# The static blueprint gets the requested WordPress / PHP versions.
+		blueprint="$run/blueprint.json"
+		node -e 'const fs=require("fs");const b=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));b.preferredVersions={php:process.env.SMOKE_PHP,wp:process.env.SMOKE_WP};fs.writeFileSync(process.argv[2],JSON.stringify(b,null,2));' "$(win "$HERE/smoke-test-blueprint.json")" "$(win "$blueprint")"
 		# Mounting over wp-content/mu-plugins would hide Playground's own mu-plugin, so the fixture
 		# travels through /out and the blueprint copies it into mu-plugins.
 		cp "$HERE"/smoke-test-fixtures/mu-plugins/*.php "$out/"
+	elif [ "$id" = "S6" ]; then
+		blueprint="$run/blueprint.json"
+		node "$(win "$HERE/smoke-test-blueprint.cjs")" "$id" "$(win "$blueprint")"
+		cp "$HERE"/smoke-test-fixtures/s6/*.php "$out/"
 	else
 		blueprint="$run/blueprint.json"
 		node "$(win "$HERE/smoke-test-blueprint.cjs")" "$id" "$(win "$blueprint")"

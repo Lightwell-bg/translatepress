@@ -96,7 +96,7 @@ final class HtmlDocument {
 		$html = (string) $this->document->saveHTML();
 
 		// Возвращаем на место символы, закодированные перед разбором.
-		return mb_decode_numericentity( $html, self::NON_ASCII, 'UTF-8' );
+		return self::decodeNonAscii( $html );
 	}
 
 	/**
@@ -114,8 +114,75 @@ final class HtmlDocument {
 		}
 
 		return $this->legacy
-			? mb_decode_numericentity( $html, self::NON_ASCII, 'UTF-8' )
+			? self::decodeNonAscii( $html )
 			: $html;
+	}
+
+	/**
+	 * Все не-ASCII символы → числовые сущности `&#N;`.
+	 *
+	 * Расширение mbstring необязательно, а WordPress не даёт полифила для
+	 * `mb_encode_numericentity()`, поэтому без mbstring работает PCRE-вариант
+	 * с тем же результатом. Некорректный UTF-8 PCRE не разбирает — тогда текст
+	 * остаётся как есть (так же ведёт себя и путь без преобразования).
+	 *
+	 * @param string $html Разметка в UTF-8.
+	 */
+	public static function encodeNonAscii( string $html ): string {
+		if ( function_exists( 'mb_encode_numericentity' ) ) {
+			return mb_encode_numericentity( $html, self::NON_ASCII, 'UTF-8' );
+		}
+
+		$encoded = preg_replace_callback(
+			'/[\x{80}-\x{10FFFF}]/u',
+			static function ( array $match ): string {
+				$bytes = $match[0];
+				$first = ord( $bytes[0] );
+
+				if ( $first < 0xE0 ) {
+					$code = ( ( $first & 0x1F ) << 6 ) | ( ord( $bytes[1] ) & 0x3F );
+				} elseif ( $first < 0xF0 ) {
+					$code = ( ( $first & 0x0F ) << 12 ) | ( ( ord( $bytes[1] ) & 0x3F ) << 6 ) | ( ord( $bytes[2] ) & 0x3F );
+				} else {
+					$code = ( ( $first & 0x07 ) << 18 ) | ( ( ord( $bytes[1] ) & 0x3F ) << 12 ) | ( ( ord( $bytes[2] ) & 0x3F ) << 6 ) | ( ord( $bytes[3] ) & 0x3F );
+				}
+
+				return '&#' . $code . ';';
+			},
+			$html
+		);
+
+		return is_string( $encoded ) ? $encoded : $html;
+	}
+
+	/**
+	 * Числовые сущности `&#N;` / `&#xH;` с кодом от U+0080 → символы UTF-8.
+	 *
+	 * Парный метод к {@see self::encodeNonAscii()}; без mbstring использует
+	 * `html_entity_decode()`, которая входит в ядро PHP.
+	 *
+	 * @param string $html Разметка после сериализации libxml.
+	 */
+	public static function decodeNonAscii( string $html ): string {
+		if ( function_exists( 'mb_decode_numericentity' ) ) {
+			return mb_decode_numericentity( $html, self::NON_ASCII, 'UTF-8' );
+		}
+
+		$decoded = preg_replace_callback(
+			'/&#(?:[xX]([0-9A-Fa-f]{1,6})|([0-9]{1,7}));/',
+			static function ( array $match ): string {
+				$code = '' !== $match[1] ? (int) hexdec( $match[1] ) : (int) $match[2];
+
+				if ( $code < 0x80 || $code > 0x10FFFF ) {
+					return $match[0];
+				}
+
+				return html_entity_decode( '&#' . $code . ';', ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			},
+			$html
+		);
+
+		return is_string( $decoded ) ? $decoded : $html;
 	}
 
 	/**
@@ -206,7 +273,7 @@ final class HtmlDocument {
 	 * @param string $html Готовый ответ страницы.
 	 */
 	private static function parseLegacy( string $html ): ?self {
-		$encoded = mb_encode_numericentity( $html, self::NON_ASCII, 'UTF-8' );
+		$encoded = self::encodeNonAscii( $html );
 
 		$previous = libxml_use_internal_errors( true );
 

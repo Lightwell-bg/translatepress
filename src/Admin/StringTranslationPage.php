@@ -811,8 +811,7 @@ final class StringTranslationPage implements Hookable {
 				<span class="displaying-num">
 					<?php
 					printf(
-						/* translators: %s: number of strings */
-						esc_html( _n( '%s string', '%s strings', $total, 'lingocanvas' ) ),
+						esc_html( /* translators: %s: number of strings. */ _n( '%s string', '%s strings', $total, 'lingocanvas' ) ),
 						esc_html( number_format_i18n( $total ) )
 					);
 					?>

@@ -164,4 +164,42 @@ final class LanguageCatalogTest extends TestCase {
 
 		wp_mlp_test_options( array() );
 	}
+
+	public function testUtf8CharMatchesMbChrForAllRegionalIndicators(): void {
+		foreach ( range( 'A', 'Z' ) as $letter ) {
+			$codePoint = 0x1F1E6 + ord( $letter ) - 65;
+
+			$this->assertSame( 4, strlen( LanguageCatalog::utf8Char( $codePoint ) ) );
+
+			if ( function_exists( 'mb_chr' ) ) {
+				$this->assertSame( mb_chr( $codePoint, 'UTF-8' ), LanguageCatalog::utf8Char( $codePoint ), $letter );
+			}
+		}
+	}
+
+	public function testFlagBytesForKnownCountries(): void {
+		// U+1F1E7 U+1F1EC и U+1F1F7 U+1F1FA.
+		$this->assertSame( "\xF0\x9F\x87\xA7\xF0\x9F\x87\xAC", LanguageCatalog::flagFor( 'bg_BG' ) );
+		$this->assertSame( "\xF0\x9F\x87\xB7\xF0\x9F\x87\xBA", LanguageCatalog::flagFor( 'ru_RU' ) );
+	}
+
+	public function testUtf8CharAcrossByteRanges(): void {
+		$this->assertSame( 'A', LanguageCatalog::utf8Char( 0x41 ) );
+		$this->assertSame( "\x7F", LanguageCatalog::utf8Char( 0x7F ) );
+		$this->assertSame( "\xC2\x80", LanguageCatalog::utf8Char( 0x80 ) );
+		$this->assertSame( "\xD0\xB6", LanguageCatalog::utf8Char( 0x436 ) );
+		$this->assertSame( "\xDF\xBF", LanguageCatalog::utf8Char( 0x7FF ) );
+		$this->assertSame( "\xE0\xA0\x80", LanguageCatalog::utf8Char( 0x800 ) );
+		$this->assertSame( "\xE2\x82\xAC", LanguageCatalog::utf8Char( 0x20AC ) );
+		$this->assertSame( "\xEF\xBF\xBF", LanguageCatalog::utf8Char( 0xFFFF ) );
+		$this->assertSame( "\xF0\x90\x80\x80", LanguageCatalog::utf8Char( 0x10000 ) );
+		$this->assertSame( "\xF4\x8F\xBF\xBF", LanguageCatalog::utf8Char( 0x10FFFF ) );
+	}
+
+	public function testUtf8CharRejectsSurrogatesAndOutOfRange(): void {
+		$this->assertSame( '', LanguageCatalog::utf8Char( 0xD800 ) );
+		$this->assertSame( '', LanguageCatalog::utf8Char( 0xDFFF ) );
+		$this->assertSame( '', LanguageCatalog::utf8Char( 0x110000 ) );
+		$this->assertSame( '', LanguageCatalog::utf8Char( -1 ) );
+	}
 }

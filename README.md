@@ -76,7 +76,7 @@ LingoCanvas is the same code under a new name, and it **reuses all data as is**:
 
 1. Back up the database (at least the `{prefix}mlp_*` tables and `wp_options`). Note where the OpenAI key is stored: if it lives only in `wp-content/plugins/wp-mlp/.env`, move it to `wp-config.php` constants first.
 2. Do **not** delete or deactivate WP Multilang Press yet.
-3. "Plugins → Add New → Upload Plugin" → `lingocanvas-0.3.13.zip` → "Install Now" (WordPress installs it as a separate plugin).
+3. "Plugins → Add New → Upload Plugin" → `lingocanvas-0.3.14.zip` → "Install Now" (WordPress installs it as a separate plugin).
 4. Activate LingoCanvas. It deactivates WP Multilang Press automatically (without running its deactivation code) and finishes its own setup on the next page load.
 5. Open any admin page once, then check "Multilingual → Languages", a translated page such as `/en/`, the sitemap and the language switcher.
 6. "Settings → Permalinks → Save" once (optional, refreshes the rewrite rules).
@@ -401,7 +401,7 @@ php bin/build-zip.php --no-bump  # without changing the version
 php bin/build-zip.php --dry-run  # only list files, write nothing
 ```
 
-The archive is named after the version (`dist/lingocanvas-0.3.13.zip`); an existing archive is never overwritten. The archive (folder `lingocanvas/`) contains only the runtime: `lingocanvas.php`, `uninstall.php`, `readme.txt`, `src/`, `assets/`, `languages/`. `README.md` and `.env.example` are not shipped, and the real `.env` never gets into the archive. Unless `--no-bump` is given, the build also syncs `Stable tag:` in `readme.txt` with the new plugin version and fails if they differ.
+The archive is named after the version (`dist/lingocanvas-0.3.14.zip`); an existing archive is never overwritten. The archive (folder `lingocanvas/`) contains only the runtime: `lingocanvas.php`, `uninstall.php`, `readme.txt`, `src/`, `assets/`, `languages/`. `README.md` and `.env.example` are not shipped, and the real `.env` never gets into the archive. Unless `--no-bump` is given, the build also syncs `Stable tag:` in `readme.txt` with the new plugin version and fails if they differ.
 
 `readme.txt` is the WordPress.org readme (plugin directory page); `README.md` / `README_RU.md` are the repository docs.
 

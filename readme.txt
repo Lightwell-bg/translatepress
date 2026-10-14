@@ -4,7 +4,7 @@ Tags: multilingual, translation, translate, language switcher, hreflang
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.13
+Stable tag: 0.3.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,11 +178,20 @@ PHP 8.1 or newer. On PHP 8.4+ the built-in HTML5 parser is used; on 8.1 to 8.3 t
 
 == Changelog ==
 
+= 0.3.14 =
+* Interface tab: the official translation of theme and plugin strings is now read from the loaded translation files of their text domain instead of through gettext filters, so a site owner's override is never shown as the official translation.
+* Correct official translation for each plural form.
+* Translators comments added to all strings with placeholders.
+* Flag emoji and the libxml fallback no longer need the optional mbstring extension (PHP fallback).
+
 = 0.3.13 =
 * Rebrand to LingoCanvas: plugin folder and text domain are now lingocanvas; public hooks renamed to lingocanvas_* (the old mlp_* names still work as deprecated aliases); automatic hand-over from WP Multilang Press (translations, settings and tables are reused, nothing is deleted).
 * Preparation for WordPress.org: English source strings with bundled Russian translation, security hardening (URL protocol validation for translated links, SVG flag sanitizing, API key masking in errors), full data cleanup on opted-in uninstall, readme.txt.
 
 == Upgrade Notice ==
+
+= 0.3.14 =
+Interface tab shows the real official translation of each plural form; works without the mbstring extension.
 
 = 0.3.13 =
 The plugin is now called LingoCanvas. Users of WP Multilang Press: see the FAQ for the safe switch order. Also security hardening and English source strings with a bundled Russian translation.

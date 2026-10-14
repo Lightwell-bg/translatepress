@@ -10,10 +10,12 @@ msgstr ""
 "X-Domain: lingocanvas\n"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: language code.
 msgid "The flag file for language \"%s\" failed to upload. Please try again."
 msgstr "Файл флага для языка «%s» не загрузился — попробуйте ещё раз."
 
 #: src/Admin/SettingsPage.php
+#. translators: 1: language code, 2: maximum file size in kilobytes
 msgid "The flag for language \"%1$s\" was not saved: an SVG file up to %2$d KB is required. The plugin does not accept other formats."
 msgstr "Флаг для языка «%1$s» не сохранён: нужен файл SVG размером до %2$d КБ. Другие форматы плагин не принимает."
 
@@ -46,6 +48,7 @@ msgid "Could not enable posts"
 msgstr "Не удалось включить записи"
 
 #: src/Admin/SettingsPage.php
+#. translators: %d: number of posts enabled by the click.
 msgid "Posts enabled: %d"
 msgstr "Включено записей: %d"
 
@@ -60,6 +63,7 @@ msgid "Languages"
 msgstr "Языки"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: link to permalink settings
 msgid "LingoCanvas requires pretty permalinks. Open %s and choose any structure except \"Plain\"."
 msgstr "LingoCanvas требует «красивые» постоянные ссылки. Откройте %s и выберите любую структуру, кроме «Простые»."
 
@@ -72,14 +76,17 @@ msgid "You do not have permission to change these settings."
 msgstr "Недостаточно прав для изменения настроек."
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: language name.
 msgid "Currently shown in %s — posts and pages:"
 msgstr "Сейчас показано на %s — записей и страниц:"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: language name.
 msgid "Enable all posts fully translated into %s"
 msgstr "Включить все полностью переведённые на %s"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: language name.
 msgid "No posts are enabled for %s — the language will be empty after saving."
 msgstr "На %s не включено ни одной записи — после сохранения язык будет пустым."
 
@@ -172,6 +179,7 @@ msgid "The order of languages in the switcher follows the order of rows in the t
 msgstr "Порядок языков в переключателе задаётся порядком строк в таблице выше — переставьте их стрелками слева."
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: path to the flags directory
 msgid "The flag is taken from the file %s, named by the language code from the first column. If there is no file, the emoji entered by hand is shown, and if there is none, the language code. More about flags is in \"Help\" at the top right."
 msgstr "Флаг берётся из файла %s — по коду языка из первой колонки. Если файла нет, показывается вписанный вручную emoji, а если нет и его — код языка. Подробнее о флагах — в «Помощь» справа вверху."
 
@@ -278,6 +286,7 @@ msgid "Delete the saved key"
 msgstr "Удалить сохранённый ключ"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: link to OpenAI API keys page
 msgid "Stored in the site database, not in files. Get a key: %s."
 msgstr "Хранится в базе данных сайта, не в файлах. Взять ключ: %s."
 
@@ -321,14 +330,17 @@ msgid "Save"
 msgstr "Сохранить"
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: constant name
 msgid "The value is set in wp-config.php (%s); the field above is not used."
 msgstr "Значение задано в wp-config.php (%s) — поле выше не используется."
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: constant name
 msgid "The key is set in wp-config.php (%s); the field below is not used."
 msgstr "Ключ задан в wp-config.php (%s) — поле ниже не используется."
 
 #: src/Admin/SettingsPage.php
+#. translators: %s: last 4 characters of the saved key
 msgid "The key is stored in the database and survives plugin updates. Ends with \"%s\"."
 msgstr "Ключ хранится в базе данных — переживает обновление плагина. Заканчивается на «%s»."
 
@@ -555,6 +567,7 @@ msgid "Upload a flag right here: in the \"Flag\" column click \"Choose file\" in
 msgstr "Флаг загружается прямо здесь: в колонке «Флаг» нажмите «Выберите файл» в нужной строке и сохраните. Имя файла значения не имеет — плагин сам положит его под кодом языка из первой колонки."
 
 #: src/Admin/HelpTabs.php
+#. translators: %s: link to the flag-icons repository
 msgid "Where to get them: %s is a ready-made set of all flags (MIT license). The ones you need are in the flags/4x3 folder; you do not have to download the whole set: open the file you need and save it."
 msgstr "Где взять: %s — готовый набор всех флагов (лицензия MIT). Нужные лежат в папке flags/4x3, качать весь набор не обязательно: откройте нужный файл и сохраните его к себе."
 
@@ -799,10 +812,12 @@ msgid "Paragraph merged. Refreshing the preview…"
 msgstr "Абзац объединён. Обновляю предпросмотр…"
 
 #: src/Admin/EditorPage.php
+#. translators: %s: text domain, e.g. woocommerce.
 msgid "This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab."
 msgstr "Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс»."
 
 #: src/Admin/EditorPage.php
+#. translators: %d: link number inside the block.
 msgid "Link #%d"
 msgstr "Ссылка №%d"
 
@@ -1016,6 +1031,7 @@ msgid "Fully translated"
 msgstr "Переведено полностью"
 
 #: src/Admin/EditorPage.php
+#. translators: %d: percent of strings translated.
 msgid "%d%% translated"
 msgstr "Переведено на %d%%"
 
@@ -1028,6 +1044,7 @@ msgid "This page has no strings yet"
 msgstr "Строк этой страницы пока нет"
 
 #: src/Admin/EditorPage.php
+#. translators: %s: language name.
 msgid "Show this page in %s"
 msgstr "Показывать эту страницу на %s"
 
@@ -1104,13 +1121,13 @@ msgstr "Тип"
 msgid "No strings found."
 msgstr "Строк не найдено."
 
-#. translators: %s: number of strings
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: number of strings
 msgid "Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again."
 msgstr "Удалить %s строк без перевода? Переводы не пострадают; строки вернутся, если вы снова откроете эти страницы."
 
-#. translators: %s: number of strings
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: number of strings
 msgid "Delete strings without a translation (%s)"
 msgstr "Удалить строки без перевода (%s)"
 
@@ -1126,8 +1143,8 @@ msgstr "Убирает только адреса ссылок. Полезно, �
 msgid "Cleans up “Content” and “SEO/GEO” at once — they live in one table. Useful if interface strings collected before the “Interface” tab existed ended up in the list. Translated strings are not deleted; the rest will be collected again."
 msgstr "Чистит «Контент» и «SEO/GEO» разом — они лежат в одной таблице. Полезно, если в список попали строки интерфейса, собранные до появления вкладки «Интерфейс». Переведённое не удаляется, остальное соберётся заново."
 
-#. translators: %s: number of deleted strings
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: number of deleted strings
 msgid "Strings deleted: %s."
 msgstr "Удалено строк: %s."
 
@@ -1190,14 +1207,14 @@ msgstr "* — любые символы: *blog/en/ значит «кончает
 msgid "Show"
 msgstr "Показать"
 
-#. translators: %s: number of strings
 #: src/Admin/StringTranslationPage.php
 #: src/Admin/InterfaceStringsScreen.php
+#. translators: %s: number of strings
 msgid "Strings found: %s"
 msgstr "Найдено строк: %s"
 
-#. translators: %s: language code
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: language code
 msgid "Delete all translations for the language “%s”"
 msgstr "Удалить все переводы языка «%s»"
 
@@ -1205,13 +1222,13 @@ msgstr "Удалить все переводы языка «%s»"
 msgid "Source strings will stay — only translations into this language will be deleted."
 msgstr "Исходные строки останутся — удалятся только переводы на этот язык."
 
-#. translators: 1: language label, 2: language code
 #: src/Admin/StringTranslationPage.php
+#. translators: 1: language label, 2: language code
 msgid "Delete ALL translations for the language “%1$s” (%2$s)? This action cannot be undone."
 msgstr "Удалить ВСЕ переводы языка «%1$s» (%2$s)? Это действие нельзя отменить."
 
-#. translators: 1: comma-separated list of missing fields, 2: link to the settings page
 #: src/Admin/StringTranslationPage.php
+#. translators: 1: comma-separated list of missing fields, 2: link to the settings page
 msgid "The “Translate with AI” button is not available: missing — %1$s. Fill it in on the %2$s page."
 msgstr "Кнопки «Перевести с ИИ» нет: не заполнено — %1$s. Впишите на странице %2$s."
 
@@ -1220,13 +1237,13 @@ msgstr "Кнопки «Перевести с ИИ» нет: не заполне�
 msgid "Multilingual → Languages"
 msgstr "Мультиязычность → Языки"
 
-#. translators: %s: number of deleted translations
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: number of deleted translations
 msgid "Translations deleted: %s."
 msgstr "Удалено переводов: %s."
 
-#. translators: %s: number of strings
 #: src/Admin/StringTranslationPage.php
+#. translators: %s: number of strings.
 msgid "%s string"
 msgid_plural "%s strings"
 msgstr[0] "%s строка"
@@ -1287,10 +1304,12 @@ msgid "Your translation"
 msgstr "Ваш перевод"
 
 #: src/Admin/InterfaceStringsScreen.php
+#. translators: %s: gettext context from _x()
 msgid "Context: %s"
 msgstr "Контекст: %s"
 
 #: src/Admin/InterfaceStringsScreen.php
+#. translators: %d: plural form number
 msgid "Plural form no. %d"
 msgstr "Форма множественного числа №%d"
 
@@ -1327,22 +1346,27 @@ msgid "English is the language of the originals themselves: the interface string
 msgstr "Английский — язык самих оригиналов: строки интерфейса на нём уже написаны, и переводить их не нужно. Список ниже общий для всех языков (он собран там, где перевода не хватало), поэтому у строк стоит «Нет перевода» — на английском это нормально. Переключите язык, чтобы увидеть, где перевод действительно нужен."
 
 #: src/Admin/InterfaceStringsScreen.php
+#. translators: 1: language label, 2: WordPress locale
 msgid "The language pack for \"%1$s\" (%2$s) is not installed. Until it is, WordPress serves the English originals for all interface strings, and collecting them into the dictionary is pointless, so this list is not filled for this language."
 msgstr "Языковой пакет для «%1$s» (%2$s) не установлен. Пока его нет, WordPress отдаёт английские оригиналы вообще всех строк интерфейса, и собирать их в словарь бессмысленно — поэтому этот список для данного языка не пополняется."
 
 #: src/Admin/InterfaceStringsScreen.php
+#. translators: %s: link to the languages settings page
 msgid "Install the pack on the %s page; after that, only what it truly lacks will appear here."
 msgstr "Установите пакет на странице %s — после этого сюда попадёт только то, чего в нём действительно не хватает."
 
 #: src/Admin/PostListLanguages.php
+#. translators: %s: language name.
 msgid "Show on language: %s"
 msgstr "Показывать на языке: %s"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %s: language name.
 msgid "Hide on language: %s"
 msgstr "Скрыть на языке: %s"
 
 #: src/Admin/PostListLanguages.php
+#. translators: 1: "Shown" or "Hidden", 2: language code, 3: number of posts with the noun
 msgid "%1$s on %2$s: %3$s"
 msgstr "%1$s на %2$s: %3$s"
 
@@ -1355,6 +1379,7 @@ msgid "Hidden"
 msgstr "Скрыто"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %d: number of posts.
 msgid "%d post"
 msgid_plural "%d posts"
 msgstr[0] "%d запись"
@@ -1362,6 +1387,7 @@ msgstr[1] "%d записи"
 msgstr[2] "%d записей"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %d: number of posts that were skipped.
 msgid "(skipped, no permission or unsuitable post type: %d)"
 msgstr "(пропущено, нет прав или тип не подходит: %d)"
 
@@ -1370,15 +1396,18 @@ msgid "Translation: all"
 msgstr "Перевод: все"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %s: language name.
 msgid "Not fully translated: %s"
 msgstr "Не переведено полностью: %s"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %s: language name
 msgid "Hidden on %s"
 msgstr "Скрыто на %s"
 
 #: src/Admin/PostListLanguages.php
 #: src/Frontend/VisibilityAdminBar.php
+#. translators: %s: language code.
 msgid "Shown on %s"
 msgstr "Показано на %s"
 
@@ -1399,6 +1428,7 @@ msgid "on site"
 msgstr "на сайте"
 
 #: src/Admin/PostListLanguages.php
+#. translators: 1: translated count, 2: total count
 msgid "Strings translated: %1$d of %2$d"
 msgstr "Переведено строк: %1$d из %2$d"
 
@@ -1407,6 +1437,7 @@ msgid "no translation"
 msgstr "нет перевода"
 
 #: src/Admin/PostListLanguages.php
+#. translators: %d: total number of strings
 msgid "Strings: %d, translated: 0"
 msgstr "Строк: %d, переведено: 0"
 
@@ -1468,14 +1499,17 @@ msgid "Cannot reach the site. Please try again."
 msgstr "Нет связи с сайтом. Попробуйте ещё раз."
 
 #: src/Frontend/VisibilityAdminBar.php
+#. translators: %s: language code.
 msgid "Hidden on %s: visitors cannot see it"
 msgstr "Скрыто на %s — посетители не видят"
 
 #: src/Frontend/VisibilityAdminBar.php
+#. translators: %s: language code.
 msgid "Hide on %s"
 msgstr "Скрыть на %s"
 
 #: src/Frontend/VisibilityAdminBar.php
+#. translators: %s: language code.
 msgid "Show on %s"
 msgstr "Показать на %s"
 
@@ -1532,10 +1566,12 @@ msgid "WordPress (core)"
 msgstr "WordPress (ядро)"
 
 #: src/I18n/DomainLabel.php
+#. translators: %s: theme name.
 msgid "Theme: %s"
 msgstr "Тема: %s"
 
 #: src/I18n/DomainLabel.php
+#. translators: %s: plugin name.
 msgid "Plugin: %s"
 msgstr "Плагин: %s"
 
@@ -1552,6 +1588,7 @@ msgid "enter the key in the plugin settings"
 msgstr "укажите ключ в настройках плагина"
 
 #: src/Translation/ProviderFactory.php
+#. translators: %s: what to configure, e.g. "enter the key in the plugin settings"
 msgid "AI translation is not set up: %s."
 msgstr "Перевод с ИИ не настроен: %s."
 
@@ -1576,6 +1613,7 @@ msgstr "Дневной лимит символов на перевод исче�
 
 #: src/Rest/TranslationsController.php
 #: src/Rest/PostTranslationController.php
+#. translators: %s: reason returned by the provider.
 msgid "Could not get a translation from OpenAI: %s"
 msgstr "Не удалось получить перевод от OpenAI: %s"
 
@@ -1601,6 +1639,7 @@ msgid "These strings were not found. Refresh the list and try again."
 msgstr "Эти строки не найдены — обновите список и попробуйте снова."
 
 #: src/Rest/PostTranslationController.php
+#. translators: %s: list of validation error codes
 msgid "Could not save: the batch validation failed (%s). No translation was written."
 msgstr "Не удалось сохранить: проверка пакета не прошла (%s). Ни один перевод не записан."
 
@@ -1613,6 +1652,7 @@ msgid "Post not found."
 msgstr "Запись не найдена."
 
 #: src/Rest/PostVisibilityController.php
+#. translators: %d: maximum number of ids
 msgid "Pass an ids list: from 1 to %d positive integers."
 msgstr "Передайте список ids: от 1 до %d положительных целых чисел."
 
@@ -1621,6 +1661,7 @@ msgid "The visible parameter must be true or false."
 msgstr "Параметр visible должен быть true или false."
 
 #: src/Rest/PostVisibilityController.php
+#. translators: %d: post ID
 msgid "Post %d was not found or its type cannot be enabled for a language."
 msgstr "Запись %d не найдена или её тип нельзя включать для языка."
 
@@ -1661,18 +1702,22 @@ msgid "The API address did not return the list of models in the expected format.
 msgstr "Адрес API не вернул список моделей в ожидаемом формате."
 
 #: src/Settings/Settings.php
+#. translators: %s: language code entered by the user
 msgid "The language code \"%s\" is not valid: 2–8 Latin letters and hyphen-separated subtags are allowed."
 msgstr "Код языка «%s» недопустим: разрешены 2–8 латинских букв и субтеги через дефис."
 
 #: src/Settings/Settings.php
+#. translators: %s: URL slug entered by the user
 msgid "The URL slug \"%s\" is not valid: lowercase Latin letters, digits and hyphens are allowed."
 msgstr "URL-слаг «%s» недопустим: разрешены строчные латинские буквы, цифры и дефис."
 
 #: src/Settings/Settings.php
+#. translators: %s: URL slug entered by the user
 msgid "The URL slug \"%s\" is already used by another language."
 msgstr "URL-слаг «%s» уже занят другим языком."
 
 #: src/Settings/Settings.php
+#. translators: %s: WordPress locale entered by the user
 msgid "The WordPress locale \"%s\" is not valid: Latin letters, digits and underscores are allowed, for example en_US."
 msgstr "Локаль WordPress «%s» недопустима: разрешены латинские буквы, цифры и подчёркивание, например en_US."
 

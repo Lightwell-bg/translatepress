@@ -184,10 +184,8 @@ final class EditorPage implements Hookable {
 					'confirmDelete'     => __( 'Delete the translation of this string?', 'lingocanvas' ),
 					'confirmBlock'      => __( 'Translate the whole paragraph as one piece? Separate translations of its parts will no longer be applied.', 'lingocanvas' ),
 					'blockCreated'      => __( 'Paragraph merged. Refreshing the preview…', 'lingocanvas' ),
-					/* translators: %s: text domain, e.g. woocommerce */
-				'gettextNotice'     => __( 'This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab.', 'lingocanvas' ),
-				/* translators: %d: link number inside the block */
-				'linkLabel'         => __( 'Link #%d', 'lingocanvas' ),
+				'gettextNotice'     => /* translators: %s: text domain, e.g. woocommerce. */ __( 'This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab.', 'lingocanvas' ),
+				'linkLabel'         => /* translators: %d: link number inside the block. */ __( 'Link #%d', 'lingocanvas' ),
 				'collapsePanel'     => __( 'Collapse panel', 'lingocanvas' ),
 				'expandPanel'       => __( 'Expand panel', 'lingocanvas' ),
 				'attribute'         => __( 'Attribute', 'lingocanvas' ),
@@ -577,8 +575,7 @@ final class EditorPage implements Hookable {
 					$progress = __( 'Fully translated', 'lingocanvas' );
 					break;
 				case PostListLanguages::STATE_PARTIAL:
-					/* translators: %d: percent of strings translated */
-					$progress = sprintf( __( '%d%% translated', 'lingocanvas' ), $pct );
+					$progress = sprintf( /* translators: %d: percent of strings translated. */ __( '%d%% translated', 'lingocanvas' ), $pct );
 					break;
 				case PostListLanguages::STATE_NONE:
 					$progress = __( 'Nothing translated yet', 'lingocanvas' );
@@ -593,8 +590,7 @@ final class EditorPage implements Hookable {
 				$postId,
 				$language->locale,
 				$this->visibility->isVisible( $postId, $language->locale ),
-				/* translators: %s: language name */
-				sprintf( __( 'Show this page in %s', 'lingocanvas' ), $language->label )
+				sprintf( /* translators: %s: language name. */ __( 'Show this page in %s', 'lingocanvas' ), $language->label )
 			);
 
 		if ( '' !== $progress ) {

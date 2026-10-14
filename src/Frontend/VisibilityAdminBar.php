@@ -119,10 +119,8 @@ final class VisibilityAdminBar implements Hookable {
 				'id'    => self::NODE_ID,
 				'title' => esc_html(
 					$visible
-						/* translators: %s: language code */
-						? sprintf( __( 'Shown on %s', 'lingocanvas' ), $code )
-						/* translators: %s: language code */
-						: sprintf( __( 'Hidden on %s: visitors cannot see it', 'lingocanvas' ), $code )
+						? sprintf( /* translators: %s: language code. */ __( 'Shown on %s', 'lingocanvas' ), $code )
+						: sprintf( /* translators: %s: language code. */ __( 'Hidden on %s: visitors cannot see it', 'lingocanvas' ), $code )
 				),
 				'meta'  => array( 'class' => $visible ? 'mlp-vis-shown' : 'mlp-vis-hidden' ),
 			)
@@ -134,10 +132,8 @@ final class VisibilityAdminBar implements Hookable {
 				'parent' => self::NODE_ID,
 				'title'  => esc_html(
 					$visible
-						/* translators: %s: language code */
-						? sprintf( __( 'Hide on %s', 'lingocanvas' ), $code )
-						/* translators: %s: language code */
-						: sprintf( __( 'Show on %s', 'lingocanvas' ), $code )
+						? sprintf( /* translators: %s: language code. */ __( 'Hide on %s', 'lingocanvas' ), $code )
+						: sprintf( /* translators: %s: language code. */ __( 'Show on %s', 'lingocanvas' ), $code )
 				),
 				'href'   => '#mlp-visibility',
 			)

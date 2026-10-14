@@ -12,6 +12,7 @@ namespace WpMlp\Admin;
 use WpMlp\I18n\DomainLabel;
 use WpMlp\I18n\GettextKey;
 use WpMlp\I18n\LanguagePacks;
+use WpMlp\I18n\OfficialTranslation;
 use WpMlp\Settings\Language;
 use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\TranslationStatus;
@@ -30,8 +31,8 @@ defined( 'ABSPATH' ) || exit;
  * нашу базу не пишутся вовсе (см. I18n\GettextRegistry), поэтому в списке
  * их обычно нет. Колонка всё равно нужна: пакет могли установить ПОЗЖЕ,
  * чем строка попала в словарь, — тогда официальный перевод у неё
- * появляется, и его видно рядом со своим. Ищется он живым вызовом
- * `translate()` под целевой локалью, а не в базе.
+ * появляется, и его видно рядом со своим. Ищется он под целевой локалью
+ * в объекте переводов домена (I18n\OfficialTranslation), а не в базе.
  */
 final class InterfaceStringsScreen {
 
@@ -216,26 +217,32 @@ final class InterfaceStringsScreen {
 	 * @return array<int, string> Идентификатор строки => официальный перевод.
 	 */
 	private function officialTranslations( array $items, Language $language ): array {
-		if ( array() === $items || ! function_exists( 'switch_to_locale' ) ) {
+		if ( array() === $items || ! function_exists( 'switch_to_locale' ) || ! function_exists( 'get_translations_for_domain' ) ) {
 			return array();
 		}
 
 		$switched = switch_to_locale( $language->wpLocale );
 		$result   = array();
+		$objects  = array();
 
 		foreach ( $items as $row ) {
-			$msgid   = (string) $row['source_text'];
-			$domain  = (string) ( $row['domain'] ?? '' );
-			$domain  = '' !== $domain ? $domain : DomainLabel::CORE;
-			$context = (string) ( $row['gettext_context'] ?? '' );
+			$domain = (string) ( $row['domain'] ?? '' );
+			$domain = '' !== $domain ? $domain : DomainLabel::CORE;
 
-			$translated = '' !== $context
-				? translate_with_gettext_context( $msgid, $context, $domain )
-				: translate( $msgid, $domain );
+			// Объект переводов домена — сами загруженные файлы, без фильтров gettext
+			// (иначе вместо официального перевода показалось бы наше же переопределение).
+			$objects[ $domain ] ??= get_translations_for_domain( $domain );
 
-			// Вернулся оригинал — значит в пакете этой строки нет.
-			if ( $translated !== $msgid ) {
-				$result[ (int) $row['id'] ] = (string) $translated;
+			$pluralKey  = isset( $row['plural_key'] ) && null !== $row['plural_key'] ? (int) $row['plural_key'] : null;
+			$translated = OfficialTranslation::lookup(
+				$objects[ $domain ],
+				(string) $row['source_text'],
+				(string) ( $row['gettext_context'] ?? '' ),
+				$pluralKey
+			);
+
+			if ( null !== $translated ) {
+				$result[ (int) $row['id'] ] = $translated;
 			}
 		}
 

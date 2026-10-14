@@ -393,8 +393,7 @@ final class PostTranslationController implements Hookable {
 			return new WP_Error(
 				'mlp_translate_failed',
 				null !== $detail
-					/* translators: %s: причина, которую вернул провайдер */
-					? sprintf( __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
+					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
 					: __( 'Could not get a translation from OpenAI.', 'lingocanvas' ),
 				array( 'status' => 502 )
 			);

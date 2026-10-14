@@ -132,8 +132,7 @@ final class SettingsPage implements Hookable {
 	 */
 	private function storeFlagFile( string $locale, array $file ): array {
 		if ( UPLOAD_ERR_OK !== ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
-			/* translators: %s: language code */
-			return array( sprintf( __( 'The flag file for language "%s" failed to upload. Please try again.', 'lingocanvas' ), $locale ) );
+			return array( sprintf( /* translators: %s: language code. */ __( 'The flag file for language "%s" failed to upload. Please try again.', 'lingocanvas' ), $locale ) );
 		}
 
 		$path = (string) ( $file['tmp_name'] ?? '' );
@@ -144,8 +143,7 @@ final class SettingsPage implements Hookable {
 		 * можно было бы переписать в картинку флага.
 		 */
 		if ( '' === $path || ! is_uploaded_file( $path ) ) {
-			/* translators: %s: language code */
-			return array( sprintf( __( 'The flag file for language "%s" failed to upload. Please try again.', 'lingocanvas' ), $locale ) );
+			return array( sprintf( /* translators: %s: language code. */ __( 'The flag file for language "%s" failed to upload. Please try again.', 'lingocanvas' ), $locale ) );
 		}
 
 		$content = (string) file_get_contents( $path );
@@ -202,8 +200,7 @@ final class SettingsPage implements Hookable {
 					'error'         => __( 'Could not load the model list', 'lingocanvas' ),
 					'enabling'      => __( 'Enabling…', 'lingocanvas' ),
 					'enableFailed'  => __( 'Could not enable posts', 'lingocanvas' ),
-					/* translators: %d: number of posts enabled by the click */
-					'enabledResult' => __( 'Posts enabled: %d', 'lingocanvas' ),
+					'enabledResult' => /* translators: %d: number of posts enabled by the click. */ __( 'Posts enabled: %d', 'lingocanvas' ),
 				),
 			)
 		);
@@ -341,17 +338,14 @@ final class SettingsPage implements Hookable {
 				'<p class="mlp-vis-lang" data-locale="%1$s" data-count="%2$d">%3$s <strong class="mlp-vis-count">%2$d</strong> <button type="button" class="button mlp-enable-translated" data-locale="%1$s">%4$s</button> <span class="mlp-vis-msg" role="status" aria-live="polite"></span></p>',
 				esc_attr( $language->locale ),
 				absint( $count ),
-				/* translators: %s: language name */
-				esc_html( sprintf( __( 'Currently shown in %s — posts and pages:', 'lingocanvas' ), $language->label ) ),
-				/* translators: %s: language name */
-				esc_html( sprintf( __( 'Enable all posts fully translated into %s', 'lingocanvas' ), $language->label ) )
+				esc_html( sprintf( /* translators: %s: language name. */ __( 'Currently shown in %s — posts and pages:', 'lingocanvas' ), $language->label ) ),
+				esc_html( sprintf( /* translators: %s: language name. */ __( 'Enable all posts fully translated into %s', 'lingocanvas' ), $language->label ) )
 			);
 
 			printf(
 				'<p class="notice notice-warning inline mlp-vis-warning" data-locale="%1$s" hidden="hidden">%2$s</p>',
 				esc_attr( $language->locale ),
-				/* translators: %s: language name */
-				esc_html( sprintf( __( 'No posts are enabled for %s — the language will be empty after saving.', 'lingocanvas' ), $language->label ) )
+				esc_html( sprintf( /* translators: %s: language name. */ __( 'No posts are enabled for %s — the language will be empty after saving.', 'lingocanvas' ), $language->label ) )
 			);
 		}
 

@@ -126,10 +126,43 @@ final class LanguageCatalog {
 		$flag = '';
 
 		foreach ( str_split( $country ) as $letter ) {
-			$flag .= mb_chr( 0x1F1E6 + ord( $letter ) - 65, 'UTF-8' );
+			$flag .= self::utf8Char( 0x1F1E6 + ord( $letter ) - 65 );
 		}
 
 		return $flag;
+	}
+
+	/**
+	 * Символ Unicode в UTF-8 по номеру кодовой позиции.
+	 *
+	 * Функцию mbstring «символ по коду» не используем: расширение mbstring
+	 * необязательно, а её полифил появился в WordPress только в 7.1 — на 6.4–7.0 без mbstring
+	 * вызов привёл бы к фатальной ошибке. Суррогаты и числа вне Unicode дают
+	 * пустую строку.
+	 *
+	 * @param int $codePoint Кодовая позиция.
+	 */
+	public static function utf8Char( int $codePoint ): string {
+		if ( $codePoint < 0 || $codePoint > 0x10FFFF || ( $codePoint >= 0xD800 && $codePoint <= 0xDFFF ) ) {
+			return '';
+		}
+
+		if ( $codePoint < 0x80 ) {
+			return chr( $codePoint );
+		}
+
+		if ( $codePoint < 0x800 ) {
+			return chr( 0xC0 | ( $codePoint >> 6 ) ) . chr( 0x80 | ( $codePoint & 0x3F ) );
+		}
+
+		if ( $codePoint < 0x10000 ) {
+			return chr( 0xE0 | ( $codePoint >> 12 ) ) . chr( 0x80 | ( ( $codePoint >> 6 ) & 0x3F ) ) . chr( 0x80 | ( $codePoint & 0x3F ) );
+		}
+
+		return chr( 0xF0 | ( $codePoint >> 18 ) )
+			. chr( 0x80 | ( ( $codePoint >> 12 ) & 0x3F ) )
+			. chr( 0x80 | ( ( $codePoint >> 6 ) & 0x3F ) )
+			. chr( 0x80 | ( $codePoint & 0x3F ) );
 	}
 
 	/**
