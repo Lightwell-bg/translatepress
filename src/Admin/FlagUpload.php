@@ -60,7 +60,7 @@ final class FlagUpload {
 	/**
 	 * Атрибуты со ссылками: в них прячется `javascript:`.
 	 */
-	private const URL_ATTRIBUTES = array( 'href', 'xlink:href', 'src', 'from', 'to', 'values' );
+	private const URL_ATTRIBUTES = array( 'href', 'src', 'from', 'to', 'values' );
 
 	/**
 	 * Чистит содержимое SVG. Чистая функция.
@@ -134,7 +134,10 @@ final class FlagUpload {
 				continue;
 			}
 
-			if ( in_array( strtolower( $child->nodeName ), self::FORBIDDEN_TAGS, true ) ) {
+			// По localName: `<x:script xmlns:x="…svg">` — тот же script, что и без префикса.
+			$tag = strtolower( '' !== $child->localName ? $child->localName : $child->nodeName );
+
+			if ( in_array( $tag, self::FORBIDDEN_TAGS, true ) ) {
 				$node->removeChild( $child );
 
 				continue;
@@ -161,7 +164,12 @@ final class FlagUpload {
 				continue;
 			}
 
-			$name  = strtolower( $attribute->nodeName );
+			/*
+			 * Имя берётся без префикса: `xl:href` с переопределённым префиксом
+			 * xlink — тот же href, а `onload` в любом пространстве имён — тот же
+			 * обработчик.
+			 */
+			$name  = strtolower( '' !== $attribute->localName ? $attribute->localName : $attribute->nodeName );
 			$value = $attribute->nodeValue ?? '';
 
 			// Любой обработчик события: onload, onclick, onmouseover и прочие.
@@ -227,7 +235,17 @@ final class FlagUpload {
 			return false;
 		}
 
-		return false !== file_put_contents( $directory . '/' . $name, $svg );
+		global $wp_filesystem;
+
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		if ( ! WP_Filesystem() || ! is_object( $wp_filesystem ) ) {
+			return false;
+		}
+
+		return (bool) $wp_filesystem->put_contents( $directory . '/' . $name, $svg, FS_CHMOD_FILE );
 	}
 
 	/**
@@ -244,6 +262,12 @@ final class FlagUpload {
 
 		$path = Flags::directoryPath() . '/' . $name;
 
-		return is_file( $path ) && unlink( $path );
+		if ( ! is_file( $path ) ) {
+			return false;
+		}
+
+		wp_delete_file( $path );
+
+		return ! is_file( $path );
 	}
 }

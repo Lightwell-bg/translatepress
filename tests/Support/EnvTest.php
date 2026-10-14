@@ -69,11 +69,8 @@ final class EnvTest extends TestCase {
 	}
 
 	/**
-	 * Значение должно читаться, даже если хостинг запретил putenv().
-	 *
-	 * Раньше get() опирался только на getenv(): при отключённом putenv ключ
-	 * из полностью корректного .env считался ненастроенным, и кнопка перевода
-	 * молча не появлялась в админке.
+	 * Значение читается из собственного хранилища, не попадая в окружение
+	 * процесса (иначе ключ виден через getenv()/phpinfo() всем плагинам).
 	 */
 	public function testValueSurvivesWithoutProcessEnvironment(): void {
 		$path = tempnam( sys_get_temp_dir(), 'mlp' );
@@ -83,9 +80,7 @@ final class EnvTest extends TestCase {
 		Env::reset();
 		Env::load( $path );
 
-		// Имитируем хостинг без putenv: убираем значение из окружения процесса.
-		putenv( 'MLP_TEST_KEY' );
-
+		// Значение не должно утекать в окружение всего PHP-процесса.
 		$this->assertFalse( getenv( 'MLP_TEST_KEY' ) );
 		$this->assertSame( 'secret-value', Env::get( 'MLP_TEST_KEY' ) );
 

@@ -23,6 +23,7 @@ use WpMlp\Storage\UsageTracker;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
+use WpMlp\Support\UrlGuard;
 use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\ProviderFactory;
 use WpMlp\Translation\ProviderInterface;
@@ -295,7 +296,7 @@ final class TranslationsController implements Hookable {
 		$text   = $result[ $hash ] ?? null;
 
 		if ( ! is_string( $text ) || '' === trim( $text ) ) {
-			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->lastError() : null;
+			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->maskedLastError() : null;
 
 			return new WP_Error(
 				'mlp_suggest_failed',
@@ -364,6 +365,18 @@ final class TranslationsController implements Hookable {
 		$text = Segment::KIND_HTML_BLOCK === (string) $source['kind']
 			? BlockSanitizer::sanitize( $text )
 			: wp_strip_all_tags( $text );
+
+		if ( '' !== $text
+			&& Segment::KIND_ATTRIBUTE === (string) $source['kind']
+			&& UrlGuard::looksLikeUrl( (string) ( $source['source_text'] ?? '' ) )
+			&& ! UrlGuard::isSafe( $text )
+		) {
+			return new WP_Error(
+				'mlp_unsafe_url',
+				__( 'The link address uses a protocol that is not allowed (for example javascript: or data:).', 'wp-mlp' ),
+				array( 'status' => 400 )
+			);
+		}
 
 		$status = (string) ( $request->get_param( 'status' ) ?? '' );
 

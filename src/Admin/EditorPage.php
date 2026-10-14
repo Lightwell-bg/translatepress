@@ -630,8 +630,7 @@ final class EditorPage implements Hookable {
 	 * Путь текущей страницы фронтенда без языкового префикса.
 	 */
 	private function currentRelativePath(): string {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение экранируется в add_query_arg/esc_url.
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '/';
 		$path = (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '/' );
 
 		return $this->link->relativePath( $path );

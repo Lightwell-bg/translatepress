@@ -79,6 +79,28 @@ final class OpenAiProvider implements ProviderInterface {
 	}
 
 	/**
+	 * Причина последней ошибки, безопасная для отправки в браузер: ключ API
+	 * (если он каким-то образом попал в текст) заменён на `***`.
+	 */
+	public function maskedLastError(): ?string {
+		return self::maskKey( $this->lastError, $this->apiKey );
+	}
+
+	/**
+	 * Вырезает ключ из текста.
+	 *
+	 * @param string|null $message Текст.
+	 * @param string      $key     Ключ API.
+	 */
+	public static function maskKey( ?string $message, string $key ): ?string {
+		if ( null === $message || '' === $key ) {
+			return $message;
+		}
+
+		return str_replace( $key, '***', $message );
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function supports( string $sourceLocale, string $targetLocale ): bool {
@@ -123,7 +145,7 @@ final class OpenAiProvider implements ProviderInterface {
 		if ( array() === $result ) {
 			// HTTP 200, но модель не вернула то, что было запрошено: либо
 			// ответила текстом вместо JSON, либо не тем набором ключей.
-			$this->lastError = 'модель ответила, но её ответ не удалось разобрать';
+			$this->lastError = 'the model replied, but the reply could not be parsed';
 			$this->log( $this->lastError . ': ' . substr( $body, 0, 500 ) );
 		}
 
@@ -153,6 +175,7 @@ final class OpenAiProvider implements ProviderInterface {
 		 * ошибки это не добавляет.
 		 */
 		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- долгий запрос к OpenAI, запускается явным действием администратора.
 			set_time_limit( ( self::TIMEOUT_SECONDS + self::RETRY_DELAY_SECONDS ) * self::MAX_ATTEMPTS + 10 );
 		}
 
@@ -179,7 +202,7 @@ final class OpenAiProvider implements ProviderInterface {
 			);
 
 			if ( is_wp_error( $response ) ) {
-				$this->lastError = 'сетевая ошибка: ' . $response->get_error_message();
+				$this->lastError = 'network error: ' . $response->get_error_message();
 				$this->log( $this->lastError );
 
 				continue;

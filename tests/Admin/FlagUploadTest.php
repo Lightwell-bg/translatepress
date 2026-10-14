@@ -63,6 +63,21 @@ final class FlagUploadTest extends TestCase {
 				'<svg xmlns="http://www.w3.org/2000/svg"><rect width="9" height="6" style="background:url(javascript:alert(1))"/></svg>',
 				'javascript:',
 			),
+			// Обход через префикс пространства имён у запрещённого элемента.
+			array(
+				'<svg xmlns="http://www.w3.org/2000/svg" xmlns:x="http://www.w3.org/2000/svg"><x:script>alert(1)</x:script><rect width="9" height="6"/></svg>',
+				'script',
+			),
+			// Обход через переопределённый префикс xlink.
+			array(
+				'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xl="http://www.w3.org/1999/xlink"><a xl:href="javascript:alert(1)"><rect width="9" height="6"/></a></svg>',
+				'javascript:',
+			),
+			// Обработчик события в чужом пространстве имён.
+			array(
+				'<svg xmlns="http://www.w3.org/2000/svg" xmlns:q="urn:q"><rect width="9" height="6" q:onload="alert(1)"/></svg>',
+				'onload',
+			),
 		);
 	}
 

@@ -90,7 +90,14 @@ final class EditorPostLinks implements Hookable {
 			return;
 		}
 
-		$posted = isset( $_POST[ self::FIELD ] ) && is_array( $_POST[ self::FIELD ] ) ? wp_unslash( $_POST[ self::FIELD ] ) : array();
+		$posted = array();
+
+		if ( isset( $_POST[ self::FIELD ] ) && is_array( $_POST[ self::FIELD ] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- каждый ключ и значение санируются в цикле ниже.
+			foreach ( wp_unslash( $_POST[ self::FIELD ] ) as $postedLocale => $postedFlag ) {
+				$posted[ sanitize_text_field( (string) $postedLocale ) ] = ! empty( $postedFlag );
+			}
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		unset( $post );

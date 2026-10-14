@@ -291,6 +291,17 @@ final class Settings {
 			return false;
 		}
 
+		/*
+		 * Поисковые запросы, 404, фиды и предпросмотр порождают произвольный
+		 * текст (строка поиска, мусорный адрес), которого нет в контенте сайта:
+		 * по ним посетитель мог бы наполнять таблицу строк чем угодно.
+		 */
+		foreach ( array( 'is_search', 'is_404', 'is_feed', 'is_preview' ) as $conditional ) {
+			if ( function_exists( $conditional ) && $conditional() ) {
+				return false;
+			}
+		}
+
 		return $this->isDiscoveryFromVisitorsEnabled() || current_user_can( 'manage_options' );
 	}
 

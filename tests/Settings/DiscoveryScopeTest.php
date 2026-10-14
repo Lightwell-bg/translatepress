@@ -69,6 +69,34 @@ final class DiscoveryScopeTest extends TestCase {
 		$this->assertTrue( $settings->shouldDiscoverForCurrentUser() );
 	}
 
+	/**
+	 * Поиск, 404, фид и предпросмотр не пополняют список строк даже при
+	 * включённом сборе со страниц посетителей.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function noDiscoveryRequests(): array {
+		return array(
+			'search'  => array( 'is_search' ),
+			'404'     => array( 'is_404' ),
+			'feed'    => array( 'is_feed' ),
+			'preview' => array( 'is_preview' ),
+		);
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider( 'noDiscoveryRequests' )]
+	public function testSpecialRequestsAreNeverCollected( string $flag ): void {
+		$settings = $this->settings( array( 'discover_strings' => true, 'discover_from_visitors' => true ), true );
+
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( $flag => true ) ) );
+
+		$this->assertFalse( $settings->shouldDiscoverForCurrentUser() );
+
+		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( $flag => false ) ) );
+
+		$this->assertTrue( $settings->shouldDiscoverForCurrentUser() );
+	}
+
 	public function testVisitorIsCollectedWhenFlagIsOn(): void {
 		$settings = $this->settings( array( 'discover_strings' => true, 'discover_from_visitors' => true ), false );
 

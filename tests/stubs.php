@@ -118,6 +118,35 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_allowed_protocols' ) ) {
+	/**
+	 * Список схем ядра по умолчанию.
+	 *
+	 * @return list<string>
+	 */
+	function wp_allowed_protocols(): array {
+		return array( 'http', 'https', 'ftp', 'ftps', 'mailto', 'news', 'irc', 'irc6', 'ircs', 'gopher', 'nntp', 'feed', 'telnet', 'mms', 'rtsp', 'sms', 'svn', 'tel', 'fax', 'xmpp', 'webcal', 'urn' );
+	}
+}
+
+if ( ! function_exists( 'wp_kses_bad_protocol' ) ) {
+	/**
+	 * Упрощённая копия ядра: срезает недопустимую схему в начале строки.
+	 *
+	 * @param string       $content           Адрес.
+	 * @param list<string> $allowed_protocols Допустимые схемы.
+	 */
+	function wp_kses_bad_protocol( string $content, array $allowed_protocols ): string {
+		$content = (string) preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $content );
+
+		if ( 1 === preg_match( '/^\s*([A-Za-z][A-Za-z0-9+.\-]*):/', $content, $m ) && ! in_array( strtolower( $m[1] ), $allowed_protocols, true ) ) {
+			return (string) preg_replace( '/^\s*[A-Za-z][A-Za-z0-9+.\-]*:/', '', $content );
+		}
+
+		return $content;
+	}
+}
+
 /**
  * Учёт вызовов do_action() — на время одного теста.
  *
@@ -691,6 +720,18 @@ if ( ! function_exists( 'wp_verify_nonce' ) ) {
 if ( ! function_exists( 'is_404' ) ) {
 	function is_404(): bool {
 		return (bool) ( wp_mlp_test_wp()['is_404'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'is_feed' ) ) {
+	function is_feed(): bool {
+		return (bool) ( wp_mlp_test_wp()['is_feed'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'is_preview' ) ) {
+	function is_preview(): bool {
+		return (bool) ( wp_mlp_test_wp()['is_preview'] ?? false );
 	}
 }
 

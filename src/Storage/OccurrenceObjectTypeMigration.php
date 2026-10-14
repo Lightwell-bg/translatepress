@@ -204,8 +204,9 @@ final class OccurrenceObjectTypeMigration {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( '[wp-mlp] OccurrenceObjectTypeMigration: ' . ( '' !== $error ? $error : 'запрос вернул false' ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[wp-mlp] OccurrenceObjectTypeMigration: ' . ( '' !== $error ? $error : 'query returned false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 
 		return true;
 	}

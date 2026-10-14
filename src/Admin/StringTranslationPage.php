@@ -456,8 +456,7 @@ final class StringTranslationPage implements Hookable {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение приводится к целому.
-		$deleted = absint( $_GET['mlp-cleaned'] );
+		$deleted = absint( wp_unslash( $_GET['mlp-cleaned'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
 
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
@@ -774,8 +773,7 @@ final class StringTranslationPage implements Hookable {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение приводится к целому.
-		$deleted = absint( $_GET['mlp-purged'] );
+		$deleted = absint( wp_unslash( $_GET['mlp-purged'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
 
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
@@ -1011,7 +1009,7 @@ final class StringTranslationPage implements Hookable {
 		$scope  = isset( $_GET['mlp_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_scope'] ) ) : '';
 		$type   = isset( $_GET['mlp_type'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_type'] ) ) : '';
 		$domain = isset( $_GET['mlp_domain'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_domain'] ) ) : '';
-		$page   = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
+		$page   = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! isset( $secondary[ $locale ] ) ) {

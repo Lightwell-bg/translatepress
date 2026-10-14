@@ -29,10 +29,9 @@ final class Env {
 	/**
 	 * Значения, прочитанные из файлов.
 	 *
-	 * Собственное хранилище, а не только `putenv()`: на многих shared-хостингах
-	 * `putenv` отключён через `disable_functions`, и тогда `getenv()` вернул бы
-	 * пустоту даже при полностью корректном `.env`. Из-за этого ключ считался
-	 * бы ненастроенным, а кнопка перевода молча не появлялась.
+	 * Значения живут только в этом хранилище и в окружение процесса не
+	 * копируются: иначе секрет (ключ OpenAI) утёк бы в `getenv()`, `phpinfo()`
+	 * и дочерние процессы всего PHP-процесса, включая чужие плагины.
 	 *
 	 * @var array<string, string>
 	 */
@@ -93,12 +92,6 @@ final class Env {
 
 			self::$values[ $key ]  = $value;
 			self::$sources[ $key ] = $path;
-
-			// Дублируем в окружение процесса, если хостинг это позволяет:
-			// так значение увидит и сторонний код, читающий getenv() напрямую.
-			if ( function_exists( 'putenv' ) ) {
-				putenv( $key . '=' . $value );
-			}
 		}
 	}
 
@@ -111,8 +104,8 @@ final class Env {
 	 */
 	public static function sourceOf( string $key ): ?string {
 		if ( isset( self::$sources[ $key ] ) ) {
-			// Если кто-то подменил значение в окружении процесса (putenv из другого
-			// плагина), get() вернёт уже его — источник должен это отражать.
+			// Если у сервера задана своя переменная с другим значением, get()
+			// вернёт именно её — источник должен это отражать.
 			$current = getenv( $key );
 
 			if ( is_string( $current ) && '' !== $current && ( self::$values[ $key ] ?? '' ) !== $current ) {
@@ -182,7 +175,7 @@ final class Env {
 	 * @param string $default Значение по умолчанию.
 	 */
 	public static function get( string $key, string $default = '' ): string {
-		// Реальное окружение сервера приоритетнее файла.
+		// Реальное окружение сервера (getenv) приоритетнее файла.
 		$fromEnv = getenv( $key );
 
 		if ( is_string( $fromEnv ) && '' !== $fromEnv ) {
@@ -196,20 +189,11 @@ final class Env {
 
 	/**
 	 * Сбрасывает состояние. Нужен только тестам.
-	 *
-	 * Убирает и то, что было записано в окружение процесса: иначе значения
-	 * пережили бы «сброс» и протекли в следующий тест через getenv().
 	 */
 	public static function reset(): void {
-		if ( function_exists( 'putenv' ) ) {
-			foreach ( array_keys( self::$values ) as $key ) {
-				putenv( (string) $key );
-			}
-		}
-
-		self::$loaded  = array();
-		self::$values  = array();
-		self::$sources = array();
+		self::$loaded    = array();
+		self::$values    = array();
+		self::$sources   = array();
 		self::$unguarded = array();
 	}
 

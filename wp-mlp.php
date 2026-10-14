@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name:       WP Multilang Press
- * Plugin URI:        https://example.com/wp-mlp
- * Description:       Мультиязычность по модели TranslatePress: одна запись WordPress, N языковых URL, переводы строк в собственных таблицах. Без дублирования постов.
+ * Plugin URI:        https://github.com/Lightwell-bg/translatepress
+ * Description:       Multilingual websites without duplicate posts: one WordPress post, a URL per language, string translations stored in dedicated tables, optional AI translation via OpenAI.
  * Version:           0.3.12
  * Requires at least: 6.4
  * Requires PHP:      8.1
- * Author:            —
+ * Author:            Lightwell
+ * Author URI:        https://github.com/Lightwell-bg
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-mlp
@@ -68,7 +69,7 @@ if ( version_compare( PHP_VERSION, WP_MLP_MIN_PHP, '<' ) ) {
 				esc_html(
 					sprintf(
 						/* translators: 1: required PHP version, 2: current PHP version */
-						__( 'WP Multilang Press требует PHP %1$s или новее. На сервере установлен PHP %2$s — плагин отключён.', 'wp-mlp' ),
+						__( 'WP Multilang Press requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled.', 'wp-mlp' ),
 						WP_MLP_MIN_PHP,
 						PHP_VERSION
 					)

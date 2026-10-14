@@ -13,6 +13,7 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WpMlp\Support\Hookable;
+use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\ProviderFactory;
 
 /**
@@ -209,7 +210,7 @@ final class OpenAiModelsController implements Hookable {
 	 * @param string $key     Ключ, который не должен попасть в ответ.
 	 */
 	private function failure( string $message, string $key ): WP_Error {
-		$message = str_replace( $key, '***', $message );
+		$message = (string) OpenAiProvider::maskKey( $message, $key );
 		$message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 300 ) : substr( $message, 0, 300 );
 
 		return new WP_Error( 'mlp_openai_models', $message, array( 'status' => 400 ) );

@@ -386,7 +386,7 @@ final class PostTranslationController implements Hookable {
 		$result = $this->provider->translateBatch( $items, $sourceLocale, $language->locale, $aiContext );
 
 		if ( array() === $result ) {
-			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->lastError() : null;
+			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->maskedLastError() : null;
 
 			return new WP_Error(
 				'mlp_translate_failed',

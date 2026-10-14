@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+use WpMlp\Support\UrlGuard;
+
 /**
  * Одно место в документе, куда можно подставить перевод.
  *
@@ -85,6 +87,11 @@ final class Segment {
 		}
 
 		if ( self::KIND_ATTRIBUTE === $this->kind && null !== $this->attribute ) {
+			// Адрес с опасной схемой (javascript:, data:) не пишем — остаётся оригинал.
+			if ( UrlGuard::isUrlAttribute( $this->attribute ) && ! UrlGuard::isSafe( $translation ) ) {
+				return;
+			}
+
 			$this->node->setAttribute( $this->attribute, $translation );
 
 			return;

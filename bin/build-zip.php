@@ -5,15 +5,20 @@
  * Запуск: `php bin/build-zip.php [--no-bump] [--dry-run]`
  *
  * 1. Поднимает patch-версию в wp-mlp.php (заголовок `Version:` и константа
- *    WP_MLP_VERSION); `--no-bump` пропускает этот шаг.
+ *    WP_MLP_VERSION) и `Stable tag:` в readme.txt (если он есть);
+ *    `--no-bump` пропускает этот шаг.
  * 2. Берёт следующий номер N после максимального `_<N>wp-mlp.zip` в dist/.
  * 3. Кладёт в архив `wp-mlp/` только рантайм: wp-mlp.php, uninstall.php,
- *    README.md, .env.example (только шаблон), src/, assets/, languages/.
- *    Ни tests, docs, bin, vendor (у плагина свой PSR-4 автозагрузчик), ни
- *    dotfiles; настоящий .env не включается никогда.
+ *    readme.txt (если есть), src/, assets/, languages/. Ни tests, docs, bin,
+ *    vendor (у плагина свой PSR-4 автозагрузчик), ни README.md, ни скрытых
+ *    файлов (.env, .env.example и т. п.: скрытые файлы — ошибка Plugin Check).
+ * 4. Сборка падает, если в списке оказался скрытый файл или любой `.env*`,
+ *    а также если `Stable tag` в readme.txt не равен `Version` плагина.
  *
  * `--dry-run` только печатает список файлов: ничего не пишет и не меняет версию.
- * Существующий архив никогда не перезаписывается.
+ * Существующий архив никогда не перезаписывается. readme.txt и wp-mlp.php
+ * правятся на диске только после успешного переименования архива; при сбое
+ * записи оба возвращаются к исходному содержимому, а архив удаляется.
  */
 
 declare( strict_types=1 );
@@ -51,10 +56,31 @@ if ( ! $noBump ) {
 	$source = (string) $updated;
 }
 
+// readme.txt для wordpress.org: Stable tag обязан совпадать с версией плагина.
+$readmeFile   = $root . '/readme.txt';
+$readmeSource = is_file( $readmeFile ) ? (string) file_get_contents( $readmeFile ) : null;
+$readmeNew    = $readmeSource;
+
+if ( null !== $readmeNew && ! $noBump ) {
+	$readmeNew = preg_replace( '/^(\s*Stable tag:\s*)\S+/mi', '${1}' . $version, $readmeNew, 1, $tagCount );
+
+	if ( 1 !== $tagCount || null === $readmeNew ) {
+		fwrite( STDERR, "Не найдена строка Stable tag: в readme.txt.\n" );
+		exit( 1 );
+	}
+}
+
+if ( null !== $readmeNew ) {
+	if ( 1 !== preg_match( '/^\s*Stable tag:\s*(\S+)/mi', $readmeNew, $tag ) || $tag[1] !== $version ) {
+		fwrite( STDERR, 'Stable tag в readme.txt (' . ( $tag[1] ?? 'нет' ) . ") не равен версии плагина {$version}.\n" );
+		exit( 1 );
+	}
+}
+
 // Файлы рантайма: относительный путь => абсолютный.
 $files = array();
 
-foreach ( array( 'wp-mlp.php', 'uninstall.php', 'README.md', '.env.example' ) as $name ) {
+foreach ( array( 'wp-mlp.php', 'uninstall.php', 'readme.txt' ) as $name ) {
 	if ( is_file( $root . '/' . $name ) ) {
 		$files[ $name ] = $root . '/' . $name;
 	}
@@ -80,14 +106,13 @@ foreach ( array( 'src', 'assets', 'languages' ) as $dir ) {
 	}
 }
 
-// Защита от утечки секретов: настоящий .env в архив не попадает никогда.
-unset( $files['.env'] );
-
+// Скрытые файлы и любые .env* в архив не попадают никогда (секреты; Plugin Check).
 foreach ( array_keys( $files ) as $relative ) {
-	if ( '.env' === basename( (string) $relative ) ) {
-		fwrite( STDERR, "В архив попал .env ({$relative}) — сборка прервана.
-" );
-		exit( 1 );
+	foreach ( explode( '/', (string) $relative ) as $part ) {
+		if ( str_starts_with( $part, '.' ) || str_starts_with( strtolower( $part ), '.env' ) ) {
+			fwrite( STDERR, "В архив попал скрытый файл или .env* ({$relative}) — сборка прервана.\n" );
+			exit( 1 );
+		}
 	}
 }
 
@@ -158,9 +183,13 @@ if ( true !== $zip->open( $temp, ZipArchive::CREATE | ZipArchive::EXCL ) ) {
 }
 
 foreach ( $files as $relative => $absolute ) {
-	$added = 'wp-mlp.php' === $relative
-		? $zip->addFromString( 'wp-mlp/' . $relative, $source )
-		: $zip->addFile( $absolute, 'wp-mlp/' . $relative );
+	if ( 'wp-mlp.php' === $relative ) {
+		$added = $zip->addFromString( 'wp-mlp/' . $relative, $source );
+	} elseif ( 'readme.txt' === $relative && null !== $readmeNew ) {
+		$added = $zip->addFromString( 'wp-mlp/' . $relative, $readmeNew );
+	} else {
+		$added = $zip->addFile( $absolute, 'wp-mlp/' . $relative );
+	}
 
 	if ( true !== $added ) {
 		$zip->close();
@@ -180,10 +209,22 @@ if ( ! rename( $temp, $target ) ) {
 	build_fail( "Не удалось переименовать {$temp} в {$target}.", $temp );
 }
 
-if ( ! $noBump && false === file_put_contents( $mainFile, $source ) ) {
-	unlink( $target );
-	fwrite( STDERR, "Не удалось записать wp-mlp.php, архив удалён.\n" );
-	exit( 1 );
+if ( ! $noBump ) {
+	$originalMain = (string) file_get_contents( $mainFile );
+
+	if ( false === file_put_contents( $mainFile, $source ) ) {
+		unlink( $target );
+		fwrite( STDERR, "Не удалось записать wp-mlp.php, архив удалён.\n" );
+		exit( 1 );
+	}
+
+	if ( null !== $readmeNew && $readmeNew !== $readmeSource && false === file_put_contents( $readmeFile, $readmeNew ) ) {
+		// Откат wp-mlp.php, чтобы версия и Stable tag не разошлись.
+		file_put_contents( $mainFile, $originalMain );
+		unlink( $target );
+		fwrite( STDERR, "Не удалось записать readme.txt, wp-mlp.php возвращён, архив удалён.\n" );
+		exit( 1 );
+	}
 }
 
 printf(

@@ -14,6 +14,7 @@ use WpMlp\Rendering\Segment;
 use WpMlp\Storage\TranslationStatus;
 use WpMlp\Support\Hash;
 use WpMlp\Support\ShortcodeGuard;
+use WpMlp\Support\UrlGuard;
 
 /**
  * Решает — до единой записи в БД — можно ли вообще сохранять пакет
@@ -50,6 +51,9 @@ final class PostCommitValidator {
 
 	/** Перевод меняет последовательность шорткодов исходника. */
 	public const ERROR_SHORTCODE = 'shortcode_mismatch';
+
+	/** Перевод адреса ссылки содержит недопустимую схему (javascript:, data:). */
+	public const ERROR_UNSAFE_URL = 'unsafe_url';
 
 	/**
 	 * @param list<array<string, mixed>>                                  $segments      Сырые строки из тела запроса.
@@ -110,6 +114,15 @@ final class PostCommitValidator {
 				&& ! ShortcodeGuard::isPreserved( $source['source_text'], $text )
 			) {
 				$errors[] = self::ERROR_SHORTCODE . ':' . $hash;
+				continue;
+			}
+
+			if ( '' !== $text
+				&& Segment::KIND_ATTRIBUTE === $source['kind']
+				&& UrlGuard::looksLikeUrl( $source['source_text'] )
+				&& ! UrlGuard::isSafe( $text )
+			) {
+				$errors[] = self::ERROR_UNSAFE_URL . ':' . $hash;
 				continue;
 			}
 

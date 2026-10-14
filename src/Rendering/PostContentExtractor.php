@@ -154,6 +154,7 @@ final class PostContentExtractor {
 	 * @return list<PostSegment>
 	 */
 	private function extractThumbnailAlt( string $alt, string $locale ): array {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- нужна ровно та обработка, что у ядра при выводе миниатюры (trim + strip_tags); wp_strip_all_tags дополнительно вырезала бы содержимое script/style и дала бы другой хеш строки.
 		$alt = trim( strip_tags( $alt ) );
 
 		if ( '' === $alt ) {

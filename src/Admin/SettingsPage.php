@@ -263,7 +263,7 @@ final class SettingsPage implements Hookable {
 
 		check_admin_referer( self::ACTION_SAVE );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce проверен выше (check_admin_referer); каждое поле санируется в Settings::sanitize().
 		$input  = wp_unslash( $_POST );
 		$result = $this->settings->sanitize( is_array( $input ) ? $input : array() );
 

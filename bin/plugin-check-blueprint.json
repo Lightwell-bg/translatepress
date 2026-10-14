@@ -1,0 +1,21 @@
+{
+  "landingPage": "/",
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://downloads.wordpress.org/plugin/plugin-check.2.1.0.zip"
+      },
+      "options": { "activate": true }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $f='/wordpress/wp-content/plugins/plugin-check/vendor/squizlabs/php_codesniffer/src/Reporter.php'; $s=file_get_contents($f); file_put_contents($f, str_replace('(FILE_APPEND | LOCK_EX)','FILE_APPEND',$s));"
+    },
+    {
+      "step": "wp-cli",
+      "command": "wp eval \"$r = WP_CLI::runcommand('plugin check wp-mlp --format=json --categories=plugin_repo', array('return'=>true,'launch'=>false,'exit_error'=>false)); file_put_contents('/out/report.json', $r);\""
+    }
+  ]
+}
