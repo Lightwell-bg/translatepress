@@ -80,6 +80,27 @@ final class ProviderFactory {
 	}
 
 	/**
+	 * Путь к `.env` в папке прежнего плагина (wp-mlp/), если она отличается от текущей.
+	 *
+	 * Нужен, чтобы AI-перевод не пропал сразу после перехода на LingoCanvas.
+	 * Источник такого ключа считается «файл в папке плагина» (SOURCE_PLUGIN_ENV):
+	 * он исчезнет вместе со старой папкой.
+	 */
+	public static function legacyPluginEnvPath(): ?string {
+		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+			return null;
+		}
+
+		$legacy = rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/wp-mlp/.env';
+
+		if ( defined( 'LINGOCANVAS_DIR' ) && self::normalizePath( $legacy ) === self::normalizePath( LINGOCANVAS_DIR . '.env' ) ) {
+			return null;
+		}
+
+		return $legacy;
+	}
+
+	/**
 	 * Приводит путь к сравнимому виду: прямые слеши, без хвостового.
 	 *
 	 * @param string $path Путь.
@@ -237,16 +258,16 @@ final class ProviderFactory {
 		$noModel = in_array( self::FIELD_MODEL, $missing, true );
 
 		if ( $noKey && $noModel ) {
-			$what = __( 'enter the key and the model in the plugin settings', 'wp-mlp' );
+			$what = __( 'enter the key and the model in the plugin settings', 'lingocanvas' );
 		} elseif ( $noModel ) {
-			$what = __( 'enter the model in the plugin settings', 'wp-mlp' );
+			$what = __( 'enter the model in the plugin settings', 'lingocanvas' );
 		} else {
-			$what = __( 'enter the key in the plugin settings', 'wp-mlp' );
+			$what = __( 'enter the key in the plugin settings', 'lingocanvas' );
 		}
 
 		return sprintf(
 			/* translators: %s: what to configure, e.g. "enter the key in the plugin settings" */
-			__( 'AI translation is not set up: %s.', 'wp-mlp' ),
+			__( 'AI translation is not set up: %s.', 'lingocanvas' ),
 			$what
 		);
 	}
@@ -267,11 +288,22 @@ final class ProviderFactory {
 			: new ManualProvider();
 
 		/**
-		 * Позволяет подменить провайдера перевода своим.
+		 * Прежнее имя фильтра `lingocanvas_translation_provider`.
+		 *
+		 * @since 0.3.13 Заменён на `lingocanvas_translation_provider`.
 		 *
 		 * @param ProviderInterface $provider Провайдер, выбранный плагином.
 		 */
-		return apply_filters( 'mlp_translation_provider', $provider );
+		$provider = apply_filters_deprecated( 'mlp_translation_provider', array( $provider ), '0.3.13', 'lingocanvas_translation_provider' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
+
+		/**
+		 * Позволяет подменить провайдера перевода своим.
+		 *
+		 * @since 0.3.13
+		 *
+		 * @param ProviderInterface $provider Провайдер, выбранный плагином.
+		 */
+		return apply_filters( 'lingocanvas_translation_provider', $provider );
 	}
 
 	/**

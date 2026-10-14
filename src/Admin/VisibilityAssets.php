@@ -49,9 +49,9 @@ final class VisibilityAssets {
 				'url'   => esc_url_raw( rest_url( PostVisibilityController::NAMESPACE . '/posts/visibility' ) ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'  => array(
-					'saving'  => __( 'Saving…', 'wp-mlp' ),
-					'failed'  => __( 'Could not save', 'wp-mlp' ),
-					'network' => __( 'Cannot reach the site. Please try again.', 'wp-mlp' ),
+					'saving'  => __( 'Saving…', 'lingocanvas' ),
+					'failed'  => __( 'Could not save', 'lingocanvas' ),
+					'network' => __( 'Cannot reach the site. Please try again.', 'lingocanvas' ),
 				),
 			)
 		);

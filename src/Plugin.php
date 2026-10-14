@@ -72,6 +72,11 @@ use WpMlp\Translation\ProviderInterface;
 final class Plugin {
 
 	/**
+	 * Опция-флаг отложенной активации (после перехода с прежнего плагина).
+	 */
+	public const PENDING_ACTIVATION_OPTION = 'lingocanvas_pending_activation';
+
+	/**
 	 * Контейнер текущего запроса.
 	 */
 	private static ?Container $container = null;
@@ -87,6 +92,11 @@ final class Plugin {
 		self::$container = self::buildContainer();
 
 		add_action( 'init', array( self::class, 'loadTextdomain' ), 0 );
+
+		// Активация, отложенная из-за прежнего плагина, доделывается, когда он уже выключен.
+		if ( get_option( self::PENDING_ACTIVATION_OPTION, false ) ) {
+			add_action( 'init', array( self::class, 'finishPendingActivation' ), 99 );
+		}
 
 		// Схема могла отстать, если плагин обновили копированием файлов.
 		if ( is_admin() ) {
@@ -118,13 +128,31 @@ final class Plugin {
 	 * Подключает переводы интерфейса самого плагина.
 	 */
 	public static function loadTextdomain(): void {
-		load_plugin_textdomain( 'wp-mlp', false, dirname( WP_MLP_BASENAME ) . '/languages' );
+		load_plugin_textdomain( 'lingocanvas', false, dirname( LINGOCANVAS_BASENAME ) . '/languages' );
 	}
 
 	/**
 	 * Активация плагина.
 	 */
 	public static function activate(): void {
+		self::install();
+	}
+
+	/**
+	 * Доделывает отложенную активацию (см. lingocanvas.php): схема и правила ссылок.
+	 *
+	 * Флаг снимается первым, чтобы сбой в установке не зациклил повторы.
+	 */
+	public static function finishPendingActivation(): void {
+		delete_option( self::PENDING_ACTIVATION_OPTION );
+
+		self::install();
+	}
+
+	/**
+	 * Общие шаги активации: настройки по умолчанию, схема, rewrite-правила.
+	 */
+	private static function install(): void {
 		if ( false === get_option( Settings::OPTION, false ) ) {
 			add_option( Settings::OPTION, Settings::defaults() );
 		}

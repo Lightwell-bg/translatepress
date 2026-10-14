@@ -17,11 +17,11 @@ use WpMlp\Support\Assets;
 final class AssetsTest extends TestCase {
 
 	public function testUrlIsBuiltFromPluginUrl(): void {
-		$this->assertSame( WP_MLP_URL . 'assets/admin.js', Assets::url( 'assets/admin.js' ) );
+		$this->assertSame( LINGOCANVAS_URL . 'assets/admin.js', Assets::url( 'assets/admin.js' ) );
 	}
 
 	public function testLeadingSlashDoesNotDoubleUp(): void {
-		$this->assertSame( WP_MLP_URL . 'assets/admin.js', Assets::url( '/assets/admin.js' ) );
+		$this->assertSame( LINGOCANVAS_URL . 'assets/admin.js', Assets::url( '/assets/admin.js' ) );
 	}
 
 	/**
@@ -32,11 +32,11 @@ final class AssetsTest extends TestCase {
 	public function testVersionOfRealFileIncludesModificationTime(): void {
 		$version = Assets::version( 'assets/admin.js' );
 
-		$this->assertNotSame( WP_MLP_VERSION, $version );
-		$this->assertStringStartsWith( WP_MLP_VERSION . '.', $version );
+		$this->assertNotSame( LINGOCANVAS_VERSION, $version );
+		$this->assertStringStartsWith( LINGOCANVAS_VERSION . '.', $version );
 	}
 
 	public function testMissingFileFallsBackToPluginVersion(): void {
-		$this->assertSame( WP_MLP_VERSION, Assets::version( 'assets/does-not-exist.js' ) );
+		$this->assertSame( LINGOCANVAS_VERSION, Assets::version( 'assets/does-not-exist.js' ) );
 	}
 }

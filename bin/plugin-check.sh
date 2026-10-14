@@ -3,17 +3,17 @@
 # without Docker / composer / wp-cli: WordPress Playground CLI (WASM) does it.
 #
 # Usage (Git Bash, from anywhere):  bash bin/plugin-check.sh
-#   PCP_SCRATCH=/some/dir  override scratch dir (default: $TMPDIR/wp-mlp-plugin-check)
+#   PCP_SCRATCH=/some/dir  override scratch dir (default: $TMPDIR/lingocanvas-plugin-check)
 #
 # What it does:
-#   1. Builds a clean runtime copy (wp-mlp.php, uninstall.php, src/, assets/,
+#   1. Builds a clean runtime copy (lingocanvas.php, uninstall.php, src/, assets/,
 #      languages/, readme.txt if present) in the scratch dir. Nothing is written
 #      into the plugin tree.
 #   2. Installs pinned @wp-playground/cli into the scratch dir (cached).
 #   3. Runs bin/plugin-check-blueprint.json: installs pinned Plugin Check 2.1.0,
 #      patches one PHPCS call (LOCK_EX is unsupported in Playground's VFS; this
 #      only touches the throw-away Plugin Check copy), runs
-#      `wp plugin check wp-mlp --categories=plugin_repo --format=json`.
+#      `wp plugin check lingocanvas --categories=plugin_repo --format=json`.
 #   4. Prints a summary and the report path ($SCRATCH/out/report.json).
 # First run downloads WordPress + Plugin Check (~1-2 min). Needs node + internet.
 # Note: the pinned Playground CLI declares node >=24.18 but works on 24.15.
@@ -24,16 +24,16 @@ export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
-SCRATCH="${PCP_SCRATCH:-${TMPDIR:-/tmp}/wp-mlp-plugin-check}"
+SCRATCH="${PCP_SCRATCH:-${TMPDIR:-/tmp}/lingocanvas-plugin-check}"
 mkdir -p "$SCRATCH"
 SCRATCH="$(cd "$SCRATCH" && pwd)"
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
 
 # 1. clean copy
-CLEAN="$SCRATCH/clean/wp-mlp"
+CLEAN="$SCRATCH/clean/lingocanvas"
 rm -rf "$SCRATCH/clean" "$SCRATCH/out"
 mkdir -p "$CLEAN" "$SCRATCH/out"
-for item in wp-mlp.php uninstall.php readme.txt src assets languages; do
+for item in lingocanvas.php uninstall.php readme.txt src assets languages; do
 	[ -e "$ROOT/$item" ] && cp -r "$ROOT/$item" "$CLEAN/"
 done
 
@@ -49,7 +49,7 @@ fi
 LOG="$SCRATCH/run.log"
 (cd "$TOOL" && node node_modules/@wp-playground/cli/cli.js run-blueprint \
 	--blueprint="$(win "$HERE/plugin-check-blueprint.json")" \
-	--mount-dir "$(win "$CLEAN")" /wordpress/wp-content/plugins/wp-mlp \
+	--mount-dir "$(win "$CLEAN")" /wordpress/wp-content/plugins/lingocanvas \
 	--mount-dir "$(win "$SCRATCH/out")" /out) >"$LOG" 2>&1 || { echo "Playground failed, see $LOG"; exit 1; }
 
 REPORT="$SCRATCH/out/report.json"

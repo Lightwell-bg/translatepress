@@ -411,9 +411,16 @@ final class Sitemap implements Hookable {
 		 * id записи; хук ничего не решает сам, просто даёт исключить (или
 		 * вернуть) конкретные id без правки кода плагина.
 		 *
+		 * Прежнее имя фильтра: `mlp_sitemap_post_ids` (устарело с 0.3.13,
+		 * работает как псевдоним `lingocanvas_sitemap_post_ids`).
+		 *
+		 * @since 0.3.13 Имя фильтра — `lingocanvas_sitemap_post_ids`.
+		 *
 		 * @param list<int> $ids Идентификаторы записей, отобранные в карту сайта.
 		 */
-		return apply_filters( 'mlp_sitemap_post_ids', $ids );
+		$ids = apply_filters_deprecated( 'mlp_sitemap_post_ids', array( $ids ), '0.3.13', 'lingocanvas_sitemap_post_ids' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
+
+		return apply_filters( 'lingocanvas_sitemap_post_ids', $ids );
 	}
 
 	/**

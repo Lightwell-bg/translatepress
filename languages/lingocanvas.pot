@@ -1,7 +1,7 @@
-# Translation template for WP Multilang Press.
+# Translation template for LingoCanvas.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Multilang Press\n"
+"Project-Id-Version: LingoCanvas\n"
 "Report-Msgid-Bugs-To: https://github.com/Lightwell-bg/translatepress/issues\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -10,7 +10,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Domain: wp-mlp\n"
+"X-Domain: lingocanvas\n"
 
 #: src/Admin/SettingsPage.php
 msgid "The flag file for language \"%s\" failed to upload. Please try again."
@@ -63,7 +63,7 @@ msgid "Languages"
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-msgid "WP Multilang Press requires pretty permalinks. Open %s and choose any structure except \"Plain\"."
+msgid "LingoCanvas requires pretty permalinks. Open %s and choose any structure except \"Plain\"."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
@@ -1711,8 +1711,12 @@ msgstr ""
 msgid "From the language pack"
 msgstr ""
 
-#: wp-mlp.php
-msgid "WP Multilang Press requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
+#: lingocanvas.php
+msgid "LingoCanvas requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
+msgstr ""
+
+#: lingocanvas.php
+msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active."
 msgstr ""
 
 #: src/Admin/StringTranslationPage.php

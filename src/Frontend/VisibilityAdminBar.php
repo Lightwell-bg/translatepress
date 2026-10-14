@@ -120,9 +120,9 @@ final class VisibilityAdminBar implements Hookable {
 				'title' => esc_html(
 					$visible
 						/* translators: %s: language code */
-						? sprintf( __( 'Shown on %s', 'wp-mlp' ), $code )
+						? sprintf( __( 'Shown on %s', 'lingocanvas' ), $code )
 						/* translators: %s: language code */
-						: sprintf( __( 'Hidden on %s: visitors cannot see it', 'wp-mlp' ), $code )
+						: sprintf( __( 'Hidden on %s: visitors cannot see it', 'lingocanvas' ), $code )
 				),
 				'meta'  => array( 'class' => $visible ? 'mlp-vis-shown' : 'mlp-vis-hidden' ),
 			)
@@ -135,9 +135,9 @@ final class VisibilityAdminBar implements Hookable {
 				'title'  => esc_html(
 					$visible
 						/* translators: %s: language code */
-						? sprintf( __( 'Hide on %s', 'wp-mlp' ), $code )
+						? sprintf( __( 'Hide on %s', 'lingocanvas' ), $code )
 						/* translators: %s: language code */
-						: sprintf( __( 'Show on %s', 'wp-mlp' ), $code )
+						: sprintf( __( 'Show on %s', 'lingocanvas' ), $code )
 				),
 				'href'   => '#mlp-visibility',
 			)
@@ -174,8 +174,8 @@ final class VisibilityAdminBar implements Hookable {
 				'visible' => $visible,
 				'nodeId'  => self::TOGGLE_ID,
 				'i18n'    => array(
-					'saving' => __( 'Saving…', 'wp-mlp' ),
-					'failed' => __( 'Could not save', 'wp-mlp' ),
+					'saving' => __( 'Saving…', 'lingocanvas' ),
+					'failed' => __( 'Could not save', 'lingocanvas' ),
 				),
 			)
 		);

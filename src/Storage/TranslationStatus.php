@@ -83,13 +83,13 @@ final class TranslationStatus {
 	 */
 	public static function label( string $status ): string {
 		$labels = array(
-			self::MISSING     => __( 'No translation', 'wp-mlp' ),
-			self::MACHINE     => __( 'Machine', 'wp-mlp' ),
-			self::REVIEW      => __( 'In review', 'wp-mlp' ),
-			self::APPROVED    => __( 'Ready', 'wp-mlp' ),
-			self::STALE       => __( 'Outdated', 'wp-mlp' ),
-			self::REJECTED    => __( 'Rejected', 'wp-mlp' ),
-			self::LOCALE_FILE => __( 'From the language pack', 'wp-mlp' ),
+			self::MISSING     => __( 'No translation', 'lingocanvas' ),
+			self::MACHINE     => __( 'Machine', 'lingocanvas' ),
+			self::REVIEW      => __( 'In review', 'lingocanvas' ),
+			self::APPROVED    => __( 'Ready', 'lingocanvas' ),
+			self::STALE       => __( 'Outdated', 'lingocanvas' ),
+			self::REJECTED    => __( 'Rejected', 'lingocanvas' ),
+			self::LOCALE_FILE => __( 'From the language pack', 'lingocanvas' ),
 		);
 
 		return $labels[ $status ] ?? $status;

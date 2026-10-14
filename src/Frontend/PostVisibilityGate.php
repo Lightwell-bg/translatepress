@@ -476,9 +476,16 @@ final class PostVisibilityGate implements Hookable {
 		/**
 		 * Позволяет не скрывать записи в этом запросе (например, для администратора).
 		 *
+		 * Прежнее имя фильтра: `mlp_visibility_bypass` (устарело с 0.3.13,
+		 * работает как псевдоним `lingocanvas_visibility_bypass`).
+		 *
+		 * @since 0.3.13 Имя фильтра — `lingocanvas_visibility_bypass`.
+		 *
 		 * @param bool $bypass По умолчанию false.
 		 */
-		if ( (bool) apply_filters( 'mlp_visibility_bypass', false ) ) {
+		$bypass = apply_filters_deprecated( 'mlp_visibility_bypass', array( false ), '0.3.13', 'lingocanvas_visibility_bypass' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
+
+		if ( (bool) apply_filters( 'lingocanvas_visibility_bypass', $bypass ) ) {
 			return false;
 		}
 

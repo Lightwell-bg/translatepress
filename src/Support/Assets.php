@@ -29,7 +29,7 @@ final class Assets {
 	 * @param string $relativePath Путь относительно корня плагина, например `assets/admin.js`.
 	 */
 	public static function url( string $relativePath ): string {
-		return WP_MLP_URL . ltrim( $relativePath, '/' );
+		return LINGOCANVAS_URL . ltrim( $relativePath, '/' );
 	}
 
 	/**
@@ -38,14 +38,14 @@ final class Assets {
 	 * @param string $relativePath Путь относительно корня плагина.
 	 */
 	public static function version( string $relativePath ): string {
-		$path = WP_MLP_DIR . ltrim( $relativePath, '/' );
+		$path = LINGOCANVAS_DIR . ltrim( $relativePath, '/' );
 
 		if ( ! is_readable( $path ) ) {
-			return WP_MLP_VERSION;
+			return LINGOCANVAS_VERSION;
 		}
 
 		$modified = filemtime( $path );
 
-		return false !== $modified ? WP_MLP_VERSION . '.' . $modified : WP_MLP_VERSION;
+		return false !== $modified ? LINGOCANVAS_VERSION . '.' . $modified : LINGOCANVAS_VERSION;
 	}
 }

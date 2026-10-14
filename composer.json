@@ -1,6 +1,6 @@
 {
     "name": "wp-mlp/wp-multilang-press",
-    "description": "WordPress-плагин мультиязычности: одна запись, N языковых URL, переводы строк в собственных таблицах",
+    "description": "LingoCanvas: WordPress multilingual plugin with one post, a URL per language and string translations stored in dedicated tables",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {

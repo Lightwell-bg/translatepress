@@ -33,6 +33,20 @@ final class PageCachePurgerTest extends TestCase {
 
 		PageCachePurger::purgeAll();
 
-		$this->assertContains( 'mlp_purge_page_cache', wp_mlp_test_actions() );
+		$this->assertContains( 'lingocanvas_purge_page_cache', wp_mlp_test_actions() );
+	}
+
+	public function testStillFiresDeprecatedHookNameAfterTheNewOne(): void {
+		wp_mlp_test_actions( null, true );
+
+		PageCachePurger::purgeAll();
+
+		$fired = wp_mlp_test_actions();
+
+		$this->assertContains( 'mlp_purge_page_cache', $fired );
+		$this->assertLessThan(
+			array_search( 'mlp_purge_page_cache', $fired, true ),
+			array_search( 'lingocanvas_purge_page_cache', $fired, true )
+		);
 	}
 }

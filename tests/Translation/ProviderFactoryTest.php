@@ -189,6 +189,81 @@ final class ProviderFactoryTest extends TestCase {
 		rmdir( dirname( $path ) );
 	}
 
+	public function testLegacyPluginEnvPathPointsToOldPluginFolder(): void {
+		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+			define( 'WP_PLUGIN_DIR', sys_get_temp_dir() . '/mlp-plugins' );
+		}
+
+		$path = ProviderFactory::legacyPluginEnvPath();
+
+		$this->assertSame( rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/wp-mlp/.env', $path );
+		$this->assertNotSame( LINGOCANVAS_DIR . '.env', $path );
+	}
+
+	public function testKeyFromLegacyPluginEnvIsReportedAsPluginEnv(): void {
+		$dir = sys_get_temp_dir() . '/mlp-legacy-' . uniqid();
+		mkdir( $dir . '/wp-mlp', 0777, true );
+		$path = $dir . '/wp-mlp/.env';
+		file_put_contents( $path, "OPENAI_API_KEY=sk-legacy\n" );
+		Env::load( $path );
+
+		$factory = $this->factoryWithPaths( array( 'content' => $dir . '/wp-mlp.env.php', 'parent' => $dir . '/wp-mlp.env' ) );
+
+		$this->assertSame( 'sk-legacy', $factory->apiKey() );
+		$this->assertSame( ProviderFactory::SOURCE_PLUGIN_ENV, $factory->apiKeySource() );
+
+		unlink( $path );
+		rmdir( $dir . '/wp-mlp' );
+		rmdir( $dir );
+	}
+
+	/**
+	 * Фильтр провайдера: старое имя применяется первым, новое получает его результат.
+	 */
+	public function testProviderFiltersApplyOldNameThenNewName(): void {
+		$first  = new ManualProvider();
+		$second = new ManualProvider();
+		$seen   = null;
+
+		wp_mlp_test_filter( 'mlp_translation_provider', static fn() => $first );
+		wp_mlp_test_filter(
+			'lingocanvas_translation_provider',
+			static function ( $provider ) use ( &$seen, $second ) {
+				$seen = $provider;
+
+				return $second;
+			}
+		);
+
+		$result = $this->factory()->create();
+
+		wp_mlp_test_filter( 'mlp_translation_provider', null );
+		wp_mlp_test_filter( 'lingocanvas_translation_provider', null );
+
+		$this->assertSame( $first, $seen );
+		$this->assertSame( $second, $result );
+	}
+
+	public function testDeprecatedProviderFilterAloneStillReplacesProvider(): void {
+		$custom = new ManualProvider();
+
+		wp_mlp_test_filter( 'mlp_translation_provider', static fn() => $custom );
+		$result = $this->factory()->create();
+		wp_mlp_test_filter( 'mlp_translation_provider', null );
+
+		$this->assertSame( $custom, $result );
+	}
+
+	public function testNewProviderFilterAloneReplacesProvider(): void {
+		$custom = new ManualProvider();
+
+		wp_mlp_test_filter( 'lingocanvas_translation_provider', static fn() => $custom );
+		$result = $this->factory()->create();
+		wp_mlp_test_filter( 'lingocanvas_translation_provider', null );
+
+		$this->assertSame( $custom, $result );
+	}
+
 	public function testConstantsWinOverSettingsAndEnv(): void {
 		$path = $this->loadEnvFile( "OPENAI_API_KEY=sk-env\nOPENAI_MODEL=m-env\nOPENAI_BASE_URL=https://env.test/v1\n", '.env' );
 

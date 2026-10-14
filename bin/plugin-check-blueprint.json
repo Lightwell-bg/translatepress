@@ -15,7 +15,7 @@
     },
     {
       "step": "wp-cli",
-      "command": "wp eval \"$r = WP_CLI::runcommand('plugin check wp-mlp --format=json --categories=plugin_repo', array('return'=>true,'launch'=>false,'exit_error'=>false)); file_put_contents('/out/report.json', $r);\""
+      "command": "wp eval \"$r = WP_CLI::runcommand('plugin check lingocanvas --format=json --categories=plugin_repo', array('return'=>true,'launch'=>false,'exit_error'=>false)); file_put_contents('/out/report.json', $r);\""
     }
   ]
 }

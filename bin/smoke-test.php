@@ -53,7 +53,7 @@ function mlp_smoke_flush(): void {
 		copy( $log, '/out/debug.log' );
 
 		foreach ( file( $log, FILE_IGNORE_NEW_LINES ) ?: array() as $line ) {
-			if ( preg_match( '/wp-mlp|mlp_|WordPress database error|Doing it wrong|Fatal|Warning|Deprecated|Notice/i', $line ) ) {
+			if ( preg_match( '/lingocanvas|wp-mlp|mlp_|WordPress database error|Doing it wrong|Fatal|Warning|Deprecated|Notice/i', $line ) ) {
 				$out[] = $line;
 			}
 		}
@@ -454,11 +454,11 @@ if ( 'check2' === $phase ) {
 			$force = static fn(): string => 'ru_RU';
 			add_filter( 'locale', $force );
 			add_filter( 'plugin_locale', $force );
-			unload_textdomain( 'wp-mlp' );
+			unload_textdomain( 'lingocanvas' );
 			Plugin::loadTextdomain();
-			$languages = __( 'Languages', 'wp-mlp' );
+			$languages = __( 'Languages', 'lingocanvas' );
 			mlp_smoke_check( 'g_bundled_ru_RU_loads', 'Языки' === $languages, 'got=' . $languages );
-			$ctx = _x( 'OpenAI key', 'mid-sentence', 'wp-mlp' );
+			$ctx = _x( 'OpenAI key', 'mid-sentence', 'lingocanvas' );
 			mlp_smoke_check( 'g_context_translation', 'ключ OpenAI' === $ctx, 'got=' . $ctx );
 			remove_filter( 'locale', $force );
 			remove_filter( 'plugin_locale', $force );
@@ -476,16 +476,16 @@ if ( 'check2' === $phase ) {
 			$s['delete_data_on_uninstall'] = true;
 			update_option( 'mlp_settings', $s );
 
-			deactivate_plugins( 'wp-mlp/wp-mlp.php' );
-			$res = delete_plugins( array( 'wp-mlp/wp-mlp.php' ) );
+			deactivate_plugins( 'lingocanvas/lingocanvas.php' );
+			$res = delete_plugins( array( 'lingocanvas/lingocanvas.php' ) );
 
 			// delete_plugins() runs uninstall.php first; the mounted plugin folder itself may then
 			// refuse to be removed in Playground. If uninstall.php is still there, run it directly.
-			$uninstall = WP_PLUGIN_DIR . '/wp-mlp/uninstall.php';
+			$uninstall = WP_PLUGIN_DIR . '/lingocanvas/uninstall.php';
 
 			if ( true !== $res && is_readable( $uninstall ) ) {
 				if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-					define( 'WP_UNINSTALL_PLUGIN', 'wp-mlp/wp-mlp.php' );
+					define( 'WP_UNINSTALL_PLUGIN', 'lingocanvas/lingocanvas.php' );
 				}
 				include $uninstall;
 			}

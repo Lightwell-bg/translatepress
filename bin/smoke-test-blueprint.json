@@ -22,7 +22,7 @@
     },
     {
       "step": "activatePlugin",
-      "pluginPath": "wp-mlp/wp-mlp.php"
+      "pluginPath": "lingocanvas/lingocanvas.php"
     },
     {
       "step": "runPHP",

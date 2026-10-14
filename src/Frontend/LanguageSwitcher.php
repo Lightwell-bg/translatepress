@@ -177,7 +177,7 @@ final class LanguageSwitcher implements Hookable {
 	private function renderDropdown( array $items ): string {
 		$html = sprintf(
 			'<select class="mlp-language-switcher mlp-language-switcher--dropdown" aria-label="%s" onchange="if(this.value)window.location.href=this.value">',
-			esc_attr__( 'Site language', 'wp-mlp' )
+			esc_attr__( 'Site language', 'lingocanvas' )
 		);
 
 		foreach ( $items as $item ) {

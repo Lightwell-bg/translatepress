@@ -4,11 +4,11 @@
  *
  * Запуск: `php bin/build-zip.php [--no-bump] [--dry-run]`
  *
- * 1. Поднимает patch-версию в wp-mlp.php (заголовок `Version:` и константа
- *    WP_MLP_VERSION) и `Stable tag:` в readme.txt (если он есть);
+ * 1. Поднимает patch-версию в lingocanvas.php (заголовок `Version:` и константа
+ *    LINGOCANVAS_VERSION) и `Stable tag:` в readme.txt (если он есть);
  *    `--no-bump` пропускает этот шаг.
- * 2. Берёт следующий номер N после максимального `_<N>wp-mlp.zip` в dist/.
- * 3. Кладёт в архив `wp-mlp/` только рантайм: wp-mlp.php, uninstall.php,
+ * 2. Имя архива: `dist/lingocanvas-<версия>.zip`; существующий файл не перезаписывается.
+ * 3. Кладёт в архив `lingocanvas/` только рантайм: lingocanvas.php, uninstall.php,
  *    readme.txt (если есть), src/, assets/, languages/. Ни tests, docs, bin,
  *    vendor (у плагина свой PSR-4 автозагрузчик), ни README.md, ни скрытых
  *    файлов (.env, .env.example и т. п.: скрытые файлы — ошибка Plugin Check).
@@ -16,7 +16,7 @@
  *    а также если `Stable tag` в readme.txt не равен `Version` плагина.
  *
  * `--dry-run` только печатает список файлов: ничего не пишет и не меняет версию.
- * Существующий архив никогда не перезаписывается. readme.txt и wp-mlp.php
+ * Существующий архив никогда не перезаписывается. readme.txt и lingocanvas.php
  * правятся на диске только после успешного переименования архива; при сбое
  * записи оба возвращаются к исходному содержимому, а архив удаляется.
  */
@@ -33,11 +33,11 @@ if ( ! class_exists( ZipArchive::class ) ) {
 	exit( 1 );
 }
 
-$mainFile = $root . '/wp-mlp.php';
+$mainFile = $root . '/lingocanvas.php';
 $source   = (string) file_get_contents( $mainFile );
 
 if ( 1 !== preg_match( '/^(\s*\*\s*Version:\s*)(\d+)\.(\d+)\.(\d+)\s*$/m', $source, $m ) ) {
-	fwrite( STDERR, "Не найдена строка Version: в wp-mlp.php.\n" );
+	fwrite( STDERR, "Не найдена строка Version: в lingocanvas.php.\n" );
 	exit( 1 );
 }
 
@@ -46,10 +46,10 @@ $version = "{$m[2]}.{$m[3]}.{$m[4]}";
 if ( ! $noBump ) {
 	$version = "{$m[2]}.{$m[3]}." . ( (int) $m[4] + 1 );
 	$updated = preg_replace( '/^(\s*\*\s*Version:\s*)\d+\.\d+\.\d+/m', '${1}' . $version, $source, 1 );
-	$updated = preg_replace( "/(const WP_MLP_VERSION = ')\d+\.\d+\.\d+(')/", '${1}' . $version . '${2}', (string) $updated, 1, $count );
+	$updated = preg_replace( "/(const LINGOCANVAS_VERSION = ')\d+\.\d+\.\d+(')/", '${1}' . $version . '${2}', (string) $updated, 1, $count );
 
 	if ( 1 !== $count ) {
-		fwrite( STDERR, "Не найдена константа WP_MLP_VERSION в wp-mlp.php.\n" );
+		fwrite( STDERR, "Не найдена константа LINGOCANVAS_VERSION в lingocanvas.php.\n" );
 		exit( 1 );
 	}
 
@@ -80,7 +80,7 @@ if ( null !== $readmeNew ) {
 // Файлы рантайма: относительный путь => абсолютный.
 $files = array();
 
-foreach ( array( 'wp-mlp.php', 'uninstall.php', 'readme.txt' ) as $name ) {
+foreach ( array( 'lingocanvas.php', 'uninstall.php', 'readme.txt' ) as $name ) {
 	if ( is_file( $root . '/' . $name ) ) {
 		$files[ $name ] = $root . '/' . $name;
 	}
@@ -118,17 +118,9 @@ foreach ( array_keys( $files ) as $relative ) {
 
 ksort( $files );
 
-// Следующий номер архива.
+// Имя архива задаётся версией плагина.
 $distDir = $root . '/dist';
-$max     = 0;
-
-foreach ( (array) glob( $distDir . '/_*wp-mlp.zip' ) as $existing ) {
-	if ( 1 === preg_match( '/_(\d+)wp-mlp\.zip$/', (string) $existing, $n ) ) {
-		$max = max( $max, (int) $n[1] );
-	}
-}
-
-$target = $distDir . '/_' . ( $max + 1 ) . 'wp-mlp.zip';
+$target  = $distDir . '/lingocanvas-' . $version . '.zip';
 
 if ( file_exists( $target ) ) {
 	fwrite( STDERR, "Файл уже существует: {$target}\n" );
@@ -137,7 +129,7 @@ if ( file_exists( $target ) ) {
 
 if ( $dryRun ) {
 	foreach ( array_keys( $files ) as $relative ) {
-		echo 'wp-mlp/' . $relative . "\n";
+		echo 'lingocanvas/' . $relative . "\n";
 	}
 
 	printf( "[dry-run] %s, версия %s, файлов: %d\n", $target, $version, count( $files ) );
@@ -151,11 +143,11 @@ if ( ! is_dir( $distDir ) && ! mkdir( $distDir, 0777, true ) ) {
 
 /*
  * Транзакционная сборка: архив собирается во временный файл (имя не подпадает
- * под `_<N>wp-mlp.zip`), wp-mlp.php кладётся из уже поднятой версии в памяти.
- * Исходный wp-mlp.php правится только после успешного переименования, и если
+ * под `lingocanvas-<версия>.zip`), lingocanvas.php кладётся из уже поднятой версии в памяти.
+ * Исходный lingocanvas.php правится только после успешного переименования, и если
  * запись не удалась — готовый архив удаляется, чтобы версия и архив не разошлись.
  */
-$temp = $distDir . '/.building-' . ( $max + 1 ) . '.zip';
+$temp = $distDir . '/.building-' . $version . '.zip';
 
 /**
  * Прерывает сборку: удаляет временный файл, печатает ошибку в STDERR.
@@ -183,12 +175,12 @@ if ( true !== $zip->open( $temp, ZipArchive::CREATE | ZipArchive::EXCL ) ) {
 }
 
 foreach ( $files as $relative => $absolute ) {
-	if ( 'wp-mlp.php' === $relative ) {
-		$added = $zip->addFromString( 'wp-mlp/' . $relative, $source );
+	if ( 'lingocanvas.php' === $relative ) {
+		$added = $zip->addFromString( 'lingocanvas/' . $relative, $source );
 	} elseif ( 'readme.txt' === $relative && null !== $readmeNew ) {
-		$added = $zip->addFromString( 'wp-mlp/' . $relative, $readmeNew );
+		$added = $zip->addFromString( 'lingocanvas/' . $relative, $readmeNew );
 	} else {
-		$added = $zip->addFile( $absolute, 'wp-mlp/' . $relative );
+		$added = $zip->addFile( $absolute, 'lingocanvas/' . $relative );
 	}
 
 	if ( true !== $added ) {
@@ -238,7 +230,7 @@ if ( ! $noBump ) {
 	$failed = '';
 
 	if ( ! build_replace_file( $mainFile, $source ) ) {
-		$failed = 'wp-mlp.php';
+		$failed = 'lingocanvas.php';
 	} elseif ( null !== $readmeNew && $readmeNew !== $readmeSource && ! build_replace_file( $readmeFile, $readmeNew ) ) {
 		$failed = 'readme.txt';
 	}
@@ -247,7 +239,7 @@ if ( ! $noBump ) {
 		$problems = array();
 
 		if ( ! build_replace_file( $mainFile, $originalMain ) ) {
-			$problems[] = 'wp-mlp.php';
+			$problems[] = 'lingocanvas.php';
 		}
 
 		if ( null !== $originalReadme && ! build_replace_file( $readmeFile, $originalReadme ) ) {
@@ -276,5 +268,6 @@ printf(
 	filesize( $target ) / 1024
 );
 
-echo "Внимание: .env в папке плагина на сервере будет удалён при замене через ZIP — ключ храните в настройках, wp-config.php, wp-content/wp-mlp.env.php (первая строка <?php exit; ?>) или wp-mlp.env выше корня WordPress.
+echo "Внимание: .env в папке плагина на сервере будет удалён при замене через ZIP — ключ храните в настройках, wp-config.php, wp-content/wp-mlp.env.php (первая строка <?php exit; ?>) или wp-mlp.env выше корня WordPress (имена файлов окружения сохранены от прежнего плагина).
+Если на сайте ещё активен прежний «WP Multilang Press» (папка wp-mlp/): загрузите этот ZIP как новый плагин LingoCanvas и активируйте его — прежний плагин будет выключен автоматически, данные общие.
 ";

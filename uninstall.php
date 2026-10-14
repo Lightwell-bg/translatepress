@@ -22,10 +22,39 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 /**
+ * Активен ли прежний плагин «WP Multilang Press» (главный файл wp-mlp.php).
+ *
+ * Он пользуется теми же таблицами и опциями, поэтому, пока он активен,
+ * данные удалять нельзя. Сравнивается имя главного файла, а не путь целиком.
+ */
+function wp_mlp_uninstall_legacy_plugin_active(): bool {
+	$active = (array) get_option( 'active_plugins', array() );
+
+	if ( is_multisite() ) {
+		$active = array_merge( $active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+	}
+
+	foreach ( $active as $basename ) {
+		if ( is_string( $basename ) && 'wp-mlp.php' === basename( $basename ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+if ( wp_mlp_uninstall_legacy_plugin_active() ) {
+	return;
+}
+
+/**
  * Удаляет данные плагина текущего сайта, если владелец это разрешил.
  */
 function wp_mlp_uninstall_current_site(): void {
 	global $wpdb;
+
+	// Служебный флаг отложенной активации не содержит данных пользователя: убираем всегда.
+	delete_option( 'lingocanvas_pending_activation' );
 
 	$settings = get_option( 'mlp_settings', array() );
 

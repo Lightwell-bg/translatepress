@@ -81,7 +81,7 @@ final class NavMenu implements Hookable {
 	public function addMetaBox(): void {
 		add_meta_box(
 			'mlp-languages',
-			__( 'Languages', 'wp-mlp' ),
+			__( 'Languages', 'lingocanvas' ),
 			array( $this, 'renderMetaBox' ),
 			'nav-menus',
 			'side',
@@ -99,7 +99,7 @@ final class NavMenu implements Hookable {
 	 */
 	public function renderMetaBox(): void {
 		if ( array() === $this->settings->all() ) {
-			printf( '<p>%s</p>', esc_html__( 'First add languages on the "Languages" page.', 'wp-mlp' ) );
+			printf( '<p>%s</p>', esc_html__( 'First add languages on the "Languages" page.', 'lingocanvas' ) );
 
 			return;
 		}
@@ -107,17 +107,17 @@ final class NavMenu implements Hookable {
 		$rows = array(
 			array(
 				'key'         => -1,
-				'title'       => __( 'Language', 'wp-mlp' ),
+				'title'       => __( 'Language', 'lingocanvas' ),
 				'url'         => self::MARKER_DROPDOWN,
-				'label'       => __( 'Dropdown list', 'wp-mlp' ),
-				'description' => __( 'A single item; the languages open on hover or click, like a regular theme submenu.', 'wp-mlp' ),
+				'label'       => __( 'Dropdown list', 'lingocanvas' ),
+				'description' => __( 'A single item; the languages open on hover or click, like a regular theme submenu.', 'lingocanvas' ),
 			),
 			array(
 				'key'         => -2,
-				'title'       => __( 'Language switcher', 'wp-mlp' ),
+				'title'       => __( 'Language switcher', 'lingocanvas' ),
 				'url'         => self::MARKER_ROW,
-				'label'       => __( 'In a row', 'wp-mlp' ),
-				'description' => __( 'The languages are visible right away as separate items in a row, with no dropdown.', 'wp-mlp' ),
+				'label'       => __( 'In a row', 'lingocanvas' ),
+				'description' => __( 'The languages are visible right away as separate items in a row, with no dropdown.', 'lingocanvas' ),
 			),
 		);
 
@@ -150,7 +150,7 @@ final class NavMenu implements Hookable {
 			<p class="button-controls">
 				<span class="add-to-menu">
 					<input type="submit" class="button-secondary submit-add-to-menu right"
-						value="<?php esc_attr_e( 'Add to menu', 'wp-mlp' ); ?>"
+						value="<?php esc_attr_e( 'Add to menu', 'lingocanvas' ); ?>"
 						name="add-mlp-language-menu-item" id="submit-mlp-languages">
 					<span class="spinner"></span>
 				</span>
@@ -285,16 +285,18 @@ final class NavMenu implements Hookable {
 		 * Название пункта, заданное в «Внешний вид → Меню», при этом
 		 * теряется. Кому нужно именно оно — возвращает его этим фильтром.
 		 *
+		 * Прежнее имя фильтра: `mlp_nav_menu_trigger_title` (устарело с 0.3.13,
+		 * работает как псевдоним `lingocanvas_nav_menu_trigger_title`).
+		 *
+		 * @since 0.3.13 Имя фильтра — `lingocanvas_nav_menu_trigger_title`.
+		 *
 		 * @param string   $title   Подпись по умолчанию (может быть разметкой).
 		 * @param Language $current Язык текущей страницы.
 		 * @param object   $item    Сам пункт-маркер, с исходным `title`.
 		 */
-		$item->title = (string) apply_filters(
-			'mlp_nav_menu_trigger_title',
-			Flags::switcherMarkup( $current, $this->settings->switcherDisplay() ),
-			$current,
-			$item
-		);
+		$title = Flags::switcherMarkup( $current, $this->settings->switcherDisplay() );
+		$title = apply_filters_deprecated( 'mlp_nav_menu_trigger_title', array( $title, $current, $item ), '0.3.13', 'lingocanvas_nav_menu_trigger_title' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
+		$item->title = (string) apply_filters( 'lingocanvas_nav_menu_trigger_title', $title, $current, $item );
 
 		/**
 		 * Классы триггера выпадающего списка.
@@ -305,21 +307,20 @@ final class NavMenu implements Hookable {
 		 * ждут свой класс или data-атрибут — фильтр позволяет его добавить,
 		 * не трогая код плагина.
 		 *
+		 * Прежнее имя фильтра: `mlp_nav_menu_dropdown_classes` (устарело с 0.3.13,
+		 * работает как псевдоним `lingocanvas_nav_menu_dropdown_classes`).
+		 *
+		 * @since 0.3.13 Имя фильтра — `lingocanvas_nav_menu_dropdown_classes`.
+		 *
 		 * @param list<string> $classes Классы пункта-триггера.
 		 * @param object       $item    Сам пункт меню.
 		 */
-		$item->classes = array_values(
-			array_unique(
-				apply_filters(
-					'mlp_nav_menu_dropdown_classes',
-					array_merge(
-						is_array( $item->classes ) ? $item->classes : array(),
-						array( 'mlp-language-switcher-trigger', 'menu-item-has-children' )
-					),
-					$item
-				)
-			)
+		$classes = array_merge(
+			is_array( $item->classes ) ? $item->classes : array(),
+			array( 'mlp-language-switcher-trigger', 'menu-item-has-children' )
 		);
+		$classes = apply_filters_deprecated( 'mlp_nav_menu_dropdown_classes', array( $classes, $item ), '0.3.13', 'lingocanvas_nav_menu_dropdown_classes' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
+		$item->classes = array_values( array_unique( apply_filters( 'lingocanvas_nav_menu_dropdown_classes', $classes, $item ) ) );
 
 		return $item;
 	}
@@ -347,7 +348,7 @@ final class NavMenu implements Hookable {
 		$item->object   = 'custom';
 		$item->object_id = 0;
 		$item->type     = 'custom';
-		$item->type_label = __( 'Custom link', 'wp-mlp' );
+		$item->type_label = __( 'Custom link', 'lingocanvas' );
 		$item->menu_item_parent = $parentDbId;
 		$item->menu_order = (int) $marker->menu_order + $index + 1;
 		$item->description = '';

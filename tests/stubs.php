@@ -269,6 +269,39 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+if ( ! function_exists( 'apply_filters_deprecated' ) ) {
+	/**
+	 * Устаревший фильтр: как в WordPress, обработчик старого имени получает
+	 * массив аргументов; предупреждение об устаревании в тестах не нужно.
+	 *
+	 * @param string       $tag         Старое имя фильтра.
+	 * @param array<mixed> $args        Аргументы (первый — фильтруемое значение).
+	 * @param string       $version     Версия, с которой имя устарело.
+	 * @param string       $replacement Новое имя.
+	 */
+	function apply_filters_deprecated( string $tag, array $args, string $version, string $replacement = '' ) {
+		unset( $version, $replacement );
+
+		return apply_filters( $tag, ...$args );
+	}
+}
+
+if ( ! function_exists( 'do_action_deprecated' ) ) {
+	/**
+	 * Устаревшее действие: делегирует обычному do_action заглушки.
+	 *
+	 * @param string       $tag         Старое имя действия.
+	 * @param array<mixed> $args        Аргументы.
+	 * @param string       $version     Версия, с которой имя устарело.
+	 * @param string       $replacement Новое имя.
+	 */
+	function do_action_deprecated( string $tag, array $args, string $version, string $replacement = '' ): void {
+		unset( $version, $replacement );
+
+		do_action( $tag, ...$args );
+	}
+}
+
 if ( ! function_exists( 'add_action' ) ) {
 	/**
 	 * Заглушка регистрации хука: тесты вызывают обработчики напрямую, а

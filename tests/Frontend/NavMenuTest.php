@@ -140,13 +140,31 @@ final class NavMenuTest extends TestCase {
 	 * есть фильтр — вернуть его обратно.
 	 */
 	public function testTriggerTitleCanBeOverriddenByFilter(): void {
-		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', static fn(): string => 'Язык' );
+		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', static fn(): string => 'Язык' );
 
 		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
 
 		$this->assertSame( 'Язык', $result[0]->title );
 
+		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', null );
+	}
+
+	/**
+	 * Старое имя фильтра работает; новое применяется после него и побеждает.
+	 */
+	public function testDeprecatedTriggerTitleFilterStillWorksAndNewNameRunsAfterIt(): void {
+		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', static fn(): string => 'old' );
+
+		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
+		$this->assertSame( 'old', $result[0]->title );
+
+		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', static fn( string $title ): string => $title . '+new' );
+
+		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
+		$this->assertSame( 'old+new', $result[0]->title );
+
 		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', null );
+		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', null );
 	}
 
 	public function testDropdownDoesNotIncludeDraftLanguage(): void {

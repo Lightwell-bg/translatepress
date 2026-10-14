@@ -3,7 +3,7 @@
  * Регрессия: закрывающий тег PHP внутри однострочного комментария.
  *
  * `// ... ?> ...` завершает PHP-режим, и остаток файла выводится как HTML
- * (так лёг живой сайт из-за wp-mlp.php).
+ * (так лёг живой сайт из-за главного файла плагина).
  *
  * @package WpMlp
  */
@@ -113,7 +113,7 @@ final class NoCloseTagInCommentsTest extends TestCase {
 	private static function purePhpFiles(): array {
 		$root  = dirname( __DIR__ );
 		$files = self::phpFiles( $root . '/bin', false );
-		foreach ( array( 'wp-mlp.php', 'uninstall.php' ) as $name ) {
+		foreach ( array( 'lingocanvas.php', 'uninstall.php' ) as $name ) {
 			if ( is_file( $root . '/' . $name ) ) {
 				$files[] = $root . '/' . $name;
 			}

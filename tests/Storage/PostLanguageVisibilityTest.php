@@ -112,7 +112,7 @@ final class PostLanguageVisibilityTest extends TestCase {
 
 		$service->setMany( array( 10, 11, 10 ), 'en', true );
 
-		$this->assertSame( 1, array_count_values( wp_mlp_test_actions() )['mlp_purge_page_cache'] ?? 0 );
+		$this->assertSame( 1, array_count_values( wp_mlp_test_actions() )['lingocanvas_purge_page_cache'] ?? 0 );
 		$this->assertSame( 2, wp_mlp_test_options()[ TranslationCache::OPTION_VERSION ], 'Версия кэша выросла — карта сайта пересоберётся.' );
 	}
 

@@ -27,8 +27,8 @@ final class LanguageSwitcherWidget extends WP_Widget {
 	public function __construct() {
 		parent::__construct(
 			'mlp_language_switcher',
-			__( 'Language switcher', 'wp-mlp' ),
-			array( 'description' => __( 'Links to the current page in the other languages of the site.', 'wp-mlp' ) )
+			__( 'Language switcher', 'lingocanvas' ),
+			array( 'description' => __( 'Links to the current page in the other languages of the site.', 'lingocanvas' ) )
 		);
 	}
 
@@ -95,7 +95,7 @@ final class LanguageSwitcherWidget extends WP_Widget {
 		?>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>">
-				<?php esc_html_e( 'Title:', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Title:', 'lingocanvas' ); ?>
 			</label>
 			<input class="widefat" type="text"
 				id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"
@@ -106,14 +106,14 @@ final class LanguageSwitcherWidget extends WP_Widget {
 			<label>
 				<input type="checkbox" <?php checked( ! empty( $instance['hide_current'] ) ); ?>
 					name="<?php echo esc_attr( $this->get_field_name( 'hide_current' ) ); ?>" value="1">
-				<?php esc_html_e( 'Hide the current language', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Hide the current language', 'lingocanvas' ); ?>
 			</label>
 		</p>
 		<p>
 			<label>
 				<input type="checkbox" <?php checked( ! empty( $instance['as_dropdown'] ) ); ?>
 					name="<?php echo esc_attr( $this->get_field_name( 'as_dropdown' ) ); ?>" value="1">
-				<?php esc_html_e( 'Show as a dropdown', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Show as a dropdown', 'lingocanvas' ); ?>
 			</label>
 		</p>
 		<?php

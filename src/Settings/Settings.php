@@ -474,7 +474,7 @@ final class Settings {
 
 			if ( ! Locale::isValid( $locale ) ) {
 				/* translators: %s: language code entered by the user */
-				$errors[] = sprintf( /* translators: %s: language code entered by the user */ __( 'The language code "%s" is not valid: 2–8 Latin letters and hyphen-separated subtags are allowed.', 'wp-mlp' ), $locale );
+				$errors[] = sprintf( /* translators: %s: language code entered by the user */ __( 'The language code "%s" is not valid: 2–8 Latin letters and hyphen-separated subtags are allowed.', 'lingocanvas' ), $locale );
 				continue;
 			}
 
@@ -483,13 +483,13 @@ final class Settings {
 
 			if ( ! Locale::isValidSlug( $slug ) ) {
 				/* translators: %s: URL slug entered by the user */
-				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is not valid: lowercase Latin letters, digits and hyphens are allowed.', 'wp-mlp' ), $slug );
+				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is not valid: lowercase Latin letters, digits and hyphens are allowed.', 'lingocanvas' ), $slug );
 				continue;
 			}
 
 			if ( isset( $slugs[ $slug ] ) ) {
 				/* translators: %s: duplicated URL slug */
-				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is already used by another language.', 'wp-mlp' ), $slug );
+				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is already used by another language.', 'lingocanvas' ), $slug );
 				continue;
 			}
 
@@ -506,7 +506,7 @@ final class Settings {
 
 			if ( '' !== $wpLocale && ! Locale::isValidWpLocale( $wpLocale ) ) {
 				/* translators: %s: WordPress locale entered by the user */
-				$errors[] = sprintf( /* translators: %s: WordPress locale entered by the user */ __( 'The WordPress locale "%s" is not valid: Latin letters, digits and underscores are allowed, for example en_US.', 'wp-mlp' ), $wpLocale );
+				$errors[] = sprintf( /* translators: %s: WordPress locale entered by the user */ __( 'The WordPress locale "%s" is not valid: Latin letters, digits and underscores are allowed, for example en_US.', 'lingocanvas' ), $wpLocale );
 				$wpLocale = '';
 			}
 
@@ -525,7 +525,7 @@ final class Settings {
 		$defaultLocale = Locale::normalize( (string) ( $input['default_locale'] ?? '' ) );
 
 		if ( ! isset( $languages[ $defaultLocale ] ) ) {
-			$errors[]      = __( 'The default language must be in the list of languages. The default language settings were not changed.', 'wp-mlp' );
+			$errors[]      = __( 'The default language must be in the list of languages. The default language settings were not changed.', 'lingocanvas' );
 			$defaultLocale = $this->defaultLanguage()->locale;
 
 			if ( ! isset( $languages[ $defaultLocale ] ) ) {

@@ -111,7 +111,7 @@ final class BlocksController implements Hookable {
 		if ( ! Text::isTranslatable( wp_strip_all_tags( $html ) ) ) {
 			return new WP_Error(
 				'mlp_empty_block',
-				__( 'There is nothing to translate in this fragment.', 'wp-mlp' ),
+				__( 'There is nothing to translate in this fragment.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -139,7 +139,7 @@ final class BlocksController implements Hookable {
 		if ( ! isset( $ids[ $uniqHash ] ) ) {
 			return new WP_Error(
 				'mlp_block_failed',
-				__( 'Could not create the block.', 'wp-mlp' ),
+				__( 'Could not create the block.', 'lingocanvas' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -173,7 +173,7 @@ final class BlocksController implements Hookable {
 		if ( null === $source || Segment::KIND_HTML_BLOCK !== (string) $source['kind'] ) {
 			return new WP_Error(
 				'mlp_block_not_found',
-				__( 'Block not found.', 'wp-mlp' ),
+				__( 'Block not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
 		}

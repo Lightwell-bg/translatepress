@@ -3,10 +3,10 @@
 # WordPress Playground CLI (WASM, latest WP, PHP 8.3, WP_DEBUG on).
 #
 # Usage (Git Bash, from anywhere):  bash bin/smoke-test.sh
-#   SMOKE_SCRATCH=/some/dir  override scratch dir (default: $TMPDIR/wp-mlp-smoke-test)
+#   SMOKE_SCRATCH=/some/dir  override scratch dir (default: $TMPDIR/lingocanvas-smoke-test)
 #
 # What it does:
-#   1. Copies only the runtime files (wp-mlp.php, uninstall.php, readme.txt, src/,
+#   1. Copies only the runtime files (lingocanvas.php, uninstall.php, readme.txt, src/,
 #      assets/, languages/) into the scratch dir; nothing is written into the plugin tree.
 #   2. Reuses the pinned @wp-playground/cli installed by bin/plugin-check.sh when present,
 #      otherwise installs it into the scratch dir.
@@ -25,23 +25,23 @@ export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
-SCRATCH="${SMOKE_SCRATCH:-${TMPDIR:-/tmp}/wp-mlp-smoke-test}"
+SCRATCH="${SMOKE_SCRATCH:-${TMPDIR:-/tmp}/lingocanvas-smoke-test}"
 mkdir -p "$SCRATCH"
 SCRATCH="$(cd "$SCRATCH" && pwd)"
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
 
 # 1. clean runtime copy
-CLEAN="$SCRATCH/clean/wp-mlp"
+CLEAN="$SCRATCH/clean/lingocanvas"
 rm -rf "$SCRATCH/clean" "$SCRATCH/out"
 mkdir -p "$CLEAN" "$SCRATCH/out"
-for item in wp-mlp.php uninstall.php readme.txt src assets languages; do
+for item in lingocanvas.php uninstall.php readme.txt src assets languages; do
 	[ -e "$ROOT/$item" ] && cp -r "$ROOT/$item" "$CLEAN/"
 done
 cp "$HERE/smoke-test.php" "$HERE/smoke-test-render.php" "$SCRATCH/out/"
 
 # 2. playground cli (reuse the plugin-check install if there is one)
 TOOL="$SCRATCH/tool"
-PC_TOOL="${TMPDIR:-/tmp}/wp-mlp-plugin-check/tool"
+PC_TOOL="${TMPDIR:-/tmp}/lingocanvas-plugin-check/tool"
 if [ -f "$PC_TOOL/node_modules/@wp-playground/cli/cli.js" ]; then
 	TOOL="$PC_TOOL"
 elif [ ! -f "$TOOL/node_modules/@wp-playground/cli/cli.js" ]; then
@@ -54,7 +54,7 @@ fi
 LOG="$SCRATCH/run.log"
 (cd "$TOOL" && node node_modules/@wp-playground/cli/cli.js run-blueprint \
 	--blueprint="$(win "$HERE/smoke-test-blueprint.json")" \
-	--mount-dir "$(win "$CLEAN")" /wordpress/wp-content/plugins/wp-mlp \
+	--mount-dir "$(win "$CLEAN")" /wordpress/wp-content/plugins/lingocanvas \
 	--mount-dir "$(win "$SCRATCH/out")" /out) >"$LOG" 2>&1 || { echo "Playground failed, see $LOG"; tail -n 20 "$LOG"; exit 1; }
 
 RESULT="$SCRATCH/out/smoke.json"

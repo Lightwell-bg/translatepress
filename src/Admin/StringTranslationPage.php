@@ -107,7 +107,7 @@ final class StringTranslationPage implements Hookable {
 	 */
 	public function handlePurge(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to delete translations.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to delete translations.', 'lingocanvas' ), '', array( 'response' => 403 ) );
 		}
 
 		check_admin_referer( self::ACTION_PURGE );
@@ -117,7 +117,7 @@ final class StringTranslationPage implements Hookable {
 		$language = $this->settings->get( $locale );
 
 		if ( null === $language || $language->isDefault ) {
-			wp_die( esc_html__( 'This additional language is not in the settings.', 'wp-mlp' ), '', array( 'response' => 400 ) );
+			wp_die( esc_html__( 'This additional language is not in the settings.', 'lingocanvas' ), '', array( 'response' => 400 ) );
 		}
 
 		$deleted = $this->translations->deleteAllForLocale( $language->locale );
@@ -146,7 +146,7 @@ final class StringTranslationPage implements Hookable {
 	 */
 	public function handleCleanGettext(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have sufficient permissions.', 'lingocanvas' ), '', array( 'response' => 403 ) );
 		}
 
 		check_admin_referer( self::ACTION_CLEAN_GETTEXT );
@@ -218,8 +218,8 @@ final class StringTranslationPage implements Hookable {
 	public function addMenu(): void {
 		add_submenu_page(
 			SettingsPage::MENU_SLUG,
-			__( 'String translation', 'wp-mlp' ),
-			__( 'String translation', 'wp-mlp' ),
+			__( 'String translation', 'lingocanvas' ),
+			__( 'String translation', 'lingocanvas' ),
 			self::CAPABILITY,
 			self::MENU_SLUG,
 			array( $this, 'render' )
@@ -247,17 +247,17 @@ final class StringTranslationPage implements Hookable {
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 				'pagesRoot' => esc_url_raw( rest_url( EditorPagesController::NAMESPACE . '/editor/pages' ) ),
 					'i18n'  => array(
-						'pickerLoading' => __( 'Searching…', 'wp-mlp' ),
-						'pickerEmpty'   => __( 'Nothing found', 'wp-mlp' ),
-						'pickerError'   => __( 'Search failed', 'wp-mlp' ),
-					'saving'        => __( 'Saving…', 'wp-mlp' ),
-					'saved'         => __( 'Saved', 'wp-mlp' ),
-					'failed'        => __( 'Save error', 'wp-mlp' ),
-					'deleting'      => __( 'Deleting…', 'wp-mlp' ),
-					'confirmDelete' => __( 'Delete the translation of this string?', 'wp-mlp' ),
-					'translating'   => __( 'Translating with AI…', 'wp-mlp' ),
-					'aiSuggested'   => __( 'Suggested by AI — review and save', 'wp-mlp' ),
-					'aiFailed'      => __( 'AI could not translate', 'wp-mlp' ),
+						'pickerLoading' => __( 'Searching…', 'lingocanvas' ),
+						'pickerEmpty'   => __( 'Nothing found', 'lingocanvas' ),
+						'pickerError'   => __( 'Search failed', 'lingocanvas' ),
+					'saving'        => __( 'Saving…', 'lingocanvas' ),
+					'saved'         => __( 'Saved', 'lingocanvas' ),
+					'failed'        => __( 'Save error', 'lingocanvas' ),
+					'deleting'      => __( 'Deleting…', 'lingocanvas' ),
+					'confirmDelete' => __( 'Delete the translation of this string?', 'lingocanvas' ),
+					'translating'   => __( 'Translating with AI…', 'lingocanvas' ),
+					'aiSuggested'   => __( 'Suggested by AI — review and save', 'lingocanvas' ),
+					'aiFailed'      => __( 'AI could not translate', 'lingocanvas' ),
 				),
 			)
 		);
@@ -276,8 +276,8 @@ final class StringTranslationPage implements Hookable {
 		if ( array() === $secondary ) {
 			printf(
 				'<div class="wrap"><h1>%s</h1><div class="notice notice-warning"><p>%s</p></div></div>',
-				esc_html__( 'String translation', 'wp-mlp' ),
-				esc_html__( 'First add at least one additional language on the “Languages” page.', 'wp-mlp' )
+				esc_html__( 'String translation', 'lingocanvas' ),
+				esc_html__( 'First add at least one additional language on the “Languages” page.', 'lingocanvas' )
 			);
 
 			return;
@@ -288,7 +288,7 @@ final class StringTranslationPage implements Hookable {
 
 		?>
 		<div class="wrap wp-mlp-strings">
-			<h1><?php esc_html_e( 'String translation', 'wp-mlp' ); ?></h1>
+			<h1><?php esc_html_e( 'String translation', 'lingocanvas' ); ?></h1>
 
 			<?php $this->renderTabs( $tab, $filters['locale'] ); ?>
 			<?php $this->renderPurgeNotice(); ?>
@@ -371,17 +371,17 @@ final class StringTranslationPage implements Hookable {
 		?>
 		<p class="description">
 			<?php if ( self::TAB_SEO === $tab ) : ?>
-				<?php esc_html_e( 'Fields for search engines and social previews: meta description, Open Graph, Twitter Card and JSON-LD text fields. They are not visible on the page itself — Google and messengers read them when someone shares a link.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Fields for search engines and social previews: meta description, Open Graph, Twitter Card and JSON-LD text fields. They are not visible on the page itself — Google and messengers read them when someone shares a link.', 'lingocanvas' ); ?>
 				<br>
-				<?php esc_html_e( 'You do not need to translate the post title here: it is shared with the H1 and is translated once in the “Content” tab.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'You do not need to translate the post title here: it is shared with the H1 and is translated once in the “Content” tab.', 'lingocanvas' ); ?>
 			<?php elseif ( self::TAB_LINKS === $tab ) : ?>
-				<?php esc_html_e( 'Where links lead in this language. On the left is the address from the original; on the right you can set a different one: for example, point the Bulgarian button to a Bulgarian landing page and the English one to an English page.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Where links lead in this language. On the left is the address from the original; on the right you can set a different one: for example, point the Bulgarian button to a Bulgarian landing page and the English one to an English page.', 'lingocanvas' ); ?>
 				<br>
-				<?php esc_html_e( 'Leave the field empty — the link stays as is and gets the language prefix automatically, as before. Fill it in only where the address must differ.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Leave the field empty — the link stays as is and gets the language prefix automatically, as before. Fill it in only where the address must differ.', 'lingocanvas' ); ?>
 			<?php else : ?>
-				<?php esc_html_e( 'What you wrote yourself: post and page text, titles, menu items, image captions, widget texts. This is the main tab — start here.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'What you wrote yourself: post and page text, titles, menu items, image captions, widget texts. This is the main tab — start here.', 'lingocanvas' ); ?>
 				<br>
-				<?php esc_html_e( 'Strings do not appear here right away: the plugin learns a page’s text only when the page is actually displayed. Open the page in an additional language and its strings will show up in the list.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Strings do not appear here right away: the plugin learns a page’s text only when the page is actually displayed. Open the page in an additional language and its strings will show up in the list.', 'lingocanvas' ); ?>
 			<?php endif; ?>
 		</p>
 
@@ -391,16 +391,16 @@ final class StringTranslationPage implements Hookable {
 		<table class="widefat striped wp-mlp-table">
 			<thead>
 				<tr>
-					<th scope="col" class="wp-mlp-col-source"><?php esc_html_e( 'Source string', 'wp-mlp' ); ?></th>
-					<th scope="col" class="wp-mlp-col-kind"><?php esc_html_e( 'Type', 'wp-mlp' ); ?></th>
-					<th scope="col" class="wp-mlp-col-translation"><?php esc_html_e( 'Translation', 'wp-mlp' ); ?></th>
-					<th scope="col" class="wp-mlp-col-status"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></th>
+					<th scope="col" class="wp-mlp-col-source"><?php esc_html_e( 'Source string', 'lingocanvas' ); ?></th>
+					<th scope="col" class="wp-mlp-col-kind"><?php esc_html_e( 'Type', 'lingocanvas' ); ?></th>
+					<th scope="col" class="wp-mlp-col-translation"><?php esc_html_e( 'Translation', 'lingocanvas' ); ?></th>
+					<th scope="col" class="wp-mlp-col-status"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php if ( array() === $result['items'] ) : ?>
 					<tr>
-						<td colspan="4"><?php esc_html_e( 'No strings found.', 'wp-mlp' ); ?></td>
+						<td colspan="4"><?php esc_html_e( 'No strings found.', 'lingocanvas' ); ?></td>
 					</tr>
 				<?php endif; ?>
 
@@ -433,16 +433,16 @@ final class StringTranslationPage implements Hookable {
 			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
 
 			<button type="submit" class="button" <?php disabled( 0 === $count ); ?>
-				data-mlp-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of strings */ __( 'Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again.', 'wp-mlp' ), number_format_i18n( $count ) ) ); ?>">
-				<?php echo esc_html( sprintf( /* translators: %s: number of strings */ __( 'Delete strings without a translation (%s)', 'wp-mlp' ), number_format_i18n( $count ) ) ); ?>
+				data-mlp-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of strings */ __( 'Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again.', 'lingocanvas' ), number_format_i18n( $count ) ) ); ?>">
+				<?php echo esc_html( sprintf( /* translators: %s: number of strings */ __( 'Delete strings without a translation (%s)', 'lingocanvas' ), number_format_i18n( $count ) ) ); ?>
 			</button>
 			<span class="description">
 				<?php if ( $isInterface ) : ?>
-					<?php esc_html_e( 'Useful if the list got cluttered with strings collected before the language pack was installed. Strings with your translation are not deleted.', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Useful if the list got cluttered with strings collected before the language pack was installed. Strings with your translation are not deleted.', 'lingocanvas' ); ?>
 				<?php elseif ( self::TAB_LINKS === $tab ) : ?>
-					<?php esc_html_e( 'Removes link addresses only. Useful if the list got cluttered with technical addresses (for example, collected before this update). Links with your translation are not deleted.', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Removes link addresses only. Useful if the list got cluttered with technical addresses (for example, collected before this update). Links with your translation are not deleted.', 'lingocanvas' ); ?>
 				<?php else : ?>
-					<?php esc_html_e( 'Cleans up “Content” and “SEO/GEO” at once — they live in one table. Useful if interface strings collected before the “Interface” tab existed ended up in the list. Translated strings are not deleted; the rest will be collected again.', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Cleans up “Content” and “SEO/GEO” at once — they live in one table. Useful if interface strings collected before the “Interface” tab existed ended up in the list. Translated strings are not deleted; the rest will be collected again.', 'lingocanvas' ); ?>
 				<?php endif; ?>
 			</span>
 		</form>
@@ -465,7 +465,7 @@ final class StringTranslationPage implements Hookable {
 			esc_html(
 				sprintf(
 					/* translators: %s: number of deleted strings */
-					__( 'Strings deleted: %s.', 'wp-mlp' ),
+					__( 'Strings deleted: %s.', 'lingocanvas' ),
 					number_format_i18n( $deleted )
 				)
 			)
@@ -480,10 +480,10 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function renderTabs( string $current, string $locale ): void {
 		$tabs = array(
-			self::TAB_CONTENT   => __( 'Content', 'wp-mlp' ),
-			self::TAB_SEO       => __( 'SEO/GEO', 'wp-mlp' ),
-			self::TAB_INTERFACE => __( 'Interface', 'wp-mlp' ),
-			self::TAB_LINKS     => __( 'Links', 'wp-mlp' ),
+			self::TAB_CONTENT   => __( 'Content', 'lingocanvas' ),
+			self::TAB_SEO       => __( 'SEO/GEO', 'lingocanvas' ),
+			self::TAB_INTERFACE => __( 'Interface', 'lingocanvas' ),
+			self::TAB_LINKS     => __( 'Links', 'lingocanvas' ),
 		);
 
 		echo '<nav class="nav-tab-wrapper wp-clearfix">';
@@ -577,7 +577,7 @@ final class StringTranslationPage implements Hookable {
 			</td>
 			<td class="wp-mlp-col-translation">
 				<label class="screen-reader-text" for="mlp-input-<?php echo esc_attr( (string) $row['id'] ); ?>">
-					<?php esc_html_e( 'Translation', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Translation', 'lingocanvas' ); ?>
 				</label>
 				<textarea
 					id="mlp-input-<?php echo esc_attr( (string) $row['id'] ); ?>"
@@ -586,18 +586,18 @@ final class StringTranslationPage implements Hookable {
 					data-source-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 					data-locale="<?php echo esc_attr( $locale ); ?>"><?php echo esc_textarea( $text ); ?></textarea>
 				<button type="button" class="button button-secondary wp-mlp-save">
-					<?php esc_html_e( 'Save', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Save', 'lingocanvas' ); ?>
 				</button>
 				<?php if ( $this->providers->isReady() && ! $isLink ) : ?>
 					<button type="button" class="button-link wp-mlp-translate"
-						title="<?php esc_attr_e( 'Fill the field with an AI translation — does not save automatically', 'wp-mlp' ); ?>">
-						<?php esc_html_e( 'Translate with AI', 'wp-mlp' ); ?>
+						title="<?php esc_attr_e( 'Fill the field with an AI translation — does not save automatically', 'lingocanvas' ); ?>">
+						<?php esc_html_e( 'Translate with AI', 'lingocanvas' ); ?>
 					</button>
 				<?php endif; ?>
 				<?php if ( '' !== $text ) : ?>
 					<button type="button" class="button-link wp-mlp-delete"
-						title="<?php esc_attr_e( 'Delete translation', 'wp-mlp' ); ?>">
-						<?php esc_html_e( 'Delete', 'wp-mlp' ); ?>
+						title="<?php esc_attr_e( 'Delete translation', 'lingocanvas' ); ?>">
+						<?php esc_html_e( 'Delete', 'lingocanvas' ); ?>
 					</button>
 				<?php endif; ?>
 			</td>
@@ -623,7 +623,7 @@ final class StringTranslationPage implements Hookable {
 			<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
 			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
 
-			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language', 'wp-mlp' ); ?></label>
+			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language', 'lingocanvas' ); ?></label>
 			<select name="mlp_locale" id="mlp-locale">
 				<?php foreach ( $secondary as $language ) : ?>
 					<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $filters['locale'] ); ?>>
@@ -632,9 +632,9 @@ final class StringTranslationPage implements Hookable {
 				<?php endforeach; ?>
 			</select>
 
-			<label for="mlp-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></label>
+			<label for="mlp-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></label>
 			<select name="mlp_status" id="mlp-status">
-				<option value=""><?php esc_html_e( 'All statuses', 'wp-mlp' ); ?></option>
+				<option value=""><?php esc_html_e( 'All statuses', 'lingocanvas' ); ?></option>
 				<?php foreach ( TranslationStatus::all() as $status ) : ?>
 					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $status, $filters['status'] ); ?>>
 						<?php echo esc_html( TranslationStatus::label( $status ) ); ?>
@@ -652,33 +652,33 @@ final class StringTranslationPage implements Hookable {
 
 			<?php if ( self::TAB_SEO !== $tab && self::TAB_LINKS !== $tab ) : ?>
 				<?php /* На SEO/GEO и «Ссылках» выбирать нечего: вкладка сама и есть тип. */ ?>
-				<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'String type', 'wp-mlp' ); ?></label>
+				<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'String type', 'lingocanvas' ); ?></label>
 				<select name="mlp_type" id="mlp-type">
-					<option value=""><?php esc_html_e( 'All content', 'wp-mlp' ); ?></option>
+					<option value=""><?php esc_html_e( 'All content', 'lingocanvas' ); ?></option>
 					<option value="<?php echo esc_attr( SourceRepository::TYPE_TEXT ); ?>" <?php selected( SourceRepository::TYPE_TEXT, $filters['type'] ); ?>>
-						<?php esc_html_e( 'Text', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Text', 'lingocanvas' ); ?>
 					</option>
 					<option value="<?php echo esc_attr( SourceRepository::TYPE_ATTRIBUTE ); ?>" <?php selected( SourceRepository::TYPE_ATTRIBUTE, $filters['type'] ); ?>>
-						<?php esc_html_e( 'Attribute (alt, title, placeholder)', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Attribute (alt, title, placeholder)', 'lingocanvas' ); ?>
 					</option>
 					<option value="<?php echo esc_attr( SourceRepository::TYPE_BLOCK ); ?>" <?php selected( SourceRepository::TYPE_BLOCK, $filters['type'] ); ?>>
-						<?php esc_html_e( 'Block (paragraph with markup)', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Block (paragraph with markup)', 'lingocanvas' ); ?>
 					</option>
 				</select>
 			<?php endif; ?>
 
-			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search', 'wp-mlp' ); ?></label>
+			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search', 'lingocanvas' ); ?></label>
 			<input type="search" name="s" id="mlp-search" value="<?php echo esc_attr( $filters['search'] ); ?>"
-				placeholder="<?php esc_attr_e( 'Search the source and the translation', 'wp-mlp' ); ?>"
-				title="<?php esc_attr_e( '* — any characters: *blog/en/ means “ends with”, blog/en/* means “starts with”. More details in “Help” at the top right.', 'wp-mlp' ); ?>">
+				placeholder="<?php esc_attr_e( 'Search the source and the translation', 'lingocanvas' ); ?>"
+				title="<?php esc_attr_e( '* — any characters: *blog/en/ means “ends with”, blog/en/* means “starts with”. More details in “Help” at the top right.', 'lingocanvas' ); ?>">
 
-			<?php submit_button( __( 'Show', 'wp-mlp' ), 'secondary', '', false ); ?>
+			<?php submit_button( __( 'Show', 'lingocanvas' ), 'secondary', '', false ); ?>
 
 			<span class="wp-mlp-total">
 				<?php
 				printf(
 					/* translators: %s: number of strings */
-					esc_html__( 'Strings found: %s', 'wp-mlp' ),
+					esc_html__( 'Strings found: %s', 'lingocanvas' ),
 					esc_html( number_format_i18n( $total ) )
 				);
 				?>
@@ -695,13 +695,13 @@ final class StringTranslationPage implements Hookable {
 				<?php
 				printf(
 					/* translators: %s: language code */
-					esc_html__( 'Delete all translations for the language “%s”', 'wp-mlp' ),
+					esc_html__( 'Delete all translations for the language “%s”', 'lingocanvas' ),
 					esc_html( $filters['locale'] )
 				);
 				?>
 			</button>
 			<span class="description">
-				<?php esc_html_e( 'Source strings will stay — only translations into this language will be deleted.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Source strings will stay — only translations into this language will be deleted.', 'lingocanvas' ); ?>
 			</span>
 		</form>
 		<?php
@@ -718,7 +718,7 @@ final class StringTranslationPage implements Hookable {
 
 		return sprintf(
 			/* translators: 1: language label, 2: language code */
-			__( 'Delete ALL translations for the language “%1$s” (%2$s)? This action cannot be undone.', 'wp-mlp' ),
+			__( 'Delete ALL translations for the language “%1$s” (%2$s)? This action cannot be undone.', 'lingocanvas' ),
 			$label,
 			$locale
 		);
@@ -739,8 +739,8 @@ final class StringTranslationPage implements Hookable {
 		}
 
 		$names = array(
-			ProviderFactory::FIELD_KEY   => _x( 'OpenAI key', 'mid-sentence', 'wp-mlp' ),
-			ProviderFactory::FIELD_MODEL => _x( 'OpenAI model', 'mid-sentence', 'wp-mlp' ),
+			ProviderFactory::FIELD_KEY   => _x( 'OpenAI key', 'mid-sentence', 'lingocanvas' ),
+			ProviderFactory::FIELD_MODEL => _x( 'OpenAI model', 'mid-sentence', 'lingocanvas' ),
 		);
 
 		$labels = array();
@@ -754,9 +754,9 @@ final class StringTranslationPage implements Hookable {
 			wp_kses(
 				sprintf(
 					/* translators: 1: comma-separated list of missing fields, 2: link to the settings page */
-					__( 'The “Translate with AI” button is not available: missing — %1$s. Fill it in on the %2$s page.', 'wp-mlp' ),
+					__( 'The “Translate with AI” button is not available: missing — %1$s. Fill it in on the %2$s page.', 'lingocanvas' ),
 					'<strong>' . esc_html( implode( ', ', $labels ) ) . '</strong>',
-					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Multilingual → Languages', 'wp-mlp' ) . '</a>'
+					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Multilingual → Languages', 'lingocanvas' ) . '</a>'
 				),
 				array(
 					'a'      => array( 'href' => array() ),
@@ -782,7 +782,7 @@ final class StringTranslationPage implements Hookable {
 			esc_html(
 				sprintf(
 					/* translators: %s: number of deleted translations */
-					__( 'Translations deleted: %s.', 'wp-mlp' ),
+					__( 'Translations deleted: %s.', 'lingocanvas' ),
 					number_format_i18n( $deleted )
 				)
 			)
@@ -812,7 +812,7 @@ final class StringTranslationPage implements Hookable {
 					<?php
 					printf(
 						/* translators: %s: number of strings */
-						esc_html( _n( '%s string', '%s strings', $total, 'wp-mlp' ) ),
+						esc_html( _n( '%s string', '%s strings', $total, 'lingocanvas' ) ),
 						esc_html( number_format_i18n( $total ) )
 					);
 					?>
@@ -829,13 +829,13 @@ final class StringTranslationPage implements Hookable {
 							<form method="get" class="wp-mlp-paging-form">
 								<?php $this->renderHiddenFilters( $filters ); ?>
 								<label class="screen-reader-text" for="mlp-page-<?php echo esc_attr( $position ); ?>">
-									<?php esc_html_e( 'Current page', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Current page', 'lingocanvas' ); ?>
 								</label>
 								<input class="current-page" id="mlp-page-<?php echo esc_attr( $position ); ?>"
 									type="number" name="paged" min="1" max="<?php echo esc_attr( (string) $pages ); ?>"
 									value="<?php echo esc_attr( (string) $current ); ?>" size="2">
 								<span class="tablenav-paging-text">
-									<?php esc_html_x( 'of', 'pagination: page X of Y', 'wp-mlp' ); ?>
+									<?php esc_html_x( 'of', 'pagination: page X of Y', 'lingocanvas' ); ?>
 									<span class="total-pages"><?php echo esc_html( number_format_i18n( $pages ) ); ?></span>
 								</span>
 							</form>
@@ -936,19 +936,19 @@ final class StringTranslationPage implements Hookable {
 		$objectValue = SourceRepository::SCOPE_OBJECT . ':' . ( $isObject ? (string) $objectId : '' );
 		$selected    = static fn( bool $on ): string => $on ? ' selected="selected"' : '';
 
-		$html  = '<label for="mlp-scope" class="screen-reader-text">' . esc_html__( 'Where it appears', 'wp-mlp' ) . '</label>';
+		$html  = '<label for="mlp-scope" class="screen-reader-text">' . esc_html__( 'Where it appears', 'lingocanvas' ) . '</label>';
 		$html .= '<select name="mlp_scope" id="mlp-scope">';
-		$html .= '<option value=""' . $selected( ! $isObject && SourceRepository::SCOPE_GLOBAL !== $scope ) . '>' . esc_html__( 'Whole site', 'wp-mlp' ) . '</option>';
+		$html .= '<option value=""' . $selected( ! $isObject && SourceRepository::SCOPE_GLOBAL !== $scope ) . '>' . esc_html__( 'Whole site', 'lingocanvas' ) . '</option>';
 		$html .= '<option value="' . esc_attr( SourceRepository::SCOPE_GLOBAL ) . '"' . $selected( SourceRepository::SCOPE_GLOBAL === $scope ) . '>'
-			. esc_html__( 'Shared elements (menu, header, footer)', 'wp-mlp' ) . '</option>';
+			. esc_html__( 'Shared elements (menu, header, footer)', 'lingocanvas' ) . '</option>';
 		$html .= '<option value="' . esc_attr( $objectValue ) . '" data-mlp-object="1"' . $selected( $isObject ) . '>'
-			. esc_html__( 'A specific post…', 'wp-mlp' ) . '</option>';
+			. esc_html__( 'A specific post…', 'lingocanvas' ) . '</option>';
 		$html .= '</select>';
 
 		$html .= '<span class="wp-mlp-scope-picker wp-mlp-editor-picker" id="mlp-scope-picker"' . ( $isObject ? '' : ' hidden' ) . '>';
 		$html .= '<input type="text" id="mlp-scope-search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="mlp-scope-list"'
 			. ' value="' . esc_attr( $isObject ? $title : '' ) . '"'
-			. ' placeholder="' . esc_attr( __( 'Start typing a post title', 'wp-mlp' ) ) . '">';
+			. ' placeholder="' . esc_attr( __( 'Start typing a post title', 'lingocanvas' ) ) . '">';
 		$html .= '<ul class="wp-mlp-editor-picker__list" id="mlp-scope-list" role="listbox" hidden></ul>';
 		$html .= '</span>';
 
@@ -1122,15 +1122,15 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function kindLabel( string $kind, ?string $attributeName = null ): string {
 		if ( Segment::KIND_SEO === $kind || ( Segment::KIND_ATTRIBUTE === $kind && 'content' === $attributeName ) ) {
-			return __( 'SEO/GEO', 'wp-mlp' );
+			return __( 'SEO/GEO', 'lingocanvas' );
 		}
 
 		if ( Segment::KIND_HTML_BLOCK === $kind ) {
-			return __( 'Block', 'wp-mlp' );
+			return __( 'Block', 'lingocanvas' );
 		}
 
 		return Segment::KIND_ATTRIBUTE === $kind
-			? __( 'Attribute', 'wp-mlp' )
-			: __( 'Text', 'wp-mlp' );
+			? __( 'Attribute', 'lingocanvas' )
+			: __( 'Text', 'lingocanvas' );
 	}
 }

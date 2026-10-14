@@ -38,20 +38,20 @@ if ( is_readable( __DIR__ . '/../vendor/autoload.php' ) ) {
 require_once __DIR__ . '/stubs.php';
 require_once __DIR__ . '/stubs_visibility.php';
 
-if ( ! defined( 'WP_MLP_DIR' ) ) {
-	define( 'WP_MLP_DIR', dirname( __DIR__ ) . '/' );
+if ( ! defined( 'LINGOCANVAS_DIR' ) ) {
+	define( 'LINGOCANVAS_DIR', dirname( __DIR__ ) . '/' );
 }
 
 if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/' );
 }
 
-if ( ! defined( 'WP_MLP_URL' ) ) {
-	define( 'WP_MLP_URL', 'https://example.test/wp-content/plugins/wp-mlp/' );
+if ( ! defined( 'LINGOCANVAS_URL' ) ) {
+	define( 'LINGOCANVAS_URL', 'https://example.test/wp-content/plugins/lingocanvas/' );
 }
 
-if ( ! defined( 'WP_MLP_VERSION' ) ) {
-	define( 'WP_MLP_VERSION', '0.3.0' );
+if ( ! defined( 'LINGOCANVAS_VERSION' ) ) {
+	define( 'LINGOCANVAS_VERSION', '0.3.0' );
 }
 
 // Константы времени, на которые ссылаются константы классов.

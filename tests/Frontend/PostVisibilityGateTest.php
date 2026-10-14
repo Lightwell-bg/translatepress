@@ -109,6 +109,7 @@ final class PostVisibilityGateTest extends TestCase {
 		wp_mlp_test_wp( array() );
 		wp_mlp_test_request( array() );
 		wp_mlp_test_filter( 'mlp_visibility_bypass', null );
+		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', null );
 	}
 
 	private function configure( string $mode ): void {
@@ -305,12 +306,37 @@ final class PostVisibilityGateTest extends TestCase {
 	}
 
 	public function testBypassFilterTurnsRestrictionOff(): void {
+		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', static fn(): bool => true );
+		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
+
+		$this->gate()->filterQuery( $query );
+
+		$this->assertNull( $this->queryMeta( $query ) );
+	}
+
+	/**
+	 * Фильтр со старым именем продолжает работать (обратная совместимость).
+	 */
+	public function testDeprecatedBypassFilterStillTurnsRestrictionOff(): void {
 		wp_mlp_test_filter( 'mlp_visibility_bypass', static fn(): bool => true );
 		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
 
 		$this->gate()->filterQuery( $query );
 
 		$this->assertNull( $this->queryMeta( $query ) );
+	}
+
+	/**
+	 * Старое имя применяется первым, новое получает его результат и может его изменить.
+	 */
+	public function testNewBypassFilterRunsAfterDeprecatedOneAndCanOverrideIt(): void {
+		wp_mlp_test_filter( 'mlp_visibility_bypass', static fn(): bool => true );
+		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', static fn( bool $value ): bool => ! $value );
+		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
+
+		$this->gate()->filterQuery( $query );
+
+		$this->assertNotNull( $this->queryMeta( $query ) );
 	}
 
 	// --- Редирект одиночной записи ---------------------------------------

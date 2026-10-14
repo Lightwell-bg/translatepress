@@ -136,7 +136,7 @@ final class PostVisibilityController implements Hookable {
 			return new WP_Error(
 				'mlp_invalid_ids',
 				/* translators: %d: maximum number of posts per request */
-				sprintf( /* translators: %d: maximum number of ids */ __( 'Pass an ids list: from 1 to %d positive integers.', 'wp-mlp' ), self::MAX_IDS ),
+				sprintf( /* translators: %d: maximum number of ids */ __( 'Pass an ids list: from 1 to %d positive integers.', 'lingocanvas' ), self::MAX_IDS ),
 				array( 'status' => 400 )
 			);
 		}
@@ -150,7 +150,7 @@ final class PostVisibilityController implements Hookable {
 		$visible = self::parseBool( $request->get_param( 'visible' ) );
 
 		if ( null === $visible ) {
-			return new WP_Error( 'mlp_invalid_visible', __( 'The visible parameter must be true or false.', 'wp-mlp' ), array( 'status' => 400 ) );
+			return new WP_Error( 'mlp_invalid_visible', __( 'The visible parameter must be true or false.', 'lingocanvas' ), array( 'status' => 400 ) );
 		}
 
 		foreach ( $ids as $id ) {
@@ -158,7 +158,7 @@ final class PostVisibilityController implements Hookable {
 				return new WP_Error(
 					'mlp_invalid_post',
 					/* translators: %d: post ID */
-					sprintf( /* translators: %d: post ID */ __( 'Post %d was not found or its type cannot be enabled for a language.', 'wp-mlp' ), $id ),
+					sprintf( /* translators: %d: post ID */ __( 'Post %d was not found or its type cannot be enabled for a language.', 'lingocanvas' ), $id ),
 					array( 'status' => 400 )
 				);
 			}
@@ -283,6 +283,6 @@ final class PostVisibilityController implements Hookable {
 	 * Ошибка «язык не настроен».
 	 */
 	private function unknownLocale(): WP_Error {
-		return new WP_Error( 'mlp_unknown_locale', __( 'This secondary language is not in the settings.', 'wp-mlp' ), array( 'status' => 400 ) );
+		return new WP_Error( 'mlp_unknown_locale', __( 'This secondary language is not in the settings.', 'lingocanvas' ), array( 'status' => 400 ) );
 	}
 }

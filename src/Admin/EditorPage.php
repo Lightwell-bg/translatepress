@@ -98,8 +98,8 @@ final class EditorPage implements Hookable {
 	public function addMenu(): void {
 		add_submenu_page(
 			SettingsPage::MENU_SLUG,
-			__( 'Visual editor', 'wp-mlp' ),
-			__( 'Visual editor', 'wp-mlp' ),
+			__( 'Visual editor', 'lingocanvas' ),
+			__( 'Visual editor', 'lingocanvas' ),
 			self::CAPABILITY,
 			self::MENU_SLUG,
 			array( $this, 'render' )
@@ -119,7 +119,7 @@ final class EditorPage implements Hookable {
 		$bar->add_node(
 			array(
 				'id'    => 'wp-mlp-editor',
-				'title' => __( 'Translate page', 'wp-mlp' ),
+				'title' => __( 'Translate page', 'lingocanvas' ),
 				'href'  => $this->editorUrl( $this->currentRelativePath() ),
 			)
 		);
@@ -176,53 +176,53 @@ final class EditorPage implements Hookable {
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'statuses'     => $this->statusLabels(),
 				'i18n'         => array(
-					'pick'              => __( 'Click text in the preview to translate it.', 'wp-mlp' ),
-					'saving'            => __( 'Saving…', 'wp-mlp' ),
-					'saved'             => __( 'Saved', 'wp-mlp' ),
-					'failed'            => __( 'Could not save', 'wp-mlp' ),
-					'loading'           => __( 'Loading…', 'wp-mlp' ),
-					'confirmDelete'     => __( 'Delete the translation of this string?', 'wp-mlp' ),
-					'confirmBlock'      => __( 'Translate the whole paragraph as one piece? Separate translations of its parts will no longer be applied.', 'wp-mlp' ),
-					'blockCreated'      => __( 'Paragraph merged. Refreshing the preview…', 'wp-mlp' ),
+					'pick'              => __( 'Click text in the preview to translate it.', 'lingocanvas' ),
+					'saving'            => __( 'Saving…', 'lingocanvas' ),
+					'saved'             => __( 'Saved', 'lingocanvas' ),
+					'failed'            => __( 'Could not save', 'lingocanvas' ),
+					'loading'           => __( 'Loading…', 'lingocanvas' ),
+					'confirmDelete'     => __( 'Delete the translation of this string?', 'lingocanvas' ),
+					'confirmBlock'      => __( 'Translate the whole paragraph as one piece? Separate translations of its parts will no longer be applied.', 'lingocanvas' ),
+					'blockCreated'      => __( 'Paragraph merged. Refreshing the preview…', 'lingocanvas' ),
 					/* translators: %s: text domain, e.g. woocommerce */
-				'gettextNotice'     => __( 'This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab.', 'wp-mlp' ),
+				'gettextNotice'     => __( 'This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab.', 'lingocanvas' ),
 				/* translators: %d: link number inside the block */
-				'linkLabel'         => __( 'Link #%d', 'wp-mlp' ),
-				'collapsePanel'     => __( 'Collapse panel', 'wp-mlp' ),
-				'expandPanel'       => __( 'Expand panel', 'wp-mlp' ),
-				'attribute'         => __( 'Attribute', 'wp-mlp' ),
-					'text'              => __( 'Text', 'wp-mlp' ),
-					'htmlBlock'         => __( 'Block with markup', 'wp-mlp' ),
-					'translating'       => __( 'Translating with AI…', 'wp-mlp' ),
-					'aiSuggested'       => __( 'Suggested by AI — review before saving', 'wp-mlp' ),
-					'aiFailed'          => __( 'AI could not translate', 'wp-mlp' ),
-					'bulkButton'        => __( 'Translate the whole post with AI', 'wp-mlp' ),
-					'bulkModeTitle'     => __( 'What to translate?', 'wp-mlp' ),
-					'bulkModeEmpty'     => __( 'Empty segments only', 'wp-mlp' ),
-					'bulkModeAll'       => __( 'Retranslate the whole post', 'wp-mlp' ),
-					'bulkStart'         => __( 'Start', 'wp-mlp' ),
-					'bulkCancel'        => __( 'Cancel', 'wp-mlp' ),
-					'bulkPreparing'     => __( 'Analyzing the post…', 'wp-mlp' ),
-					'bulkProgress'      => __( 'Translating part {current} of {total}…', 'wp-mlp' ),
-					'bulkNothing'       => __( 'Nothing to translate — the post is already translated. Switch the mode to “Retranslate the whole post” if you want to refresh the translation.', 'wp-mlp' ),
-					'bulkReviewTitle'   => __( 'Review the translation before saving', 'wp-mlp' ),
-					'bulkSaveAll'       => __( 'Save all', 'wp-mlp' ),
-					'bulkSaving'        => __( 'Saving all…', 'wp-mlp' ),
-					'bulkSaved'         => __( 'The post was saved and the preview was updated.', 'wp-mlp' ),
-					'bulkFailed'        => __( 'Could not translate', 'wp-mlp' ),
-				'bulkPartialFailed' => __( 'Not everything was translated: {reason}. The finished part is below: save it with the “Save all” button, then click “Start” again — in “Empty segments only” mode only what is left will be translated, with no repeat charge for what is already translated.', 'wp-mlp' ),
-					'bulkCommitFailed'  => __( 'Could not save — the changes were rolled back, nothing was lost.', 'wp-mlp' ),
-					'bulkRejected'      => __( 'AI could not safely translate {count} string(s) without breaking a shortcode — translate them manually below.', 'wp-mlp' ),
-					'bulkChanged'       => __( 'changed since the last translation', 'wp-mlp' ),
-					'bulkFieldTitle'    => __( 'Title', 'wp-mlp' ),
-					'bulkFieldExcerpt'  => __( 'Excerpt', 'wp-mlp' ),
-					'bulkFieldContent'  => __( 'Post content', 'wp-mlp' ),
-					'bulkFieldThumbnailAlt' => __( 'Thumbnail alt', 'wp-mlp' ),
-					'bulkClose'         => __( 'Close', 'wp-mlp' ),
-					'pickerPlaceholder' => __( 'Find a page by title or paste a URL', 'wp-mlp' ),
-					'pickerLoading'     => __( 'Loading…', 'wp-mlp' ),
-					'pickerEmpty'       => __( 'Nothing found', 'wp-mlp' ),
-					'pickerError'       => __( 'Could not load the list of pages', 'wp-mlp' ),
+				'linkLabel'         => __( 'Link #%d', 'lingocanvas' ),
+				'collapsePanel'     => __( 'Collapse panel', 'lingocanvas' ),
+				'expandPanel'       => __( 'Expand panel', 'lingocanvas' ),
+				'attribute'         => __( 'Attribute', 'lingocanvas' ),
+					'text'              => __( 'Text', 'lingocanvas' ),
+					'htmlBlock'         => __( 'Block with markup', 'lingocanvas' ),
+					'translating'       => __( 'Translating with AI…', 'lingocanvas' ),
+					'aiSuggested'       => __( 'Suggested by AI — review before saving', 'lingocanvas' ),
+					'aiFailed'          => __( 'AI could not translate', 'lingocanvas' ),
+					'bulkButton'        => __( 'Translate the whole post with AI', 'lingocanvas' ),
+					'bulkModeTitle'     => __( 'What to translate?', 'lingocanvas' ),
+					'bulkModeEmpty'     => __( 'Empty segments only', 'lingocanvas' ),
+					'bulkModeAll'       => __( 'Retranslate the whole post', 'lingocanvas' ),
+					'bulkStart'         => __( 'Start', 'lingocanvas' ),
+					'bulkCancel'        => __( 'Cancel', 'lingocanvas' ),
+					'bulkPreparing'     => __( 'Analyzing the post…', 'lingocanvas' ),
+					'bulkProgress'      => __( 'Translating part {current} of {total}…', 'lingocanvas' ),
+					'bulkNothing'       => __( 'Nothing to translate — the post is already translated. Switch the mode to “Retranslate the whole post” if you want to refresh the translation.', 'lingocanvas' ),
+					'bulkReviewTitle'   => __( 'Review the translation before saving', 'lingocanvas' ),
+					'bulkSaveAll'       => __( 'Save all', 'lingocanvas' ),
+					'bulkSaving'        => __( 'Saving all…', 'lingocanvas' ),
+					'bulkSaved'         => __( 'The post was saved and the preview was updated.', 'lingocanvas' ),
+					'bulkFailed'        => __( 'Could not translate', 'lingocanvas' ),
+				'bulkPartialFailed' => __( 'Not everything was translated: {reason}. The finished part is below: save it with the “Save all” button, then click “Start” again — in “Empty segments only” mode only what is left will be translated, with no repeat charge for what is already translated.', 'lingocanvas' ),
+					'bulkCommitFailed'  => __( 'Could not save — the changes were rolled back, nothing was lost.', 'lingocanvas' ),
+					'bulkRejected'      => __( 'AI could not safely translate {count} string(s) without breaking a shortcode — translate them manually below.', 'lingocanvas' ),
+					'bulkChanged'       => __( 'changed since the last translation', 'lingocanvas' ),
+					'bulkFieldTitle'    => __( 'Title', 'lingocanvas' ),
+					'bulkFieldExcerpt'  => __( 'Excerpt', 'lingocanvas' ),
+					'bulkFieldContent'  => __( 'Post content', 'lingocanvas' ),
+					'bulkFieldThumbnailAlt' => __( 'Thumbnail alt', 'lingocanvas' ),
+					'bulkClose'         => __( 'Close', 'lingocanvas' ),
+					'pickerPlaceholder' => __( 'Find a page by title or paste a URL', 'lingocanvas' ),
+					'pickerLoading'     => __( 'Loading…', 'lingocanvas' ),
+					'pickerEmpty'       => __( 'Nothing found', 'lingocanvas' ),
+					'pickerError'       => __( 'Could not load the list of pages', 'lingocanvas' ),
 				),
 			)
 		);
@@ -358,8 +358,8 @@ final class EditorPage implements Hookable {
 		if ( array() === $secondary ) {
 			printf(
 				'<div class="wrap"><h1>%s</h1><div class="notice notice-warning"><p>%s</p></div></div>',
-				esc_html__( 'Visual editor', 'wp-mlp' ),
-				esc_html__( 'First add at least one additional language on the “Languages” page.', 'wp-mlp' )
+				esc_html__( 'Visual editor', 'lingocanvas' ),
+				esc_html__( 'First add at least one additional language on the “Languages” page.', 'lingocanvas' )
 			);
 
 			return;
@@ -373,12 +373,12 @@ final class EditorPage implements Hookable {
 
 		?>
 		<div class="wrap wp-mlp-editor-wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Visual editor', 'wp-mlp' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Visual editor', 'lingocanvas' ); ?></h1>
 
 			<form method="get" class="wp-mlp-editor-toolbar">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
 
-				<label for="mlp-editor-locale"><?php esc_html_e( 'Language:', 'wp-mlp' ); ?></label>
+				<label for="mlp-editor-locale"><?php esc_html_e( 'Language:', 'lingocanvas' ); ?></label>
 				<select name="mlp_locale" id="mlp-editor-locale">
 					<?php foreach ( $secondary as $language ) : ?>
 						<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $locale ); ?>>
@@ -387,11 +387,11 @@ final class EditorPage implements Hookable {
 					<?php endforeach; ?>
 				</select>
 
-				<label for="mlp-editor-path"><?php esc_html_e( 'Page:', 'wp-mlp' ); ?></label>
+				<label for="mlp-editor-path"><?php esc_html_e( 'Page:', 'lingocanvas' ); ?></label>
 				<input type="text" name="mlp_path" id="mlp-editor-path" class="regular-text"
 					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/" autocomplete="off">
 
-				<?php submit_button( __( 'Open', 'wp-mlp' ), 'secondary', '', false ); ?>
+				<?php submit_button( __( 'Open', 'lingocanvas' ), 'secondary', '', false ); ?>
 			</form>
 
 			<?php
@@ -408,10 +408,10 @@ final class EditorPage implements Hookable {
 			<p class="wp-mlp-editor-toolbar__aside">
 				<button type="button" class="button" id="mlp-editor-toggle-panel"
 					aria-expanded="true" aria-controls="mlp-editor-panel">
-					<?php esc_html_e( 'Collapse panel', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Collapse panel', 'lingocanvas' ); ?>
 				</button>
 				<span class="description">
-					<?php esc_html_e( 'The preview gets the full width — the theme shows the regular menu instead of the mobile one.', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'The preview gets the full width — the theme shows the regular menu instead of the mobile one.', 'lingocanvas' ); ?>
 				</span>
 			</p>
 
@@ -421,31 +421,31 @@ final class EditorPage implements Hookable {
 					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
 						<div class="wp-mlp-editor__bulk">
 							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">
-								<?php esc_html_e( 'Translate the whole post with AI', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate the whole post with AI', 'lingocanvas' ); ?>
 							</button>
 							<p class="description">
-								<?php esc_html_e( 'Title, excerpt and the full post content in one operation — instead of translating block by block.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Title, excerpt and the full post content in one operation — instead of translating block by block.', 'lingocanvas' ); ?>
 							</p>
 
 							<div class="wp-mlp-editor__bulk-panel" id="mlp-editor-bulk-panel" hidden>
 								<fieldset>
-									<legend><?php esc_html_e( 'What to translate?', 'wp-mlp' ); ?></legend>
+									<legend><?php esc_html_e( 'What to translate?', 'lingocanvas' ); ?></legend>
 									<label>
 										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::EMPTY ); ?>" checked>
-										<?php esc_html_e( 'Empty segments only', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Empty segments only', 'lingocanvas' ); ?>
 									</label>
 									<label>
 										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::ALL ); ?>">
-										<?php esc_html_e( 'Retranslate the whole post', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Retranslate the whole post', 'lingocanvas' ); ?>
 									</label>
 								</fieldset>
 
 								<div class="wp-mlp-editor__actions">
 									<button type="button" class="button button-primary" id="mlp-editor-bulk-start">
-										<?php esc_html_e( 'Start', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Start', 'lingocanvas' ); ?>
 									</button>
 									<button type="button" class="button" id="mlp-editor-bulk-cancel">
-										<?php esc_html_e( 'Cancel', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Cancel', 'lingocanvas' ); ?>
 									</button>
 								</div>
 
@@ -456,10 +456,10 @@ final class EditorPage implements Hookable {
 
 								<div class="wp-mlp-editor__actions wp-mlp-editor__bulk-commit" hidden>
 									<button type="button" class="button button-primary" id="mlp-editor-bulk-save">
-										<?php esc_html_e( 'Save all', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Save all', 'lingocanvas' ); ?>
 									</button>
 									<button type="button" class="button" id="mlp-editor-bulk-close">
-										<?php esc_html_e( 'Close', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Close', 'lingocanvas' ); ?>
 									</button>
 								</div>
 							</div>
@@ -468,27 +468,27 @@ final class EditorPage implements Hookable {
 					<?php endif; ?>
 
 					<p class="wp-mlp-editor__hint">
-						<?php esc_html_e( 'Click text in the preview to translate it.', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Click text in the preview to translate it.', 'lingocanvas' ); ?>
 					</p>
 
 					<div class="wp-mlp-editor__form" hidden>
 						<p class="wp-mlp-editor__kind"></p>
 
-						<label for="mlp-editor-source"><?php esc_html_e( 'Original', 'wp-mlp' ); ?></label>
+						<label for="mlp-editor-source"><?php esc_html_e( 'Original', 'lingocanvas' ); ?></label>
 						<textarea id="mlp-editor-source" rows="3" readonly></textarea>
 
 						<label for="mlp-editor-target">
-							<?php esc_html_e( 'Translation', 'wp-mlp' ); ?>
+							<?php esc_html_e( 'Translation', 'lingocanvas' ); ?>
 						</label>
 						<textarea id="mlp-editor-target" rows="5"></textarea>
 
 						<?php if ( $this->providers->isReady() ) : ?>
 							<button type="button" class="button" id="mlp-editor-translate">
-								<?php esc_html_e( 'Translate with AI', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate with AI', 'lingocanvas' ); ?>
 							</button>
 						<?php endif; ?>
 
-						<label for="mlp-editor-status"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></label>
+						<label for="mlp-editor-status"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></label>
 						<select id="mlp-editor-status">
 							<?php foreach ( TranslationStatus::all() as $status ) : ?>
 								<option value="<?php echo esc_attr( $status ); ?>">
@@ -499,10 +499,10 @@ final class EditorPage implements Hookable {
 
 						<div class="wp-mlp-editor__actions">
 							<button type="button" class="button button-primary" id="mlp-editor-save">
-								<?php esc_html_e( 'Save', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Save', 'lingocanvas' ); ?>
 							</button>
 							<button type="button" class="button" id="mlp-editor-delete">
-								<?php esc_html_e( 'Delete translation', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Delete translation', 'lingocanvas' ); ?>
 							</button>
 						</div>
 
@@ -518,7 +518,7 @@ final class EditorPage implements Hookable {
 						<div class="wp-mlp-editor__links" id="mlp-editor-links" hidden>
 							<hr>
 							<p class="description">
-								<?php esc_html_e( 'Links in this block. The address applies to the current language only — other languages have their own.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Links in this block. The address applies to the current language only — other languages have their own.', 'lingocanvas' ); ?>
 							</p>
 							<div class="wp-mlp-editor__links-list"></div>
 						</div>
@@ -526,10 +526,10 @@ final class EditorPage implements Hookable {
 						<div class="wp-mlp-editor__block" hidden>
 							<hr>
 							<p class="description">
-								<?php esc_html_e( 'The paragraph is split into parts by inline tags. You can translate it as a whole, together with the markup.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'The paragraph is split into parts by inline tags. You can translate it as a whole, together with the markup.', 'lingocanvas' ); ?>
 							</p>
 							<button type="button" class="button" id="mlp-editor-make-block">
-								<?php esc_html_e( 'Translate the whole paragraph', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate the whole paragraph', 'lingocanvas' ); ?>
 							</button>
 						</div>
 
@@ -539,7 +539,7 @@ final class EditorPage implements Hookable {
 
 				<iframe class="wp-mlp-editor__preview" id="mlp-editor-preview"
 					src="<?php echo esc_url( $previewer ); ?>"
-					title="<?php esc_attr_e( 'Page preview', 'wp-mlp' ); ?>"></iframe>
+					title="<?php esc_attr_e( 'Page preview', 'lingocanvas' ); ?>"></iframe>
 			</div>
 		</div>
 		<?php
@@ -574,17 +574,17 @@ final class EditorPage implements Hookable {
 
 			switch ( $state ) {
 				case PostListLanguages::STATE_FULL:
-					$progress = __( 'Fully translated', 'wp-mlp' );
+					$progress = __( 'Fully translated', 'lingocanvas' );
 					break;
 				case PostListLanguages::STATE_PARTIAL:
 					/* translators: %d: percent of strings translated */
-					$progress = sprintf( __( '%d%% translated', 'wp-mlp' ), $pct );
+					$progress = sprintf( __( '%d%% translated', 'lingocanvas' ), $pct );
 					break;
 				case PostListLanguages::STATE_NONE:
-					$progress = __( 'Nothing translated yet', 'wp-mlp' );
+					$progress = __( 'Nothing translated yet', 'lingocanvas' );
 					break;
 				default:
-					$progress = __( 'This page has no strings yet', 'wp-mlp' );
+					$progress = __( 'This page has no strings yet', 'lingocanvas' );
 			}
 		}
 
@@ -594,7 +594,7 @@ final class EditorPage implements Hookable {
 				$language->locale,
 				$this->visibility->isVisible( $postId, $language->locale ),
 				/* translators: %s: language name */
-				sprintf( __( 'Show this page in %s', 'wp-mlp' ), $language->label )
+				sprintf( __( 'Show this page in %s', 'lingocanvas' ), $language->label )
 			);
 
 		if ( '' !== $progress ) {

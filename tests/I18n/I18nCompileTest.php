@@ -30,7 +30,7 @@ final class I18nCompileTest extends TestCase {
 	}
 
 	private function writePo( string $body ): string {
-		$path = $this->dir . '/wp-mlp-ru_RU.po';
+		$path = $this->dir . '/lingocanvas-ru_RU.po';
 		file_put_contents( $path, $body );
 		return $path;
 	}
@@ -39,7 +39,7 @@ final class I18nCompileTest extends TestCase {
 		return <<<'PO'
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Multilang Press\n"
+"Project-Id-Version: LingoCanvas\n"
 "Language: ru_RU\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
@@ -95,7 +95,7 @@ PO;
 	public function test_mo_round_trip(): void {
 		$r = wp_mlp_i18n_process( $this->writePo( $this->fixture() ), false );
 		$this->assertSame( array(), $r['errors'] );
-		$mo = $this->readMo( (string) file_get_contents( $this->dir . '/wp-mlp-ru_RU.mo' ) );
+		$mo = $this->readMo( (string) file_get_contents( $this->dir . '/lingocanvas-ru_RU.mo' ) );
 
 		$this->assertSame( 'Сохранить', $mo['Save'] );
 		$this->assertSame( 'Сохранить (меню)', $mo["menu\x04Save"] );
@@ -115,13 +115,13 @@ PO;
 
 	public function test_l10n_php_returns_expected_array(): void {
 		wp_mlp_i18n_process( $this->writePo( $this->fixture() ), false );
-		$data = include $this->dir . '/wp-mlp-ru_RU.l10n.php';
+		$data = include $this->dir . '/lingocanvas-ru_RU.l10n.php';
 
 		$this->assertIsArray( $data );
 		$this->assertSame( 'ru_RU', $data['language'] );
-		$this->assertSame( 'wp-mlp', $data['domain'] );
+		$this->assertSame( 'lingocanvas', $data['domain'] );
 		$this->assertStringStartsWith( 'nplurals=3;', $data['plural-forms'] );
-		$this->assertSame( 'WP Multilang Press', $data['project-id-version'] );
+		$this->assertSame( 'LingoCanvas', $data['project-id-version'] );
 		$this->assertSame(
 			array(
 				"%d file\0%d files" => "%d файл\0%d файла\0%d файлов",
@@ -204,12 +204,12 @@ PO;
 
 	public function test_pot_generation(): void {
 		$r = wp_mlp_i18n_process( $this->writePo( $this->fixture() ), true );
-		$this->assertSame( array( $this->dir . '/wp-mlp.pot' ), $r['written'] );
-		$pot    = (string) file_get_contents( $this->dir . '/wp-mlp.pot' );
+		$this->assertSame( array( $this->dir . '/lingocanvas.pot' ), $r['written'] );
+		$pot    = (string) file_get_contents( $this->dir . '/lingocanvas.pot' );
 		$parsed = wp_mlp_i18n_parse_po( $pot );
 
-		$this->assertSame( 'WP Multilang Press', $parsed['header']['Project-Id-Version'] );
-		$this->assertSame( 'wp-mlp', $parsed['header']['X-Domain'] );
+		$this->assertSame( 'LingoCanvas', $parsed['header']['Project-Id-Version'] );
+		$this->assertSame( 'lingocanvas', $parsed['header']['X-Domain'] );
 		$this->assertStringContainsString( '#: src/a.php:1', $pot );
 		$this->assertStringContainsString( 'msgctxt "menu"', $pot );
 		$this->assertStringContainsString( 'msgstr[2] ""', $pot );

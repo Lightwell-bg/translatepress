@@ -3,8 +3,8 @@
  * Компиляция переводов плагина без gettext: .po -> .mo + .l10n.php (WordPress 6.5+).
  *
  * Запуск:
- *   php bin/i18n-compile.php [languages/wp-mlp-ru_RU.po ...]   (по умолчанию все languages/*.po)
- *   php bin/i18n-compile.php --pot languages/wp-mlp-ru_RU.po   (пишет languages/wp-mlp.pot)
+ *   php bin/i18n-compile.php [languages/lingocanvas-ru_RU.po ...]   (по умолчанию все languages/*.po)
+ *   php bin/i18n-compile.php --pot languages/lingocanvas-ru_RU.po   (пишет languages/lingocanvas.pot)
  *
  * Для каждого .po рядом пишутся `<name>.mo` (GNU, little-endian) и `<name>.l10n.php`
  * (формат WP_Translation_File_PHP: заголовки в нижнем регистре + ключ `messages`).
@@ -400,7 +400,7 @@ function wp_mlp_i18n_build_mo( array $messages, array $header ): string {
  */
 function wp_mlp_i18n_build_php( array $messages, array $header, string $language ): string {
 	$data = array(
-		'domain'             => $header['X-Domain'] ?? 'wp-mlp',
+		'domain'             => $header['X-Domain'] ?? 'lingocanvas',
 		'plural-forms'       => $header['Plural-Forms'] ?? 'nplurals=2; plural=(n != 1);',
 		'language'           => $language,
 		'project-id-version' => $header['Project-Id-Version'] ?? '',
@@ -418,7 +418,7 @@ function wp_mlp_i18n_build_php( array $messages, array $header, string $language
 }
 
 /**
- * Язык: заголовок Language или хвост имени файла (wp-mlp-ru_RU.po -> ru_RU).
+ * Язык: заголовок Language или хвост имени файла (lingocanvas-ru_RU.po -> ru_RU).
  */
 function wp_mlp_i18n_language( array $header, string $poPath ): string {
 	if ( ! empty( $header['Language'] ) ) {
@@ -450,7 +450,8 @@ function wp_mlp_i18n_build_pot( array $parsed ): string {
 	if ( 1 === preg_match( '/nplurals\s*=\s*(\d+)/', $pf, $m ) ) {
 		$n = (int) $m[1];
 	}
-	$hdr  = "Project-Id-Version: WP Multilang Press\n";
+	$domain = $h['X-Domain'] ?? 'lingocanvas';
+	$hdr    = "Project-Id-Version: LingoCanvas\n";
 	$hdr .= "Report-Msgid-Bugs-To: https://github.com/Lightwell-bg/translatepress/issues\n";
 	$hdr .= 'POT-Creation-Date: ' . ( $h['POT-Creation-Date'] ?? 'YEAR-MO-DA HO:MI+ZONE' ) . "\n";
 	$hdr .= "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n";
@@ -459,9 +460,9 @@ function wp_mlp_i18n_build_pot( array $parsed ): string {
 	$hdr .= "MIME-Version: 1.0\n";
 	$hdr .= "Content-Type: text/plain; charset=UTF-8\n";
 	$hdr .= "Content-Transfer-Encoding: 8bit\n";
-	$hdr .= "X-Domain: wp-mlp\n";
+	$hdr .= 'X-Domain: ' . $domain . "\n";
 
-	$out  = "# Translation template for WP Multilang Press.\n";
+	$out  = "# Translation template for LingoCanvas.\n";
 	$out .= "msgid \"\"\nmsgstr " . wp_mlp_i18n_quote( $hdr ) . "\n";
 
 	$seen = array();
@@ -511,7 +512,7 @@ function wp_mlp_i18n_process( string $poPath, bool $pot, ?string $potPath = null
 	$parsed  = wp_mlp_i18n_parse_po( $content );
 	$written = array();
 	if ( $pot ) {
-		$potPath = $potPath ?? dirname( $poPath ) . '/wp-mlp.pot';
+		$potPath = $potPath ?? dirname( $poPath ) . '/' . ( $parsed['header']['X-Domain'] ?? 'lingocanvas' ) . '.pot';
 		file_put_contents( $potPath, wp_mlp_i18n_build_pot( $parsed ) );
 		return array(
 			'entries' => count( $parsed['entries'] ),

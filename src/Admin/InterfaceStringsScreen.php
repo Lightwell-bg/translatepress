@@ -72,10 +72,10 @@ final class InterfaceStringsScreen {
 
 		?>
 		<p class="description">
-			<?php esc_html_e( 'These are not your own content but the labels drawn by WordPress itself, the theme and plugins: "Reply", "Leave a comment", the trash buttons. You did not write them and rarely need to translate them by hand, because WordPress takes the translation from the official language pack.', 'wp-mlp' ); ?>
+			<?php esc_html_e( 'These are not your own content but the labels drawn by WordPress itself, the theme and plugins: "Reply", "Leave a comment", the trash buttons. You did not write them and rarely need to translate them by hand, because WordPress takes the translation from the official language pack.', 'lingocanvas' ); ?>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'Only strings that the language pack has no translation for (usually from a theme or a niche plugin) and strings you edited by hand appear here. Check the "Source" column: theme strings matter most because visitors see them on every page, while admin plugins such as Rank Math can be left alone, since their labels are only visible to you.', 'wp-mlp' ); ?>
+			<?php esc_html_e( 'Only strings that the language pack has no translation for (usually from a theme or a niche plugin) and strings you edited by hand appear here. Check the "Source" column: theme strings matter most because visitors see them on every page, while admin plugins such as Rank Math can be left alone, since their labels are only visible to you.', 'lingocanvas' ); ?>
 		</p>
 
 		<?php $this->renderFilters( $language, $secondary, $filters, $result['total'] ); ?>
@@ -84,16 +84,16 @@ final class InterfaceStringsScreen {
 		<table class="widefat striped wp-mlp-table">
 			<thead>
 				<tr>
-					<th scope="col"><?php esc_html_e( 'Original', 'wp-mlp' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Source', 'wp-mlp' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Official translation', 'wp-mlp' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Your translation', 'wp-mlp' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Original', 'lingocanvas' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Source', 'lingocanvas' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Official translation', 'lingocanvas' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Your translation', 'lingocanvas' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php if ( array() === $result['items'] ) : ?>
-					<tr><td colspan="5"><?php esc_html_e( 'No strings found.', 'wp-mlp' ); ?></td></tr>
+					<tr><td colspan="5"><?php esc_html_e( 'No strings found.', 'lingocanvas' ); ?></td></tr>
 				<?php endif; ?>
 
 				<?php foreach ( $result['items'] as $row ) : ?>
@@ -129,7 +129,7 @@ final class InterfaceStringsScreen {
 						<?php
 						printf(
 							/* translators: %s: gettext context from _x() */
-							esc_html__( 'Context: %s', 'wp-mlp' ),
+							esc_html__( 'Context: %s', 'lingocanvas' ),
 							'<code>' . esc_html( $context ) . '</code>'
 						);
 						?>
@@ -140,7 +140,7 @@ final class InterfaceStringsScreen {
 						<?php
 						printf(
 							/* translators: %d: plural form number */
-							esc_html__( 'Plural form no. %d', 'wp-mlp' ),
+							esc_html__( 'Plural form no. %d', 'lingocanvas' ),
 							(int) $plural
 						);
 						?>
@@ -157,7 +157,7 @@ final class InterfaceStringsScreen {
 			</td>
 			<td class="wp-mlp-col-translation">
 				<label class="screen-reader-text" for="mlp-input-<?php echo esc_attr( (string) $row['id'] ); ?>">
-					<?php esc_html_e( 'Your translation', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Your translation', 'lingocanvas' ); ?>
 				</label>
 				<textarea
 					id="mlp-input-<?php echo esc_attr( (string) $row['id'] ); ?>"
@@ -166,12 +166,12 @@ final class InterfaceStringsScreen {
 					data-source-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 					data-locale="<?php echo esc_attr( $language->locale ); ?>"><?php echo esc_textarea( $override ); ?></textarea>
 				<button type="button" class="button button-secondary wp-mlp-save">
-					<?php esc_html_e( 'Save', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Save', 'lingocanvas' ); ?>
 				</button>
 				<?php if ( '' !== $override ) : ?>
 					<button type="button" class="button-link wp-mlp-delete"
-						title="<?php esc_attr_e( 'Remove your override and use the official translation again', 'wp-mlp' ); ?>">
-						<?php esc_html_e( 'Reset to official', 'wp-mlp' ); ?>
+						title="<?php esc_attr_e( 'Remove your override and use the official translation again', 'lingocanvas' ); ?>">
+						<?php esc_html_e( 'Reset to official', 'lingocanvas' ); ?>
 					</button>
 				<?php endif; ?>
 			</td>
@@ -302,7 +302,7 @@ final class InterfaceStringsScreen {
 			<input type="hidden" name="page" value="<?php echo esc_attr( StringTranslationPage::MENU_SLUG ); ?>">
 			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( StringTranslationPage::TAB_INTERFACE ); ?>">
 
-			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language','wp-mlp' ); ?></label>
+			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language','lingocanvas' ); ?></label>
 			<select name="mlp_locale" id="mlp-locale">
 				<?php foreach ( $secondary as $option ) : ?>
 					<option value="<?php echo esc_attr( $option->locale ); ?>" <?php selected( $option->locale, $language->locale ); ?>>
@@ -311,9 +311,9 @@ final class InterfaceStringsScreen {
 				<?php endforeach; ?>
 			</select>
 
-			<label for="mlp-domain" class="screen-reader-text"><?php esc_html_e( 'Source', 'wp-mlp' ); ?></label>
+			<label for="mlp-domain" class="screen-reader-text"><?php esc_html_e( 'Source', 'lingocanvas' ); ?></label>
 			<select name="mlp_domain" id="mlp-domain">
-				<option value=""><?php esc_html_e( 'All sources', 'wp-mlp' ); ?></option>
+				<option value=""><?php esc_html_e( 'All sources', 'lingocanvas' ); ?></option>
 				<?php foreach ( $labels as $domain => $label ) : ?>
 					<option value="<?php echo esc_attr( $domain ); ?>" <?php selected( $domain, $filters['domain'] ); ?>>
 						<?php echo esc_html( $label ); ?>
@@ -321,28 +321,28 @@ final class InterfaceStringsScreen {
 				<?php endforeach; ?>
 			</select>
 
-			<label for="mlp-gettext-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></label>
+			<label for="mlp-gettext-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></label>
 			<select name="mlp_status" id="mlp-gettext-status">
-				<option value=""><?php esc_html_e( 'All strings', 'wp-mlp' ); ?></option>
+				<option value=""><?php esc_html_e( 'All strings', 'lingocanvas' ); ?></option>
 				<option value="<?php echo esc_attr( GettextRepository::STATUS_MISSING ); ?>" <?php selected( GettextRepository::STATUS_MISSING, $filters['status'] ); ?>>
-					<?php esc_html_e( 'Without your translation', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Without your translation', 'lingocanvas' ); ?>
 				</option>
 				<option value="<?php echo esc_attr( GettextRepository::STATUS_OVERRIDDEN ); ?>" <?php selected( GettextRepository::STATUS_OVERRIDDEN, $filters['status'] ); ?>>
-					<?php esc_html_e( 'Overridden by hand', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Overridden by hand', 'lingocanvas' ); ?>
 				</option>
 			</select>
 
-			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search','wp-mlp' ); ?></label>
+			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search','lingocanvas' ); ?></label>
 			<input type="search" name="s" id="mlp-search" value="<?php echo esc_attr( $filters['search'] ); ?>"
-				placeholder="<?php esc_attr_e( 'Search the original and the translation', 'wp-mlp' ); ?>">
+				placeholder="<?php esc_attr_e( 'Search the original and the translation', 'lingocanvas' ); ?>">
 
-			<?php submit_button( __( 'Show', 'wp-mlp' ), 'secondary', '', false ); ?>
+			<?php submit_button( __( 'Show', 'lingocanvas' ), 'secondary', '', false ); ?>
 
 			<span class="wp-mlp-total">
 				<?php
 				printf(
 					/* translators: %s: number of strings */
-					esc_html__( 'Strings found: %s', 'wp-mlp' ),
+					esc_html__( 'Strings found: %s', 'lingocanvas' ),
 					esc_html( number_format_i18n( $total ) )
 				);
 				?>
@@ -376,7 +376,7 @@ final class InterfaceStringsScreen {
 			 */
 			printf(
 				'<div class="notice notice-info"><p>%s</p></div>',
-				esc_html__( 'English is the language of the originals themselves: the interface strings are already written in it and do not need translating. The list below is shared by all languages (it was collected wherever a translation was missing), so the strings show "No translation", which is normal for English. Switch the language to see where a translation is really needed.', 'wp-mlp' )
+				esc_html__( 'English is the language of the originals themselves: the interface strings are already written in it and do not need translating. The list below is shared by all languages (it was collected wherever a translation was missing), so the strings show "No translation", which is normal for English. Switch the language to see where a translation is really needed.', 'lingocanvas' )
 			);
 
 			return;
@@ -391,7 +391,7 @@ final class InterfaceStringsScreen {
 			esc_html(
 				sprintf(
 					/* translators: 1: language label, 2: WordPress locale */
-					__( 'The language pack for "%1$s" (%2$s) is not installed. Until it is, WordPress serves the English originals for all interface strings, and collecting them into the dictionary is pointless, so this list is not filled for this language.', 'wp-mlp' ),
+					__( 'The language pack for "%1$s" (%2$s) is not installed. Until it is, WordPress serves the English originals for all interface strings, and collecting them into the dictionary is pointless, so this list is not filled for this language.', 'lingocanvas' ),
 					$language->label,
 					$language->wpLocale
 				)
@@ -399,8 +399,8 @@ final class InterfaceStringsScreen {
 			wp_kses(
 				sprintf(
 					/* translators: %s: link to the languages settings page */
-					__( 'Install the pack on the %s page; after that, only what it truly lacks will appear here.', 'wp-mlp' ),
-					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Multilingual → Languages', 'wp-mlp' ) . '</a>'
+					__( 'Install the pack on the %s page; after that, only what it truly lacks will appear here.', 'lingocanvas' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Multilingual → Languages', 'lingocanvas' ) . '</a>'
 				),
 				array( 'a' => array( 'href' => array() ) )
 			)

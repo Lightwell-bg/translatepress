@@ -166,7 +166,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $source ) {
 			return new WP_Error(
 				'mlp_source_not_found',
-				__( 'Source string not found.', 'wp-mlp' ),
+				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -210,7 +210,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
 				'mlp_invalid_locale',
-				__( 'This secondary language is not in the settings.', 'wp-mlp' ),
+				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -246,7 +246,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
 				'mlp_invalid_locale',
-				__( 'This secondary language is not in the settings.', 'wp-mlp' ),
+				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -258,7 +258,7 @@ final class TranslationsController implements Hookable {
 				'mlp_provider_unavailable',
 				null !== $this->providers
 					? ProviderFactory::unavailableMessage( $this->providers->missing() )
-					: __( 'AI translation is not set up: enter the key in the plugin settings.', 'wp-mlp' ),
+					: __( 'AI translation is not set up: enter the key in the plugin settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -268,7 +268,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $source ) {
 			return new WP_Error(
 				'mlp_source_not_found',
-				__( 'Source string not found.', 'wp-mlp' ),
+				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -279,7 +279,7 @@ final class TranslationsController implements Hookable {
 		if ( $dailyLimit > 0 && $this->usage->remainingToday( $dailyLimit ) < mb_strlen( $sourceText ) ) {
 			return new WP_Error(
 				'mlp_daily_limit_reached',
-				__( 'The daily character limit for translation has been reached. Change the limit in the settings or try again tomorrow.', 'wp-mlp' ),
+				__( 'The daily character limit for translation has been reached. Change the limit in the settings or try again tomorrow.', 'lingocanvas' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -304,8 +304,8 @@ final class TranslationsController implements Hookable {
 				'mlp_suggest_failed',
 				null !== $detail
 					/* translators: %s: причина, которую вернул провайдер */
-					? sprintf( __( 'Could not get a translation from OpenAI: %s', 'wp-mlp' ), $detail )
-					: __( 'Could not get a translation from OpenAI.', 'wp-mlp' ),
+					? sprintf( __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
+					: __( 'Could not get a translation from OpenAI.', 'lingocanvas' ),
 				array( 'status' => 502 )
 			);
 		}
@@ -341,7 +341,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
 				'mlp_invalid_locale',
-				__( 'This secondary language is not in the settings.', 'wp-mlp' ),
+				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -351,7 +351,7 @@ final class TranslationsController implements Hookable {
 		if ( null === $source ) {
 			return new WP_Error(
 				'mlp_source_not_found',
-				__( 'Source string not found.', 'wp-mlp' ),
+				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -375,7 +375,7 @@ final class TranslationsController implements Hookable {
 		) {
 			return new WP_Error(
 				'mlp_unsafe_url',
-				__( 'The link address uses a protocol that is not allowed (for example javascript: or data:).', 'wp-mlp' ),
+				__( 'The link address uses a protocol that is not allowed (for example javascript: or data:).', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -399,7 +399,7 @@ final class TranslationsController implements Hookable {
 		if ( ! $saved ) {
 			return new WP_Error(
 				'mlp_save_failed',
-				__( 'Could not save the translation.', 'wp-mlp' ),
+				__( 'Could not save the translation.', 'lingocanvas' ),
 				array( 'status' => 500 )
 			);
 		}

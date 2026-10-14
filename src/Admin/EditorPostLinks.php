@@ -130,7 +130,7 @@ final class EditorPostLinks implements Hookable {
 		$actions['mlp_translate'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
-			esc_html__( 'Translate', 'wp-mlp' )
+			esc_html__( 'Translate', 'lingocanvas' )
 		);
 
 		return $actions;
@@ -154,7 +154,7 @@ final class EditorPostLinks implements Hookable {
 
 		add_meta_box(
 			'wp-mlp-translate',
-			__( 'Translation', 'wp-mlp' ),
+			__( 'Translation', 'lingocanvas' ),
 			array( $this, 'renderMetaBox' ),
 			$postType,
 			'side',
@@ -175,7 +175,7 @@ final class EditorPostLinks implements Hookable {
 		$secondary = $this->settings->secondary();
 
 		if ( null === $this->link->pathForPost( $post ) ) {
-			printf( '<p>%s</p>', esc_html__( 'Publish the post to translate it in the visual editor.', 'wp-mlp' ) );
+			printf( '<p>%s</p>', esc_html__( 'Publish the post to translate it in the visual editor.', 'lingocanvas' ) );
 
 			$this->renderVisibility( $post );
 
@@ -183,7 +183,7 @@ final class EditorPostLinks implements Hookable {
 		}
 
 		if ( array() === $secondary ) {
-			printf( '<p>%s</p>', esc_html__( 'First add at least one secondary language on the "Languages" page.', 'wp-mlp' ) );
+			printf( '<p>%s</p>', esc_html__( 'First add at least one secondary language on the "Languages" page.', 'lingocanvas' ) );
 
 			return;
 		}
@@ -200,7 +200,7 @@ final class EditorPostLinks implements Hookable {
 			printf(
 				'<li><a href="%s">%s</a></li>',
 				esc_url( $url ),
-				esc_html( sprintf( '%s — %s', __( 'Open in the visual editor', 'wp-mlp' ), $language->label ) )
+				esc_html( sprintf( '%s — %s', __( 'Open in the visual editor', 'lingocanvas' ), $language->label ) )
 			);
 		}
 
@@ -233,7 +233,7 @@ final class EditorPostLinks implements Hookable {
 
 		$this->visibility->prime( array( (int) $post->ID ) );
 
-		printf( '<hr><p><strong>%s</strong></p>', esc_html__( 'Show on the site', 'wp-mlp' ) );
+		printf( '<hr><p><strong>%s</strong></p>', esc_html__( 'Show on the site', 'lingocanvas' ) );
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD );
 		echo '<ul>';
 
@@ -248,6 +248,6 @@ final class EditorPostLinks implements Hookable {
 		}
 
 		echo '</ul>';
-		printf( '<p class="description">%s</p>', esc_html__( 'Check the languages in which this post is visible to visitors. In the other languages it is hidden: the link leads to the default-language version.', 'wp-mlp' ) );
+		printf( '<p class="description">%s</p>', esc_html__( 'Check the languages in which this post is visible to visitors. In the other languages it is hidden: the link leads to the default-language version.', 'lingocanvas' ) );
 	}
 }

@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Поэтому подмена локали идёт ПЕРВОЙ, до собственного gettext-словаря:
  * тот нужен только для того, что осталось непокрытым (см. GettextRegistry).
  *
- * Регистрируется на `plugins_loaded` (приоритет 5, см. wp-mlp.php) — это
+ * Регистрируется на `plugins_loaded` (приоритет 5, см. lingocanvas.php) — это
  * важно по времени: `load_default_textdomain()` ядра, `load_theme_textdomain()`
  * темы и `load_plugin_textdomain()` плагинов вызываются ПОЗЖЕ, уже после
  * `plugins_loaded`, и к этому моменту фильтры должны стоять. Плагин,
