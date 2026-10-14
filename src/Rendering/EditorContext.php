@@ -118,7 +118,7 @@ final class EditorContext implements Hookable {
 				'channel' => self::channelFromRequest(),
 				'locale'  => $this->resolver->currentLocale(),
 				'i18n'   => array(
-					'blockHint' => __( 'Перевести абзац целиком', 'wp-mlp' ),
+					'blockHint' => __( 'Translate the whole paragraph', 'wp-mlp' ),
 				),
 			)
 		);

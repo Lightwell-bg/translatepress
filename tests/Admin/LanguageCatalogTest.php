@@ -137,7 +137,7 @@ final class LanguageCatalogTest extends TestCase {
 		$this->assertStringContainsString( 'autocomplete="off"', $source );
 		$this->assertStringContainsString( 'data-lpignore="true"', $source );
 		$this->assertStringContainsString( 'data-1p-ignore', $source );
-		$this->assertStringContainsString( 'Пакет будет предложен после сохранения', $source );
+		$this->assertStringContainsString( 'The language pack will be offered after saving', $source );
 		$this->assertTrue( class_exists( SettingsPage::class ) );
 	}
 

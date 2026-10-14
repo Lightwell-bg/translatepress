@@ -131,7 +131,7 @@ final class SettingsPage implements Hookable {
 	private function storeFlagFile( string $locale, array $file ): array {
 		if ( UPLOAD_ERR_OK !== ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			/* translators: %s: language code */
-			return array( sprintf( __( 'Файл флага для языка «%s» не загрузился — попробуйте ещё раз.', 'wp-mlp' ), $locale ) );
+			return array( sprintf( __( 'The flag file for language "%s" failed to upload. Please try again.', 'wp-mlp' ), $locale ) );
 		}
 
 		$path = (string) ( $file['tmp_name'] ?? '' );
@@ -143,7 +143,7 @@ final class SettingsPage implements Hookable {
 		 */
 		if ( '' === $path || ! is_uploaded_file( $path ) ) {
 			/* translators: %s: language code */
-			return array( sprintf( __( 'Файл флага для языка «%s» не загрузился — попробуйте ещё раз.', 'wp-mlp' ), $locale ) );
+			return array( sprintf( __( 'The flag file for language "%s" failed to upload. Please try again.', 'wp-mlp' ), $locale ) );
 		}
 
 		$content = (string) file_get_contents( $path );
@@ -155,7 +155,7 @@ final class SettingsPage implements Hookable {
 		return array(
 			sprintf(
 				/* translators: 1: language code, 2: maximum file size in kilobytes */
-				__( 'Флаг для языка «%1$s» не сохранён: нужен файл SVG размером до %2$d КБ. Другие форматы плагин не принимает.', 'wp-mlp' ),
+				__( 'The flag for language "%1$s" was not saved: an SVG file up to %2$d KB is required. The plugin does not accept other formats.', 'wp-mlp' ),
 				$locale,
 				(int) ( FlagUpload::MAX_BYTES / 1000 )
 			),
@@ -193,15 +193,15 @@ final class SettingsPage implements Hookable {
 				'enableUrl' => esc_url_raw( rest_url( PostVisibilityController::NAMESPACE . '/posts/visibility/enable-translated' ) ),
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
-					'saved'         => __( '(сохранённая)', 'wp-mlp' ),
-					'custom'        => __( 'Другая модель…', 'wp-mlp' ),
-					'refresh'       => __( 'Обновить список', 'wp-mlp' ),
-					'loading'       => __( 'Загрузка списка…', 'wp-mlp' ),
-					'error'         => __( 'Не удалось получить список моделей', 'wp-mlp' ),
-					'enabling'      => __( 'Включаю…', 'wp-mlp' ),
-					'enableFailed'  => __( 'Не удалось включить записи', 'wp-mlp' ),
+					'saved'         => __( '(saved)', 'wp-mlp' ),
+					'custom'        => __( 'Other model…', 'wp-mlp' ),
+					'refresh'       => __( 'Refresh list', 'wp-mlp' ),
+					'loading'       => __( 'Loading list…', 'wp-mlp' ),
+					'error'         => __( 'Could not load the model list', 'wp-mlp' ),
+					'enabling'      => __( 'Enabling…', 'wp-mlp' ),
+					'enableFailed'  => __( 'Could not enable posts', 'wp-mlp' ),
 					/* translators: %d: number of posts enabled by the click */
-					'enabledResult' => __( 'Включено записей: %d', 'wp-mlp' ),
+					'enabledResult' => __( 'Posts enabled: %d', 'wp-mlp' ),
 				),
 			)
 		);
@@ -212,8 +212,8 @@ final class SettingsPage implements Hookable {
 	 */
 	public function addMenu(): void {
 		add_menu_page(
-			__( 'Мультиязычность', 'wp-mlp' ),
-			__( 'Мультиязычность', 'wp-mlp' ),
+			__( 'Multilingual', 'wp-mlp' ),
+			__( 'Multilingual', 'wp-mlp' ),
 			self::CAPABILITY,
 			self::MENU_SLUG,
 			array( $this, 'render' ),
@@ -223,8 +223,8 @@ final class SettingsPage implements Hookable {
 
 		add_submenu_page(
 			self::MENU_SLUG,
-			__( 'Языки', 'wp-mlp' ),
-			__( 'Языки', 'wp-mlp' ),
+			__( 'Languages', 'wp-mlp' ),
+			__( 'Languages', 'wp-mlp' ),
 			self::CAPABILITY,
 			self::MENU_SLUG,
 			array( $this, 'render' )
@@ -245,8 +245,8 @@ final class SettingsPage implements Hookable {
 			wp_kses(
 				sprintf(
 					/* translators: %s: link to permalink settings */
-					__( 'WP Multilang Press требует «красивые» постоянные ссылки. Откройте %s и выберите любую структуру, кроме «Простые».', 'wp-mlp' ),
-					'<a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Настройки → Постоянные ссылки', 'wp-mlp' ) . '</a>'
+					__( 'WP Multilang Press requires pretty permalinks. Open %s and choose any structure except "Plain".', 'wp-mlp' ),
+					'<a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Settings → Permalinks', 'wp-mlp' ) . '</a>'
 				),
 				array( 'a' => array( 'href' => array() ) )
 			)
@@ -258,7 +258,7 @@ final class SettingsPage implements Hookable {
 	 */
 	public function handleSave(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'Недостаточно прав для изменения настроек.', 'wp-mlp' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to change these settings.', 'wp-mlp' ), '', array( 'response' => 403 ) );
 		}
 
 		check_admin_referer( self::ACTION_SAVE );
@@ -340,16 +340,16 @@ final class SettingsPage implements Hookable {
 				esc_attr( $language->locale ),
 				$count,
 				/* translators: %s: language name */
-				esc_html( sprintf( __( 'Сейчас показано на %s — записей и страниц:', 'wp-mlp' ), $language->label ) ),
+				esc_html( sprintf( __( 'Currently shown in %s — posts and pages:', 'wp-mlp' ), $language->label ) ),
 				/* translators: %s: language name */
-				esc_html( sprintf( __( 'Включить все полностью переведённые на %s', 'wp-mlp' ), $language->label ) )
+				esc_html( sprintf( __( 'Enable all posts fully translated into %s', 'wp-mlp' ), $language->label ) )
 			);
 
 			printf(
 				'<p class="notice notice-warning inline mlp-vis-warning" data-locale="%1$s" hidden="hidden">%2$s</p>',
 				esc_attr( $language->locale ),
 				/* translators: %s: language name */
-				esc_html( sprintf( __( 'На %s не включено ни одной записи — после сохранения язык будет пустым.', 'wp-mlp' ), $language->label ) )
+				esc_html( sprintf( __( 'No posts are enabled for %s — the language will be empty after saving.', 'wp-mlp' ), $language->label ) )
 			);
 		}
 
@@ -370,17 +370,17 @@ final class SettingsPage implements Hookable {
 
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Языки сайта', 'wp-mlp' ); ?></h1>
+			<h1><?php esc_html_e( 'Site languages', 'wp-mlp' ); ?></h1>
 
 			<?php $this->renderNotices(); ?>
 
 			<p class="description">
-				<?php esc_html_e( 'Язык по умолчанию отдаётся по обычным адресам сайта, без префикса. Остальные языки живут на своём префиксе, например /en/. Черновой язык недоступен посетителям и не попадает в hreflang.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'The default language is served at the regular site addresses, without a prefix. Other languages live under their own prefix, for example /en/. A draft language is not available to visitors and is not included in hreflang.', 'wp-mlp' ); ?>
 			</p>
 
 			<p class="description">
-				<strong><?php esc_html_e( 'Что в какой колонке:', 'wp-mlp' ); ?></strong>
-				<?php esc_html_e( '«Код языка» — короткое имя внутри плагина. «URL-слаг» — то, что появится в адресе: /bg/статья/. «Название» и «Флаг» видит посетитель в переключателе языков. «Локаль WordPress» — имя, под которым WordPress ищет переводы своего интерфейса (bg_BG, en_US); именно благодаря ей «Reply» становится «Отговор» без вашего участия.', 'wp-mlp' ); ?>
+				<strong><?php esc_html_e( 'What each column means:', 'wp-mlp' ); ?></strong>
+				<?php esc_html_e( '"Language code" is a short name used inside the plugin. "URL slug" is what appears in the address: /bg/article/. Visitors see "Name" and "Flag" in the language switcher. "WordPress locale" is the name under which WordPress looks up translations of its own interface (bg_BG, en_US); it is why "Reply" becomes "Отговор" without any effort on your part.', 'wp-mlp' ); ?>
 			</p>
 
 			<?php // enctype нужен для загрузки картинок флагов в таблице ниже. ?>
@@ -392,19 +392,19 @@ final class SettingsPage implements Hookable {
 					<thead>
 						<tr>
 							<th scope="col" class="mlp-order-column">
-								<span class="screen-reader-text"><?php esc_html_e( 'Порядок', 'wp-mlp' ); ?></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Order', 'wp-mlp' ); ?></span>
 							</th>
-							<th scope="col"><?php esc_html_e( 'Код языка', 'wp-mlp' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'URL-слаг', 'wp-mlp' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Название', 'wp-mlp' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Флаг', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Language code', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'URL slug', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Name', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Flag', 'wp-mlp' ); ?></th>
 							<th scope="col">
-								<?php esc_html_e( 'Локаль WordPress', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'WordPress locale', 'wp-mlp' ); ?>
 								<span class="dashicons dashicons-editor-help"
-									title="<?php esc_attr_e( 'Имя, под которым WordPress хранит переводы своего интерфейса: en_US, bg_BG, ru_RU. По нему ядро, тема и плагины находят свои файлы перевода и сами отдают «Ответить» вместо «Reply». Не путать с кодом языка слева — тот идёт в адрес страницы.', 'wp-mlp' ); ?>"></span>
+									title="<?php esc_attr_e( 'The name under which WordPress stores translations of its own interface: en_US, bg_BG, ru_RU. Core, the theme and plugins use it to find their translation files and show "Ответить" instead of "Reply". Do not confuse it with the language code on the left, which goes into the page address.', 'wp-mlp' ); ?>"></span>
 							</th>
-							<th scope="col"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Удалить', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Delete', 'wp-mlp' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -431,7 +431,7 @@ final class SettingsPage implements Hookable {
 
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><label for="mlp-default-locale"><?php esc_html_e( 'Язык по умолчанию', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-default-locale"><?php esc_html_e( 'Default language', 'wp-mlp' ); ?></label></th>
 						<td>
 							<select name="default_locale" id="mlp-default-locale">
 								<?php foreach ( $languages as $language ) : ?>
@@ -440,66 +440,67 @@ final class SettingsPage implements Hookable {
 									</option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( 'Язык, на котором вы пишете контент в WordPress. Новый язык сначала добавьте и сохраните, только потом его можно выбрать здесь.', 'wp-mlp' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The language in which you write content in WordPress. Add and save a new language first; only then can you select it here.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-switcher-display"><?php esc_html_e( 'Показывать в переключателе', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-switcher-display"><?php esc_html_e( 'Show in switcher', 'wp-mlp' ); ?></label></th>
 						<td>
 							<?php $display = $this->settings->switcherDisplay(); ?>
 							<select name="switcher_display" id="mlp-switcher-display">
 								<option value="<?php echo esc_attr( SwitcherDisplay::LABEL ); ?>" <?php selected( SwitcherDisplay::LABEL, $display ); ?>>
-									<?php esc_html_e( 'Название языка', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Language name', 'wp-mlp' ); ?>
 								</option>
 								<option value="<?php echo esc_attr( SwitcherDisplay::CODE ); ?>" <?php selected( SwitcherDisplay::CODE, $display ); ?>>
-									<?php esc_html_e( 'Код языка (RU, EN)', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Language code (RU, EN)', 'wp-mlp' ); ?>
 								</option>
 								<option value="<?php echo esc_attr( SwitcherDisplay::FLAG ); ?>" <?php selected( SwitcherDisplay::FLAG, $display ); ?>>
-									<?php esc_html_e( 'Только флаг', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Flag only', 'wp-mlp' ); ?>
 								</option>
 								<option value="<?php echo esc_attr( SwitcherDisplay::FLAG_CODE ); ?>" <?php selected( SwitcherDisplay::FLAG_CODE, $display ); ?>>
-									<?php esc_html_e( 'Флаг и код языка', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Flag and language code', 'wp-mlp' ); ?>
 								</option>
 							</select>
 							<p class="description">
-								<?php esc_html_e( 'Порядок языков в переключателе задаётся порядком строк в таблице выше — переставьте их стрелками слева.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'The order of languages in the switcher follows the order of rows in the table above — rearrange them with the arrows on the left.', 'wp-mlp' ); ?>
 								<br>
 								<?php
 								printf(
 									/* translators: %s: path to the flags directory */
-									esc_html__( 'Флаг берётся из файла %s — по коду языка из первой колонки. Если файла нет, показывается вписанный вручную emoji, а если нет и его — код языка. Подробнее о флагах — в «Помощь» справа вверху.', 'wp-mlp' ),
-									'<code>' . esc_html( 'wp-content/uploads/' . Flags::DIRECTORY . '/<код>.svg' ) . '</code>'
+									esc_html__( 'The flag is taken from the file %s, named by the language code from the first column. If there is no file, the emoji entered by hand is shown, and if there is none, the language code. More about flags is in "Help" at the top right.', 'wp-mlp' ),
+									/* translators: placeholder for a language code in a file name, shown as /<code>.svg */
+									'<code>' . esc_html( 'wp-content/uploads/' . Flags::DIRECTORY . '/<' . __( 'code', 'wp-mlp' ) . '>.svg' ) . '</code>'
 								);
 								?>
 							</p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Сбор строк', 'wp-mlp' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'String collection', 'wp-mlp' ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="discover_strings" value="1" <?php checked( ! empty( $raw['discover_strings'] ) ); ?>>
-								<?php esc_html_e( 'Запоминать новые строки, когда я (администратор) открываю страницу на дополнительном языке', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Remember new strings when I (an administrator) open a page in an additional language', 'wp-mlp' ); ?>
 							</label>
 							<p class="description">
-								<?php esc_html_e( 'Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы, войдя в админку, открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк». Так в список попадает только то, что вы сами решили открыть.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'The plugin cannot know in advance what text the theme will output; it finds out only when a page is actually displayed. So the translation list fills up like this: you log in to the admin, open a page in an additional language, the plugin remembers everything it found on it, and those strings appear in "String translation". Only what you chose to open ends up in the list.', 'wp-mlp' ); ?>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Если сайт стоит за плагином кэша страниц, администраторы обычно его обходят, поэтому сбор работает. Выключать имеет смысл, только когда сайт полностью переведён.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'If the site sits behind a page cache plugin, administrators usually bypass it, so collection works. Turning it off only makes sense once the site is fully translated.', 'wp-mlp' ); ?>
 								</p>
 								<p>
 									<label>
 										<input type="checkbox" name="discover_from_visitors" value="1" <?php checked( ! empty( $raw['discover_from_visitors'] ) ); ?>>
-										<?php esc_html_e( 'Также запоминать строки со страниц, которые открывают посетители', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Also remember strings from pages opened by visitors', 'wp-mlp' ); ?>
 									</label>
 								</p>
 								<p class="description">
-									<?php esc_html_e( 'Обычно не нужно: список наполнится текстом всех страниц, которые кто-то открыл, даже если вы не собирались их переводить.', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Usually not needed: the list will fill with the text of every page anyone opened, even pages you never meant to translate.', 'wp-mlp' ); ?>
 							</p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Карта сайта', 'wp-mlp' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Sitemap', 'wp-mlp' ); ?></th>
 						<td>
 							<?php $sitemapUrl = home_url( '/' . Sitemap::FILE ); ?>
 							<p>
@@ -508,72 +509,72 @@ final class SettingsPage implements Hookable {
 								</a>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Содержит все языковые версии со взаимными hreflang — по ним Google понимает, что это одна страница на разных языках, а не дубли. Непереведённые страницы в карту не попадают.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Contains all language versions with reciprocal hreflang links, which tell Google these are one page in different languages, not duplicates. Untranslated pages are not included in the sitemap.', 'wp-mlp' ); ?>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Адрес уже добавлен в robots.txt, поэтому поисковики найдут его сами. Отправить его вручную в Google Search Console — быстрее.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'The address is already added to robots.txt, so search engines will find it on their own. Submitting it manually in Google Search Console is faster.', 'wp-mlp' ); ?>
 							</p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-sitemap-excluded"><?php esc_html_e( 'Исключить из карты сайта', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-sitemap-excluded"><?php esc_html_e( 'Exclude from sitemap', 'wp-mlp' ); ?></label></th>
 						<td>
 							<textarea name="sitemap_excluded_slugs" id="mlp-sitemap-excluded" class="large-text code" rows="4"
 								placeholder="oformlenie-zakaza&#10;net-dostupa"><?php echo esc_textarea( implode( "\n", $this->settings->sitemapExcludedSlugs() ) ); ?></textarea>
 							<p class="description">
-								<?php esc_html_e( 'По одному слагу на строку — последний сегмент адреса страницы, без слешей (для /blog/oformlenie-zakaza/ впишите oformlenie-zakaza). Страница со вложенными страницами исключается вместе с ними.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'One slug per line: the last segment of the page address, without slashes (for /blog/checkout/ enter checkout). A page with child pages is excluded together with them.', 'wp-mlp' ); ?>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Заполнять нужно не всегда: страницы корзины, оформления заказа и личного кабинета WooCommerce, а также страницы, помеченные noindex в Yoast SEO, Rank Math или SEOPress, исключаются сами, без этого поля. Впишите сюда только то, что осталось без плагина корзины и без отметки noindex — например, техническую страницу «Нет доступа» или созданную вручную страницу оформления заказа.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'You do not always need to fill this in: WooCommerce cart, checkout and account pages, as well as pages marked noindex in Yoast SEO, Rank Math or SEOPress, are excluded automatically without this field. Enter here only what is left without a cart plugin and without a noindex mark — for example, a technical "No access" page or a manually created checkout page.', 'wp-mlp' ); ?>
 							</p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Непереведённые записи', 'wp-mlp' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Untranslated posts', 'wp-mlp' ); ?></th>
 						<td>
 							<fieldset id="mlp-untranslated-posts-mode">
-								<legend class="screen-reader-text"><span><?php esc_html_e( 'Непереведённые записи', 'wp-mlp' ); ?></span></legend>
+								<legend class="screen-reader-text"><span><?php esc_html_e( 'Untranslated posts', 'wp-mlp' ); ?></span></legend>
 								<p>
 									<label>
 										<input type="radio" name="untranslated_posts_mode" value="<?php echo esc_attr( Settings::POSTS_ALL ); ?>" <?php checked( $this->settings->untranslatedPostsMode(), Settings::POSTS_ALL ); ?>>
-										<?php esc_html_e( 'Показывать все записи (переведённые и нет)', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Show all posts (translated or not)', 'wp-mlp' ); ?>
 									</label>
 								</p>
 								<p>
 									<label>
 										<input type="radio" name="untranslated_posts_mode" value="<?php echo esc_attr( Settings::POSTS_MANUAL ); ?>" <?php checked( $this->settings->untranslatedPostsMode(), Settings::POSTS_MANUAL ); ?>>
-										<?php esc_html_e( 'Показывать на языке только записи, включённые вручную (рекомендуется)', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'In each language, show only posts enabled manually (recommended)', 'wp-mlp' ); ?>
 									</label>
 								</p>
 							</fieldset>
 							<p class="description">
-								<?php esc_html_e( 'В ручном режиме запись или страница появляется на дополнительном языке (в списках, меню, карте сайта и по прямой ссылке), лишь когда вы её включили для этого языка. Остальные ведут на русскую версию.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'In manual mode, a post or page appears in an additional language (in lists, menus, the sitemap and by direct link) only when you have enabled it for that language. The rest link to the default language version.', 'wp-mlp' ); ?>
 							</p>
 							<?php $this->renderVisibilityCounts(); ?>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Удаление плагина', 'wp-mlp' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Plugin uninstall', 'wp-mlp' ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="delete_data_on_uninstall" value="1" <?php checked( ! empty( $raw['delete_data_on_uninstall'] ) ); ?>>
-								<?php esc_html_e( 'Удалить все переводы и таблицы при удалении плагина', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Delete all translations and tables when the plugin is uninstalled', 'wp-mlp' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'По умолчанию выключено: после удаления плагина переводы остаются в базе и восстанавливаются при повторной установке.', 'wp-mlp' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Off by default: after the plugin is uninstalled, translations stay in the database and are restored if you reinstall it.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-openai-key"><?php esc_html_e( 'Ключ OpenAI', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-openai-key"><?php esc_html_e( 'OpenAI key', 'wp-mlp' ); ?></label></th>
 						<td>
 							<?php $this->renderOpenAiKeyStatus(); ?>
 							<input type="password" name="openai_api_key" id="mlp-openai-key"
 								class="regular-text" autocomplete="off"
 								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_API_KEY ) ? 'readonly' : ''; ?>
-								placeholder="<?php echo esc_attr( $this->settings->openAiApiKey() !== '' ? '••••••••  (оставьте пустым, чтобы не менять)' : 'sk-...' ); ?>">
+								placeholder="<?php echo esc_attr( $this->settings->openAiApiKey() !== '' ? __( '••••••••  (leave empty to keep unchanged)', 'wp-mlp' ) : 'sk-...' ); ?>">
 							<?php if ( $this->settings->openAiApiKey() !== '' ) : ?>
 								<label>
 									<input type="checkbox" name="openai_api_key_clear" value="1">
-									<?php esc_html_e( 'Удалить сохранённый ключ', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'Delete the saved key', 'wp-mlp' ); ?>
 								</label>
 							<?php endif; ?>
 							<p class="description">
@@ -581,7 +582,7 @@ final class SettingsPage implements Hookable {
 								echo wp_kses(
 									sprintf(
 										/* translators: %s: link to OpenAI API keys page */
-										__( 'Хранится в базе данных сайта, не в файлах. Взять ключ: %s.', 'wp-mlp' ),
+										__( 'Stored in the site database, not in files. Get a key: %s.', 'wp-mlp' ),
 										'<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>'
 									),
 									array(
@@ -597,7 +598,7 @@ final class SettingsPage implements Hookable {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-openai-model"><?php esc_html_e( 'Модель OpenAI', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-openai-model"><?php esc_html_e( 'OpenAI model', 'wp-mlp' ); ?></label></th>
 						<td>
 							<?php
 							$modelLocked = $this->providers->isOverriddenByConstant( ProviderFactory::CONST_MODEL );
@@ -609,20 +610,20 @@ final class SettingsPage implements Hookable {
 									value="<?php echo esc_attr( $this->settings->openAiModel() ); ?>" placeholder="gpt-4o-mini">
 							</div>
 							<?php if ( ! $hasKey && ! $modelLocked ) : ?>
-								<p class="description"><?php esc_html_e( 'Сначала сохраните ключ OpenAI — тогда здесь появится список моделей.', 'wp-mlp' ); ?></p>
+								<p class="description"><?php esc_html_e( 'Save the OpenAI key first — then a list of models will appear here.', 'wp-mlp' ); ?></p>
 							<?php endif; ?>
 							<?php if ( $modelLocked ) : ?>
 								<p class="description"><?php echo esc_html( $this->overriddenNote( ProviderFactory::CONST_MODEL ) ); ?></p>
 							<?php elseif ( '' === trim( $this->providers->model() ) ) : ?>
 								<p class="description" style="color:#b32d2e;">
-									<?php esc_html_e( 'Поле пустое — без него кнопка «Перевести с ИИ» не появится, даже если ключ сохранён.', 'wp-mlp' ); ?>
+									<?php esc_html_e( 'The field is empty — without it the "Translate with AI" button will not appear, even if a key is saved.', 'wp-mlp' ); ?>
 								</p>
 							<?php endif; ?>
-							<p class="description"><?php esc_html_e( 'Выберите модель из списка, который отдаёт API, или укажите идентификатор вручную («Другая модель…»).', 'wp-mlp' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Choose a model from the list returned by the API, or enter the identifier manually ("Other model…").', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-openai-base"><?php esc_html_e( 'Адрес API', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-openai-base"><?php esc_html_e( 'API address', 'wp-mlp' ); ?></label></th>
 						<td>
 							<input type="text" name="openai_base_url" id="mlp-openai-base" class="regular-text"
 								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ? 'readonly' : ''; ?>
@@ -631,21 +632,21 @@ final class SettingsPage implements Hookable {
 							<?php if ( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ) : ?>
 								<p class="description"><?php echo esc_html( $this->overriddenNote( ProviderFactory::CONST_BASE_URL ) ); ?></p>
 							<?php endif; ?>
-							<p class="description"><?php esc_html_e( 'Меняйте только для своего прокси или совместимого шлюза вместо api.openai.com.', 'wp-mlp' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Change only for your own proxy or a compatible gateway instead of api.openai.com.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="mlp-openai-limit"><?php esc_html_e( 'Дневной лимит символов', 'wp-mlp' ); ?></label></th>
+						<th scope="row"><label for="mlp-openai-limit"><?php esc_html_e( 'Daily character limit', 'wp-mlp' ); ?></label></th>
 						<td>
 							<input type="number" name="openai_daily_char_limit" id="mlp-openai-limit"
 								min="0" max="10000000" step="1000"
 								value="<?php echo esc_attr( (string) $this->settings->openAiDailyCharLimit() ); ?>">
-							<p class="description"><?php esc_html_e( 'Сколько символов в сумме можно отправить в OpenAI за день, нажимая «Перевести с ИИ». Защита от случайных расходов, не автоматизация — плагин ничего не переводит сам.', 'wp-mlp' ); ?></p>
+							<p class="description"><?php esc_html_e( 'How many characters in total can be sent to OpenAI per day by clicking "Translate with AI". A safeguard against accidental spending, not automation — the plugin never translates anything on its own.', 'wp-mlp' ); ?></p>
 						</td>
 					</tr>
 				</table>
 
-				<?php submit_button( __( 'Сохранить', 'wp-mlp' ) ); ?>
+				<?php submit_button( __( 'Save', 'wp-mlp' ) ); ?>
 			</form>
 		</div>
 		<?php
@@ -659,7 +660,7 @@ final class SettingsPage implements Hookable {
 	private function overriddenNote( string $constName ): string {
 		return sprintf(
 			/* translators: %s: constant name */
-			__( 'Значение задано в wp-config.php (%s) — поле выше не используется.', 'wp-mlp' ),
+			__( 'The value is set in wp-config.php (%s); the field above is not used.', 'wp-mlp' ),
 			$constName
 		);
 	}
@@ -687,7 +688,7 @@ final class SettingsPage implements Hookable {
 				return $plain(
 					sprintf(
 						/* translators: %s: constant name */
-						__( 'Ключ задан в wp-config.php (%s) — поле ниже не используется.', 'wp-mlp' ),
+						__( 'The key is set in wp-config.php (%s); the field below is not used.', 'wp-mlp' ),
 						ProviderFactory::CONST_API_KEY
 					)
 				);
@@ -696,39 +697,39 @@ final class SettingsPage implements Hookable {
 				return $plain(
 					sprintf(
 						/* translators: %s: last 4 characters of the saved key */
-						__( 'Ключ хранится в базе данных — переживает обновление плагина. Заканчивается на «%s».', 'wp-mlp' ),
+						__( 'The key is stored in the database and survives plugin updates. Ends with "%s".', 'wp-mlp' ),
 						substr( $this->settings->openAiApiKey(), -4 )
 					)
 				);
 
 			case ProviderFactory::SOURCE_CONTENT_ENV:
-				$html = $plain( __( 'Ключ берётся из wp-content/wp-mlp.env.php — переживает обновление плагина.', 'wp-mlp' ) );
+				$html = $plain( __( 'The key is read from wp-content/wp-mlp.env.php and survives plugin updates.', 'wp-mlp' ) );
 				break;
 
 			case ProviderFactory::SOURCE_PARENT_ENV:
-				$html = $plain( __( 'Ключ берётся из файла wp-mlp.env выше корня WordPress — переживает обновление плагина.', 'wp-mlp' ) );
+				$html = $plain( __( 'The key is read from a wp-mlp.env file above the WordPress root and survives plugin updates.', 'wp-mlp' ) );
 				break;
 
 			case ProviderFactory::SOURCE_PLUGIN_ENV:
 				$html = sprintf(
 					'<div class="notice notice-warning inline"><p>%s</p></div>',
-					esc_html__( 'Ключ берётся из .env в папке плагина — он будет удалён при замене плагина через ZIP. Вставьте ключ в поле ниже или перенесите его в wp-content/wp-mlp.env.php.', 'wp-mlp' )
+					esc_html__( 'The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/wp-mlp.env.php.', 'wp-mlp' )
 				);
 				break;
 
 			case ProviderFactory::SOURCE_PROCESS_ENV:
-				$html = $plain( __( 'Ключ задан переменной окружения сервера.', 'wp-mlp' ) );
+				$html = $plain( __( 'The key is set by a server environment variable.', 'wp-mlp' ) );
 				break;
 
 			default:
-				$html = $plain( __( 'Ключ не сохранён.', 'wp-mlp' ) );
+				$html = $plain( __( 'No key saved.', 'wp-mlp' ) );
 		}
 
 		// Файл в wp-content без защитной строки читался бы по прямой ссылке — не используем.
 		if ( array() !== Env::unguardedFiles() ) {
 			$html .= sprintf(
 				'<div class="notice notice-error inline"><p>%s</p></div>',
-				esc_html__( 'Файл wp-mlp.env.php без защитной первой строки — не используется. Первой строкой должно быть: <?php exit; ?>', 'wp-mlp' )
+				esc_html__( 'The wp-mlp.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>', 'wp-mlp' )
 			);
 		}
 
@@ -755,12 +756,12 @@ final class SettingsPage implements Hookable {
 
 		?>
 		<div class="mlp-language-picker" hidden>
-			<label for="mlp-language-picker-input"><strong><?php esc_html_e( 'Добавить язык', 'wp-mlp' ); ?></strong></label>
+			<label for="mlp-language-picker-input"><strong><?php esc_html_e( 'Add language', 'wp-mlp' ); ?></strong></label>
 			<input type="text" id="mlp-language-picker-input" list="mlp-language-picker-list"
 				class="regular-text" autocomplete="off" autocapitalize="off" spellcheck="false"
 				data-1p-ignore data-lpignore="true" data-form-type="other"
-				data-invalid="<?php esc_attr_e( 'Выберите язык из списка или впишите локаль вроде de_DE.', 'wp-mlp' ); ?>"
-				placeholder="<?php esc_attr_e( 'Начните вводить: Deutsch, French, pt_BR…', 'wp-mlp' ); ?>">
+				data-invalid="<?php esc_attr_e( 'Choose a language from the list or enter a locale such as de_DE.', 'wp-mlp' ); ?>"
+				placeholder="<?php esc_attr_e( 'Start typing: Deutsch, French, pt_BR…', 'wp-mlp' ); ?>">
 			<datalist id="mlp-language-picker-list">
 				<?php foreach ( $options as $option ) : ?>
 					<option value="<?php echo esc_attr( $option['label'] ); ?>"
@@ -770,9 +771,9 @@ final class SettingsPage implements Hookable {
 						data-native="<?php echo esc_attr( $option['native'] ); ?>"></option>
 				<?php endforeach; ?>
 			</datalist>
-			<button type="button" class="button" id="mlp-language-picker-add"><?php esc_html_e( 'Добавить', 'wp-mlp' ); ?></button>
+			<button type="button" class="button" id="mlp-language-picker-add"><?php esc_html_e( 'Add', 'wp-mlp' ); ?></button>
 			<p class="description">
-				<?php esc_html_e( 'Выберите язык из списка WordPress или впишите его локаль вручную (например, de_DE). Число языков не ограничено. Не забудьте нажать «Сохранить» внизу страницы.', 'wp-mlp' ); ?>
+				<?php esc_html_e( 'Choose a language from the WordPress list or enter its locale manually (for example, de_DE). The number of languages is not limited. Do not forget to click "Save" at the bottom of the page.', 'wp-mlp' ); ?>
 			</p>
 		</div>
 		<?php
@@ -816,33 +817,33 @@ final class SettingsPage implements Hookable {
 					 */
 					?>
 					<button type="button" class="button-link mlp-order-up" hidden
-						title="<?php esc_attr_e( 'Выше', 'wp-mlp' ); ?>">
+						title="<?php esc_attr_e( 'Up', 'wp-mlp' ); ?>">
 						<span class="dashicons dashicons-arrow-up-alt2"></span>
-						<span class="screen-reader-text"><?php esc_html_e( 'Переместить язык выше', 'wp-mlp' ); ?></span>
+						<span class="screen-reader-text"><?php esc_html_e( 'Move language up', 'wp-mlp' ); ?></span>
 					</button>
 					<button type="button" class="button-link mlp-order-down" hidden
-						title="<?php esc_attr_e( 'Ниже', 'wp-mlp' ); ?>">
+						title="<?php esc_attr_e( 'Down', 'wp-mlp' ); ?>">
 						<span class="dashicons dashicons-arrow-down-alt2"></span>
-						<span class="screen-reader-text"><?php esc_html_e( 'Переместить язык ниже', 'wp-mlp' ); ?></span>
+						<span class="screen-reader-text"><?php esc_html_e( 'Move language down', 'wp-mlp' ); ?></span>
 					</button>
 				<?php endif; ?>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[locale]' ); ?>"
 					value="<?php echo esc_attr( $language->locale ?? '' ); ?>"
-					placeholder="<?php echo esc_attr( null === $language ? __( 'например, de', 'wp-mlp' ) : '' ); ?>"
+					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. de', 'wp-mlp' ) : '' ); ?>"
 					size="10" pattern="[A-Za-z-]{2,20}" <?php echo $noFill; ?>>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[slug]' ); ?>"
 					value="<?php echo esc_attr( $language->slug ?? '' ); ?>"
-					placeholder="<?php echo esc_attr( null === $language ? __( 'как код', 'wp-mlp' ) : '' ); ?>"
+					placeholder="<?php echo esc_attr( null === $language ? __( 'same as code', 'wp-mlp' ) : '' ); ?>"
 					size="10" <?php echo $noFill; ?>>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[label]' ); ?>"
 					value="<?php echo esc_attr( $language->label ?? '' ); ?>"
-					placeholder="<?php echo esc_attr( null === $language ? __( 'например, Deutsch', 'wp-mlp' ) : '' ); ?>"
+					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. Deutsch', 'wp-mlp' ) : '' ); ?>"
 					<?php echo $noFill; ?>>
 			</td>
 			<td class="mlp-flag-cell">
@@ -861,43 +862,43 @@ final class SettingsPage implements Hookable {
 						alt="" width="24" height="18">
 					<label class="mlp-flag-remove">
 						<input type="checkbox" name="<?php echo esc_attr( $name . '[flag_remove]' ); ?>" value="1">
-						<?php esc_html_e( 'убрать', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'remove', 'wp-mlp' ); ?>
 					</label>
 				<?php endif; ?>
 
 				<?php if ( null !== $language ) : ?>
 					<input type="file" name="<?php echo esc_attr( 'flag_file_' . $index ); ?>"
 						accept=".svg,image/svg+xml" class="mlp-flag-file"
-						title="<?php esc_attr_e( 'Картинка флага (SVG). Загрузится под кодом языка из первой колонки.', 'wp-mlp' ); ?>">
+						title="<?php esc_attr_e( 'Flag image (SVG). It will be saved under the language code from the first column.', 'wp-mlp' ); ?>">
 				<?php endif; ?>
 
 				<input type="text" name="<?php echo esc_attr( $name . '[flag]' ); ?>"
 					value="<?php echo esc_attr( $language->flag ?? '' ); ?>"
 					size="4" maxlength="16" <?php echo $noFill; ?>
-					title="<?php esc_attr_e( 'Запасной вариант: emoji-флаг. Показывается, если картинка не загружена. На Windows emoji-флаги не отображаются — там будут видны буквы.', 'wp-mlp' ); ?>">
+					title="<?php esc_attr_e( 'Fallback: an emoji flag. Shown if no image is uploaded. Windows does not render emoji flags; letters are shown there instead.', 'wp-mlp' ); ?>">
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[wp_locale]' ); ?>"
 					value="<?php echo esc_attr( $language->wpLocale ?? '' ); ?>"
-					placeholder="<?php echo esc_attr( null === $language ? __( 'например, de_DE', 'wp-mlp' ) : '' ); ?>"
+					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. de_DE', 'wp-mlp' ) : '' ); ?>"
 					size="10" <?php echo $noFill; ?>
-					title="<?php esc_attr_e( 'Локаль WordPress: под этим именем ядро, тема и плагины ищут свои переводы', 'wp-mlp' ); ?>">
+					title="<?php esc_attr_e( 'WordPress locale: core, the theme and plugins look up their translations under this name', 'wp-mlp' ); ?>">
 				<?php if ( $isTemplate ) : ?>
-					<p class="description"><?php esc_html_e( 'Пакет будет предложен после сохранения', 'wp-mlp' ); ?></p>
+					<p class="description"><?php esc_html_e( 'The language pack will be offered after saving', 'wp-mlp' ); ?></p>
 				<?php endif; ?>
 				<?php $this->renderLanguagePackStatus( $language ); ?>
 			</td>
 			<td>
 				<?php if ( null !== $language && $language->isDefault ) : ?>
 					<input type="hidden" name="<?php echo esc_attr( $name . '[status]' ); ?>" value="<?php echo esc_attr( Language::STATUS_PUBLISHED ); ?>">
-					<em><?php esc_html_e( 'по умолчанию', 'wp-mlp' ); ?></em>
+					<em><?php esc_html_e( 'default', 'wp-mlp' ); ?></em>
 				<?php else : ?>
 					<select name="<?php echo esc_attr( $name . '[status]' ); ?>">
 						<option value="<?php echo esc_attr( Language::STATUS_PUBLISHED ); ?>" <?php selected( Language::STATUS_PUBLISHED, $language->status ?? Language::STATUS_PUBLISHED ); ?>>
-							<?php esc_html_e( 'Опубликован', 'wp-mlp' ); ?>
+							<?php esc_html_e( 'Published', 'wp-mlp' ); ?>
 						</option>
 						<option value="<?php echo esc_attr( Language::STATUS_DRAFT ); ?>" <?php selected( Language::STATUS_DRAFT, $language->status ?? '' ); ?>>
-							<?php esc_html_e( 'Черновик', 'wp-mlp' ); ?>
+							<?php esc_html_e( 'Draft', 'wp-mlp' ); ?>
 						</option>
 					</select>
 				<?php endif; ?>
@@ -906,12 +907,12 @@ final class SettingsPage implements Hookable {
 				<?php if ( null !== $language && ! $language->isDefault ) : ?>
 					<label>
 						<input type="checkbox" name="<?php echo esc_attr( $name . '[delete]' ); ?>" value="1">
-						<?php esc_html_e( 'Удалить язык', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Delete language', 'wp-mlp' ); ?>
 					</label>
 				<?php elseif ( $isTemplate ) : ?>
 					<button type="button" class="button-link mlp-row-remove">
 						<span aria-hidden="true">&#10005;</span>
-						<?php esc_html_e( 'Удалить язык', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Delete language', 'wp-mlp' ); ?>
 					</button>
 				<?php endif; ?>
 			</td>
@@ -936,7 +937,7 @@ final class SettingsPage implements Hookable {
 		if ( ! LanguagePacks::needsPack( $language->wpLocale ) ) {
 			printf(
 				'<p class="description">%s</p>',
-				esc_html__( 'Встроенная локаль — пакет не нужен.', 'wp-mlp' )
+				esc_html__( 'Built-in locale: no pack needed.', 'wp-mlp' )
 			);
 
 			return;
@@ -945,7 +946,7 @@ final class SettingsPage implements Hookable {
 		if ( $this->packs->isInstalled( $language->wpLocale ) ) {
 			printf(
 				'<p class="description" style="color:#007017;">%s</p>',
-				esc_html__( 'Языковой пакет установлен.', 'wp-mlp' )
+				esc_html__( 'Language pack installed.', 'wp-mlp' )
 			);
 
 			return;
@@ -953,13 +954,13 @@ final class SettingsPage implements Hookable {
 
 		printf(
 			'<p class="description" style="color:#b32d2e;">%s</p>',
-			esc_html__( 'Языкового пакета нет — строки интерфейса останутся на английском.', 'wp-mlp' )
+			esc_html__( 'No language pack: interface strings will stay in English.', 'wp-mlp' )
 		);
 
 		if ( ! $this->packs->canInstall() ) {
 			printf(
 				'<p class="description">%s</p>',
-				esc_html__( 'Автоматическая установка недоступна: нет прав на запись в wp-content/languages или закрыт доступ к api.wordpress.org. Загрузите файлы перевода вручную.', 'wp-mlp' )
+				esc_html__( 'Automatic installation is unavailable: no write permission for wp-content/languages, or access to api.wordpress.org is blocked. Upload the translation files manually.', 'wp-mlp' )
 			);
 
 			return;
@@ -969,7 +970,7 @@ final class SettingsPage implements Hookable {
 			'<button type="submit" class="button button-secondary" name="%s" value="%s">%s</button>',
 			esc_attr( self::FIELD_DOWNLOAD_PACK ),
 			esc_attr( $language->wpLocale ),
-			esc_html__( 'Скачать языковой пакет', 'wp-mlp' )
+			esc_html__( 'Download language pack', 'wp-mlp' )
 		);
 	}
 
@@ -981,7 +982,7 @@ final class SettingsPage implements Hookable {
 		if ( isset( $_GET['mlp-updated'] ) ) {
 			printf(
 				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-				esc_html__( 'Настройки сохранены.', 'wp-mlp' )
+				esc_html__( 'Settings saved.', 'wp-mlp' )
 			);
 		}
 
@@ -993,8 +994,8 @@ final class SettingsPage implements Hookable {
 				$installed ? 'success' : 'error',
 				esc_html(
 					$installed
-						? __( 'Языковой пакет установлен.', 'wp-mlp' )
-						: __( 'Не удалось скачать языковой пакет. Проверьте, что для этой локали существует перевод на translate.wordpress.org и что сайту разрешён доступ к api.wordpress.org.', 'wp-mlp' )
+						? __( 'Language pack installed.', 'wp-mlp' )
+						: __( 'Could not download the language pack. Check that a translation for this locale exists on translate.wordpress.org and that the site is allowed to access api.wordpress.org.', 'wp-mlp' )
 				)
 			);
 		}

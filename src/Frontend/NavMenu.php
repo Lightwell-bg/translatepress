@@ -79,7 +79,7 @@ final class NavMenu implements Hookable {
 	public function addMetaBox(): void {
 		add_meta_box(
 			'mlp-languages',
-			__( 'Языки', 'wp-mlp' ),
+			__( 'Languages', 'wp-mlp' ),
 			array( $this, 'renderMetaBox' ),
 			'nav-menus',
 			'side',
@@ -97,7 +97,7 @@ final class NavMenu implements Hookable {
 	 */
 	public function renderMetaBox(): void {
 		if ( array() === $this->settings->all() ) {
-			printf( '<p>%s</p>', esc_html__( 'Сначала добавьте языки на странице «Языки».', 'wp-mlp' ) );
+			printf( '<p>%s</p>', esc_html__( 'First add languages on the "Languages" page.', 'wp-mlp' ) );
 
 			return;
 		}
@@ -105,17 +105,17 @@ final class NavMenu implements Hookable {
 		$rows = array(
 			array(
 				'key'         => -1,
-				'title'       => __( 'Язык', 'wp-mlp' ),
+				'title'       => __( 'Language', 'wp-mlp' ),
 				'url'         => self::MARKER_DROPDOWN,
-				'label'       => __( 'Выпадающий список', 'wp-mlp' ),
-				'description' => __( 'Один пункт, языки открываются по наведению/клику — так же, как обычное подменю темы.', 'wp-mlp' ),
+				'label'       => __( 'Dropdown list', 'wp-mlp' ),
+				'description' => __( 'A single item; the languages open on hover or click, like a regular theme submenu.', 'wp-mlp' ),
 			),
 			array(
 				'key'         => -2,
-				'title'       => __( 'Переключатель языков', 'wp-mlp' ),
+				'title'       => __( 'Language switcher', 'wp-mlp' ),
 				'url'         => self::MARKER_ROW,
-				'label'       => __( 'В ряд', 'wp-mlp' ),
-				'description' => __( 'Языки видны сразу, отдельными пунктами подряд, без раскрытия.', 'wp-mlp' ),
+				'label'       => __( 'In a row', 'wp-mlp' ),
+				'description' => __( 'The languages are visible right away as separate items in a row, with no dropdown.', 'wp-mlp' ),
 			),
 		);
 
@@ -148,7 +148,7 @@ final class NavMenu implements Hookable {
 			<p class="button-controls">
 				<span class="add-to-menu">
 					<input type="submit" class="button-secondary submit-add-to-menu right"
-						value="<?php esc_attr_e( 'Добавить в меню', 'wp-mlp' ); ?>"
+						value="<?php esc_attr_e( 'Add to menu', 'wp-mlp' ); ?>"
 						name="add-mlp-language-menu-item" id="submit-mlp-languages">
 					<span class="spinner"></span>
 				</span>
@@ -345,7 +345,7 @@ final class NavMenu implements Hookable {
 		$item->object   = 'custom';
 		$item->object_id = 0;
 		$item->type     = 'custom';
-		$item->type_label = __( 'Произвольная ссылка', 'wp-mlp' );
+		$item->type_label = __( 'Custom link', 'wp-mlp' );
 		$item->menu_item_parent = $parentDbId;
 		$item->menu_order = (int) $marker->menu_order + $index + 1;
 		$item->description = '';

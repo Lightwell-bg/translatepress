@@ -106,7 +106,7 @@ final class OpenAiModelsController implements Hookable {
 		if ( '' === $key ) {
 			return new WP_Error(
 				'mlp_openai_no_key',
-				__( 'Сначала сохраните ключ OpenAI — тогда здесь появится список моделей.', 'wp-mlp' ),
+				__( 'Save the OpenAI key first; the list of models will then appear here.', 'wp-mlp' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -132,7 +132,7 @@ final class OpenAiModelsController implements Hookable {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return $this->failure( __( 'Сетевая ошибка: ', 'wp-mlp' ) . $response->get_error_message(), $key );
+			return $this->failure( __( 'Network error: ', 'wp-mlp' ) . $response->get_error_message(), $key );
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
@@ -148,7 +148,7 @@ final class OpenAiModelsController implements Hookable {
 		$decoded = json_decode( $body, true );
 
 		if ( ! is_array( $decoded ) || ! is_array( $decoded['data'] ?? null ) ) {
-			return $this->failure( __( 'Адрес API не вернул список моделей в ожидаемом формате.', 'wp-mlp' ), $key );
+			return $this->failure( __( 'The API address did not return the list of models in the expected format.', 'wp-mlp' ), $key );
 		}
 
 		$list = self::filterAndSort( $decoded['data'] );

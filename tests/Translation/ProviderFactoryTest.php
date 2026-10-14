@@ -380,10 +380,10 @@ final class ProviderFactoryTest extends TestCase {
 		$model = ProviderFactory::unavailableMessage( array( ProviderFactory::FIELD_MODEL ) );
 		$both  = ProviderFactory::unavailableMessage( array( ProviderFactory::FIELD_KEY, ProviderFactory::FIELD_MODEL ) );
 
-		$this->assertStringContainsString( 'укажите ключ в настройках плагина', $key );
-		$this->assertStringNotContainsString( 'модель', $key );
-		$this->assertStringContainsString( 'укажите модель в настройках плагина', $model );
-		$this->assertStringNotContainsString( 'ключ', $model );
-		$this->assertStringContainsString( 'ключ и модель', $both );
+		$this->assertStringContainsString( 'enter the key in the plugin settings', $key );
+		$this->assertStringNotContainsString( 'model', $key );
+		$this->assertStringContainsString( 'enter the model in the plugin settings', $model );
+		$this->assertStringNotContainsString( 'key', $model );
+		$this->assertStringContainsString( 'the key and the model', $both );
 	}
 }

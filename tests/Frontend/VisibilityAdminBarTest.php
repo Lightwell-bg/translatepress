@@ -112,9 +112,9 @@ final class VisibilityAdminBarTest extends TestCase {
 	public function testHiddenPageShowsWarningAndShowButton(): void {
 		$bar = $this->nodes( $this->bar() );
 
-		$this->assertSame( 'Скрыто на EN — посетители не видят', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['title'] );
+		$this->assertSame( 'Hidden on EN: visitors cannot see it', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['title'] );
 		$this->assertSame( 'mlp-vis-hidden', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['meta']['class'] );
-		$this->assertSame( 'Показать на EN', $bar->nodes[ VisibilityAdminBar::TOGGLE_ID ]['title'] );
+		$this->assertSame( 'Show on EN', $bar->nodes[ VisibilityAdminBar::TOGGLE_ID ]['title'] );
 		$this->assertSame( VisibilityAdminBar::NODE_ID, $bar->nodes[ VisibilityAdminBar::TOGGLE_ID ]['parent'] );
 	}
 
@@ -123,9 +123,9 @@ final class VisibilityAdminBarTest extends TestCase {
 
 		$bar = $this->nodes( $this->bar() );
 
-		$this->assertSame( 'Показано на EN', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['title'] );
+		$this->assertSame( 'Shown on EN', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['title'] );
 		$this->assertSame( 'mlp-vis-shown', $bar->nodes[ VisibilityAdminBar::NODE_ID ]['meta']['class'] );
-		$this->assertSame( 'Скрыть на EN', $bar->nodes[ VisibilityAdminBar::TOGGLE_ID ]['title'] );
+		$this->assertSame( 'Hide on EN', $bar->nodes[ VisibilityAdminBar::TOGGLE_ID ]['title'] );
 	}
 
 	public function testStateIsPerLanguage(): void {

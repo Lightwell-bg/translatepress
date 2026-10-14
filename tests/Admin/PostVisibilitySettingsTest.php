@@ -108,8 +108,8 @@ final class PostVisibilitySettingsTest extends TestCase {
 		$source = (string) file_get_contents( dirname( __DIR__, 2 ) . '/src/Admin/SettingsPage.php' );
 
 		$this->assertSame( 2, substr_count( $source, 'type="radio" name="untranslated_posts_mode"' ) );
-		$this->assertStringContainsString( 'Показывать все записи (переведённые и нет)', $source );
-		$this->assertStringContainsString( 'Показывать на языке только записи, включённые вручную (рекомендуется)', $source );
+		$this->assertStringContainsString( 'Show all posts (translated or not)', $source );
+		$this->assertStringContainsString( 'In each language, show only posts enabled manually (recommended)', $source );
 		$this->assertStringNotContainsString( '<select name="untranslated_posts_mode"', $source );
 	}
 
@@ -118,11 +118,11 @@ final class PostVisibilitySettingsTest extends TestCase {
 
 		$html = $this->counts( $this->settingsPage() );
 
-		$this->assertStringContainsString( 'Сейчас показано на &lt;b&gt;English&lt;/b&gt; — записей и страниц:', $html );
+		$this->assertStringContainsString( 'Currently shown in &lt;b&gt;English&lt;/b&gt; — posts and pages:', $html );
 		$this->assertStringNotContainsString( '<b>English', $html );
 		$this->assertStringContainsString( 'class="mlp-vis-count">12</strong>', $html );
 		$this->assertStringContainsString( 'data-count="12"', $html );
-		$this->assertStringContainsString( 'Включить все полностью переведённые на &lt;b&gt;English&lt;/b&gt;', $html );
+		$this->assertStringContainsString( 'Enable all posts fully translated into &lt;b&gt;English&lt;/b&gt;', $html );
 		$this->assertStringContainsString( 'data-locale="en"', $html );
 		$this->assertStringNotContainsString( 'data-locale="ru"', $html );
 	}
@@ -133,7 +133,7 @@ final class PostVisibilitySettingsTest extends TestCase {
 		$html = $this->counts( $this->settingsPage() );
 
 		$this->assertStringContainsString( 'data-count="0"', $html );
-		$this->assertMatchesRegularExpression( '/class="notice notice-warning inline mlp-vis-warning" data-locale="en" hidden="hidden">На &lt;b&gt;English&lt;\/b&gt; не включено ни одной записи — после сохранения язык будет пустым\./u', $html );
+		$this->assertMatchesRegularExpression( '/class="notice notice-warning inline mlp-vis-warning" data-locale="en" hidden="hidden">No posts are enabled for &lt;b&gt;English&lt;\/b&gt; — the language will be empty after saving\./u', $html );
 	}
 
 	public function testNoCountsWithoutVisibilityService(): void {
@@ -155,9 +155,9 @@ final class PostVisibilitySettingsTest extends TestCase {
 
 		$html = $this->editorBlock( 10 );
 
-		$this->assertStringContainsString( 'Показывать эту страницу на &lt;b&gt;English&lt;/b&gt;', $html );
+		$this->assertStringContainsString( 'Show this page in &lt;b&gt;English&lt;/b&gt;', $html );
 		$this->assertMatchesRegularExpression( '/data-post-id="10" data-locale="en" checked="checked"/', $html );
-		$this->assertStringContainsString( 'Переведено на 60%', $html );
+		$this->assertStringContainsString( '60% translated', $html );
 	}
 
 	public function testEditorSwitchUncheckedWhenHiddenAndShowsNoStringsNote(): void {
@@ -166,7 +166,7 @@ final class PostVisibilitySettingsTest extends TestCase {
 		$html = $this->editorBlock( 10 );
 
 		$this->assertStringNotContainsString( 'checked', $html );
-		$this->assertStringContainsString( 'Строк этой страницы пока нет', $html );
+		$this->assertStringContainsString( 'This page has no strings yet', $html );
 	}
 
 	public function testEditorSwitchAbsentInAllModeNonPostAttachmentOrWithoutRight(): void {

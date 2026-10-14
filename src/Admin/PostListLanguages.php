@@ -173,9 +173,9 @@ final class PostListLanguages implements Hookable {
 
 		foreach ( $this->settings->secondary() as $language ) {
 			/* translators: %s: language name */
-			$actions[ self::BULK_SHOW . $language->locale ] = sprintf( __( 'Показывать на языке: %s', 'wp-mlp' ), $language->label );
+			$actions[ self::BULK_SHOW . $language->locale ] = sprintf( __( 'Show on language: %s', 'wp-mlp' ), $language->label );
 			/* translators: %s: language name */
-			$actions[ self::BULK_HIDE . $language->locale ] = sprintf( __( 'Скрыть на языке: %s', 'wp-mlp' ), $language->label );
+			$actions[ self::BULK_HIDE . $language->locale ] = sprintf( __( 'Hide on language: %s', 'wp-mlp' ), $language->label );
 		}
 
 		return $actions;
@@ -260,16 +260,20 @@ final class PostListLanguages implements Hookable {
 		}
 
 		$text = sprintf(
-			/* translators: 1: "Показано"/"Скрыто", 2: language code, 3: number of posts with the noun */
-			__( '%1$s на %2$s: %3$s', 'wp-mlp' ),
-			$shown ? __( 'Показано', 'wp-mlp' ) : __( 'Скрыто', 'wp-mlp' ),
+			/* translators: 1: "Shown" or "Hidden", 2: language code, 3: number of posts with the noun */
+			__( '%1$s on %2$s: %3$s', 'wp-mlp' ),
+			$shown ? __( 'Shown', 'wp-mlp' ) : __( 'Hidden', 'wp-mlp' ),
 			strtoupper( $locale ),
-			$count . ' ' . self::plural( $count, __( 'запись', 'wp-mlp' ), __( 'записи', 'wp-mlp' ), __( 'записей', 'wp-mlp' ) )
+			sprintf(
+				/* translators: %d: number of posts */
+				_n( '%d post', '%d posts', $count, 'wp-mlp' ),
+				$count
+			)
 		);
 
 		if ( $skipped > 0 ) {
 			/* translators: %d: number of skipped posts */
-			$text .= ' ' . sprintf( __( '(пропущено, нет прав или тип не подходит: %d)', 'wp-mlp' ), $skipped );
+			$text .= ' ' . sprintf( __( '(skipped, no permission or unsuitable post type: %d)', 'wp-mlp' ), $skipped );
 		}
 
 		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $text ) );
@@ -379,7 +383,7 @@ final class PostListLanguages implements Hookable {
 
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
-				$result[ self::COLUMN ] = __( 'Языки', 'wp-mlp' );
+				$result[ self::COLUMN ] = __( 'Languages', 'wp-mlp' );
 				$added                  = true;
 			}
 
@@ -387,7 +391,7 @@ final class PostListLanguages implements Hookable {
 		}
 
 		if ( ! $added ) {
-			$result[ self::COLUMN ] = __( 'Языки', 'wp-mlp' );
+			$result[ self::COLUMN ] = __( 'Languages', 'wp-mlp' );
 		}
 
 		return $result;
@@ -432,21 +436,21 @@ final class PostListLanguages implements Hookable {
 		$currentV  = null === $requested ? '' : ( $requested[0] ? self::FILTER_SHOWN : self::FILTER_HIDDEN ) . $requested[1];
 
 		printf( '<select name="%s">', esc_attr( self::FILTER_PARAM ) );
-		printf( '<option value="">%s</option>', esc_html__( 'Перевод: все', 'wp-mlp' ) );
+		printf( '<option value="">%s</option>', esc_html__( 'Translation: all', 'wp-mlp' ) );
 
 		foreach ( $this->settings->secondary() as $language ) {
 			printf(
 				'<option value="%s"%s>%s</option>',
 				esc_attr( $language->locale ),
 				$current === $language->locale ? ' selected="selected"' : '',
-				esc_html( sprintf( __( 'Не переведено полностью: %s', 'wp-mlp' ), $language->label ) )
+				esc_html( sprintf( __( 'Not fully translated: %s', 'wp-mlp' ), $language->label ) )
 			);
 		}
 
 		// Показ на языке: только в ручном режиме, когда флаги вообще что-то значат.
 		if ( $this->togglesAvailable() ) {
 			foreach ( $this->settings->secondary() as $language ) {
-				foreach ( array( self::FILTER_HIDDEN => __( 'Скрыто на %s', 'wp-mlp' ), self::FILTER_SHOWN => __( 'Показано на %s', 'wp-mlp' ) ) as $prefix => $format ) {
+				foreach ( array( self::FILTER_HIDDEN => /* translators: %s: language name */ __( 'Hidden on %s', 'wp-mlp' ), self::FILTER_SHOWN => /* translators: %s: language name */ __( 'Shown on %s', 'wp-mlp' ) ) as $prefix => $format ) {
 					$value = $prefix . $language->locale;
 
 					printf(
@@ -648,7 +652,7 @@ final class PostListLanguages implements Hookable {
 
 		if ( null === $path ) {
 			return '<span aria-hidden="true">—</span><span class="screen-reader-text">'
-				. esc_html__( 'Недоступно: запись не опубликована', 'wp-mlp' ) . '</span>';
+				. esc_html__( 'Unavailable: the post is not published', 'wp-mlp' ) . '</span>';
 		}
 
 		$items = array();
@@ -679,16 +683,16 @@ final class PostListLanguages implements Hookable {
 		$disabled = '';
 
 		if ( ! PostLanguageVisibility::isEligibleType( (string) $post->post_type ) ) {
-			$disabled = __( 'Для этого типа записей показ на языке не настраивается', 'wp-mlp' );
+			$disabled = __( 'Visibility per language cannot be set for this post type', 'wp-mlp' );
 		} elseif ( ! current_user_can( 'edit_post', $id ) || ! current_user_can( EditorPage::CAPABILITY ) ) {
-			$disabled = __( 'Нет прав на редактирование этой записи', 'wp-mlp' );
+			$disabled = __( 'You do not have permission to edit this post', 'wp-mlp' );
 		}
 
 		return ' ' . VisibilityAssets::toggleHtml(
 			$id,
 			$language->locale,
 			$this->visibility->isVisible( $id, $language->locale ),
-			__( 'на сайте', 'wp-mlp' ),
+			__( 'on site', 'wp-mlp' ),
 			$disabled
 		);
 	}
@@ -707,15 +711,15 @@ final class PostListLanguages implements Hookable {
 		switch ( $state ) {
 			case self::STATE_FULL:
 				$text = '✅';
-				$hint = __( 'Переведено полностью', 'wp-mlp' );
+				$hint = __( 'Fully translated', 'wp-mlp' );
 				break;
 			case self::STATE_PARTIAL:
 				$text = $percent . '%';
-				$hint = sprintf( /* translators: 1: переведено, 2: всего */ __( 'Переведено строк: %1$d из %2$d', 'wp-mlp' ), $done, $total );
+				$hint = sprintf( /* translators: 1: translated count, 2: total count */ __( 'Strings translated: %1$d of %2$d', 'wp-mlp' ), $done, $total );
 				break;
 			case self::STATE_NONE:
-				$text = __( 'нет перевода', 'wp-mlp' );
-				$hint = sprintf( __( 'Строк: %d, переведено: 0', 'wp-mlp' ), $total );
+				$text = __( 'no translation', 'wp-mlp' );
+				$hint = sprintf( /* translators: %d: total number of strings */ __( 'Strings: %d, translated: 0', 'wp-mlp' ), $total );
 				break;
 			default:
 				/*
@@ -725,12 +729,12 @@ final class PostListLanguages implements Hookable {
 				 * весь материал с ИИ». Визуальный редактор строк записи не
 				 * собирает, поэтому на него в подсказке не ссылаемся.
 				 */
-				$text = __( 'строк пока нет', 'wp-mlp' );
-				$hint = __( 'Плагин ещё не собрал строки этой записи: откройте её на сайте на дополнительном языке или запустите «Перевести весь материал с ИИ»', 'wp-mlp' );
+				$text = __( 'no strings yet', 'wp-mlp' );
+				$hint = __( 'The plugin has not collected the strings of this post yet: open it on the site in a secondary language or run "Translate all content with AI"', 'wp-mlp' );
 		}
 
 		if ( ! $language->isPublished() ) {
-			$hint .= ' · ' . __( 'язык-черновик', 'wp-mlp' );
+			$hint .= ' · ' . __( 'draft language', 'wp-mlp' );
 		}
 
 		$stringsUrl = add_query_arg(
@@ -753,15 +757,15 @@ final class PostListLanguages implements Hookable {
 		if ( $language->isPublished() ) {
 			$head = sprintf( '<a href="%s" title="%s">%s</a>', esc_url( $this->link->urlForPath( $path, $language->locale ) ), $title, $label );
 		} else {
-			$head = sprintf( '<span title="%s">%s</span> <em>%s</em>', $title, $label, esc_html__( '(черн.)', 'wp-mlp' ) );
+			$head = sprintf( '<span title="%s">%s</span> <em>%s</em>', $title, $label, esc_html__( '(draft)', 'wp-mlp' ) );
 		}
 
 		$html = sprintf(
 			'<span class="mlp-post-lang">%s <a href="%s" title="%s">%s</a>',
 			$head,
 			esc_url( $stringsUrl ),
-			esc_attr__( 'Перевод строк этой записи', 'wp-mlp' ),
-			esc_html__( 'строки', 'wp-mlp' )
+			esc_attr__( 'Translate the strings of this post', 'wp-mlp' ),
+			esc_html__( 'strings', 'wp-mlp' )
 		);
 
 		// Вкладка «Контент» SEO-строк не показывает, а в счёт они входят — даём отдельную ссылку.
@@ -779,7 +783,7 @@ final class PostListLanguages implements Hookable {
 			$html .= sprintf(
 				' <a href="%s" title="%s">%s</a>',
 				esc_url( $seoUrl ),
-				esc_attr__( 'Непереведённые SEO/GEO-строки этой записи', 'wp-mlp' ),
+				esc_attr__( 'Untranslated SEO/GEO strings of this post', 'wp-mlp' ),
 				esc_html( sprintf( 'SEO: %d', $seoMissing ) )
 			);
 		}

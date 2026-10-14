@@ -69,7 +69,7 @@ final class EditorPostLinksTest extends TestCase {
 
 		$this->assertArrayHasKey( 'mlp_translate', $actions );
 		$this->assertStringContainsString( 'mlp_path=%2Fabout%2F', $actions['mlp_translate'] );
-		$this->assertStringContainsString( 'Перевести', $actions['mlp_translate'] );
+		$this->assertStringContainsString( 'Translate', $actions['mlp_translate'] );
 	}
 
 	public function testRowActionSkippedForDraft(): void {
@@ -100,7 +100,7 @@ final class EditorPostLinksTest extends TestCase {
 		$this->links()->renderMetaBox( $this->post( 'draft' ) );
 		$html = (string) ob_get_clean();
 
-		$this->assertStringContainsString( 'Опубликуйте запись', $html );
+		$this->assertStringContainsString( 'Publish the post', $html );
 		$this->assertStringNotContainsString( '<a ', $html );
 	}
 

@@ -81,7 +81,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 	public function testDatabaseStatusShowsOnlyLastFourCharacters(): void {
 		$html = $this->page( array(), array( 'openai_api_key' => 'sk-secret-abcd' ) )->keyStatusHtml();
 
-		$this->assertStringContainsString( 'переживает обновление плагина', $html );
+		$this->assertStringContainsString( 'survives plugin updates', $html );
 		$this->assertStringContainsString( 'abcd', $html );
 		$this->assertStringNotContainsString( 'sk-secret', $html );
 	}
@@ -95,7 +95,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 		$html = $this->page()->keyStatusHtml();
 
 		$this->assertStringContainsString( 'notice-warning', $html );
-		$this->assertStringContainsString( 'будет удалён при замене плагина', $html );
+		$this->assertStringContainsString( 'will be deleted when the plugin is replaced', $html );
 		$this->assertStringNotContainsString( 'sk-plugin-secret', $html );
 
 		unlink( $dir . '/.env' );
@@ -117,7 +117,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 		rmdir( $dir );
 		Env::reset();
 
-		$this->assertStringContainsString( 'Ключ не сохранён', $this->page()->keyStatusHtml() );
+		$this->assertStringContainsString( 'No key saved', $this->page()->keyStatusHtml() );
 	}
 
 	public function testUnguardedContentFileShowsWarning(): void {
@@ -128,8 +128,8 @@ final class SettingsPageKeyStatusTest extends TestCase {
 
 		$html = $this->page()->keyStatusHtml();
 
-		$this->assertStringContainsString( 'без защитной первой строки', $html );
-		$this->assertStringContainsString( 'Ключ не сохранён', $html );
+		$this->assertStringContainsString( 'no protective first line', $html );
+		$this->assertStringContainsString( 'No key saved', $html );
 		$this->assertStringNotContainsString( 'sk-leak', $html );
 
 		unlink( $dir . '/wp-mlp.env.php' );

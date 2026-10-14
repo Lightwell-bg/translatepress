@@ -37,17 +37,17 @@ final class DomainLabel {
 	 */
 	public static function format( string $domain, array $themes = array(), array $plugins = array() ): string {
 		if ( '' === $domain || self::CORE === $domain ) {
-			return __( 'WordPress (ядро)', 'wp-mlp' );
+			return __( 'WordPress (core)', 'wp-mlp' );
 		}
 
 		if ( isset( $themes[ $domain ] ) && '' !== $themes[ $domain ] ) {
 			/* translators: %s: theme name */
-			return sprintf( __( 'Тема: %s', 'wp-mlp' ), $themes[ $domain ] );
+			return sprintf( __( 'Theme: %s', 'wp-mlp' ), $themes[ $domain ] );
 		}
 
 		if ( isset( $plugins[ $domain ] ) && '' !== $plugins[ $domain ] ) {
 			/* translators: %s: plugin name */
-			return sprintf( __( 'Плагин: %s', 'wp-mlp' ), $plugins[ $domain ] );
+			return sprintf( __( 'Plugin: %s', 'wp-mlp' ), $plugins[ $domain ] );
 		}
 
 		/*

@@ -103,7 +103,7 @@ final class EditorPagesControllerTest extends TestCase {
 
 		$items = $this->search( '' );
 
-		$this->assertSame( 'Главная', $items[0]['title'] );
+		$this->assertSame( 'Home', $items[0]['title'] );
 		$this->assertSame( '/', $items[0]['path'] );
 		$this->assertSame( 0, $items[0]['id'] );
 		$this->assertSame( 1, $items[1]['id'] );
@@ -176,7 +176,7 @@ final class EditorPagesControllerTest extends TestCase {
 		$items = $this->search( 'x' );
 
 		$this->assertSame( "Tom & Jerry 's", $items[0]['title'] );
-		$this->assertSame( '(без названия)', $items[1]['title'] );
+		$this->assertSame( '(no title)', $items[1]['title'] );
 	}
 
 	public function testPathQueryAddsSyntheticAddressItem(): void {
@@ -187,7 +187,7 @@ final class EditorPagesControllerTest extends TestCase {
 
 		$this->assertSame( 1, $items[0]['id'] );
 		$this->assertSame( 0, $items[1]['id'] );
-		$this->assertSame( 'Адрес', $items[1]['type_label'] );
+		$this->assertSame( 'URL', $items[1]['type_label'] );
 		$this->assertSame( '/about/', $items[1]['path'] );
 		$this->assertSame( '/about/', $items[1]['title'] );
 		$this->assertSame( array(), \WP_Query::$calls );

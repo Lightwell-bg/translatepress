@@ -60,7 +60,7 @@ final class Container {
 		}
 
 		if ( ! isset( $this->factories[ $id ] ) ) {
-			throw new RuntimeException( sprintf( 'Сервис "%s" не зарегистрирован в контейнере.', $id ) );
+			throw new RuntimeException( sprintf( 'Service "%s" is not registered in the container.', $id ) );
 		}
 
 		$this->instances[ $id ] = ( $this->factories[ $id ] )( $this );

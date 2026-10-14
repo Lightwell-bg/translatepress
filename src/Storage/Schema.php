@@ -44,7 +44,7 @@ final class Schema {
 		global $wpdb;
 
 		if ( ! in_array( $name, self::TABLES, true ) ) {
-			throw new \InvalidArgumentException( sprintf( 'Неизвестная таблица "%s".', $name ) );
+			throw new \InvalidArgumentException( sprintf( 'Unknown table "%s".', $name ) );
 		}
 
 		return $wpdb->prefix . 'mlp_' . $name;

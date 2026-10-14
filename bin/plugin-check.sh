@@ -70,5 +70,5 @@ for (const r of rows) { t[r.type] = (t[r.type] || 0) + 1; const k = r.type + ' '
 console.log('ERROR=' + t.ERROR + ' WARNING=' + t.WARNING);
 Object.entries(codes).sort((a, b) => b[1] - a[1]).slice(0, 40).forEach(([k, n]) => console.log(String(n).padStart(5), k));
 JS
-node "$SUMMARY_JS" "$REPORT"
+node "$(win "$SUMMARY_JS")" "$(win "$REPORT")"
 echo "Report: $REPORT"

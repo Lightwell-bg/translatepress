@@ -111,7 +111,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 
 		$html = $this->box( 4 );
 
-		$this->assertStringContainsString( 'Показывать на сайте', $html );
+		$this->assertStringContainsString( 'Show on the site', $html );
 		$this->assertStringContainsString( 'name="mlp_visible[en]" value="1">', $html );
 		$this->assertStringContainsString( 'name="mlp_visible[de]" value="1" checked="checked">', $html );
 		$this->assertStringNotContainsString( 'mlp_visible[ru]', $html );
@@ -131,7 +131,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 	public function testBlockAlsoShownForDraft(): void {
 		$html = $this->box( 5 );
 
-		$this->assertStringContainsString( 'Опубликуйте запись', $html );
+		$this->assertStringContainsString( 'Publish the post', $html );
 		$this->assertStringContainsString( 'name="mlp_visible[en]"', $html );
 	}
 

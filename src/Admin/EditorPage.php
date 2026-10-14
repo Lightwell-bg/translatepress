@@ -96,8 +96,8 @@ final class EditorPage implements Hookable {
 	public function addMenu(): void {
 		add_submenu_page(
 			SettingsPage::MENU_SLUG,
-			__( 'Визуальный редактор', 'wp-mlp' ),
-			__( 'Визуальный редактор', 'wp-mlp' ),
+			__( 'Visual editor', 'wp-mlp' ),
+			__( 'Visual editor', 'wp-mlp' ),
 			self::CAPABILITY,
 			self::MENU_SLUG,
 			array( $this, 'render' )
@@ -117,7 +117,7 @@ final class EditorPage implements Hookable {
 		$bar->add_node(
 			array(
 				'id'    => 'wp-mlp-editor',
-				'title' => __( 'Перевести страницу', 'wp-mlp' ),
+				'title' => __( 'Translate page', 'wp-mlp' ),
 				'href'  => $this->editorUrl( $this->currentRelativePath() ),
 			)
 		);
@@ -174,53 +174,53 @@ final class EditorPage implements Hookable {
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'statuses'     => $this->statusLabels(),
 				'i18n'         => array(
-					'pick'              => __( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ),
-					'saving'            => __( 'Сохраняю…', 'wp-mlp' ),
-					'saved'             => __( 'Сохранено', 'wp-mlp' ),
-					'failed'            => __( 'Не удалось сохранить', 'wp-mlp' ),
-					'loading'           => __( 'Загружаю…', 'wp-mlp' ),
-					'confirmDelete'     => __( 'Удалить перевод этой строки?', 'wp-mlp' ),
-					'confirmBlock'      => __( 'Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться.', 'wp-mlp' ),
-					'blockCreated'      => __( 'Абзац объединён. Обновляю предпросмотр…', 'wp-mlp' ),
+					'pick'              => __( 'Click text in the preview to translate it.', 'wp-mlp' ),
+					'saving'            => __( 'Saving…', 'wp-mlp' ),
+					'saved'             => __( 'Saved', 'wp-mlp' ),
+					'failed'            => __( 'Could not save', 'wp-mlp' ),
+					'loading'           => __( 'Loading…', 'wp-mlp' ),
+					'confirmDelete'     => __( 'Delete the translation of this string?', 'wp-mlp' ),
+					'confirmBlock'      => __( 'Translate the whole paragraph as one piece? Separate translations of its parts will no longer be applied.', 'wp-mlp' ),
+					'blockCreated'      => __( 'Paragraph merged. Refreshing the preview…', 'wp-mlp' ),
 					/* translators: %s: text domain, e.g. woocommerce */
-				'gettextNotice'     => __( 'Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс».', 'wp-mlp' ),
+				'gettextNotice'     => __( 'This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab.', 'wp-mlp' ),
 				/* translators: %d: link number inside the block */
-				'linkLabel'         => __( 'Ссылка №%d', 'wp-mlp' ),
-				'collapsePanel'     => __( 'Свернуть панель', 'wp-mlp' ),
-				'expandPanel'       => __( 'Развернуть панель', 'wp-mlp' ),
-				'attribute'         => __( 'Атрибут', 'wp-mlp' ),
-					'text'              => __( 'Текст', 'wp-mlp' ),
-					'htmlBlock'         => __( 'Блок с разметкой', 'wp-mlp' ),
-					'translating'       => __( 'Перевожу с ИИ…', 'wp-mlp' ),
-					'aiSuggested'       => __( 'Предложено ИИ — проверьте перед сохранением', 'wp-mlp' ),
-					'aiFailed'          => __( 'ИИ не смог перевести', 'wp-mlp' ),
-					'bulkButton'        => __( 'Перевести весь материал с ИИ', 'wp-mlp' ),
-					'bulkModeTitle'     => __( 'Что переводить?', 'wp-mlp' ),
-					'bulkModeEmpty'     => __( 'Только пустые сегменты', 'wp-mlp' ),
-					'bulkModeAll'       => __( 'Перевести заново весь материал', 'wp-mlp' ),
-					'bulkStart'         => __( 'Начать', 'wp-mlp' ),
-					'bulkCancel'        => __( 'Отмена', 'wp-mlp' ),
-					'bulkPreparing'     => __( 'Разбираю запись…', 'wp-mlp' ),
-					'bulkProgress'      => __( 'Перевожу часть {current} из {total}…', 'wp-mlp' ),
-					'bulkNothing'       => __( 'Переводить нечего — материал уже переведён. Переключите режим на «Перевести заново весь материал», если хотите обновить перевод.', 'wp-mlp' ),
-					'bulkReviewTitle'   => __( 'Проверьте перевод перед сохранением', 'wp-mlp' ),
-					'bulkSaveAll'       => __( 'Сохранить всё', 'wp-mlp' ),
-					'bulkSaving'        => __( 'Сохраняю всё…', 'wp-mlp' ),
-					'bulkSaved'         => __( 'Материал сохранён и обновлён в превью.', 'wp-mlp' ),
-					'bulkFailed'        => __( 'Не удалось перевести', 'wp-mlp' ),
-				'bulkPartialFailed' => __( 'Успели перевести не всё: {reason}. Уже готовое — ниже: сохраните его кнопкой «Сохранить всё», а затем нажмите «Начать» ещё раз — при режиме «Только пустые сегменты» заново переведётся только то, что осталось, без повторной оплаты уже переведённого.', 'wp-mlp' ),
-					'bulkCommitFailed'  => __( 'Не удалось сохранить — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
-					'bulkRejected'      => __( 'ИИ не смог безопасно перевести {count} строк(и), не повредив шорткод — переведите их вручную ниже.', 'wp-mlp' ),
-					'bulkChanged'       => __( 'изменилось с прошлого перевода', 'wp-mlp' ),
-					'bulkFieldTitle'    => __( 'Заголовок', 'wp-mlp' ),
-					'bulkFieldExcerpt'  => __( 'Анонс', 'wp-mlp' ),
-					'bulkFieldContent'  => __( 'Текст записи', 'wp-mlp' ),
-					'bulkFieldThumbnailAlt' => __( 'Alt миниатюры', 'wp-mlp' ),
-					'bulkClose'         => __( 'Закрыть', 'wp-mlp' ),
-					'pickerPlaceholder' => __( 'Найти страницу по названию или вставить адрес', 'wp-mlp' ),
-					'pickerLoading'     => __( 'Загрузка…', 'wp-mlp' ),
-					'pickerEmpty'       => __( 'Ничего не найдено', 'wp-mlp' ),
-					'pickerError'       => __( 'Не удалось загрузить список страниц', 'wp-mlp' ),
+				'linkLabel'         => __( 'Link #%d', 'wp-mlp' ),
+				'collapsePanel'     => __( 'Collapse panel', 'wp-mlp' ),
+				'expandPanel'       => __( 'Expand panel', 'wp-mlp' ),
+				'attribute'         => __( 'Attribute', 'wp-mlp' ),
+					'text'              => __( 'Text', 'wp-mlp' ),
+					'htmlBlock'         => __( 'Block with markup', 'wp-mlp' ),
+					'translating'       => __( 'Translating with AI…', 'wp-mlp' ),
+					'aiSuggested'       => __( 'Suggested by AI — review before saving', 'wp-mlp' ),
+					'aiFailed'          => __( 'AI could not translate', 'wp-mlp' ),
+					'bulkButton'        => __( 'Translate the whole post with AI', 'wp-mlp' ),
+					'bulkModeTitle'     => __( 'What to translate?', 'wp-mlp' ),
+					'bulkModeEmpty'     => __( 'Empty segments only', 'wp-mlp' ),
+					'bulkModeAll'       => __( 'Retranslate the whole post', 'wp-mlp' ),
+					'bulkStart'         => __( 'Start', 'wp-mlp' ),
+					'bulkCancel'        => __( 'Cancel', 'wp-mlp' ),
+					'bulkPreparing'     => __( 'Analyzing the post…', 'wp-mlp' ),
+					'bulkProgress'      => __( 'Translating part {current} of {total}…', 'wp-mlp' ),
+					'bulkNothing'       => __( 'Nothing to translate — the post is already translated. Switch the mode to “Retranslate the whole post” if you want to refresh the translation.', 'wp-mlp' ),
+					'bulkReviewTitle'   => __( 'Review the translation before saving', 'wp-mlp' ),
+					'bulkSaveAll'       => __( 'Save all', 'wp-mlp' ),
+					'bulkSaving'        => __( 'Saving all…', 'wp-mlp' ),
+					'bulkSaved'         => __( 'The post was saved and the preview was updated.', 'wp-mlp' ),
+					'bulkFailed'        => __( 'Could not translate', 'wp-mlp' ),
+				'bulkPartialFailed' => __( 'Not everything was translated: {reason}. The finished part is below: save it with the “Save all” button, then click “Start” again — in “Empty segments only” mode only what is left will be translated, with no repeat charge for what is already translated.', 'wp-mlp' ),
+					'bulkCommitFailed'  => __( 'Could not save — the changes were rolled back, nothing was lost.', 'wp-mlp' ),
+					'bulkRejected'      => __( 'AI could not safely translate {count} string(s) without breaking a shortcode — translate them manually below.', 'wp-mlp' ),
+					'bulkChanged'       => __( 'changed since the last translation', 'wp-mlp' ),
+					'bulkFieldTitle'    => __( 'Title', 'wp-mlp' ),
+					'bulkFieldExcerpt'  => __( 'Excerpt', 'wp-mlp' ),
+					'bulkFieldContent'  => __( 'Post content', 'wp-mlp' ),
+					'bulkFieldThumbnailAlt' => __( 'Thumbnail alt', 'wp-mlp' ),
+					'bulkClose'         => __( 'Close', 'wp-mlp' ),
+					'pickerPlaceholder' => __( 'Find a page by title or paste a URL', 'wp-mlp' ),
+					'pickerLoading'     => __( 'Loading…', 'wp-mlp' ),
+					'pickerEmpty'       => __( 'Nothing found', 'wp-mlp' ),
+					'pickerError'       => __( 'Could not load the list of pages', 'wp-mlp' ),
 				),
 			)
 		);
@@ -356,8 +356,8 @@ final class EditorPage implements Hookable {
 		if ( array() === $secondary ) {
 			printf(
 				'<div class="wrap"><h1>%s</h1><div class="notice notice-warning"><p>%s</p></div></div>',
-				esc_html__( 'Визуальный редактор', 'wp-mlp' ),
-				esc_html__( 'Сначала добавьте хотя бы один дополнительный язык на странице «Языки».', 'wp-mlp' )
+				esc_html__( 'Visual editor', 'wp-mlp' ),
+				esc_html__( 'First add at least one additional language on the “Languages” page.', 'wp-mlp' )
 			);
 
 			return;
@@ -371,12 +371,12 @@ final class EditorPage implements Hookable {
 
 		?>
 		<div class="wrap wp-mlp-editor-wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Визуальный редактор', 'wp-mlp' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Visual editor', 'wp-mlp' ); ?></h1>
 
 			<form method="get" class="wp-mlp-editor-toolbar">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
 
-				<label for="mlp-editor-locale"><?php esc_html_e( 'Язык:', 'wp-mlp' ); ?></label>
+				<label for="mlp-editor-locale"><?php esc_html_e( 'Language:', 'wp-mlp' ); ?></label>
 				<select name="mlp_locale" id="mlp-editor-locale">
 					<?php foreach ( $secondary as $language ) : ?>
 						<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $locale ); ?>>
@@ -385,11 +385,11 @@ final class EditorPage implements Hookable {
 					<?php endforeach; ?>
 				</select>
 
-				<label for="mlp-editor-path"><?php esc_html_e( 'Страница:', 'wp-mlp' ); ?></label>
+				<label for="mlp-editor-path"><?php esc_html_e( 'Page:', 'wp-mlp' ); ?></label>
 				<input type="text" name="mlp_path" id="mlp-editor-path" class="regular-text"
 					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/" autocomplete="off">
 
-				<?php submit_button( __( 'Открыть', 'wp-mlp' ), 'secondary', '', false ); ?>
+				<?php submit_button( __( 'Open', 'wp-mlp' ), 'secondary', '', false ); ?>
 			</form>
 
 			<?php
@@ -406,10 +406,10 @@ final class EditorPage implements Hookable {
 			<p class="wp-mlp-editor-toolbar__aside">
 				<button type="button" class="button" id="mlp-editor-toggle-panel"
 					aria-expanded="true" aria-controls="mlp-editor-panel">
-					<?php esc_html_e( 'Свернуть панель', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'Collapse panel', 'wp-mlp' ); ?>
 				</button>
 				<span class="description">
-					<?php esc_html_e( 'Превью получит всю ширину — тема покажет обычное меню вместо мобильного.', 'wp-mlp' ); ?>
+					<?php esc_html_e( 'The preview gets the full width — the theme shows the regular menu instead of the mobile one.', 'wp-mlp' ); ?>
 				</span>
 			</p>
 
@@ -419,31 +419,31 @@ final class EditorPage implements Hookable {
 					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
 						<div class="wp-mlp-editor__bulk">
 							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">
-								<?php esc_html_e( 'Перевести весь материал с ИИ', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate the whole post with AI', 'wp-mlp' ); ?>
 							</button>
 							<p class="description">
-								<?php esc_html_e( 'Заголовок, анонс и весь текст записи одной операцией — вместо перевода блок за блоком.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Title, excerpt and the full post content in one operation — instead of translating block by block.', 'wp-mlp' ); ?>
 							</p>
 
 							<div class="wp-mlp-editor__bulk-panel" id="mlp-editor-bulk-panel" hidden>
 								<fieldset>
-									<legend><?php esc_html_e( 'Что переводить?', 'wp-mlp' ); ?></legend>
+									<legend><?php esc_html_e( 'What to translate?', 'wp-mlp' ); ?></legend>
 									<label>
 										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::EMPTY ); ?>" checked>
-										<?php esc_html_e( 'Только пустые сегменты', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Empty segments only', 'wp-mlp' ); ?>
 									</label>
 									<label>
 										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::ALL ); ?>">
-										<?php esc_html_e( 'Перевести заново весь материал', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Retranslate the whole post', 'wp-mlp' ); ?>
 									</label>
 								</fieldset>
 
 								<div class="wp-mlp-editor__actions">
 									<button type="button" class="button button-primary" id="mlp-editor-bulk-start">
-										<?php esc_html_e( 'Начать', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Start', 'wp-mlp' ); ?>
 									</button>
 									<button type="button" class="button" id="mlp-editor-bulk-cancel">
-										<?php esc_html_e( 'Отмена', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Cancel', 'wp-mlp' ); ?>
 									</button>
 								</div>
 
@@ -454,10 +454,10 @@ final class EditorPage implements Hookable {
 
 								<div class="wp-mlp-editor__actions wp-mlp-editor__bulk-commit" hidden>
 									<button type="button" class="button button-primary" id="mlp-editor-bulk-save">
-										<?php esc_html_e( 'Сохранить всё', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Save all', 'wp-mlp' ); ?>
 									</button>
 									<button type="button" class="button" id="mlp-editor-bulk-close">
-										<?php esc_html_e( 'Закрыть', 'wp-mlp' ); ?>
+										<?php esc_html_e( 'Close', 'wp-mlp' ); ?>
 									</button>
 								</div>
 							</div>
@@ -466,27 +466,27 @@ final class EditorPage implements Hookable {
 					<?php endif; ?>
 
 					<p class="wp-mlp-editor__hint">
-						<?php esc_html_e( 'Нажмите на текст в предпросмотре, чтобы перевести его.', 'wp-mlp' ); ?>
+						<?php esc_html_e( 'Click text in the preview to translate it.', 'wp-mlp' ); ?>
 					</p>
 
 					<div class="wp-mlp-editor__form" hidden>
 						<p class="wp-mlp-editor__kind"></p>
 
-						<label for="mlp-editor-source"><?php esc_html_e( 'Оригинал', 'wp-mlp' ); ?></label>
+						<label for="mlp-editor-source"><?php esc_html_e( 'Original', 'wp-mlp' ); ?></label>
 						<textarea id="mlp-editor-source" rows="3" readonly></textarea>
 
 						<label for="mlp-editor-target">
-							<?php esc_html_e( 'Перевод', 'wp-mlp' ); ?>
+							<?php esc_html_e( 'Translation', 'wp-mlp' ); ?>
 						</label>
 						<textarea id="mlp-editor-target" rows="5"></textarea>
 
 						<?php if ( $this->providers->isReady() ) : ?>
 							<button type="button" class="button" id="mlp-editor-translate">
-								<?php esc_html_e( 'Перевести с ИИ', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate with AI', 'wp-mlp' ); ?>
 							</button>
 						<?php endif; ?>
 
-						<label for="mlp-editor-status"><?php esc_html_e( 'Статус', 'wp-mlp' ); ?></label>
+						<label for="mlp-editor-status"><?php esc_html_e( 'Status', 'wp-mlp' ); ?></label>
 						<select id="mlp-editor-status">
 							<?php foreach ( TranslationStatus::all() as $status ) : ?>
 								<option value="<?php echo esc_attr( $status ); ?>">
@@ -497,10 +497,10 @@ final class EditorPage implements Hookable {
 
 						<div class="wp-mlp-editor__actions">
 							<button type="button" class="button button-primary" id="mlp-editor-save">
-								<?php esc_html_e( 'Сохранить', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Save', 'wp-mlp' ); ?>
 							</button>
 							<button type="button" class="button" id="mlp-editor-delete">
-								<?php esc_html_e( 'Удалить перевод', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Delete translation', 'wp-mlp' ); ?>
 							</button>
 						</div>
 
@@ -516,7 +516,7 @@ final class EditorPage implements Hookable {
 						<div class="wp-mlp-editor__links" id="mlp-editor-links" hidden>
 							<hr>
 							<p class="description">
-								<?php esc_html_e( 'Ссылки в этом блоке. Адрес относится только к текущему языку — на других языках он свой.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Links in this block. The address applies to the current language only — other languages have their own.', 'wp-mlp' ); ?>
 							</p>
 							<div class="wp-mlp-editor__links-list"></div>
 						</div>
@@ -524,10 +524,10 @@ final class EditorPage implements Hookable {
 						<div class="wp-mlp-editor__block" hidden>
 							<hr>
 							<p class="description">
-								<?php esc_html_e( 'Абзац разбит на части инлайновыми тегами. Его можно перевести целиком, вместе с разметкой.', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'The paragraph is split into parts by inline tags. You can translate it as a whole, together with the markup.', 'wp-mlp' ); ?>
 							</p>
 							<button type="button" class="button" id="mlp-editor-make-block">
-								<?php esc_html_e( 'Перевести абзац целиком', 'wp-mlp' ); ?>
+								<?php esc_html_e( 'Translate the whole paragraph', 'wp-mlp' ); ?>
 							</button>
 						</div>
 
@@ -537,7 +537,7 @@ final class EditorPage implements Hookable {
 
 				<iframe class="wp-mlp-editor__preview" id="mlp-editor-preview"
 					src="<?php echo esc_url( $previewer ); ?>"
-					title="<?php esc_attr_e( 'Предпросмотр страницы', 'wp-mlp' ); ?>"></iframe>
+					title="<?php esc_attr_e( 'Page preview', 'wp-mlp' ); ?>"></iframe>
 			</div>
 		</div>
 		<?php
@@ -572,17 +572,17 @@ final class EditorPage implements Hookable {
 
 			switch ( $state ) {
 				case PostListLanguages::STATE_FULL:
-					$progress = __( 'Переведено полностью', 'wp-mlp' );
+					$progress = __( 'Fully translated', 'wp-mlp' );
 					break;
 				case PostListLanguages::STATE_PARTIAL:
 					/* translators: %d: percent of strings translated */
-					$progress = sprintf( __( 'Переведено на %d%%', 'wp-mlp' ), $pct );
+					$progress = sprintf( __( '%d%% translated', 'wp-mlp' ), $pct );
 					break;
 				case PostListLanguages::STATE_NONE:
-					$progress = __( 'Пока ничего не переведено', 'wp-mlp' );
+					$progress = __( 'Nothing translated yet', 'wp-mlp' );
 					break;
 				default:
-					$progress = __( 'Строк этой страницы пока нет', 'wp-mlp' );
+					$progress = __( 'This page has no strings yet', 'wp-mlp' );
 			}
 		}
 
@@ -592,7 +592,7 @@ final class EditorPage implements Hookable {
 				$language->locale,
 				$this->visibility->isVisible( $postId, $language->locale ),
 				/* translators: %s: language name */
-				sprintf( __( 'Показывать эту страницу на %s', 'wp-mlp' ), $language->label )
+				sprintf( __( 'Show this page in %s', 'wp-mlp' ), $language->label )
 			);
 
 		if ( '' !== $progress ) {

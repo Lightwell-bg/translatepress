@@ -73,7 +73,7 @@ final class OpenAiModelsControllerTest extends TestCase {
 
 		$this->assertInstanceOf( \WP_Error::class, $result );
 		$this->assertSame( 'mlp_openai_no_key', $result->get_error_code() );
-		$this->assertStringContainsString( 'ключ', $result->get_error_message() );
+		$this->assertStringContainsString( 'key', $result->get_error_message() );
 		$this->assertSame( array( 'status' => 400 ), $result->get_error_data() );
 		$this->assertSame( array(), wp_mlp_test_http()['calls'] );
 	}

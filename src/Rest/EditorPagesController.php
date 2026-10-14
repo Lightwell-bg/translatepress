@@ -110,8 +110,8 @@ final class EditorPagesController implements Hookable {
 
 		$items[] = $front ?? array(
 			'id'         => 0,
-			'title'      => __( 'Главная', 'wp-mlp' ),
-			'type_label' => __( 'Адрес', 'wp-mlp' ),
+			'title'      => __( 'Home', 'wp-mlp' ),
+			'type_label' => __( 'URL', 'wp-mlp' ),
 			'path'       => '/',
 		);
 
@@ -174,7 +174,7 @@ final class EditorPagesController implements Hookable {
 		$items[] = array(
 			'id'         => 0,
 			'title'      => $path,
-			'type_label' => __( 'Адрес', 'wp-mlp' ),
+			'type_label' => __( 'URL', 'wp-mlp' ),
 			'path'       => $path,
 		);
 
@@ -230,7 +230,7 @@ final class EditorPagesController implements Hookable {
 		$type  = get_post_type_object( (string) $post->post_type );
 		$item  = array(
 			'id'         => (int) $post->ID,
-			'title'      => '' !== $title ? $title : __( '(без названия)', 'wp-mlp' ),
+			'title'      => '' !== $title ? $title : __( '(no title)', 'wp-mlp' ),
 			'type_label' => (string) ( $type->labels->singular_name ?? $post->post_type ),
 			'path'       => $path,
 		);

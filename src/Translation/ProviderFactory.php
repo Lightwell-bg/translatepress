@@ -237,16 +237,16 @@ final class ProviderFactory {
 		$noModel = in_array( self::FIELD_MODEL, $missing, true );
 
 		if ( $noKey && $noModel ) {
-			$what = __( 'укажите ключ и модель в настройках плагина', 'wp-mlp' );
+			$what = __( 'enter the key and the model in the plugin settings', 'wp-mlp' );
 		} elseif ( $noModel ) {
-			$what = __( 'укажите модель в настройках плагина', 'wp-mlp' );
+			$what = __( 'enter the model in the plugin settings', 'wp-mlp' );
 		} else {
-			$what = __( 'укажите ключ в настройках плагина', 'wp-mlp' );
+			$what = __( 'enter the key in the plugin settings', 'wp-mlp' );
 		}
 
 		return sprintf(
-			/* translators: %s: what to configure, e.g. "укажите ключ в настройках плагина" */
-			__( 'Перевод с ИИ не настроен: %s.', 'wp-mlp' ),
+			/* translators: %s: what to configure, e.g. "enter the key in the plugin settings" */
+			__( 'AI translation is not set up: %s.', 'wp-mlp' ),
 			$what
 		);
 	}

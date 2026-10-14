@@ -472,7 +472,7 @@ final class Settings {
 
 			if ( ! Locale::isValid( $locale ) ) {
 				/* translators: %s: language code entered by the user */
-				$errors[] = sprintf( __( 'Код языка «%s» недопустим: разрешены 2–8 латинских букв и субтеги через дефис.', 'wp-mlp' ), $locale );
+				$errors[] = sprintf( /* translators: %s: language code entered by the user */ __( 'The language code "%s" is not valid: 2–8 Latin letters and hyphen-separated subtags are allowed.', 'wp-mlp' ), $locale );
 				continue;
 			}
 
@@ -481,13 +481,13 @@ final class Settings {
 
 			if ( ! Locale::isValidSlug( $slug ) ) {
 				/* translators: %s: URL slug entered by the user */
-				$errors[] = sprintf( __( 'URL-слаг «%s» недопустим: разрешены строчные латинские буквы, цифры и дефис.', 'wp-mlp' ), $slug );
+				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is not valid: lowercase Latin letters, digits and hyphens are allowed.', 'wp-mlp' ), $slug );
 				continue;
 			}
 
 			if ( isset( $slugs[ $slug ] ) ) {
 				/* translators: %s: duplicated URL slug */
-				$errors[] = sprintf( __( 'URL-слаг «%s» уже занят другим языком.', 'wp-mlp' ), $slug );
+				$errors[] = sprintf( /* translators: %s: URL slug entered by the user */ __( 'The URL slug "%s" is already used by another language.', 'wp-mlp' ), $slug );
 				continue;
 			}
 
@@ -504,7 +504,7 @@ final class Settings {
 
 			if ( '' !== $wpLocale && ! Locale::isValidWpLocale( $wpLocale ) ) {
 				/* translators: %s: WordPress locale entered by the user */
-				$errors[] = sprintf( __( 'Локаль WordPress «%s» недопустима: разрешены латинские буквы, цифры и подчёркивание, например en_US.', 'wp-mlp' ), $wpLocale );
+				$errors[] = sprintf( /* translators: %s: WordPress locale entered by the user */ __( 'The WordPress locale "%s" is not valid: Latin letters, digits and underscores are allowed, for example en_US.', 'wp-mlp' ), $wpLocale );
 				$wpLocale = '';
 			}
 
@@ -523,7 +523,7 @@ final class Settings {
 		$defaultLocale = Locale::normalize( (string) ( $input['default_locale'] ?? '' ) );
 
 		if ( ! isset( $languages[ $defaultLocale ] ) ) {
-			$errors[]      = __( 'Язык по умолчанию должен быть в списке языков. Настройки языка по умолчанию не изменены.', 'wp-mlp' );
+			$errors[]      = __( 'The default language must be in the list of languages. The default language settings were not changed.', 'wp-mlp' );
 			$defaultLocale = $this->defaultLanguage()->locale;
 
 			if ( ! isset( $languages[ $defaultLocale ] ) ) {

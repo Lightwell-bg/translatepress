@@ -321,7 +321,7 @@ final class PostTranslationController implements Hookable {
 		if ( ! $this->provider->supports( $sourceLocale, $language->locale ) ) {
 			return new WP_Error(
 				'mlp_provider_unavailable',
-				__( 'Перевод с ИИ не настроен.', 'wp-mlp' ),
+				__( 'AI translation is not set up.', 'wp-mlp' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -331,7 +331,7 @@ final class PostTranslationController implements Hookable {
 		if ( array() === $hashes ) {
 			return new WP_Error(
 				'mlp_empty_chunk',
-				__( 'В запросе нет ни одной строки.', 'wp-mlp' ),
+				__( 'The request contains no strings.', 'wp-mlp' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -348,7 +348,7 @@ final class PostTranslationController implements Hookable {
 		if ( array() === $items ) {
 			return new WP_Error(
 				'mlp_unknown_hashes',
-				__( 'Эти строки не найдены — обновите список и попробуйте снова.', 'wp-mlp' ),
+				__( 'These strings were not found. Refresh the list and try again.', 'wp-mlp' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -359,7 +359,7 @@ final class PostTranslationController implements Hookable {
 		if ( $dailyLimit > 0 && $this->usage->remainingToday( $dailyLimit ) < $totalChars ) {
 			return new WP_Error(
 				'mlp_daily_limit_reached',
-				__( 'Дневной лимит символов на перевод исчерпан. Измените лимит в настройках или попробуйте завтра.', 'wp-mlp' ),
+				__( 'The daily character limit for translation has been reached. Change the limit in the settings or try again tomorrow.', 'wp-mlp' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -392,8 +392,8 @@ final class PostTranslationController implements Hookable {
 				'mlp_translate_failed',
 				null !== $detail
 					/* translators: %s: причина, которую вернул провайдер */
-					? sprintf( __( 'Не удалось получить перевод от OpenAI: %s', 'wp-mlp' ), $detail )
-					: __( 'Не удалось получить перевод от OpenAI.', 'wp-mlp' ),
+					? sprintf( __( 'Could not get a translation from OpenAI: %s', 'wp-mlp' ), $detail )
+					: __( 'Could not get a translation from OpenAI.', 'wp-mlp' ),
 				array( 'status' => 502 )
 			);
 		}
@@ -492,8 +492,8 @@ final class PostTranslationController implements Hookable {
 			return new WP_Error(
 				'mlp_commit_invalid',
 				sprintf(
-					/* translators: %s: список кодов ошибок валидации */
-					__( 'Не удалось сохранить: проверка пакета не прошла (%s). Ни один перевод не записан.', 'wp-mlp' ),
+					/* translators: %s: list of validation error codes */
+					__( 'Could not save: the batch validation failed (%s). No translation was written.', 'wp-mlp' ),
 					implode( ', ', $validated['errors'] )
 				),
 				array(
@@ -570,7 +570,7 @@ final class PostTranslationController implements Hookable {
 
 		return new WP_Error(
 			'mlp_commit_failed',
-			__( 'Не удалось сохранить перевод — изменения отменены, ничего не потеряно.', 'wp-mlp' ),
+			__( 'Could not save the translation. The changes were rolled back and nothing was lost.', 'wp-mlp' ),
 			array( 'status' => 500 )
 		);
 	}
@@ -639,7 +639,7 @@ final class PostTranslationController implements Hookable {
 		if ( ! $post instanceof WP_Post ) {
 			return new WP_Error(
 				'mlp_post_not_found',
-				__( 'Запись не найдена.', 'wp-mlp' ),
+				__( 'Post not found.', 'wp-mlp' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -650,7 +650,7 @@ final class PostTranslationController implements Hookable {
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
 				'mlp_invalid_locale',
-				__( 'Такого дополнительного языка нет в настройках.', 'wp-mlp' ),
+				__( 'This secondary language is not in the settings.', 'wp-mlp' ),
 				array( 'status' => 400 )
 			);
 		}

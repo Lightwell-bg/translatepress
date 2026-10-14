@@ -195,10 +195,10 @@ final class PostListLanguagesTest extends TestCase {
 		$first = $this->cell( $service, 1 );
 		$this->assertStringContainsString( '✅', $first );
 		$this->assertStringContainsString( '60%', $first );
-		$this->assertStringContainsString( '(черн.)', $first );
+		$this->assertStringContainsString( '(draft)', $first );
 
-		$this->assertStringContainsString( 'нет перевода', $this->cell( $service, 2 ) );
-		$this->assertStringContainsString( 'строк пока нет', $this->cell( $service, 3 ) );
+		$this->assertStringContainsString( 'no translation', $this->cell( $service, 2 ) );
+		$this->assertStringContainsString( 'no strings yet', $this->cell( $service, 3 ) );
 		$this->assertStringContainsString( '—', $this->cell( $service, 5 ) );
 		$this->assertStringNotContainsString( '<a ', $this->cell( $service, 5 ) );
 	}
@@ -311,7 +311,7 @@ final class PostListLanguagesTest extends TestCase {
 		// Редактор — ровно одна ссылка (en); у черновика de есть только ссылка на строки.
 		$this->assertSame( 1, substr_count( $html, 'mlp_path=' ) );
 		$this->assertStringContainsString( 'mlp_locale=de', $html );
-		$this->assertStringContainsString( '(черн.)', $html );
+		$this->assertStringContainsString( '(draft)', $html );
 	}
 
 	public function testSeoLinkShownOnlyWhenSeoStringsMissing(): void {

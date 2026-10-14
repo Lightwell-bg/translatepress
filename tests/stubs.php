@@ -23,6 +23,20 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * @param string $single Форма для 1.
+	 * @param string $plural Форма для остальных чисел.
+	 * @param int    $number Число.
+	 * @param string $domain Текстовый домен.
+	 */
+	function _n( string $single, string $plural, int $number, string $domain = 'default' ): string { // phpcs:ignore
+		unset( $domain );
+
+		return 1 === $number ? $single : $plural;
+	}
+}
+
 if ( ! function_exists( 'esc_html' ) ) {
 	/**
 	 * @param string $text Строка.

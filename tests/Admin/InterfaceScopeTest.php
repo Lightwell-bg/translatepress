@@ -150,9 +150,9 @@ final class InterfaceScopeTest extends TestCase {
 	}
 
 	public function testCoreDomainGetsAHumanName(): void {
-		$this->assertSame( 'WordPress (ядро)', DomainLabel::format( 'default' ) );
+		$this->assertSame( 'WordPress (core)', DomainLabel::format( 'default' ) );
 		// Пустой домен WordPress трактует как `default`.
-		$this->assertSame( 'WordPress (ядро)', DomainLabel::format( '' ) );
+		$this->assertSame( 'WordPress (core)', DomainLabel::format( '' ) );
 	}
 
 	public function testThemeAndPluginDomainsAreNamed(): void {
@@ -160,11 +160,11 @@ final class InterfaceScopeTest extends TestCase {
 		$plugins = array( 'easy-digital-downloads' => 'Easy Digital Downloads' );
 
 		$this->assertSame(
-			'Тема: Twenty Twenty-Four',
+			'Theme: Twenty Twenty-Four',
 			DomainLabel::format( 'twentytwentyfour', $themes, $plugins )
 		);
 		$this->assertSame(
-			'Плагин: Easy Digital Downloads',
+			'Plugin: Easy Digital Downloads',
 			DomainLabel::format( 'easy-digital-downloads', $themes, $plugins )
 		);
 	}

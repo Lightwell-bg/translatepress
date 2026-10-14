@@ -148,7 +148,7 @@ final class PostListVisibilityTest extends TestCase {
 		$this->assertSame( 2, substr_count( $html, 'class="mlp-vis-toggle"' ) );
 		$this->assertMatchesRegularExpression( '/data-post-id="1" data-locale="en" checked="checked"/', $html );
 		$this->assertMatchesRegularExpression( '/data-post-id="1" data-locale="de">/', $html );
-		$this->assertStringContainsString( 'на сайте', $html );
+		$this->assertStringContainsString( 'on site', $html );
 		$this->assertStringNotContainsString( 'disabled', $html );
 	}
 
@@ -170,7 +170,7 @@ final class PostListVisibilityTest extends TestCase {
 
 		$this->assertStringNotContainsString( 'disabled', $allowed );
 		$this->assertSame( 2, substr_count( $denied, 'disabled="disabled"' ) );
-		$this->assertStringContainsString( 'Нет прав на редактирование этой записи', $denied );
+		$this->assertStringContainsString( 'You do not have permission to edit this post', $denied );
 	}
 
 	public function testToggleDisabledWithoutPluginRight(): void {
@@ -185,7 +185,7 @@ final class PostListVisibilityTest extends TestCase {
 		);
 
 		$this->assertSame( 1, substr_count( $html, 'disabled="disabled"' ) );
-		$this->assertStringContainsString( 'Нет прав на редактирование этой записи', $html );
+		$this->assertStringContainsString( 'You do not have permission to edit this post', $html );
 	}
 
 	public function testBulkNeedsPluginRight(): void {
@@ -217,8 +217,8 @@ final class PostListVisibilityTest extends TestCase {
 			array( 'trash', 'mlp_show_en', 'mlp_hide_en', 'mlp_show_de', 'mlp_hide_de' ),
 			array_keys( $actions )
 		);
-		$this->assertSame( 'Показывать на языке: English', $actions['mlp_show_en'] );
-		$this->assertSame( 'Скрыть на языке: Deutsch', $actions['mlp_hide_de'] );
+		$this->assertSame( 'Show on language: English', $actions['mlp_show_en'] );
+		$this->assertSame( 'Hide on language: Deutsch', $actions['mlp_hide_de'] );
 
 		$this->configure( Settings::POSTS_ALL );
 		$this->assertSame( array( 'trash' => 'В корзину' ), $this->service()->addBulkActions( array( 'trash' => 'В корзину' ) ) );
@@ -289,14 +289,14 @@ final class PostListVisibilityTest extends TestCase {
 		$this->service()->renderBulkNotice();
 		$html = (string) ob_get_clean();
 
-		$this->assertStringContainsString( 'Показано на EN: 12 записей', $html );
+		$this->assertStringContainsString( 'Shown on EN: 12 posts', $html );
 
 		$_GET[ PostListLanguages::NOTICE_COUNT ] = '1';
 		$_GET[ PostListLanguages::NOTICE_STATE ] = '0';
 
 		ob_start();
 		$this->service()->renderBulkNotice();
-		$this->assertStringContainsString( 'Скрыто на EN: 1 запись', (string) ob_get_clean() );
+		$this->assertStringContainsString( 'Hidden on EN: 1 post', (string) ob_get_clean() );
 
 		$_GET[ PostListLanguages::NOTICE_LOCALE ] = 'xx';
 
@@ -326,8 +326,8 @@ final class PostListVisibilityTest extends TestCase {
 		$this->assertStringContainsString( 'value="hidden:en"', $html );
 		$this->assertStringContainsString( 'value="shown:en"', $html );
 		$this->assertStringContainsString( 'value="hidden:de" selected="selected"', $html );
-		$this->assertStringContainsString( 'Скрыто на Deutsch', $html );
-		$this->assertStringContainsString( 'Показано на English', $html );
+		$this->assertStringContainsString( 'Hidden on Deutsch', $html );
+		$this->assertStringContainsString( 'Shown on English', $html );
 		// Прежний фильтр по переводу остаётся.
 		$this->assertStringContainsString( 'value="en"', $html );
 
