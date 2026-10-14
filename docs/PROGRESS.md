@@ -25,6 +25,20 @@
 - Заменить `Contributors: lightwell` в `readme.txt` на настоящий логин wordpress.org.
 - Проверить на MySQL: отображение сохранённого перевода на `/en/` (Playground на SQLite это не проверяет).
 
+## Ребрендинг LingoCanvas
+
+Название: LingoCanvas (разработчик CenterAI, контрибьютор WP.org `centeraieu`), slug и text domain `lingocanvas`, главный файл `lingocanvas.php`, версия 0.3.13. Решение выше про «WP Multilang Press» и `wp-mlp` заменено этим разделом.
+
+План и статус:
+
+1. [x] Совместимость данных: таблицы `mlp_*`, опции `mlp_*`, метаполя `_mlp_*`, REST `mlp/v1`, шорткод `[mlp_language_switcher]`, константы `WP_MLP_OPENAI_*`, файлы `wp-mlp.env*`, `uploads/wp-mlp-flags`, `/wp-mlp-sitemap.xml` и слаги админ-страниц не менялись.
+2. [x] Защита перехода (`lingocanvas.php`): пока прежний плагин активен, LingoCanvas ничего не загружает и показывает уведомление; активация LingoCanvas выключает прежний плагин без его хука деактивации и откладывает свою настройку до следующего запроса; при удалении прежнего плагина общие данные не стираются.
+3. [x] Хуки переименованы в `lingocanvas_*`, старые `mlp_*` работают как устаревшие алиасы (`apply_filters_deprecated` / `do_action_deprecated`).
+4. [x] Сборка: `bin/build-zip.php` даёт `dist/lingocanvas-<версия>.zip` (папка `lingocanvas/`); переводы `languages/lingocanvas-ru_RU.*`, `lingocanvas.pot`.
+5. [x] Документация: readme.txt (FAQ про переход, список хуков, changelog), README.md / README_RU.md (раздел «Переход с WP Multilang Press», таблица хуков, список неизменённых идентификаторов), QUICK_START, user-guide, data-storage, technical-spec.
+6. [x] Префикс сообщений `error_log`: `[wp-mlp]` -> `[lingocanvas]` (PHP; JS-консоль не менялась).
+7. [ ] Проверить на реальном сайте переход с установленного WP Multilang Press (активация, откат, удаление старого плагина).
+
 ## Журнал
 
 - i18n-хвосты: `StringTranslationPage` использует `_x( ..., 'mid-sentence', ... )` для «OpenAI key/model» посреди фразы (в `.po` отдельные записи с `msgctxt`); добавлены русские переводы для сообщения о версии PHP (`wp-mlp.php`), «SEO/GEO» и ошибки недопустимого протокола ссылки; в `tests/stubs.php` добавлена заглушка `_x`; `.mo`, `.l10n.php`, `.pot` пересобраны.

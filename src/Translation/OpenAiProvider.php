@@ -241,6 +241,6 @@ final class OpenAiProvider implements ProviderInterface {
 		}
 
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( '[wp-mlp] OpenAI: ' . $message );
+		error_log( '[lingocanvas] OpenAI: ' . $message );
 	}
 }

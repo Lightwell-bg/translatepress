@@ -397,7 +397,7 @@ final class StaleStringsCleanup {
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[wp-mlp] StaleStringsCleanup: ' . ( '' !== $error ? $error : 'query returned false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[lingocanvas] StaleStringsCleanup: ' . ( '' !== $error ? $error : 'query returned false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		return true;

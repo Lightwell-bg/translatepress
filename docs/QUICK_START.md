@@ -26,11 +26,11 @@
    bash bin/smoke-test.sh
    ```
 
-   Если правили переводы (`languages/wp-mlp-ru_RU.po`), пересоберите их:
+   Если правили переводы (`languages/lingocanvas-ru_RU.po`), пересоберите их:
 
    ```bash
-   php bin/i18n-compile.php languages/wp-mlp-ru_RU.po
-   php bin/i18n-compile.php --pot languages/wp-mlp-ru_RU.po
+   php bin/i18n-compile.php languages/lingocanvas-ru_RU.po
+   php bin/i18n-compile.php --pot languages/lingocanvas-ru_RU.po
    ```
 
 4. Соберите установочный ZIP:
@@ -39,11 +39,13 @@
    php bin/build-zip.php
    ```
 
-   Архив появится в `dist/_<N>wp-mlp.zip` (папка внутри архива — `wp-mlp/`); путь и версия печатаются в конце вывода. В архив попадают `wp-mlp.php`, `uninstall.php`, `readme.txt` (readme для WordPress.org), `src/`, `assets/`, `languages/`; `Stable tag` в `readme.txt` синхронизируется с версией.
+   Архив появится в `dist/lingocanvas-<версия>.zip` (папка внутри архива — `lingocanvas/`); путь и версия печатаются в конце вывода. В архив попадают `lingocanvas.php`, `uninstall.php`, `readme.txt` (readme для WordPress.org), `src/`, `assets/`, `languages/`; `Stable tag` в `readme.txt` синхронизируется с версией.
 
 5. В админке WordPress: «Плагины → Добавить новый → Загрузить плагин», выберите ZIP из `dist/` и нажмите «Установить».
 
 6. Нажмите «Активировать плагин».
+
+   Если на сайте уже стоит прежний плагин WP Multilang Press, не удаляйте его до проверки: LingoCanvas при активации сам его выключит и подхватит все переводы и настройки. Порядок перехода и откат — в README, раздел «Переход с WP Multilang Press».
 
 7. Откройте «Настройки → Постоянные ссылки» и нажмите «Сохранить изменения» (структура — любая, кроме «Простые»).
 

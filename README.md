@@ -1,6 +1,8 @@
-# WP Multilang Press
+# LingoCanvas
 
 [English](README.md) | [Русский](README_RU.md) · [Quick start (RU)](docs/QUICK_START.md)
+
+> LingoCanvas is the new name of **WP Multilang Press** (developer: CenterAI, WordPress.org contributor `centeraieu`). Plugin folder and text domain: `lingocanvas`. Existing sites switch without data loss, see [Migrating from WP Multilang Press](#migrating-from-wp-multilang-press).
 
 > **Running a site, not developing the plugin?** You need the [user guide](docs/user-guide.md) — installation, language setup and translating posts without a single line of code. This file is written for people who work on the plugin.
 
@@ -14,7 +16,7 @@ No duplicate posts are created. The plugin intercepts the already rendered HTML,
 
 Current state: **Stages 1, 2 and part of Stage 3**. Translations are still entered by hand — but you can now ask AI (OpenAI) to suggest a translation with one button, review it and save it yourself. No automation: the plugin does not translate the whole site by itself and does not call OpenAI in the background.
 
-> Note: the plugin's admin screens are in Russian. Screen and button names below are given in English translation.
+> Note: the admin screens are in English and switch to Russian automatically when the site or user language is Russian (bundled translation in `languages/`).
 
 ## What it can do now
 
@@ -60,13 +62,46 @@ On PHP 8.4+ the built-in HTML5 parser `\Dom\HTMLDocument` is used — fast and c
 
 ## Installation
 
-1. Copy the plugin folder to `wp-content/plugins/wp-mlp` (the folder name can be anything).
-2. Activate "WP Multilang Press" in the "Plugins" section. On activation four tables and default settings are created: Russian as the main language, English at `/en/`.
+1. Build the ZIP (`php bin/build-zip.php`, result: `dist/lingocanvas-<version>.zip`) and upload it via "Plugins → Add New → Upload Plugin", or copy the plugin folder to `wp-content/plugins/lingocanvas`.
+2. Activate "LingoCanvas" in the "Plugins" section. On activation four tables and default settings are created: Russian as the main language, English at `/en/`.
 3. Open "Settings → Permalinks" and click "Save" — this rebuilds the language URL rules.
 
 If the permalink structure is "Plain", the plugin shows a warning: language URLs do not work with it.
 
 For a step-by-step version see [docs/QUICK_START.md](docs/QUICK_START.md) (Russian).
+
+## Migrating from WP Multilang Press
+
+LingoCanvas is the same code under a new name, and it **reuses all data as is**: tables, settings, translations, flags and post meta are not copied, converted or deleted. Safe order:
+
+1. Back up the database (at least the `{prefix}mlp_*` tables and `wp_options`). Note where the OpenAI key is stored: if it lives only in `wp-content/plugins/wp-mlp/.env`, move it to `wp-config.php` constants first.
+2. Do **not** delete or deactivate WP Multilang Press yet.
+3. "Plugins → Add New → Upload Plugin" → `lingocanvas-0.3.13.zip` → "Install Now" (WordPress installs it as a separate plugin).
+4. Activate LingoCanvas. It deactivates WP Multilang Press automatically (without running its deactivation code) and finishes its own setup on the next page load.
+5. Open any admin page once, then check "Multilingual → Languages", a translated page such as `/en/`, the sitemap and the language switcher.
+6. "Settings → Permalinks → Save" once (optional, refreshes the rewrite rules).
+7. Only after checking, delete WP Multilang Press via "Plugins → Delete". This is safe: LingoCanvas keeps the shared data even if "delete data on uninstall" is ticked.
+
+Rollback: deactivate LingoCanvas and activate WP Multilang Press again — it works with the same data.
+
+Never keep both plugins active. If they are, LingoCanvas pauses itself (loads nothing) and shows an admin notice; the old plugin keeps working.
+
+Theme or snippet code that uses the old `mlp_*` hooks keeps working (a deprecation notice appears only with `WP_DEBUG`); rename them to `lingocanvas_*` at your convenience.
+
+### Hooks: old and new names
+
+| Old name (deprecated since 0.3.13) | New name | Type |
+|---|---|---|
+| `mlp_nav_menu_trigger_title` | `lingocanvas_nav_menu_trigger_title` | filter |
+| `mlp_nav_menu_dropdown_classes` | `lingocanvas_nav_menu_dropdown_classes` | filter |
+| `mlp_visibility_bypass` | `lingocanvas_visibility_bypass` | filter |
+| `mlp_sitemap_post_ids` | `lingocanvas_sitemap_post_ids` | filter |
+| `mlp_translation_provider` | `lingocanvas_translation_provider` | filter |
+| `mlp_purge_page_cache` | `lingocanvas_purge_page_cache` | action |
+
+### Identifiers that stay unchanged (compatibility)
+
+Kept on purpose so that existing data and integrations keep working: tables `{prefix}mlp_*`, options `mlp_*`, post meta `_mlp_*`, REST namespace `mlp/v1`, the shortcode `[mlp_language_switcher]`, constants `WP_MLP_OPENAI_API_KEY` / `WP_MLP_OPENAI_MODEL` / `WP_MLP_OPENAI_BASE_URL`, environment files `wp-content/wp-mlp.env.php` and `wp-mlp.env` (above the WordPress root), the folder `wp-content/uploads/wp-mlp-flags/`, the sitemap address `/wp-mlp-sitemap.xml`, admin page slugs and the PHP namespace `WpMlp`.
 
 ## Where to start and in what order
 
@@ -74,14 +109,14 @@ In short: **set it up once, then translate only your own text.** The site interf
 
 ### Once, at installation
 
-1. **"Multilanguage → Languages"** — add languages. In each row check the **"WordPress locale"** (`bg_BG`, `en_US`): this is the name under which WordPress looks for translations of its interface. It is filled in automatically, but `en` can mean both `en_US` and `en_GB` — it cannot be guessed.
+1. **"Multilingual → Languages"** — add languages. In each row check the **"WordPress locale"** (`bg_BG`, `en_US`): this is the name under which WordPress looks for translations of its interface. It is filled in automatically, but `en` can mean both `en_US` and `en_GB` — it cannot be guessed.
 2. In the same place, next to the locale, is the **language pack** indicator. If it says "no pack", click "Download language pack". Without it the interface stays English and it will look as if the plugin does not work. English does not need a pack.
 3. Check: open any page at `/bg/`. The menu, the comment form and the buttons should become Bulgarian **without any action from you**. If they did, the most important part already works.
 
 ### Then — for every new post
 
 4. Write the post in the main language as usual.
-5. **"Multilanguage → Visual editor"**, pick a language and a page → "Open".
+5. **"Multilingual → Visual editor"**, pick a language and a page → "Open".
 6. Click **"Translate the whole content with AI"** — title, excerpt and the whole text in one operation. Review the suggestion and click "Save all".
 7. Look through the page. Whatever is still untranslated — click it right in the preview and type the translation.
 
@@ -89,7 +124,7 @@ That is enough in 90% of cases. Everything below is for the rest.
 
 ### When something is left untranslated
 
-Open **"Multilanguage → String translation"** and choose the tab by **what exactly** is untranslated:
+Open **"Multilingual → String translation"** and choose the tab by **what exactly** is untranslated:
 
 | What you see on the site | Tab | Who wrote it |
 |---|---|---|
@@ -103,7 +138,7 @@ The rule is simple: **you wrote it — "Content", you did not — "Interface"**.
 
 - Do not translate admin plugin strings (Rank Math, Akismet, Action Scheduler) on the "Interface" tab. Only you see their labels, in the admin; visitors never do. Look at the "Source" column.
 - Do not look for strings in advance: the list fills only when a page is actually shown in an additional language. An empty list means "not opened yet", not a breakage.
-- By default strings are remembered only when you open the page (an administrator, `manage_options`) — only what you decide to open gets translated. Strings from pages opened by visitors are collected only if you turn on "Also remember strings from pages opened by visitors" in "Multilanguage → Settings → String collection" (`discover_from_visitors`). The master switch is "Remember new strings…" (`discover_strings`). If the site sits behind a page-cache plugin, administrators usually bypass it, so collection works.
+- By default strings are remembered only when you open the page (an administrator, `manage_options`) — only what you decide to open gets translated. Strings from pages opened by visitors are collected only if you turn on "Also remember strings from pages opened by visitors" in "Multilingual → Settings → String collection" (`discover_from_visitors`). The master switch is "Remember new strings…" (`discover_strings`). If the site sits behind a page-cache plugin, administrators usually bypass it, so collection works.
 - Do not translate a post title twice. It is shared by H1, `<title>`, social networks and structured data — it is translated once on the "Content" tab.
 
 ### If the list gets cluttered
@@ -114,7 +149,7 @@ The **"Delete untranslated strings (N)"** button on each tab removes found strin
 
 ### Add a language
 
-"Multilanguage → Languages": use the **"Add language"** field under the table — start typing a name or locale, pick a language from the WordPress list (or type a locale such as `de_DE` by hand) and click "Add". The row comes pre-filled (code `de`, URL slug `de`, name `Deutsch`, WordPress locale `de_DE`, status Published); if the code or slug is already taken, the full locale is used (`pt-br`). The number of languages is unlimited; an unsaved row can be dropped with "Delete language". Optionally set an emoji flag (`🇩🇪`) and change the status. Save — the URL rules are rebuilt automatically. Without JavaScript one empty row is shown instead of the picker.
+"Multilingual → Languages": use the **"Add language"** field under the table — start typing a name or locale, pick a language from the WordPress list (or type a locale such as `de_DE` by hand) and click "Add". The row comes pre-filled (code `de`, URL slug `de`, name `Deutsch`, WordPress locale `de_DE`, status Published); if the code or slug is already taken, the full locale is used (`pt-br`). The number of languages is unlimited; an unsaved row can be dropped with "Delete language". Optionally set an emoji flag (`🇩🇪`) and change the status. Save — the URL rules are rebuilt automatically. Without JavaScript one empty row is shown instead of the picker.
 
 - **Published** — the language is available to visitors and appears in `hreflang`.
 - **Draft** — the language is visible only in the admin: its URL returns 404 and it is not in `hreflang`. Handy while the translation is not ready.
@@ -154,7 +189,7 @@ In a dropdown (`<select>`) the flag is always text — emoji or code: HTML itsel
 
 The fastest way when you need to translate a specific page.
 
-1. "Multilanguage → Visual editor". Or open the page on the site and click "Translate page" in the top bar.
+1. "Multilingual → Visual editor". Or open the page on the site and click "Translate page" in the top bar.
 2. Pick a language and find the page: start typing the title in the "Page" field (a suggestion list, arrows and Enter) or paste an address or path, for example `/about/`.
 3. In the preview on the right, hover — the translatable places are outlined. Click the one you want.
 4. On the left the original and the translation field appear. Type the text and click "Save" (or Ctrl+Enter) — the text in the preview is replaced immediately.
@@ -166,7 +201,7 @@ The "Delete translation" button clears the translation of this string only.
 
 For a specific post or page — instead of translating block by block by clicking each node.
 
-1. "Multilanguage → Visual editor", open a post (the path must point to a real post/page — there will be no button on archives and service pages).
+1. "Multilingual → Visual editor", open a post (the path must point to a real post/page — there will be no button on archives and service pages).
 2. The "Translate the whole content with AI" button opens a choice: **"Empty segments only"** (the default — does not touch what is already translated) or **"Translate the whole content again"** (overwrites everything, including already confirmed translations — a deliberate choice, not the default).
 3. The plugin parses the post's title, excerpt and `post_content`, shows progress by chunks (the content is automatically split into chunks for the model's context window — nothing needs to be split by hand) and fills the translation fields right in the panel. Each translated string is immediately shown in the preview on the right.
 4. The list is a draft, not a final result: any string can be edited by hand right in the panel, and so can its status.
@@ -204,7 +239,7 @@ How it works: on an additional language the WordPress locale is swapped (`locale
 
 **What to do once:**
 
-1. "Multilanguage → Languages", the **"WordPress locale"** column — check the value (`en_US`, `bg_BG`, `ru_RU`). It is prefilled from the language code, but not everything can be guessed: British English needs `en_GB`, and Catalan's locale has no region at all — `ca`.
+1. "Multilingual → Languages", the **"WordPress locale"** column — check the value (`en_US`, `bg_BG`, `ru_RU`). It is prefilled from the language code, but not everything can be guessed: British English needs `en_GB`, and Catalan's locale has no region at all — `ca`.
 2. In the same place is the language pack indicator. If it says "No language pack", click **"Download language pack"**: without translation files core returns the English originals, and the locale swap will look as if it "did not work". English does not need a pack — WordPress ships with it.
 
 **English is special**: at `/en/` the effect is visible immediately and without downloading, because the original WordPress strings are English text. For Bulgarian without a pack the interface stays English — that is not a breakage but exactly the absence of the pack.
@@ -220,7 +255,7 @@ The date format, month names and text direction change together with the languag
 ### Translate a string from a list
 
 1. Open any page of the site in an additional language, for example `https://site.ru/en/about/`. The plugin remembers all strings found on it.
-2. Go to "Multilanguage → String translation", pick a language and, if you like, the "No translation" filter.
+2. Go to "Multilingual → String translation", pick a language and, if you like, the "No translation" filter.
 3. Type the translation and click "Save" (or Ctrl+Enter).
 4. Refresh the page in the additional language — the text is replaced.
 
@@ -254,7 +289,7 @@ Home  Blog  Contacts  🇷🇺 Русский ▾
 Home  Blog  🇷🇺 Русский  🇬🇧 English
 ```
 
-The item that opens the dropdown shows the **current** language — in the same form as chosen in the settings (flag, code, name). That way the visitor sees which language the page is in before opening the list. The item title set in the menu is not used here; it can be brought back with the `mlp_nav_menu_trigger_title` filter.
+The item that opens the dropdown shows the **current** language — in the same form as chosen in the settings (flag, code, name). That way the visitor sees which language the page is in before opening the list. The item title set in the menu is not used here; it can be brought back with the `lingocanvas_nav_menu_trigger_title` filter.
 
 Both items can be added at the same time, and both can be removed like an ordinary menu item. For the "Inline" item the title does not matter either — it becomes the first language itself.
 
@@ -270,7 +305,7 @@ Both items can be added at the same time, and both can be removed like an ordina
 
 Draft languages are not shown anywhere: they have no available address. If the only published language is the menu item itself, there is nothing to switch to, and the plugin does not print it at all.
 
-The dropdown is designed for themes with the standard WordPress submenu markup (`.sub-menu`, the `menu-item-has-children` class) — the vast majority of themes work this way. For very non-standard mega-menus the theme may not pick this up automatically; in that case you can add your own class to the trigger item with the `mlp_nav_menu_dropdown_classes` filter.
+The dropdown is designed for themes with the standard WordPress submenu markup (`.sub-menu`, the `menu-item-has-children` class) — the vast majority of themes work this way. For very non-standard mega-menus the theme may not pick this up automatically; in that case you can add your own class to the trigger item with the `lingocanvas_nav_menu_dropdown_classes` filter.
 
 ### Sitemap
 
@@ -286,13 +321,13 @@ Service pages are excluded from the sitemap — this is decided not by slug or t
 - WooCommerce role pages — cart, checkout, my account (together with all nested ones — order history, confirmation, invoice, failed transaction, etc.), if WooCommerce is active; the product catalog (the "Shop" page) is not part of this exclusion — it is an ordinary section, valuable for SEO;
 - password-protected pages;
 - pages explicitly marked `noindex` in Yoast SEO, Rank Math or SEOPress — the same three plugins the plugin is already compatible with elsewhere;
-- pages whose slug is entered by hand in "Multilanguage → Languages → Exclude from sitemap" — for cases without WooCommerce and without a `noindex` mark (for example, a checkout page built by hand without any cart plugin, or a technical page like "Access denied").
+- pages whose slug is entered by hand in "Multilingual → Languages → Exclude from sitemap" — for cases without WooCommerce and without a `noindex` mark (for example, a checkout page built by hand without any cart plugin, or a technical page like "Access denied").
 
-A match on any of these signs excludes both the page itself and everything nested under it. To remove something else programmatically, not through settings (for example, from a separate plugin or snippet), use the `mlp_sitemap_post_ids` filter — it receives the ready list of post ids right before the sitemap is built.
+A match on any of these signs excludes both the page itself and everything nested under it. To remove something else programmatically, not through settings (for example, from a separate plugin or snippet), use the `lingocanvas_sitemap_post_ids` filter — it receives the ready list of post ids right before the sitemap is built.
 
 **If problem addresses already got into the sitemap earlier and Google had time to index them** (Search Console → Sitemaps shows the number of processed pages) — fixing the sitemap alone is not enough: Google does not remove a page from the index just because it disappeared from the sitemap; this can take weeks. To speed it up: Search Console → Indexing → Removals → "New request" for each address that must not be in the results.
 
-The address is automatically added to `robots.txt` as a single `Sitemap: ...` line, so search engines find the sitemap themselves; the line is not added again even if something triggers the addition once more. Other plugins (Yoast, Rank Math) may append their own `Sitemap:` line to `robots.txt` — that is normal, several different sitemaps in one `robots.txt` are compatible with each other and are not a duplicate of the same sitemap. Submitting the sitemap manually in Google Search Console is faster than waiting for it to be found. The link is in "Multilanguage → Languages".
+The address is automatically added to `robots.txt` as a single `Sitemap: ...` line, so search engines find the sitemap themselves; the line is not added again even if something triggers the addition once more. Other plugins (Yoast, Rank Math) may append their own `Sitemap:` line to `robots.txt` — that is normal, several different sitemaps in one `robots.txt` are compatible with each other and are not a duplicate of the same sitemap. Submitting the sitemap manually in Google Search Console is faster than waiting for it to be found. The link is in "Multilingual → Languages".
 
 The sitemap is not embedded in the WordPress core sitemap and does not replace the Yoast or Rank Math sitemaps — it works alongside them. The reason: the core sitemap renderer outputs only `loc` and `lastmod` and silently drops `xhtml:link`, so language versions cannot be added there.
 
@@ -332,7 +367,7 @@ Footer text (copyright, slogans, any phrases) is translated by the same common m
 
 ### Untranslated posts
 
-"Multilanguage → Languages → Untranslated posts" has two modes:
+"Multilingual → Languages → Untranslated posts" has two modes:
 
 - **Show all posts (translated or not)** — an additional language shows every post and page of the site.
 - **Show on a language only posts enabled by hand (recommended)** — a post or page appears on an additional language (blog, categories, search, widgets, menus, previous/next links, the sitemap and its own address) only when you have switched it on for that language. A hidden post's address on the language redirects (302) to the same page in the default language.
@@ -359,12 +394,12 @@ A logged-in user who can edit a hidden post is not redirected: the admin bar sho
 ## Building the ZIP
 
 ```bash
-php bin/build-zip.php            # bump the patch version and build dist/_<N>wp-mlp.zip
+php bin/build-zip.php            # bump the patch version and build dist/lingocanvas-<version>.zip
 php bin/build-zip.php --no-bump  # without changing the version
 php bin/build-zip.php --dry-run  # only list files, write nothing
 ```
 
-The number `N` is the next one after the maximum in `dist/`; existing archives are never overwritten. The archive (folder `wp-mlp/`) contains only the runtime: `wp-mlp.php`, `uninstall.php`, `readme.txt`, `src/`, `assets/`, `languages/`. `README.md` and `.env.example` are not shipped, and the real `.env` never gets into the archive. Unless `--no-bump` is given, the build also syncs `Stable tag:` in `readme.txt` with the new plugin version and fails if they differ.
+The archive is named after the version (`dist/lingocanvas-0.3.13.zip`); an existing archive is never overwritten. The archive (folder `lingocanvas/`) contains only the runtime: `lingocanvas.php`, `uninstall.php`, `readme.txt`, `src/`, `assets/`, `languages/`. `README.md` and `.env.example` are not shipped, and the real `.env` never gets into the archive. Unless `--no-bump` is given, the build also syncs `Stable tag:` in `readme.txt` with the new plugin version and fails if they differ.
 
 `readme.txt` is the WordPress.org readme (plugin directory page); `README.md` / `README_RU.md` are the repository docs.
 
@@ -372,7 +407,7 @@ The number `N` is the next one after the maximum in `dist/`; existing archives a
 
 Without this step the plugin works as usual — the "Translate with AI" button is simply not visible, neither in the string list nor in the editor. No access to the hosting files is needed — everything is through the admin (or, optionally, through `wp-config.php`, see below).
 
-1. "Multilanguage → Languages". In the "OpenAI key" block enter the key — <https://platform.openai.com/api-keys>. API documentation: <https://platform.openai.com/docs>.
+1. "Multilingual → Languages". In the "OpenAI key" block enter the key — <https://platform.openai.com/api-keys>. API documentation: <https://platform.openai.com/docs>.
 2. Below is "OpenAI model": a drop-down with the models the API currently offers for your key (loaded live from `{API address}/models`, cached for 12 hours; the "Refresh list" button reloads it; "Other model…" lets you type an identifier by hand, e.g. for a proxy). The list appears once the key is saved. Touch "API address" only for your own proxy/compatible gateway; the default is `api.openai.com`.
 3. Save. In the same block "Key saved, ends with «…»" appears — the key itself is never shown again, and the field for entering a new value is always empty. To replace the key, enter a new one; to keep it as is, just do not touch the field when saving other settings; to delete it, tick "Delete the saved key".
 4. Set the daily character limit (100,000 by default) — this is protection against accidental spending, not automation: the plugin translates nothing by itself, the limit just caps the amount you can spend by pressing the button.
@@ -391,7 +426,7 @@ For each of the three fields (key, model, API address) the sources are checked i
    define( 'WP_MLP_OPENAI_MODEL', 'gpt-5.6-terra' );
    ```
 
-2. **Admin settings** ("Multilanguage → Languages") — stored in the database.
+2. **Admin settings** ("Multilingual → Languages") — stored in the database.
 3. **The file `wp-content/wp-mlp.env.php`** — the format is like `.env.example` (`OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`), but **the first line must be `<?php exit; ?>`**. The file lies inside the web root, and this line makes a direct request to it execute PHP and print nothing. Without the guard line the file is not read, and a warning appears on the settings page:
 
    ```
@@ -416,7 +451,7 @@ API address: an empty field in the admin means "not set" (taken from the environ
 You can plug in your own provider (another service instead of OpenAI) with a filter, without editing the plugin core:
 
 ```php
-add_filter( 'mlp_translation_provider', function () {
+add_filter( 'lingocanvas_translation_provider', function () {
     return new My\CustomProvider();
 } );
 ```
@@ -427,7 +462,7 @@ The class must implement `WpMlp\Translation\ProviderInterface`.
 
 A message like `Failed to get a translation from OpenAI: network error: cURL error 28: Operation timed out after ... with 0 bytes received` means the request to OpenAI got no response at all — no error and no start of data — within the allotted time. The plugin makes **up to two attempts of 45 seconds each** with a pause between them and, for the duration of the request itself, raises PHP's `max_execution_time` so the hosting does not cut it off earlier — if the message still appeared, both attempts failed to reach the server. Beyond that it is not the plugin's job: it honestly waited and clearly reported the failure, but cannot get around a broken connection. What to check:
 
-- **API address** ("Multilanguage → Languages → API address"): by default `api.openai.com` — if your own proxy/gateway is set there, the problem may be in it and not in OpenAI;
+- **API address** ("Multilingual → Languages → API address"): by default `api.openai.com` — if your own proxy/gateway is set there, the problem may be in it and not in OpenAI;
 - **The hosting's outgoing connections**: some cheap plans block or heavily throttle outgoing HTTPS to non-standard addresses — ask hosting support whether `curl https://api.openai.com` works from the server at all;
 - **OpenAI status**: <https://status.openai.com> — if they have an outage, waiting 30–45 seconds is pointless with any timeout;
 - **Content size**: with "Translate the whole content with AI" the text is cut into chunks of ~6000 characters (`BatchChunker`) — if the error is stable on the same large chunk while small strings translate fine, it is not about the connection but about the model not fitting into the allotted time on exactly that volume.
@@ -437,7 +472,7 @@ If the error is not a one-off but stable, the translation spoils nothing in any 
 ## Structure
 
 ```
-wp-mlp.php                  bootstrap: plugin header, autoloader, startup
+lingocanvas.php             bootstrap: plugin header, migration guard from WP Multilang Press, autoloader, startup
 uninstall.php               data removal — only with an explicit checkbox
 src/
   Plugin.php                composition root: container and hooks
@@ -504,7 +539,7 @@ The integration is built through `function_exists()`/`class_exists()` checks aga
 For a cache that is not in the list (Cloudflare, Varnish, a custom reverse proxy) there is a hook:
 
 ```php
-add_action( 'mlp_purge_page_cache', function () {
+add_action( 'lingocanvas_purge_page_cache', function () {
     // flush your own cache
 } );
 ```
@@ -516,7 +551,7 @@ There are no runtime dependencies; Composer is needed only for tests. There is n
 ```bash
 composer install
 composer test                 # or: php vendor/bin/phpunit
-php bin/build-zip.php         # installable ZIP: dist/_<N>wp-mlp.zip (see "Building the ZIP")
+php bin/build-zip.php         # installable ZIP: dist/lingocanvas-<version>.zip (see "Building the ZIP")
 ```
 
 Composer is not mandatory — tests can also be run with the PHPUnit phar:
@@ -528,14 +563,14 @@ php phpunit-12.phar
 
 ### Translations (`languages/`)
 
-Source strings in the code are always English. The Russian interface ships with the plugin in `languages/`: `wp-mlp-ru_RU.po` is the only file edited by hand; `.mo`, `.l10n.php` and `wp-mlp.pot` are generated from it. After editing the `.po`:
+Source strings in the code are always English. The Russian interface ships with the plugin in `languages/`: `lingocanvas-ru_RU.po` is the only file edited by hand; `.mo`, `.l10n.php` and `lingocanvas.pot` are generated from it. After editing the `.po`:
 
 ```bash
-php bin/i18n-compile.php languages/wp-mlp-ru_RU.po          # .mo + .l10n.php
-php bin/i18n-compile.php --pot languages/wp-mlp-ru_RU.po    # wp-mlp.pot
+php bin/i18n-compile.php languages/lingocanvas-ru_RU.po          # .mo + .l10n.php
+php bin/i18n-compile.php --pot languages/lingocanvas-ru_RU.po    # lingocanvas.pot
 ```
 
-Both commands must exit with code 0 (the compiler checks that printf placeholders in the translation match the source). A string used in the middle of a sentence where the same word is a capitalised label elsewhere gets its own entry via `_x( 'OpenAI key', 'mid-sentence', 'wp-mlp' )` and `msgctxt "mid-sentence"` in the `.po`.
+Both commands must exit with code 0 (the compiler checks that printf placeholders in the translation match the source). A string used in the middle of a sentence where the same word is a capitalised label elsewhere gets its own entry via `_x( 'OpenAI key', 'mid-sentence', 'lingocanvas' )` and `msgctxt "mid-sentence"` in the `.po`.
 
 ### Checks in real WordPress (WordPress Playground)
 
@@ -562,7 +597,7 @@ winget install PHP.PHP.8.4
 
 | Service | Why | Where to get a key | Where to enter it |
 |---|---|---|---|
-| OpenAI (optional) | the "Translate with AI" button | <https://platform.openai.com/api-keys> ([docs](https://platform.openai.com/docs)) | "Multilanguage → Languages → OpenAI key" (stored in the database), or `WP_MLP_OPENAI_API_KEY` in `wp-config.php` — see "Connecting OpenAI" above |
+| OpenAI (optional) | the "Translate with AI" button | <https://platform.openai.com/api-keys> ([docs](https://platform.openai.com/docs)) | "Multilingual → Languages → OpenAI key" (stored in the database), or `WP_MLP_OPENAI_API_KEY` in `wp-config.php` — see "Connecting OpenAI" above |
 
 ## License
 

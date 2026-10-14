@@ -4,6 +4,8 @@
 Дата: 7 августа 2026  
 Назначение: архитектурное описание для оценки и разработки WordPress-плагина мультиязычности без дублирования записей.
 
+Примечание (0.3.13): реализованный по этому ТЗ плагин называется LingoCanvas (раньше — WP Multilang Press; папка и text domain `lingocanvas`). Внутренние идентификаторы (таблицы `mlp_*`, опции `mlp_*`, REST `mlp/v1`, пространство имён `WpMlp`) сохранены для совместимости с данными. Публичные хуки переименованы в `lingocanvas_*` (`lingocanvas_nav_menu_trigger_title`, `lingocanvas_nav_menu_dropdown_classes`, `lingocanvas_visibility_bypass`, `lingocanvas_sitemap_post_ids`, `lingocanvas_translation_provider`, `lingocanvas_purge_page_cache`); старые `mlp_*` работают как устаревшие алиасы. Ниже сохранено историческое описание.
+
 ## 1. Краткий вывод
 
 TranslatePress относится к классу плагинов, которые переводят **готовый результат рендеринга**, а не создают отдельную запись WordPress для каждого языка.

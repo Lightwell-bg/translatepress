@@ -142,7 +142,7 @@ final class OutputBuffer implements Hookable {
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log(
 			sprintf(
-				'[wp-mlp] Page translation skipped: %s in %s:%d',
+				'[lingocanvas] Page translation skipped: %s in %s:%d',
 				$error->getMessage(),
 				$error->getFile(),
 				$error->getLine()

@@ -25,10 +25,14 @@ ob_start(
 register_shutdown_function(
 	static function () use ( $mlp_page ): void {
 		$location = '';
+		$ctype    = '';
 
 		foreach ( headers_list() as $h ) {
 			if ( 0 === stripos( $h, 'Location:' ) ) {
 				$location = trim( substr( $h, 9 ) );
+			}
+			if ( 0 === stripos( $h, 'Content-Type:' ) ) {
+				$ctype = trim( substr( $h, 13 ) );
 			}
 		}
 
@@ -36,8 +40,11 @@ register_shutdown_function(
 			'/out/page-' . $mlp_page . '.json',
 			json_encode( // phpcs:ignore
 				array(
-					'status'   => (int) http_response_code(),
-					'location' => $location,
+					'status'       => (int) http_response_code(),
+					'location'     => $location,
+					'content_type' => $ctype,
+					'headers'      => headers_list(),
+					'host'         => (string) ( $_SERVER['HTTP_HOST'] ?? '' ),
 				)
 			)
 		);

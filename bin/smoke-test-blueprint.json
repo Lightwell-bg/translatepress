@@ -4,21 +4,21 @@
     "php": "8.3",
     "wp": "latest"
   },
-  "login": true,
+  "login": false,
   "steps": [
     {
-      "step": "defineWpConfigConsts",
-      "consts": {
-        "WP_DEBUG": true,
-        "WP_DEBUG_LOG": true,
-        "WP_DEBUG_DISPLAY": false
-      }
+      "step": "runPHP",
+      "code": "<?php require '/out/smoke-test-wpconfig.php';"
     },
     {
       "step": "setSiteOptions",
       "options": {
         "permalink_structure": "/%postname%/"
       }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php @mkdir('/wordpress/wp-content/mu-plugins', 0777, true); copy('/out/lingocanvas-smoke-mock.php', '/wordpress/wp-content/mu-plugins/lingocanvas-smoke-mock.php');"
     },
     {
       "step": "activatePlugin",
@@ -51,6 +51,18 @@
     {
       "step": "runPHP",
       "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_PAGE']='en_post_after'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/wp-mlp-sitemap.xml'; $GLOBALS['MLP_SMOKE_PAGE']='sitemap'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/smoke-switch/'; $GLOBALS['MLP_SMOKE_PAGE']='switcher'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require '/wordpress/wp-load.php'; $GLOBALS['MLP_SMOKE_PHASE']='extra'; require '/out/smoke-test.php';"
     },
     {
       "step": "runPHP",

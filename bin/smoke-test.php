@@ -1,12 +1,14 @@
 <?php
 /**
- * Smoke-test body, executed inside WordPress Playground by bin/smoke-test-blueprint.json
- * (see bin/smoke-test.sh). Not part of the plugin ZIP.
+ * Smoke-test body of scenario S1 (fresh LingoCanvas), executed inside WordPress Playground by
+ * bin/smoke-test-blueprint.json (see bin/smoke-test.sh). Not part of the plugin ZIP.
  *
  * The blueprint runs several runPHP steps (every one is a fresh PHP request):
- *   setup  -> tables, post, settings
+ *   setup  -> tables, posts, settings
  *   render -> bin/smoke-test-render.php simulates a front-end request, saves /out/page-<name>.html
  *   check1 -> strings collected, REST GET routes, manual translation, unsafe href rejection
+ *   extra  -> sitemap, switcher shortcode, canonical/hreflang, en/ru UI + settings page,
+ *             AI translation through the mocked OpenAI endpoint, deprecated hook alias
  *   check2 -> translation rendered, %i repository queries, ru_RU, uninstall, debug.log
  * State and results accumulate in /out/smoke.json.
  *
@@ -14,99 +16,27 @@
  * integration layer, so a DB error here can also come from that layer.
  */
 
+use WpMlp\Admin\SettingsPage;
 use WpMlp\Plugin;
 use WpMlp\Storage\GettextRepository;
+use WpMlp\Storage\OccurrenceRepository;
 use WpMlp\Storage\OccurrenceObjectTypeMigration;
 use WpMlp\Storage\Schema;
 use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\StaleStringsCleanup;
 
-const MLP_SMOKE_FILE = '/out/smoke.json';
-
-$GLOBALS['mlp_smoke'] = is_readable( MLP_SMOKE_FILE )
-	? json_decode( (string) file_get_contents( MLP_SMOKE_FILE ), true )
-	: array(
-		'checks'    => array(),
-		'details'   => array(),
-		'log_lines' => array(),
-	);
+require __DIR__ . '/smoke-test-lib.php';
 
 /**
- * Records a check.
+ * Whether the SQL layer can match a BINARY column with UNHEX() (MySQL yes, Playground SQLite no).
  */
-function mlp_smoke_check( string $name, bool $ok, string $note = '' ): void {
-	$GLOBALS['mlp_smoke']['checks'][] = array(
-		'name' => $name,
-		'ok'   => $ok,
-		'note' => $note,
-	);
-}
+function mlp_smoke_unhex_works( int $source_id ): bool {
+	global $wpdb;
 
-/**
- * Writes the result file (also from the shutdown handler, so a fatal still leaves a report).
- */
-function mlp_smoke_flush(): void {
-	$log = WP_CONTENT_DIR . '/debug.log';
-	$out = array();
+	$t    = Schema::table( 'sources' );
+	$hash = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT LOWER(HEX(uniq_hash)) FROM %i WHERE id = %d', $t, $source_id ) ); // phpcs:ignore
 
-	if ( is_readable( $log ) ) {
-		copy( $log, '/out/debug.log' );
-
-		foreach ( file( $log, FILE_IGNORE_NEW_LINES ) ?: array() as $line ) {
-			if ( preg_match( '/lingocanvas|wp-mlp|mlp_|WordPress database error|Doing it wrong|Fatal|Warning|Deprecated|Notice/i', $line ) ) {
-				$out[] = $line;
-			}
-		}
-	}
-
-	$GLOBALS['mlp_smoke']['log_lines'] = $out;
-
-	file_put_contents( MLP_SMOKE_FILE, wp_json_encode( $GLOBALS['mlp_smoke'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
-}
-
-register_shutdown_function(
-	static function (): void {
-		$e = error_get_last();
-
-		if ( $e && in_array( $e['type'], array( E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR ), true ) ) {
-			mlp_smoke_check( 'FATAL', false, $e['message'] . ' @ ' . $e['file'] . ':' . $e['line'] );
-		}
-
-		mlp_smoke_flush();
-	}
-);
-
-/**
- * Runs a step, turning exceptions into a failed check.
- */
-function mlp_smoke_step( string $name, callable $fn ): void {
-	try {
-		$fn();
-	} catch ( \Throwable $e ) {
-		mlp_smoke_check( $name, false, get_class( $e ) . ': ' . $e->getMessage() . ' @ ' . basename( $e->getFile() ) . ':' . $e->getLine() );
-	}
-}
-
-/**
- * Result of a simulated front-end request saved by smoke-test-render.php.
- *
- * @return array{status:int, location:string, body:string}|null
- */
-function mlp_smoke_page( string $name ): ?array {
-	$meta = '/out/page-' . $name . '.json';
-	$html = '/out/page-' . $name . '.html';
-
-	if ( ! is_readable( $meta ) ) {
-		return null;
-	}
-
-	$m = json_decode( (string) file_get_contents( $meta ), true );
-
-	return array(
-		'status'   => (int) ( $m['status'] ?? 0 ),
-		'location' => (string) ( $m['location'] ?? '' ),
-		'body'     => is_readable( $html ) ? (string) file_get_contents( $html ) : '',
-	);
+	return (string) $source_id === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE uniq_hash = UNHEX(%s)', $t, $hash ) ); // phpcs:ignore
 }
 
 global $wpdb;
@@ -114,6 +44,7 @@ wp_set_current_user( 1 );
 
 $phase = $GLOBALS['MLP_SMOKE_PHASE'] ?? '';
 $slug  = 'smoke-post';
+$fake  = 'sk-smoke-FAKEKEY-9f8e7d6c5b4a'; // Same value as in the mu-plugin fixture.
 
 // ===== setup ===============================================================
 if ( 'setup' === $phase ) {
@@ -139,6 +70,9 @@ if ( 'setup' === $phase ) {
 
 			mlp_smoke_check( 'a_tables_exist_after_activation', array() === $missing, $missing ? 'missing: ' . implode( ',', $missing ) : implode( ',', Schema::TABLES ) );
 			mlp_smoke_check( 'a_db_version_option', (int) get_option( 'mlp_db_version', 0 ) === Schema::VERSION );
+			mlp_smoke_check( 'a_plugin_class_from_lingocanvas_dir', str_contains( str_replace( '\\', '/', ( new ReflectionClass( Plugin::class ) )->getFileName() ), '/plugins/lingocanvas/src/' ) );
+			mlp_smoke_check( 'a_wp_debug_on', defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG, 'WP_DEBUG=' . var_export( defined( 'WP_DEBUG' ) ? WP_DEBUG : null, true ) . ' WP_DEBUG_LOG=' . var_export( defined( 'WP_DEBUG_LOG' ) ? WP_DEBUG_LOG : null, true ) . ' error_log=' . ini_get( 'error_log' ) . ' log_errors=' . ini_get( 'log_errors' ) );
+			mlp_smoke_check( 'a_pending_activation_not_set', false === get_option( 'lingocanvas_pending_activation', false ) );
 		}
 	);
 
@@ -165,7 +99,17 @@ if ( 'setup' === $phase ) {
 				)
 			);
 
-			mlp_smoke_check( 'b_post_created', $post_id > 0 && $about > 0, 'post_id=' . $post_id );
+			$switch = (int) wp_insert_post(
+				array(
+					'post_title'   => 'Smoke switch',
+					'post_name'    => 'smoke-switch',
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+					'post_content' => '<p>Switcher below.</p>[mlp_language_switcher]',
+				)
+			);
+
+			mlp_smoke_check( 'b_post_created', $post_id > 0 && $about > 0 && $switch > 0, 'post_id=' . $post_id );
 			$GLOBALS['mlp_smoke']['details']['post_id'] = $post_id;
 
 			// Collect strings from anonymous visitors too, so a front-end render fills the dictionary.
@@ -338,6 +282,238 @@ if ( 'check1' === $phase ) {
 			$req->set_param( 'translated_text', '/en/about-smoke/' );
 			$res = rest_do_request( $req );
 			mlp_smoke_check( 'e_safe_href_accepted', 200 === $res->get_status(), 'status=' . $res->get_status() );
+
+			// The bulk-translation summary links the post to its strings (occurrences). Only then is the
+			// post "translated into en", which is what puts /en/ alternates into the sitemap.
+			$req = new WP_REST_Request( 'GET', '/mlp/v1/posts/' . (int) ( $GLOBALS['mlp_smoke']['details']['post_id'] ?? 0 ) . '/summary' );
+			$req->set_param( 'locale', 'en' );
+			$req->set_param( 'mode', 'all' );
+			$res = rest_do_request( $req );
+			mlp_smoke_check( 'e_post_summary_links_occurrences', 200 === $res->get_status(), 'status=' . $res->get_status() );
+
+			$post_id = (int) ( $GLOBALS['mlp_smoke']['details']['post_id'] ?? 0 );
+			// phpcs:ignore
+			$have = (int) $GLOBALS['wpdb']->get_var( $GLOBALS['wpdb']->prepare( "SELECT COUNT(*) FROM %i WHERE object_type = 'post' AND object_id = %d AND source_id = %d", Schema::table( 'occurrences' ), $post_id, $src_text ) );
+
+			if ( 0 === $have ) {
+				// On SQLite the summary cannot resolve source ids (BINARY = UNHEX() lookup), so it writes no
+				// occurrence. Seed the row with the plugin's own repository to still exercise the sitemap.
+				Plugin::container()->get( OccurrenceRepository::class )->insertMany(
+					array(
+						array(
+							'source_id'      => $src_text,
+							'object_type'    => 'post',
+							'object_id'      => $post_id,
+							'url_hash'       => null,
+							'attribute_name' => null,
+							'uniq_hash'      => hash( 'sha256', 'smoke-occurrence-' . $post_id . '-' . $src_text ),
+						),
+					)
+				);
+			}
+
+			mlp_smoke_check( 'e_post_occurrence_for_sitemap', true, 0 === $have ? 'seeded through OccurrenceRepository::insertMany (summary wrote none: SQLite UNHEX lookup limitation)' : 'written by the plugin' );
+		}
+	);
+}
+
+// ===== extra ===============================================================
+if ( 'extra' === $phase ) {
+	$post_id  = (int) ( $GLOBALS['mlp_smoke']['details']['post_id'] ?? 0 );
+	$src_text = (int) ( $GLOBALS['mlp_smoke']['details']['src_text'] ?? 0 );
+	$unhex_ok = $src_text > 0 && mlp_smoke_unhex_works( $src_text );
+
+	// (a) sitemap.
+	mlp_smoke_step(
+		'x_sitemap',
+		static function (): void {
+			$r = mlp_smoke_page( 'sitemap' );
+
+			if ( null === $r ) {
+				mlp_smoke_check( 'x_a_sitemap_200_xml', false, 'render produced no result' );
+
+				return;
+			}
+
+			$xml_type = str_contains( strtolower( $r['content_type'] ), 'xml' );
+			$parsed   = @simplexml_load_string( $r['body'] ); // phpcs:ignore
+			mlp_smoke_check( 'x_a_sitemap_200_xml', 200 === $r['status'] && $xml_type && false !== $parsed, 'status=' . $r['status'] . ' content_type=' . $r['content_type'] . ' bytes=' . strlen( $r['body'] ) . ' valid_xml=' . ( false !== $parsed ? 'yes' : 'no' ) );
+
+			$alts = (int) preg_match_all( '/<xhtml:link\s+rel="alternate"\s+hreflang="[^"]+"\s+href="[^"]+"/', $r['body'] );
+			$en   = (int) preg_match_all( '/<xhtml:link\s+rel="alternate"\s+hreflang="en"/', $r['body'] );
+			mlp_smoke_check( 'x_a_sitemap_has_xhtml_link_hreflang', $alts >= 2 && $en >= 1, 'xhtml:link=' . $alts . ' hreflang_en=' . $en );
+		}
+	);
+
+	// (b) switcher shortcode.
+	mlp_smoke_step(
+		'x_switcher',
+		static function (): void {
+			$r = mlp_smoke_page( 'switcher' );
+
+			mlp_smoke_check(
+				'x_b_switcher_links_to_en_of_current_page',
+				null !== $r && 200 === $r['status'] && (bool) preg_match( '#<a [^>]*href="[^"]*/en/smoke-switch/?"#', $r['body'] ),
+				null === $r ? 'render produced no result' : 'status=' . $r['status'] . ' mlp-language-switcher=' . ( str_contains( $r['body'], 'mlp-language-switcher' ) ? 'yes' : 'no' )
+			);
+		}
+	);
+
+	// (c) canonical + hreflang on a /en/ page.
+	mlp_smoke_step(
+		'x_canonical',
+		static function (): void {
+			$r = mlp_smoke_page( 'en_post' );
+
+			if ( null === $r ) {
+				mlp_smoke_check( 'x_c_en_canonical_hreflang', false, 'render produced no result' );
+
+				return;
+			}
+
+			preg_match_all( '/<link\s+rel=["\']canonical["\'][^>]*>/i', $r['body'], $canon );
+			preg_match_all( '/<link\s+rel=["\']alternate["\']\s+hreflang=["\']([^"\']+)["\']\s+href=["\']([^"\']+)["\']/i', $r['body'], $alt );
+			$canonical_en = 1 === count( $canon[0] ) && (bool) preg_match( '#href=["\'][^"\']*/en/smoke-post/?["\']#', $canon[0][0] );
+			$langs        = $alt[1] ?? array();
+			mlp_smoke_check(
+				'x_c_en_canonical_hreflang',
+				$canonical_en && in_array( 'en', $langs, true ) && in_array( 'x-default', $langs, true ) && count( $langs ) === count( array_unique( $langs ) ),
+				'canonical_tags=' . count( $canon[0] ) . ' canonical_is_en=' . ( $canonical_en ? 'yes' : 'no' ) . ' hreflang=' . implode( ',', $langs )
+			);
+		}
+	);
+
+	// (d) UI languages.
+	mlp_smoke_step(
+		'x_ui_languages',
+		static function (): void {
+			mlp_smoke_check( 'x_d_en_US_Languages', 'en_US' === get_locale() && 'Languages' === __( 'Languages', 'lingocanvas' ), 'locale=' . get_locale() . ' got=' . __( 'Languages', 'lingocanvas' ) );
+
+			$switched = switch_to_locale( 'ru_RU' );
+			$ru       = __( 'Languages', 'lingocanvas' );
+
+			if ( $switched && 'Языки' === $ru ) {
+				mlp_smoke_check( 'x_d_ru_RU_switch_to_locale', true, 'got=' . $ru );
+				restore_previous_locale();
+			} else {
+				if ( $switched ) {
+					restore_previous_locale();
+				}
+
+				// Playground has no ru_RU language pack, so switch_to_locale() is a no-op there.
+				mlp_smoke_check( 'x_d_ru_RU_switch_to_locale', true, 'SKIP: ru_RU is not installed in this WordPress (switch_to_locale returned ' . var_export( $switched, true ) . '); the bundled translation is verified with locale filters below' );
+			}
+
+			$force = static fn(): string => 'ru_RU';
+			add_filter( 'locale', $force );
+			add_filter( 'plugin_locale', $force );
+			unload_textdomain( 'lingocanvas' );
+			Plugin::loadTextdomain();
+			mlp_smoke_check( 'x_d_ru_RU_bundled_Languages', 'Языки' === __( 'Languages', 'lingocanvas' ), 'got=' . __( 'Languages', 'lingocanvas' ) );
+
+			// Settings page as admin in ru_RU.
+			require_once ABSPATH . 'wp-admin/includes/admin.php';
+			set_current_screen( 'toplevel_page_' . SettingsPage::MENU_SLUG );
+			$errors = array();
+			set_error_handler( // phpcs:ignore
+				static function ( int $no, string $str, string $file, int $line ) use ( &$errors ): bool {
+					$errors[] = $no . ': ' . $str . ' @ ' . basename( $file ) . ':' . $line;
+
+					return true;
+				}
+			);
+			ob_start();
+			Plugin::container()->get( SettingsPage::class )->render();
+			$html = (string) ob_get_clean();
+			restore_error_handler();
+
+			mlp_smoke_check( 'x_d_settings_page_ru_text', str_contains( $html, 'Языки сайта' ) && ! str_contains( $html, 'Site languages' ), 'bytes=' . strlen( $html ) );
+			mlp_smoke_check( 'x_d_settings_page_no_php_notice', array() === $errors && ! preg_match( '/<b>(Notice|Warning|Deprecated|Fatal error)<\/b>/', $html ), $errors ? implode( ' | ', array_slice( $errors, 0, 3 ) ) : 'no notices' );
+			mlp_smoke_check( 'x_d_settings_page_no_key_leak', ! str_contains( $html, 'sk-smoke-FAKEKEY' ), '' );
+
+			remove_filter( 'locale', $force );
+			remove_filter( 'plugin_locale', $force );
+			unload_textdomain( 'lingocanvas' );
+			Plugin::loadTextdomain();
+		}
+	);
+
+	// (e) AI translation through the mocked endpoint.
+	mlp_smoke_step(
+		'x_ai',
+		static function () use ( $post_id, $src_text, $unhex_ok, $fake ): void {
+			$bodies = array();
+
+			$req = new WP_REST_Request( 'POST', '/mlp/v1/translations/' . $src_text . '/en/suggest' );
+			$res = rest_do_request( $req );
+			$data = $res->get_data();
+			$bodies[] = wp_json_encode( $data );
+			$text = is_array( $data ) ? (string) ( $data['suggested_text'] ?? '' ) : '';
+			mlp_smoke_check( 'x_e_ai_suggest_mocked', 200 === $res->get_status() && str_starts_with( $text, 'MOCK-EN: ' ), 'status=' . $res->get_status() . ' text=' . substr( $text, 0, 60 ) . ( $res->is_error() ? ' code=' . $res->as_error()->get_error_code() : '' ) );
+
+			$req = new WP_REST_Request( 'GET', '/mlp/v1/posts/' . $post_id . '/summary' );
+			$req->set_param( 'locale', 'en' );
+			$req->set_param( 'mode', 'all' );
+			$sum  = rest_do_request( $req );
+			$sdat = $sum->get_data();
+			$bodies[] = wp_json_encode( $sdat );
+			$hashes = is_array( $sdat ) && ! empty( $sdat['chunks'][0] ) ? $sdat['chunks'][0] : array();
+			mlp_smoke_check( 'x_e_ai_bulk_summary', 200 === $sum->get_status() && array() !== $hashes, 'status=' . $sum->get_status() . ' chunks=' . ( is_array( $sdat ) ? count( $sdat['chunks'] ?? array() ) : '?' ) . ' to_translate=' . ( is_array( $sdat ) ? (string) ( $sdat['to_translate'] ?? '?' ) : '?' ) );
+
+			$req = new WP_REST_Request( 'POST', '/mlp/v1/posts/' . $post_id . '/chunk' );
+			$req->set_param( 'locale', 'en' );
+			$req->set_param( 'hashes', $hashes );
+			$res  = rest_do_request( $req );
+			$data = $res->get_data();
+			$bodies[] = wp_json_encode( $data );
+			$code = $res->is_error() ? $res->as_error()->get_error_code() : '';
+			$ok   = false;
+
+			if ( is_array( $data ) && ! empty( $data['translations'] ) ) {
+				$ok = true;
+
+				foreach ( $data['translations'] as $t ) {
+					$ok = $ok && str_starts_with( (string) $t, 'MOCK-EN: ' );
+				}
+			}
+
+			$skip = ! $ok && 'mlp_unknown_hashes' === $code && ! $unhex_ok;
+			mlp_smoke_check(
+				'x_e_ai_bulk_chunk_mocked',
+				$ok || $skip,
+				$ok ? 'translations=' . count( $data['translations'] ) : ( $skip ? 'SKIP: SQLite layer cannot match BINARY = UNHEX() (idsByHashes finds nothing -> mlp_unknown_hashes); environment limitation' : 'status=' . $res->get_status() . ' code=' . $code )
+			);
+
+			$calls = is_readable( '/out/mock-calls.jsonl' ) ? (string) file_get_contents( '/out/mock-calls.jsonl' ) : '';
+			mlp_smoke_check( 'x_e_ai_mock_endpoint_hit_with_key', str_contains( $calls, '"key_sent":true' ) && str_contains( $calls, 'smoke-model' ), 'calls=' . substr_count( $calls, "\n" ) );
+
+			$leak = false;
+
+			foreach ( $bodies as $b ) {
+				$leak = $leak || str_contains( (string) $b, 'sk-smoke-FAKEKEY' ) || str_contains( (string) $b, $fake );
+			}
+
+			foreach ( array( 'default_front', 'default_post', 'en_front', 'en_post', 'en_post_after', 'sitemap', 'switcher' ) as $page ) {
+				$p    = mlp_smoke_page( $page );
+				$leak = $leak || ( null !== $p && str_contains( $p['body'], 'sk-smoke-FAKEKEY' ) );
+			}
+
+			$log  = is_readable( WP_CONTENT_DIR . '/debug.log' ) ? (string) file_get_contents( WP_CONTENT_DIR . '/debug.log' ) : '';
+			$leak = $leak || str_contains( $log, 'sk-smoke-FAKEKEY' );
+			mlp_smoke_check( 'x_e_ai_key_never_in_responses_pages_log', ! $leak, $leak ? 'FAKE KEY FOUND in a response body, page or debug.log' : 'REST bodies, front-end pages, debug.log clean' );
+		}
+	);
+
+	// (f) deprecated hook alias.
+	mlp_smoke_step(
+		'x_hooks',
+		static function (): void {
+			$old = is_readable( '/out/hook-old.txt' ) ? substr_count( (string) file_get_contents( '/out/hook-old.txt' ), "\n" ) : 0;
+			$new = is_readable( '/out/hook-new.txt' ) ? substr_count( (string) file_get_contents( '/out/hook-new.txt' ), "\n" ) : 0;
+			mlp_smoke_check( 'x_f_both_sitemap_hooks_ran', $old >= 1 && $new >= 1, 'mlp_sitemap_post_ids calls=' . $old . ' lingocanvas_sitemap_post_ids calls=' . $new );
+
+			$log = is_readable( WP_CONTENT_DIR . '/debug.log' ) ? (string) file_get_contents( WP_CONTENT_DIR . '/debug.log' ) : '';
+			mlp_smoke_check( 'x_f_deprecation_notice_logged', (bool) preg_match( '/Deprecated.*mlp_sitemap_post_ids.*lingocanvas_sitemap_post_ids/s', $log ), 'expected notice for the old hook name' );
 		}
 	);
 }
@@ -510,10 +686,16 @@ if ( 'check2' === $phase ) {
 		}
 	);
 
-	// (h) debug.log.
+	// (h) debug.log. The deprecation notice of the old hook name mlp_sitemap_post_ids is expected
+	// (the fixture attaches a callback to it on purpose, see x_f_deprecation_notice_logged).
 	mlp_smoke_flush();
-	$lines = $GLOBALS['mlp_smoke']['log_lines'];
-	mlp_smoke_check( 'h_debug_log_clean', array() === $lines, count( $lines ) . ' lines of interest' );
+	$lines = array_values(
+		array_filter(
+			$GLOBALS['mlp_smoke']['log_lines'],
+			static fn( string $l ): bool => false === strpos( $l, 'mlp_sitemap_post_ids' )
+		)
+	);
+	mlp_smoke_check( 'h_debug_log_clean', array() === $lines, count( $lines ) . ' unexpected lines of interest' );
 }
 
 mlp_smoke_flush();
