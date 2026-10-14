@@ -38,6 +38,8 @@ use WpMlp\Translation\PostOccurrenceRows;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * «Перевести весь материал с ИИ» — заголовок, excerpt и `post_content` одной
  * операцией, а не по клику на каждый узел (визуальный редактор Этапа 3 для
@@ -561,7 +563,11 @@ final class PostTranslationController implements Hookable {
 			}
 		}
 
-		$wpdb->query( $failed ? 'ROLLBACK' : 'COMMIT' );
+		if ( $failed ) {
+			$wpdb->query( 'ROLLBACK' );
+		} else {
+			$wpdb->query( 'COMMIT' );
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 
 		if ( ! $failed ) {

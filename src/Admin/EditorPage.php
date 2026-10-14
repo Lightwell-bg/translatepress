@@ -27,6 +27,8 @@ use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\ProviderFactory;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Панель перевода слева и предпросмотр сайта справа (ТЗ 10.1).
  *

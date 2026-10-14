@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Frontend;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Дата правки записи (`wp_posts.post_modified`) относится только к
  * исходному языку — перевод живёт в отдельной таблице и её не меняет. Без

@@ -15,6 +15,8 @@ use Dom\HTMLDocument as NativeHtml5Document;
 use DOMDocument;
 use Throwable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Разбор готового HTML в DOM и обратная сериализация.
  *

@@ -11,6 +11,8 @@ namespace WpMlp\Routing;
 
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Приводит адрес к единственной канонической форме одним 301.
  *

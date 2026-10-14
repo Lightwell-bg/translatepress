@@ -11,6 +11,8 @@ namespace WpMlp\Settings;
 
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Неизменяемое значение: код, URL-слаг, название, статус и флаг языка.
  */

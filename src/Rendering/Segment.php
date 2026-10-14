@@ -11,6 +11,8 @@ namespace WpMlp\Rendering;
 
 use WpMlp\Support\UrlGuard;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Одно место в документе, куда можно подставить перевод.
  *

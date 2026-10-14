@@ -12,6 +12,8 @@ namespace WpMlp\Translation;
 use WpMlp\Rendering\PostSegment;
 use WpMlp\Support\Hash;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Строит строки для `OccurrenceRepository::insertMany()` — по одной на
  * уникальный сегмент, найденный при разборе записи для «Перевести весь

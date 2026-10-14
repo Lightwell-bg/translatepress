@@ -19,6 +19,8 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Показывает в стандартных списках WordPress, насколько запись переведена
  * на каждый дополнительный язык, и позволяет отобрать недопереведённые.
@@ -252,7 +254,7 @@ final class PostListLanguages implements Hookable {
 		$locale  = Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET[ self::NOTICE_LOCALE ] ) ) );
 		$count   = absint( wp_unslash( (string) $_GET[ self::NOTICE_COUNT ] ) );
 		$skipped = isset( $_GET[ self::NOTICE_SKIPPED ] ) ? absint( wp_unslash( (string) $_GET[ self::NOTICE_SKIPPED ] ) ) : 0;
-		$shown   = isset( $_GET[ self::NOTICE_STATE ] ) && '1' === (string) wp_unslash( (string) $_GET[ self::NOTICE_STATE ] );
+		$shown   = isset( $_GET[ self::NOTICE_STATE ] ) && '1' === sanitize_text_field( wp_unslash( (string) $_GET[ self::NOTICE_STATE ] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! isset( $this->settings->secondary()[ $locale ] ) ) {
@@ -882,8 +884,8 @@ final class PostListLanguages implements Hookable {
 		}
 
 		// Подзапрос x — строки записи как на экране «Перевод строк» (область object:ID).
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
-		$sql = "SELECT x.object_id AS object_id, COUNT(*) AS total{$selects}
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- SQL собран из кода: таблицы из Schema::table() (allowlist), счётчики $i — целые, подзапрос PostStringScope собран из констант; значения идут через prepare().
+		$sql ="SELECT x.object_id AS object_id, COUNT(*) AS total{$selects}
 			FROM (
 				" . PostStringScope::ownRowsSql( "o.object_id IN ({$idMarks})", true ) . "
 			) x{$joins}
@@ -893,7 +895,7 @@ final class PostListLanguages implements Hookable {
 		$params = array_merge( $ids, $position );
 
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A );
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		foreach ( $ids as $id ) {
 			foreach ( $locales as $locale ) {

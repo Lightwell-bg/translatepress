@@ -12,6 +12,8 @@ namespace WpMlp\Admin;
 use WpMlp\Rest\PostVisibilityController;
 use WpMlp\Support\Assets;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Один скрипт на все места админки, где есть переключатель показа записи на
  * языке (список записей, визуальный редактор): он слушает клики на уровне

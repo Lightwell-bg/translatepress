@@ -11,6 +11,8 @@ namespace WpMlp\Storage;
 
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Флаг «запись показывается на языке X» в метаполях записи.
  *
@@ -192,16 +194,16 @@ final class PostLanguageVisibility {
 
 		$typeMarks = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-		$count = $wpdb->get_var(
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- таблицы через %i, список типов собран из литералов %s; анализатор не считает параметры в array_merge().
+		$count =$wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT pm.post_id) FROM {$wpdb->postmeta} pm
-				 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				"SELECT COUNT(DISTINCT pm.post_id) FROM %i pm
+				 INNER JOIN %i p ON p.ID = pm.post_id
 				 WHERE pm.meta_key = %s AND pm.meta_value = %s AND p.post_status = 'publish' AND p.post_type IN ({$typeMarks})",
-				array_merge( array( $key, self::VALUE ), $types )
+				array_merge( array( $wpdb->postmeta, $wpdb->posts, $key, self::VALUE ), $types )
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		return (int) $count;
 	}
@@ -314,9 +316,9 @@ final class PostLanguageVisibility {
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 			$rows = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT ID FROM {$wpdb->posts}
+					"SELECT ID FROM %i
 					 WHERE ID IN ({$idMarks}) AND post_status = 'publish' AND post_type IN ({$typeMarks})",
-					array_merge( $chunk, $types )
+					array_merge( array( $wpdb->posts ), $chunk, $types )
 				)
 			);
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared

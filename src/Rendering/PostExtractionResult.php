@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Держит извлечённые сегменты вместе с документами, в которых живут их
  * DOM-узлы.

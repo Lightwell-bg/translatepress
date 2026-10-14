@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Frontend;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Убирает из списка записей саму служебную страницу и всё, что вложено под
  * ней (по цепочке родителей).

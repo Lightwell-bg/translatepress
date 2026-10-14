@@ -11,6 +11,8 @@ namespace WpMlp;
 
 use RuntimeException;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Реестр сервисов с ленивой инициализацией.
  *
@@ -60,7 +62,7 @@ final class Container {
 		}
 
 		if ( ! isset( $this->factories[ $id ] ) ) {
-			throw new RuntimeException( sprintf( 'Service "%s" is not registered in the container.', $id ) );
+			throw new RuntimeException( esc_html( sprintf( 'Service "%s" is not registered in the container.', $id ) ) );
 		}
 
 		$this->instances[ $id ] = ( $this->factories[ $id ] )( $this );

@@ -13,6 +13,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\SwitcherDisplay;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Ищет файл флага, положенный владельцем сайта.
  *

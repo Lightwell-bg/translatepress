@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Frontend;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Превращает список адресов в XML карты сайта.
  *

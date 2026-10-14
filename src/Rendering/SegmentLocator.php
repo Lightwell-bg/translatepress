@@ -11,6 +11,8 @@ namespace WpMlp\Rendering;
 
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Находит, каким именно куском текста в СЫРОЙ, ещё не разобранной строке
  * (`post_title`/`post_excerpt`/`post_content` как они лежат в базе) нужно

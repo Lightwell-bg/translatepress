@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Дёргает известные плагины полного кэширования страниц (ТЗ 12.1: «сбрасывать
  * страницу/объектный кэш после ручного изменения перевода»).
@@ -91,7 +93,7 @@ final class PageCachePurger {
 	 */
 	private static function purgeLiteSpeedCache(): void {
 		if ( has_action( 'litespeed_purge_all' ) ) {
-			do_action( 'litespeed_purge_all' );
+			do_action( 'litespeed_purge_all' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- third-party hook of the LiteSpeed Cache plugin.
 		}
 	}
 

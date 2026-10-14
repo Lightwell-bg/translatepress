@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\I18n;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Отсеивает msgid, которые технически проходят через `__()`, но текстом
  * для читателя не являются.

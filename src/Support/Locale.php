@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Support;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Единственное место, где решается, что считать допустимым кодом языка.
  *

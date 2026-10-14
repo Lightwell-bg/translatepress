@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Translation;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Что провайдеру полезно знать о переводимых строках.
  *

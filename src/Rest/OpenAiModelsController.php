@@ -16,6 +16,8 @@ use WpMlp\Support\Hookable;
 use WpMlp\Translation\OpenAiProvider;
 use WpMlp\Translation\ProviderFactory;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * `GET /wp-json/mlp/v1/openai/models[?refresh=1]`.
  *

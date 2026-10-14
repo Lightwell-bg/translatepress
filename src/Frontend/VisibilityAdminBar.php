@@ -17,6 +17,8 @@ use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Владелец сайта, открыв запись на дополнительном языке, видит в админ-панели
  * «Скрыто на DE — посетители не видят» и кнопку «Показать на DE» (или

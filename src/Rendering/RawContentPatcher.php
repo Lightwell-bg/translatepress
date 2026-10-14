@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Клеит новую строку из кусков исходной, заменяя только явно найденные
  * диапазоны — в отличие от `HtmlDocument::parse()` → правка DOM →

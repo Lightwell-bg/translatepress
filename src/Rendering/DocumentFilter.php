@@ -11,6 +11,8 @@ namespace WpMlp\Rendering;
 
 use WpMlp\Settings\Language;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Изменение документа после подстановки переводов.
  *

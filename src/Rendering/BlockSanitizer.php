@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Пропускает только безопасную инлайновую разметку (ТЗ 13).
  *

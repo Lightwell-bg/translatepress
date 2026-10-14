@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Support;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Минимальный загрузчик `.env` без зависимости от composer-пакетов.
  *

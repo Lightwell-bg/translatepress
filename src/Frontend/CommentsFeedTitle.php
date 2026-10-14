@@ -18,6 +18,8 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Заголовок вида `title="CenterAI » {заголовок записи} Comments Feed"`
  * ядро WordPress собирает само, в `feed_links_extra()` на `wp_head`, —

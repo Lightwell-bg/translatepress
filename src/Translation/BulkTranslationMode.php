@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Translation;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Решает, какие из найденных строк записи вообще нужно отправлять
  * провайдеру — до единого HTTP-вызова к ИИ (ТЗ визуального редактора:

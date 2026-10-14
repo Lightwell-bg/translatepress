@@ -11,6 +11,8 @@ namespace WpMlp\Settings;
 
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Единственная точка доступа к списку языков.
  *

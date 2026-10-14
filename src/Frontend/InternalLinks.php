@@ -15,6 +15,8 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Language;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Добавляет языковой префикс к внутренним ссылкам в готовом HTML (ТЗ 4.2:
  * маршрутизатор «переписывает внутренние ссылки в итоговом DOM»).

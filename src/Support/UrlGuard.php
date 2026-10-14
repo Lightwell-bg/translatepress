@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Support;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Не даёт сохранить или вывести адрес с опасной схемой (`javascript:`,
  * `data:`, `vbscript:`): иначе переводчик мог бы положить в перевод ссылки

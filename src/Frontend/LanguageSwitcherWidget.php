@@ -12,6 +12,8 @@ namespace WpMlp\Frontend;
 use WP_Widget;
 use WpMlp\Plugin;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Классический виджет: работает и в «Виджетах», и в блочном редакторе через
  * блок «Классический виджет». Собственный блок Gutenberg потребовал бы сборки

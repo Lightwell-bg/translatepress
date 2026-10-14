@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Допустимые значения колонки `status` (ТЗ 6.2).
  */

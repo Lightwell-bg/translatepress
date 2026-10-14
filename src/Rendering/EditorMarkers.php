@@ -11,6 +11,8 @@ namespace WpMlp\Rendering;
 
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Помечает переводимые узлы идентификаторами строк (ТЗ 10.2).
  *

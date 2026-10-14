@@ -26,6 +26,8 @@ use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\ProviderFactory;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Таблица найденных строк с полем ручного перевода.
  *

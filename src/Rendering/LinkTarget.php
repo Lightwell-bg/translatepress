@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Решает, стоит ли заводить `href` как отдельную строку словаря.
  *

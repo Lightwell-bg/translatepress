@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Settings;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Режимы подписи в переключателе языков и разбор их значения.
  *

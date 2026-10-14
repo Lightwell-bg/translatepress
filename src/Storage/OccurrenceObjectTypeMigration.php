@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Прошлые версии писали в `object_id` результат `get_queried_object_id()` для
  * любой страницы, а `object_type` ставили всегда `url`. На архивах рубрик,
@@ -132,8 +134,10 @@ final class OccurrenceObjectTypeMigration {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$upper = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT MAX(b.id) FROM (SELECT id FROM {$occurrences} WHERE id > %d ORDER BY id LIMIT " . self::BATCH . ') b',
-				$cursor
+				'SELECT MAX(b.id) FROM (SELECT id FROM %i WHERE id > %d ORDER BY id LIMIT %d) b',
+				$occurrences,
+				$cursor,
+				self::BATCH
 			)
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -153,16 +157,16 @@ final class OccurrenceObjectTypeMigration {
 		if ( array() !== $types ) {
 			$typeMarks = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- таблицы через %i, список типов собран из литералов %s; анализатор не считает параметры в array_merge()
 			$retag = $wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$occurrences} o SET o.object_type = %s
+					"UPDATE %i o SET o.object_type = %s
 					 WHERE o.id > %d AND o.id <= %d AND o.object_type = 'url' AND o.object_id IS NOT NULL
-						AND EXISTS (SELECT 1 FROM {$posts} p WHERE p.ID = o.object_id AND p.post_status = 'publish' AND p.post_type IN ({$typeMarks}))",
-					array_merge( array( OccurrenceRepository::OBJECT_TYPE_POST, $cursor, $upper ), $types )
+						AND EXISTS (SELECT 1 FROM %i p WHERE p.ID = o.object_id AND p.post_status = 'publish' AND p.post_type IN ({$typeMarks}))",
+					array_merge( array( $occurrences, OccurrenceRepository::OBJECT_TYPE_POST, $cursor, $upper, $posts ), $types )
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
 
 			if ( $this->failed( $retag ) ) {
 				return array( 'done' => false, 'error' => true );
@@ -173,8 +177,9 @@ final class OccurrenceObjectTypeMigration {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$clear = $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$occurrences} SET object_id = NULL
+				"UPDATE %i SET object_id = NULL
 				 WHERE id > %d AND id <= %d AND object_type = 'url' AND object_id IS NOT NULL",
+				$occurrences,
 				$cursor,
 				$upper
 			)

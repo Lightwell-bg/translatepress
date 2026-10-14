@@ -16,6 +16,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Блок «Языки» во «Внешний вид → Меню».
  *

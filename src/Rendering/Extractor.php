@@ -12,6 +12,8 @@ namespace WpMlp\Rendering;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Обходит документ и собирает всё, что можно перевести (ТЗ 4.3–4.4).
  *

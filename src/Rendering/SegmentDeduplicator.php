@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Одинаковые по `uniq_hash` сегменты на странице ищутся в словаре один раз
  * (ТЗ 4.5) — нужно решить, какой из них представляет всю группу при записи

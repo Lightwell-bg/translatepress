@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Готовит запись к переводу «Перевести весь материал с ИИ» одним заходом.
  *

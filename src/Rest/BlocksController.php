@@ -21,6 +21,8 @@ use WpMlp\Support\Hash;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * `POST /wp-json/mlp/v1/blocks` и `DELETE /wp-json/mlp/v1/blocks/{id}` (ТЗ 10.3).
  *

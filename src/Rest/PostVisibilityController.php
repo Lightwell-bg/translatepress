@@ -17,6 +17,8 @@ use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Два маршрута для экрана управления видимостью записей:
  *

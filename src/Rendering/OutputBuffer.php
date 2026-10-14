@@ -14,6 +14,8 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Support\FrontendRequest;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Включает output buffering на дополнительных языках (ТЗ 4.3).
  *

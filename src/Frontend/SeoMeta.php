@@ -19,6 +19,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Приводит к текущему языку то, что нельзя перевести — только заменить.
  *

@@ -93,20 +93,20 @@ if ( version_compare( PHP_VERSION, WP_MLP_MIN_PHP, '<' ) ) {
  * Сам закрывающий тег PHP в `//`-комментарии писать нельзя: он завершает
  * PHP-код прямо посреди комментария, и остаток файла уходит в вывод.
  */
-$mlp_content_env = \WpMlp\Translation\ProviderFactory::contentEnvPath();
-$mlp_parent_env  = \WpMlp\Translation\ProviderFactory::parentEnvPath();
+$wp_mlp_content_env = \WpMlp\Translation\ProviderFactory::contentEnvPath();
+$wp_mlp_parent_env  = \WpMlp\Translation\ProviderFactory::parentEnvPath();
 
-if ( null !== $mlp_content_env ) {
-	\WpMlp\Support\Env::loadGuarded( $mlp_content_env );
+if ( null !== $wp_mlp_content_env ) {
+	\WpMlp\Support\Env::loadGuarded( $wp_mlp_content_env );
 }
 
-if ( null !== $mlp_parent_env ) {
-	\WpMlp\Support\Env::load( $mlp_parent_env );
+if ( null !== $wp_mlp_parent_env ) {
+	\WpMlp\Support\Env::load( $wp_mlp_parent_env );
 }
 
 \WpMlp\Support\Env::load( WP_MLP_DIR . '.env' );
 
-unset( $mlp_content_env, $mlp_parent_env );
+unset( $wp_mlp_content_env, $wp_mlp_parent_env );
 
 register_activation_hook( __FILE__, array( \WpMlp\Plugin::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \WpMlp\Plugin::class, 'deactivate' ) );

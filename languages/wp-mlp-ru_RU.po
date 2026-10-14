@@ -1,0 +1,1701 @@
+# Russian translation for WP Multilang Press.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Multilang Press\n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Domain: wp-mlp\n"
+
+#: src/Admin/SettingsPage.php
+msgid "The flag file for language \"%s\" failed to upload. Please try again."
+msgstr "Файл флага для языка «%s» не загрузился — попробуйте ещё раз."
+
+#: src/Admin/SettingsPage.php
+msgid "The flag for language \"%1$s\" was not saved: an SVG file up to %2$d KB is required. The plugin does not accept other formats."
+msgstr "Флаг для языка «%1$s» не сохранён: нужен файл SVG размером до %2$d КБ. Другие форматы плагин не принимает."
+
+#: src/Admin/SettingsPage.php
+msgid "(saved)"
+msgstr "(сохранённая)"
+
+#: src/Admin/SettingsPage.php
+msgid "Other model…"
+msgstr "Другая модель…"
+
+#: src/Admin/SettingsPage.php
+msgid "Refresh list"
+msgstr "Обновить список"
+
+#: src/Admin/SettingsPage.php
+msgid "Loading list…"
+msgstr "Загрузка списка…"
+
+#: src/Admin/SettingsPage.php
+msgid "Could not load the model list"
+msgstr "Не удалось получить список моделей"
+
+#: src/Admin/SettingsPage.php
+msgid "Enabling…"
+msgstr "Включаю…"
+
+#: src/Admin/SettingsPage.php
+msgid "Could not enable posts"
+msgstr "Не удалось включить записи"
+
+#: src/Admin/SettingsPage.php
+msgid "Posts enabled: %d"
+msgstr "Включено записей: %d"
+
+#: src/Admin/SettingsPage.php
+msgid "Multilingual"
+msgstr "Мультиязычность"
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/PostListLanguages.php
+#: src/Frontend/NavMenu.php
+msgid "Languages"
+msgstr "Языки"
+
+#: src/Admin/SettingsPage.php
+msgid "WP Multilang Press requires pretty permalinks. Open %s and choose any structure except \"Plain\"."
+msgstr "WP Multilang Press требует «красивые» постоянные ссылки. Откройте %s и выберите любую структуру, кроме «Простые»."
+
+#: src/Admin/SettingsPage.php
+msgid "Settings → Permalinks"
+msgstr "Настройки → Постоянные ссылки"
+
+#: src/Admin/SettingsPage.php
+msgid "You do not have permission to change these settings."
+msgstr "Недостаточно прав для изменения настроек."
+
+#: src/Admin/SettingsPage.php
+msgid "Currently shown in %s — posts and pages:"
+msgstr "Сейчас показано на %s — записей и страниц:"
+
+#: src/Admin/SettingsPage.php
+msgid "Enable all posts fully translated into %s"
+msgstr "Включить все полностью переведённые на %s"
+
+#: src/Admin/SettingsPage.php
+msgid "No posts are enabled for %s — the language will be empty after saving."
+msgstr "На %s не включено ни одной записи — после сохранения язык будет пустым."
+
+#: src/Admin/SettingsPage.php
+msgid "Site languages"
+msgstr "Языки сайта"
+
+#: src/Admin/SettingsPage.php
+msgid "The default language is served at the regular site addresses, without a prefix. Other languages live under their own prefix, for example /en/. A draft language is not available to visitors and is not included in hreflang."
+msgstr "Язык по умолчанию отдаётся по обычным адресам сайта, без префикса. Остальные языки живут на своём префиксе, например /en/. Черновой язык недоступен посетителям и не попадает в hreflang."
+
+#: src/Admin/SettingsPage.php
+msgid "What each column means:"
+msgstr "Что в какой колонке:"
+
+#: src/Admin/SettingsPage.php
+msgid "\"Language code\" is a short name used inside the plugin. \"URL slug\" is what appears in the address: /bg/article/. Visitors see \"Name\" and \"Flag\" in the language switcher. \"WordPress locale\" is the name under which WordPress looks up translations of its own interface (bg_BG, en_US); it is why \"Reply\" becomes \"Отговор\" without any effort on your part."
+msgstr "«Код языка» — короткое имя внутри плагина. «URL-слаг» — то, что появится в адресе: /bg/статья/. «Название» и «Флаг» видит посетитель в переключателе языков. «Локаль WordPress» — имя, под которым WordPress ищет переводы своего интерфейса (bg_BG, en_US); именно благодаря ей «Reply» становится «Отговор» без вашего участия."
+
+#: src/Admin/SettingsPage.php
+msgid "Order"
+msgstr "Порядок"
+
+#: src/Admin/SettingsPage.php
+msgid "Language code"
+msgstr "Код языка"
+
+#: src/Admin/SettingsPage.php
+msgid "URL slug"
+msgstr "URL-слаг"
+
+#: src/Admin/SettingsPage.php
+msgid "Name"
+msgstr "Название"
+
+#: src/Admin/SettingsPage.php
+msgid "Flag"
+msgstr "Флаг"
+
+#: src/Admin/SettingsPage.php
+msgid "WordPress locale"
+msgstr "Локаль WordPress"
+
+#: src/Admin/SettingsPage.php
+msgid "The name under which WordPress stores translations of its own interface: en_US, bg_BG, ru_RU. Core, the theme and plugins use it to find their translation files and show \"Ответить\" instead of \"Reply\". Do not confuse it with the language code on the left, which goes into the page address."
+msgstr "Имя, под которым WordPress хранит переводы своего интерфейса: en_US, bg_BG, ru_RU. По нему ядро, тема и плагины находят свои файлы перевода и сами отдают «Ответить» вместо «Reply». Не путать с кодом языка слева — тот идёт в адрес страницы."
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Status"
+msgstr "Статус"
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Delete"
+msgstr "Удалить"
+
+#: src/Admin/SettingsPage.php
+msgid "Default language"
+msgstr "Язык по умолчанию"
+
+#: src/Admin/SettingsPage.php
+msgid "The language in which you write content in WordPress. Add and save a new language first; only then can you select it here."
+msgstr "Язык, на котором вы пишете контент в WordPress. Новый язык сначала добавьте и сохраните, только потом его можно выбрать здесь."
+
+#: src/Admin/SettingsPage.php
+msgid "Show in switcher"
+msgstr "Показывать в переключателе"
+
+#: src/Admin/SettingsPage.php
+msgid "Language name"
+msgstr "Название языка"
+
+#: src/Admin/SettingsPage.php
+msgid "Language code (RU, EN)"
+msgstr "Код языка (RU, EN)"
+
+#: src/Admin/SettingsPage.php
+msgid "Flag only"
+msgstr "Только флаг"
+
+#: src/Admin/SettingsPage.php
+msgid "Flag and language code"
+msgstr "Флаг и код языка"
+
+#: src/Admin/SettingsPage.php
+msgid "The order of languages in the switcher follows the order of rows in the table above — rearrange them with the arrows on the left."
+msgstr "Порядок языков в переключателе задаётся порядком строк в таблице выше — переставьте их стрелками слева."
+
+#: src/Admin/SettingsPage.php
+msgid "The flag is taken from the file %s, named by the language code from the first column. If there is no file, the emoji entered by hand is shown, and if there is none, the language code. More about flags is in \"Help\" at the top right."
+msgstr "Флаг берётся из файла %s — по коду языка из первой колонки. Если файла нет, показывается вписанный вручную emoji, а если нет и его — код языка. Подробнее о флагах — в «Помощь» справа вверху."
+
+#: src/Admin/SettingsPage.php
+msgid "code"
+msgstr "код"
+
+#: src/Admin/SettingsPage.php
+msgid "String collection"
+msgstr "Сбор строк"
+
+#: src/Admin/SettingsPage.php
+msgid "Remember new strings when I (an administrator) open a page in an additional language"
+msgstr "Запоминать новые строки, когда я (администратор) открываю страницу на дополнительном языке"
+
+#: src/Admin/SettingsPage.php
+msgid "The plugin cannot know in advance what text the theme will output; it finds out only when a page is actually displayed. So the translation list fills up like this: you log in to the admin, open a page in an additional language, the plugin remembers everything it found on it, and those strings appear in \"String translation\". Only what you chose to open ends up in the list."
+msgstr "Плагин не знает заранее, какой текст выведет тема, — он узнаёт это только когда страница реально показана. Поэтому список для перевода наполняется так: вы, войдя в админку, открываете страницу на дополнительном языке, плагин запоминает всё, что на ней нашлось, и эти строки появляются в «Переводе строк». Так в список попадает только то, что вы сами решили открыть."
+
+#: src/Admin/SettingsPage.php
+msgid "If the site sits behind a page cache plugin, administrators usually bypass it, so collection works. Turning it off only makes sense once the site is fully translated."
+msgstr "Если сайт стоит за плагином кэша страниц, администраторы обычно его обходят, поэтому сбор работает. Выключать имеет смысл, только когда сайт полностью переведён."
+
+#: src/Admin/SettingsPage.php
+msgid "Also remember strings from pages opened by visitors"
+msgstr "Также запоминать строки со страниц, которые открывают посетители"
+
+#: src/Admin/SettingsPage.php
+msgid "Usually not needed: the list will fill with the text of every page anyone opened, even pages you never meant to translate."
+msgstr "Обычно не нужно: список наполнится текстом всех страниц, которые кто-то открыл, даже если вы не собирались их переводить."
+
+#: src/Admin/SettingsPage.php
+msgid "Sitemap"
+msgstr "Карта сайта"
+
+#: src/Admin/SettingsPage.php
+msgid "Contains all language versions with reciprocal hreflang links, which tell Google these are one page in different languages, not duplicates. Untranslated pages are not included in the sitemap."
+msgstr "Содержит все языковые версии со взаимными hreflang — по ним Google понимает, что это одна страница на разных языках, а не дубли. Непереведённые страницы в карту не попадают."
+
+#: src/Admin/SettingsPage.php
+msgid "The address is already added to robots.txt, so search engines will find it on their own. Submitting it manually in Google Search Console is faster."
+msgstr "Адрес уже добавлен в robots.txt, поэтому поисковики найдут его сами. Отправить его вручную в Google Search Console — быстрее."
+
+#: src/Admin/SettingsPage.php
+msgid "Exclude from sitemap"
+msgstr "Исключить из карты сайта"
+
+#: src/Admin/SettingsPage.php
+msgid "One slug per line: the last segment of the page address, without slashes (for /blog/checkout/ enter checkout). A page with child pages is excluded together with them."
+msgstr "По одному слагу на строку — последний сегмент адреса страницы, без слешей (для /blog/oformlenie-zakaza/ впишите oformlenie-zakaza). Страница со вложенными страницами исключается вместе с ними."
+
+#: src/Admin/SettingsPage.php
+msgid "You do not always need to fill this in: WooCommerce cart, checkout and account pages, as well as pages marked noindex in Yoast SEO, Rank Math or SEOPress, are excluded automatically without this field. Enter here only what is left without a cart plugin and without a noindex mark — for example, a technical \"No access\" page or a manually created checkout page."
+msgstr "Заполнять нужно не всегда: страницы корзины, оформления заказа и личного кабинета WooCommerce, а также страницы, помеченные noindex в Yoast SEO, Rank Math или SEOPress, исключаются сами, без этого поля. Впишите сюда только то, что осталось без плагина корзины и без отметки noindex — например, техническую страницу «Нет доступа» или созданную вручную страницу оформления заказа."
+
+#: src/Admin/SettingsPage.php
+msgid "Untranslated posts"
+msgstr "Непереведённые записи"
+
+#: src/Admin/SettingsPage.php
+msgid "Show all posts (translated or not)"
+msgstr "Показывать все записи (переведённые и нет)"
+
+#: src/Admin/SettingsPage.php
+msgid "In each language, show only posts enabled manually (recommended)"
+msgstr "Показывать на языке только записи, включённые вручную (рекомендуется)"
+
+#: src/Admin/SettingsPage.php
+msgid "In manual mode, a post or page appears in an additional language (in lists, menus, the sitemap and by direct link) only when you have enabled it for that language. The rest link to the default language version."
+msgstr "В ручном режиме запись или страница появляется на дополнительном языке (в списках, меню, карте сайта и по прямой ссылке), лишь когда вы её включили для этого языка. Остальные ведут на русскую версию."
+
+#: src/Admin/SettingsPage.php
+msgid "Plugin uninstall"
+msgstr "Удаление плагина"
+
+#: src/Admin/SettingsPage.php
+msgid "Delete all translations and tables when the plugin is uninstalled"
+msgstr "Удалить все переводы и таблицы при удалении плагина"
+
+#: src/Admin/SettingsPage.php
+msgid "Off by default: after the plugin is uninstalled, translations stay in the database and are restored if you reinstall it."
+msgstr "По умолчанию выключено: после удаления плагина переводы остаются в базе и восстанавливаются при повторной установке."
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "OpenAI key"
+msgstr "Ключ OpenAI"
+
+#: src/Admin/SettingsPage.php
+msgid "••••••••  (leave empty to keep unchanged)"
+msgstr "••••••••  (оставьте пустым, чтобы не менять)"
+
+#: src/Admin/SettingsPage.php
+msgid "Delete the saved key"
+msgstr "Удалить сохранённый ключ"
+
+#: src/Admin/SettingsPage.php
+msgid "Stored in the site database, not in files. Get a key: %s."
+msgstr "Хранится в базе данных сайта, не в файлах. Взять ключ: %s."
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "OpenAI model"
+msgstr "Модель OpenAI"
+
+#: src/Admin/SettingsPage.php
+msgid "Save the OpenAI key first — then a list of models will appear here."
+msgstr "Сначала сохраните ключ OpenAI — тогда здесь появится список моделей."
+
+#: src/Admin/SettingsPage.php
+msgid "The field is empty — without it the \"Translate with AI\" button will not appear, even if a key is saved."
+msgstr "Поле пустое — без него кнопка «Перевести с ИИ» не появится, даже если ключ сохранён."
+
+#: src/Admin/SettingsPage.php
+msgid "Choose a model from the list returned by the API, or enter the identifier manually (\"Other model…\")."
+msgstr "Выберите модель из списка, который отдаёт API, или укажите идентификатор вручную («Другая модель…»)."
+
+#: src/Admin/SettingsPage.php
+msgid "API address"
+msgstr "Адрес API"
+
+#: src/Admin/SettingsPage.php
+msgid "Change only for your own proxy or a compatible gateway instead of api.openai.com."
+msgstr "Меняйте только для своего прокси или совместимого шлюза вместо api.openai.com."
+
+#: src/Admin/SettingsPage.php
+msgid "Daily character limit"
+msgstr "Дневной лимит символов"
+
+#: src/Admin/SettingsPage.php
+msgid "How many characters in total can be sent to OpenAI per day by clicking \"Translate with AI\". A safeguard against accidental spending, not automation — the plugin never translates anything on its own."
+msgstr "Сколько символов в сумме можно отправить в OpenAI за день, нажимая «Перевести с ИИ». Защита от случайных расходов, не автоматизация — плагин ничего не переводит сам."
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Save"
+msgstr "Сохранить"
+
+#: src/Admin/SettingsPage.php
+msgid "The value is set in wp-config.php (%s); the field above is not used."
+msgstr "Значение задано в wp-config.php (%s) — поле выше не используется."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is set in wp-config.php (%s); the field below is not used."
+msgstr "Ключ задан в wp-config.php (%s) — поле ниже не используется."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is stored in the database and survives plugin updates. Ends with \"%s\"."
+msgstr "Ключ хранится в базе данных — переживает обновление плагина. Заканчивается на «%s»."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is read from wp-content/wp-mlp.env.php and survives plugin updates."
+msgstr "Ключ берётся из wp-content/wp-mlp.env.php — переживает обновление плагина."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is read from a wp-mlp.env file above the WordPress root and survives plugin updates."
+msgstr "Ключ берётся из файла wp-mlp.env выше корня WordPress — переживает обновление плагина."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/wp-mlp.env.php."
+msgstr "Ключ берётся из .env в папке плагина — он будет удалён при замене плагина через ZIP. Вставьте ключ в поле ниже или перенесите его в wp-content/wp-mlp.env.php."
+
+#: src/Admin/SettingsPage.php
+msgid "The key is set by a server environment variable."
+msgstr "Ключ задан переменной окружения сервера."
+
+#: src/Admin/SettingsPage.php
+msgid "No key saved."
+msgstr "Ключ не сохранён."
+
+#: src/Admin/SettingsPage.php
+msgid "The wp-mlp.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>"
+msgstr "Файл wp-mlp.env.php без защитной первой строки — не используется. Первой строкой должно быть: <?php exit; ?>"
+
+#: src/Admin/SettingsPage.php
+msgid "Add language"
+msgstr "Добавить язык"
+
+#: src/Admin/SettingsPage.php
+msgid "Choose a language from the list or enter a locale such as de_DE."
+msgstr "Выберите язык из списка или впишите локаль вроде de_DE."
+
+#: src/Admin/SettingsPage.php
+msgid "Start typing: Deutsch, French, pt_BR…"
+msgstr "Начните вводить: Deutsch, French, pt_BR…"
+
+#: src/Admin/SettingsPage.php
+msgid "Add"
+msgstr "Добавить"
+
+#: src/Admin/SettingsPage.php
+msgid "Choose a language from the WordPress list or enter its locale manually (for example, de_DE). The number of languages is not limited. Do not forget to click \"Save\" at the bottom of the page."
+msgstr "Выберите язык из списка WordPress или впишите его локаль вручную (например, de_DE). Число языков не ограничено. Не забудьте нажать «Сохранить» внизу страницы."
+
+#: src/Admin/SettingsPage.php
+msgid "Up"
+msgstr "Выше"
+
+#: src/Admin/SettingsPage.php
+msgid "Move language up"
+msgstr "Переместить язык выше"
+
+#: src/Admin/SettingsPage.php
+msgid "Down"
+msgstr "Ниже"
+
+#: src/Admin/SettingsPage.php
+msgid "Move language down"
+msgstr "Переместить язык ниже"
+
+#: src/Admin/SettingsPage.php
+msgid "e.g. de"
+msgstr "например, de"
+
+#: src/Admin/SettingsPage.php
+msgid "same as code"
+msgstr "как код"
+
+#: src/Admin/SettingsPage.php
+msgid "e.g. Deutsch"
+msgstr "например, Deutsch"
+
+#: src/Admin/SettingsPage.php
+msgid "e.g. de_DE"
+msgstr "например, de_DE"
+
+#: src/Admin/SettingsPage.php
+msgid "remove"
+msgstr "убрать"
+
+#: src/Admin/SettingsPage.php
+msgid "Flag image (SVG). It will be saved under the language code from the first column."
+msgstr "Картинка флага (SVG). Загрузится под кодом языка из первой колонки."
+
+#: src/Admin/SettingsPage.php
+msgid "Fallback: an emoji flag. Shown if no image is uploaded. Windows does not render emoji flags; letters are shown there instead."
+msgstr "Запасной вариант: emoji-флаг. Показывается, если картинка не загружена. На Windows emoji-флаги не отображаются — там будут видны буквы."
+
+#: src/Admin/SettingsPage.php
+msgid "WordPress locale: core, the theme and plugins look up their translations under this name"
+msgstr "Локаль WordPress: под этим именем ядро, тема и плагины ищут свои переводы"
+
+#: src/Admin/SettingsPage.php
+msgid "The language pack will be offered after saving"
+msgstr "Пакет будет предложен после сохранения"
+
+#: src/Admin/SettingsPage.php
+msgid "default"
+msgstr "по умолчанию"
+
+#: src/Admin/SettingsPage.php
+msgid "Published"
+msgstr "Опубликован"
+
+#: src/Admin/SettingsPage.php
+msgid "Draft"
+msgstr "Черновик"
+
+#: src/Admin/SettingsPage.php
+msgid "Delete language"
+msgstr "Удалить язык"
+
+#: src/Admin/SettingsPage.php
+msgid "Built-in locale: no pack needed."
+msgstr "Встроенная локаль — пакет не нужен."
+
+#: src/Admin/SettingsPage.php
+msgid "Language pack installed."
+msgstr "Языковой пакет установлен."
+
+#: src/Admin/SettingsPage.php
+msgid "No language pack: interface strings will stay in English."
+msgstr "Языкового пакета нет — строки интерфейса останутся на английском."
+
+#: src/Admin/SettingsPage.php
+msgid "Automatic installation is unavailable: no write permission for wp-content/languages, or access to api.wordpress.org is blocked. Upload the translation files manually."
+msgstr "Автоматическая установка недоступна: нет прав на запись в wp-content/languages или закрыт доступ к api.wordpress.org. Загрузите файлы перевода вручную."
+
+#: src/Admin/SettingsPage.php
+msgid "Download language pack"
+msgstr "Скачать языковой пакет"
+
+#: src/Admin/SettingsPage.php
+msgid "Settings saved."
+msgstr "Настройки сохранены."
+
+#: src/Admin/SettingsPage.php
+msgid "Could not download the language pack. Check that a translation for this locale exists on translate.wordpress.org and that the site is allowed to access api.wordpress.org."
+msgstr "Не удалось скачать языковой пакет. Проверьте, что для этой локали существует перевод на translate.wordpress.org и что сайту разрешён доступ к api.wordpress.org."
+
+#: src/Admin/HelpTabs.php
+msgid "Full guide"
+msgstr "Полное руководство"
+
+#: src/Admin/HelpTabs.php
+msgid "Located in the plugin folder: docs/user-guide.md — installation, setup and translation from start to finish."
+msgstr "Лежит в папке плагина: docs/user-guide.md — установка, настройка и перевод от начала до конца."
+
+#: src/Admin/HelpTabs.php
+msgid "Getting started"
+msgstr "С чего начать"
+
+#: src/Admin/HelpTabs.php
+msgid "Fill in a row for each language, choose the default language — the one you write in — and save."
+msgstr "Заполните строку для каждого языка, выберите язык по умолчанию — тот, на котором вы пишете, — и сохраните."
+
+#: src/Admin/HelpTabs.php
+msgid "Be sure to check two things:"
+msgstr "Обязательно проверьте две вещи:"
+
+#: src/Admin/HelpTabs.php
+msgid "\"WordPress locale\" is NOT the language code. The code (bg) goes into the page address; the locale (bg_BG) is the name under which WordPress stores translations of its own interface. For English it can be either en_US or en_GB."
+msgstr "«Локаль WordPress» — это НЕ код языка. Код (bg) идёт в адрес страницы, локаль (bg_BG) — имя, под которым WordPress хранит переводы своего интерфейса. Для английского это может быть и en_US, и en_GB."
+
+#: src/Admin/HelpTabs.php
+msgid "The language pack. If it says \"no pack\", click \"Download\". Without it WordPress shows the English originals of all labels, and it looks as if the plugin does not work."
+msgstr "Языковой пакет. Если написано «пакета нет» — нажмите «Скачать». Без него WordPress отдаёт английские оригиналы всех надписей, и кажется, что плагин не работает."
+
+#: src/Admin/HelpTabs.php
+msgid "To check: open a site page with the language prefix. The menu and comment form should be translated on their own, without any effort on your part."
+msgstr "Проверка: откройте страницу сайта с языковым префиксом. Меню и форма комментариев должны стать переведёнными сами, без вашего участия."
+
+#: src/Admin/HelpTabs.php
+#: src/Frontend/LanguageSwitcherWidget.php
+#: src/Frontend/NavMenu.php
+msgid "Language switcher"
+msgstr "Переключатель языков"
+
+#: src/Admin/HelpTabs.php
+msgid "Three ways, take your pick:"
+msgstr "Три способа, любой на выбор:"
+
+#: src/Admin/HelpTabs.php
+msgid "\"Appearance → Menus\", the \"Languages\" box: tick \"Dropdown\" or \"Inline\" and add it to the menu. One item is enough — the plugin builds all the languages under it."
+msgstr "«Внешний вид → Меню», блок «Языки»: отметьте «Выпадающий список» или «В ряд» и добавьте в меню. Один пункт — плагин сам достроит под ним все языки."
+
+#: src/Admin/HelpTabs.php
+msgid "The [mlp_language_switcher] shortcode in the text."
+msgstr "Шорткод [mlp_language_switcher] в тексте."
+
+#: src/Admin/HelpTabs.php
+msgid "The \"Language switcher\" widget."
+msgstr "Виджет «Переключатель языков»."
+
+#: src/Admin/HelpTabs.php
+msgid "Language order"
+msgstr "Порядок языков"
+
+#: src/Admin/HelpTabs.php
+msgid "follows the order of rows in the table: rearrange them with the arrows in the first column and save. The default language can be moved too — it does not have to be first."
+msgstr "задаётся порядком строк в таблице: переставьте их стрелками в первой колонке и сохраните. Язык по умолчанию тоже двигается — он не обязан быть первым."
+
+#: src/Admin/HelpTabs.php
+msgid "What the visitor sees"
+msgstr "Что видит посетитель"
+
+#: src/Admin/HelpTabs.php
+msgid "is chosen below the table: language name, code (RU, EN), flag only, or flag with code. Flags have their own tab in this help."
+msgstr "— выбирается ниже таблицы: название языка, код (RU, EN), только флаг или флаг с кодом. Про флаги есть отдельная вкладка этой справки."
+
+#: src/Admin/HelpTabs.php
+msgid "In \"Dropdown\" mode, the item that opens it shows the current language in the same form, not its own menu label. This way the visitor can see which language the page is in before opening the list."
+msgstr "В режиме «Выпадающий список» пункт, который его открывает, показывает текущий язык в том же виде — а не своё название из меню. Так посетителю видно, на каком языке страница, ещё до того как он раскроет список."
+
+#: src/Admin/HelpTabs.php
+msgid "Flags"
+msgstr "Флаги"
+
+#: src/Admin/HelpTabs.php
+msgid "Upload a flag right here: in the \"Flag\" column click \"Choose file\" in the right row and save. The file name does not matter — the plugin saves it under the language code from the first column."
+msgstr "Флаг загружается прямо здесь: в колонке «Флаг» нажмите «Выберите файл» в нужной строке и сохраните. Имя файла значения не имеет — плагин сам положит его под кодом языка из первой колонки."
+
+#: src/Admin/HelpTabs.php
+msgid "Where to get them: %s is a ready-made set of all flags (MIT license). The ones you need are in the flags/4x3 folder; you do not have to download the whole set: open the file you need and save it."
+msgstr "Где взять: %s — готовый набор всех флагов (лицензия MIT). Нужные лежат в папке flags/4x3, качать весь набор не обязательно: откройте нужный файл и сохраните его к себе."
+
+#: src/Admin/HelpTabs.php
+msgid "Which file to take:"
+msgstr "Какой файл брать:"
+
+#: src/Admin/HelpTabs.php
+msgid "in flag sets the files are named by country, not by language. Russian and Bulgarian correspond to ru and bg, and English to gb (United Kingdom) or us (United States), your choice. There is no need to rename anything: the plugin saves the file under the right name itself."
+msgstr "в наборах флаги названы по стране, а не по языку. Русскому и болгарскому соответствуют ru и bg, а английскому — gb (Великобритания) или us (США), на ваш выбор. Переименовывать ничего не нужно: плагин сохранит файл под правильным именем сам."
+
+#: src/Admin/HelpTabs.php
+msgid "Only SVG up to 64 KB is accepted. The uploaded file is stripped of scripts: an SVG is not just an image, it can contain executable code, and without cleaning it would run on your domain for anyone who opened the file link. This is why WordPress does not allow SVG uploads without a plugin."
+msgstr "Принимается только SVG размером до 64 КБ. Загруженный файл очищается от скриптов: SVG — это не просто картинка, внутри может быть исполняемый код, и без очистки он выполнился бы на вашем домене у любого, кто открыл ссылку на файл. Поэтому WordPress и не разрешает загрузку SVG без плагина."
+
+#: src/Admin/HelpTabs.php
+msgid "To remove an image, tick \"remove\" next to it and save."
+msgstr "Чтобы убрать картинку, отметьте «убрать» рядом с ней и сохраните."
+
+#: src/Admin/HelpTabs.php
+msgid "No image: the plugin shows the emoji from the same field, and if that is empty too, the language code. The switcher is never left blank."
+msgstr "Картинки нет — плагин покажет emoji из того же поля, а если пусто и там, то код языка. Пустым переключатель не останется никогда."
+
+#: src/Admin/HelpTabs.php
+msgid "Why an image and not an emoji: Windows cannot draw emoji flags at all — instead of a flag the visitor sees two letters. On a MacBook or phone everything looks fine, so the problem is easy to miss."
+msgstr "Почему картинка, а не emoji: Windows не умеет рисовать emoji-флаги вовсе — вместо флага посетитель видит две буквы. На макбуке и телефоне при этом всё выглядит нормально, так что проблему легко не заметить."
+
+#: src/Admin/HelpTabs.php
+msgid "In the dropdown the flag is always text: HTML itself does not allow an image inside it."
+msgstr "В выпадающем списке флаг всегда текстовый: вставить картинку в него не позволяет сам HTML."
+
+#: src/Admin/HelpTabs.php
+msgid "AI translation"
+msgstr "Перевод с ИИ"
+
+#: src/Admin/HelpTabs.php
+msgid "Without an OpenAI key there are simply no \"Translate with AI\" buttons — everything else works as usual."
+msgstr "Без ключа OpenAI кнопок «Перевести с ИИ» просто нет — всё остальное работает как обычно."
+
+#: src/Admin/HelpTabs.php
+msgid "The plugin never translates on its own and never contacts OpenAI in the background: only when you click a button. The daily character limit caps spending, and a translation that is already saved is not paid for again."
+msgstr "Плагин никогда не переводит сам и не ходит в OpenAI в фоне: только по нажатию кнопки. Дневной лимит символов ограничивает расход, а уже сохранённый перевод повторно не оплачивается."
+
+#: src/Admin/HelpTabs.php
+msgid "Which tab"
+msgstr "Какая вкладка"
+
+#: src/Admin/HelpTabs.php
+msgid "Rule: if you wrote it yourself, it is \"Content\"; if you did not, it is \"Interface\"."
+msgstr "Правило: писали сами — «Контент», не писали — «Интерфейс»."
+
+#: src/Admin/HelpTabs.php
+msgid "\"Content\" is article text, headings, menu items, image captions. This is yours, and it is the main tab."
+msgstr "«Контент» — текст статей, заголовки, пункты меню, подписи к картинкам. Это ваше, и это основная вкладка."
+
+#: src/Admin/HelpTabs.php
+msgid "\"Interface\" is \"Reply\", \"Leave a comment\", cart buttons. WordPress, the theme and plugins draw these; almost all of it is translated automatically from the language pack."
+msgstr "«Интерфейс» — «Ответить», «Оставить комментарий», кнопки корзины. Это рисуют WordPress, тема и плагины; почти всё переводится само из языкового пакета."
+
+#: src/Admin/HelpTabs.php
+msgid "\"SEO/GEO\" is what is not visible on the page: the description for Google and the preview when a link is sent in a messenger."
+msgstr "«SEO/GEO» — то, чего на странице не видно: описание для Google и превью при отправке ссылки в мессенджер."
+
+#: src/Admin/HelpTabs.php
+msgid "How to search"
+msgstr "Как искать"
+
+#: src/Admin/HelpTabs.php
+msgid "Without special characters the search looks for the whole phrase, but not as part of another word: \"AI\" will find \"AI Act\" but not \"domain\" — the letters there match only by chance."
+msgstr "Без спецсимволов поиск ищет фразу целиком, но не как часть другого слова: «AI» найдёт «AI Act», но не «domain» — буквы там просто случайно совпали."
+
+#: src/Admin/HelpTabs.php
+msgid "An asterisk (*) stands for any number of any characters, as in Windows file search or Spotlight on Mac:"
+msgstr "Звёздочка (*) — любое количество любых символов, как в поиске файлов Windows или Spotlight на Mac:"
+
+#: src/Admin/HelpTabs.php
+msgid "*blog/en/ — the string ENDS with \"blog/en/\"."
+msgstr "*blog/en/ — строка ЗАКАНЧИВАЕТСЯ на «blog/en/»."
+
+#: src/Admin/HelpTabs.php
+msgid "blog/en/* — the string STARTS with \"blog/en/\"."
+msgstr "blog/en/* — строка НАЧИНАЕТСЯ с «blog/en/»."
+
+#: src/Admin/HelpTabs.php
+msgid "*plugin* — \"plugin\" anywhere, including inside another word (for example \"plugins\") — without asterisks it would not be found."
+msgstr "*плагин* — «плагин» где угодно, в том числе внутри другого слова (например «плагинов») — без звёздочек так не найти."
+
+#: src/Admin/HelpTabs.php
+msgid "It searches both the source and the translation. On the \"Links\" tab this is the most reliable way to find a specific address: without asterisks the search also finds anything that merely contains the phrase somewhere in the middle of the path."
+msgstr "Ищет сразу и по исходнику, и по переводу. На вкладке «Ссылки» это самый надёжный способ найти конкретный адрес: без звёздочек поиск находит и то, что лишь содержит фразу где-то в середине пути."
+
+#: src/Admin/HelpTabs.php
+msgid "What to translate and what not"
+msgstr "Что переводить, а что нет"
+
+#: src/Admin/HelpTabs.php
+msgid "On the \"Interface\" tab, look at the \"Source\" column:"
+msgstr "На вкладке «Интерфейс» смотрите на колонку «Источник»:"
+
+#: src/Admin/HelpTabs.php
+msgid "\"Theme: …\" — translate these first. This is what the visitor sees on every page."
+msgstr "«Тема: …» — переводите в первую очередь. Это то, что посетитель видит на каждой странице."
+
+#: src/Admin/HelpTabs.php
+msgid "Shop plugin — translate it if you sell: an English button in the storefront hurts sales."
+msgstr "Плагин магазина — переводите, если продаёте: английская кнопка на витрине бьёт по продажам."
+
+#: src/Admin/HelpTabs.php
+msgid "Rank Math, Akismet and other admin-side plugins — do not touch them at all. Their labels are visible only to you; a visitor never sees them."
+msgstr "Rank Math, Akismet и прочие админские — не трогайте вовсе. Их надписи видны только вам, посетитель их не увидит никогда."
+
+#: src/Admin/HelpTabs.php
+msgid "Your translation always takes priority over the official one. \"Reset to official\" restores the version from the language pack."
+msgstr "Ваш перевод всегда главнее официального. «Сбросить к официальному» возвращает вариант из языкового пакета."
+
+#: src/Admin/HelpTabs.php
+msgid "If something is wrong"
+msgstr "Если что-то не так"
+
+#: src/Admin/HelpTabs.php
+msgid "The text is on the site but not in the list."
+msgstr "Текст на сайте есть, а в списке его нет."
+
+#: src/Admin/HelpTabs.php
+msgid "Most often the page simply has not been opened in this language — the list fills only after a page is displayed. If it has been opened: the text may be in a \"Preformatted\" block — the plugin deliberately leaves such blocks alone, as they usually hold code. Replace it with a regular paragraph."
+msgstr "Чаще всего страницу просто не открывали на этом языке — список наполняется только после показа страницы. Если открывали: текст может лежать в блоке «Форматированный» — такие блоки плагин не трогает намеренно, там обычно код. Замените на обычный абзац."
+
+#: src/Admin/HelpTabs.php
+msgid "Half of the form is translated and half is not."
+msgstr "Половина формы переведена, половина нет."
+
+#: src/Admin/HelpTabs.php
+msgid "The WordPress language pack translated what WordPress draws, but the theme replaced some labels with its own, and there is no theme translation for your language. Look for them on the \"Interface\" tab, source: your theme."
+msgstr "Языковой пакет WordPress перевёл то, что рисует WordPress, а тема заменила часть надписей своими, и перевода темы на ваш язык нет. Ищите их на вкладке «Интерфейс», источник — ваша тема."
+
+#: src/Admin/HelpTabs.php
+msgid "The list is cluttered."
+msgstr "Список засорился."
+
+#: src/Admin/HelpTabs.php
+msgid "The \"Clear untranslated strings\" button at the bottom removes discovered strings that nobody translated. It does not touch translated ones, and anything needed will be collected again."
+msgstr "Кнопка «Очистить строки без перевода» внизу убирает найденное, что никто не переводил. Переведённое не трогает, нужное соберётся заново."
+
+#: src/Admin/HelpTabs.php
+msgid "The translation is saved but the site shows the old text."
+msgstr "Перевод сохранён, а на сайте старый текст."
+
+#: src/Admin/HelpTabs.php
+msgid "Clear the page cache — the caching plugin is serving a saved copy."
+msgstr "Очистите кэш страниц — кэширующий плагин отдаёт сохранённую копию."
+
+#: src/Admin/HelpTabs.php
+msgid "How to translate"
+msgstr "Как переводить"
+
+#: src/Admin/HelpTabs.php
+msgid "Choose a language, enter the page address and click \"Open\". Then there are two ways:"
+msgstr "Выберите язык, впишите адрес страницы и нажмите «Открыть». Дальше два пути:"
+
+#: src/Admin/HelpTabs.php
+msgid "\"Translate the whole post with AI\" — title, excerpt and full text in one operation. The \"Empty segments only\" mode does not touch what is already translated."
+msgstr "«Перевести весь материал с ИИ» — заголовок, анонс и весь текст одной операцией. Режим «Только пустые сегменты» не трогает то, что уже переведено."
+
+#: src/Admin/HelpTabs.php
+msgid "Click the text directly in the preview — a field for that string opens on the left."
+msgstr "Клик прямо по тексту в превью — слева откроется поле для этой строки."
+
+#: src/Admin/HelpTabs.php
+msgid "Nothing is saved automatically: until you click \"Save\", the translation remains a draft."
+msgstr "Ничего не сохраняется само: пока вы не нажали «Сохранить», перевод остаётся черновиком."
+
+#: src/Admin/HelpTabs.php
+msgid "If the layout gets in the way"
+msgstr "Если мешает вёрстка"
+
+#: src/Admin/HelpTabs.php
+msgid "The theme menu covers the preview."
+msgstr "Меню темы закрывает превью."
+
+#: src/Admin/HelpTabs.php
+msgid "The panel on the left narrows the preview, and the theme switches to its mobile layout with a slide-out menu. Click \"Collapse panel\" — the preview takes the full width and the menu becomes normal."
+msgstr "Панель слева сужает превью, и тема переключается на мобильную вёрстку с выезжающим меню. Нажмите «Свернуть панель» — превью займёт всю ширину и меню станет обычным."
+
+#: src/Admin/HelpTabs.php
+msgid "Clicking a string does nothing, and the left side says \"interface string\"."
+msgstr "Клик по строке ничего не даёт, а слева написано «строка интерфейса»."
+
+#: src/Admin/HelpTabs.php
+msgid "This is a theme or plugin label and cannot be translated here. Go to \"String translation\" → the \"Interface\" tab."
+msgstr "Это надпись темы или плагина, здесь её не перевести. Идите в «Перевод строк» → вкладка «Интерфейс»."
+
+#: src/Admin/HelpTabs.php
+msgid "A paragraph is broken up by links and translates badly."
+msgstr "Абзац разорван ссылками и переводится криво."
+
+#: src/Admin/HelpTabs.php
+msgid "Click it and choose \"Translate whole paragraph\" — it becomes a single string together with its markup."
+msgstr "Кликните по нему и нажмите «Перевести абзац целиком» — он станет одной строкой вместе с разметкой."
+
+#: src/Admin/EditorPage.php
+msgid "Visual editor"
+msgstr "Визуальный редактор"
+
+#: src/Admin/EditorPage.php
+msgid "Translate page"
+msgstr "Перевести страницу"
+
+#: src/Admin/EditorPage.php
+msgid "Click text in the preview to translate it."
+msgstr "Нажмите на текст в предпросмотре, чтобы перевести его."
+
+#: src/Admin/EditorPage.php
+#: src/Admin/VisibilityAssets.php
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Saving…"
+msgstr "Сохраняю…"
+
+#: src/Admin/EditorPage.php
+msgid "Saved"
+msgstr "Сохранено"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/VisibilityAssets.php
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Could not save"
+msgstr "Не удалось сохранить"
+
+#: src/Admin/EditorPage.php
+msgid "Loading…"
+msgstr "Загружаю…"
+
+#: src/Admin/EditorPage.php
+msgid "Delete the translation of this string?"
+msgstr "Удалить перевод этой строки?"
+
+#: src/Admin/EditorPage.php
+msgid "Translate the whole paragraph as one piece? Separate translations of its parts will no longer be applied."
+msgstr "Перевести весь абзац одним куском? Отдельные переводы его частей перестанут применяться."
+
+#: src/Admin/EditorPage.php
+msgid "Paragraph merged. Refreshing the preview…"
+msgstr "Абзац объединён. Обновляю предпросмотр…"
+
+#: src/Admin/EditorPage.php
+msgid "This is an interface string (domain: %s). WordPress translates such strings from the language pack; you can adjust the translation under String translation → Interface tab."
+msgstr "Это строка интерфейса (домен: %s). Такие строки переводит сам WordPress по языковому пакету, а поправить перевод можно в «Перевод строк» → вкладка «Интерфейс»."
+
+#: src/Admin/EditorPage.php
+msgid "Link #%d"
+msgstr "Ссылка №%d"
+
+#: src/Admin/EditorPage.php
+msgid "Collapse panel"
+msgstr "Свернуть панель"
+
+#: src/Admin/EditorPage.php
+msgid "Expand panel"
+msgstr "Развернуть панель"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Attribute"
+msgstr "Атрибут"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Text"
+msgstr "Текст"
+
+#: src/Admin/EditorPage.php
+msgid "Block with markup"
+msgstr "Блок с разметкой"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Translating with AI…"
+msgstr "Перевожу с ИИ…"
+
+#: src/Admin/EditorPage.php
+msgid "Suggested by AI — review before saving"
+msgstr "Предложено ИИ — проверьте перед сохранением"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "AI could not translate"
+msgstr "ИИ не смог перевести"
+
+#: src/Admin/EditorPage.php
+msgid "Translate the whole post with AI"
+msgstr "Перевести весь материал с ИИ"
+
+#: src/Admin/EditorPage.php
+msgid "What to translate?"
+msgstr "Что переводить?"
+
+#: src/Admin/EditorPage.php
+msgid "Empty segments only"
+msgstr "Только пустые сегменты"
+
+#: src/Admin/EditorPage.php
+msgid "Retranslate the whole post"
+msgstr "Перевести заново весь материал"
+
+#: src/Admin/EditorPage.php
+msgid "Start"
+msgstr "Начать"
+
+#: src/Admin/EditorPage.php
+msgid "Cancel"
+msgstr "Отмена"
+
+#: src/Admin/EditorPage.php
+msgid "Analyzing the post…"
+msgstr "Разбираю запись…"
+
+#: src/Admin/EditorPage.php
+msgid "Translating part {current} of {total}…"
+msgstr "Перевожу часть {current} из {total}…"
+
+#: src/Admin/EditorPage.php
+msgid "Nothing to translate — the post is already translated. Switch the mode to “Retranslate the whole post” if you want to refresh the translation."
+msgstr "Переводить нечего — материал уже переведён. Переключите режим на «Перевести заново весь материал», если хотите обновить перевод."
+
+#: src/Admin/EditorPage.php
+msgid "Review the translation before saving"
+msgstr "Проверьте перевод перед сохранением"
+
+#: src/Admin/EditorPage.php
+msgid "Save all"
+msgstr "Сохранить всё"
+
+#: src/Admin/EditorPage.php
+msgid "Saving all…"
+msgstr "Сохраняю всё…"
+
+#: src/Admin/EditorPage.php
+msgid "The post was saved and the preview was updated."
+msgstr "Материал сохранён и обновлён в превью."
+
+#: src/Admin/EditorPage.php
+msgid "Could not translate"
+msgstr "Не удалось перевести"
+
+#: src/Admin/EditorPage.php
+msgid "Not everything was translated: {reason}. The finished part is below: save it with the “Save all” button, then click “Start” again — in “Empty segments only” mode only what is left will be translated, with no repeat charge for what is already translated."
+msgstr "Успели перевести не всё: {reason}. Уже готовое — ниже: сохраните его кнопкой «Сохранить всё», а затем нажмите «Начать» ещё раз — при режиме «Только пустые сегменты» заново переведётся только то, что осталось, без повторной оплаты уже переведённого."
+
+#: src/Admin/EditorPage.php
+msgid "Could not save — the changes were rolled back, nothing was lost."
+msgstr "Не удалось сохранить — изменения отменены, ничего не потеряно."
+
+#: src/Admin/EditorPage.php
+msgid "AI could not safely translate {count} string(s) without breaking a shortcode — translate them manually below."
+msgstr "ИИ не смог безопасно перевести {count} строк(и), не повредив шорткод — переведите их вручную ниже."
+
+#: src/Admin/EditorPage.php
+msgid "changed since the last translation"
+msgstr "изменилось с прошлого перевода"
+
+#: src/Admin/EditorPage.php
+msgid "Title"
+msgstr "Заголовок"
+
+#: src/Admin/EditorPage.php
+msgid "Excerpt"
+msgstr "Анонс"
+
+#: src/Admin/EditorPage.php
+msgid "Post content"
+msgstr "Текст записи"
+
+#: src/Admin/EditorPage.php
+msgid "Thumbnail alt"
+msgstr "Alt миниатюры"
+
+#: src/Admin/EditorPage.php
+msgid "Close"
+msgstr "Закрыть"
+
+#: src/Admin/EditorPage.php
+msgid "Find a page by title or paste a URL"
+msgstr "Найти страницу по названию или вставить адрес"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Nothing found"
+msgstr "Ничего не найдено"
+
+#: src/Admin/EditorPage.php
+msgid "Could not load the list of pages"
+msgstr "Не удалось загрузить список страниц"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "First add at least one additional language on the “Languages” page."
+msgstr "Сначала добавьте хотя бы один дополнительный язык на странице «Языки»."
+
+#: src/Admin/EditorPage.php
+msgid "Language:"
+msgstr "Язык:"
+
+#: src/Admin/EditorPage.php
+msgid "Page:"
+msgstr "Страница:"
+
+#: src/Admin/EditorPage.php
+msgid "Open"
+msgstr "Открыть"
+
+#: src/Admin/EditorPage.php
+msgid "The preview gets the full width — the theme shows the regular menu instead of the mobile one."
+msgstr "Превью получит всю ширину — тема покажет обычное меню вместо мобильного."
+
+#: src/Admin/EditorPage.php
+msgid "Title, excerpt and the full post content in one operation — instead of translating block by block."
+msgstr "Заголовок, анонс и весь текст записи одной операцией — вместо перевода блок за блоком."
+
+#: src/Admin/EditorPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Original"
+msgstr "Оригинал"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/EditorPostLinks.php
+msgid "Translation"
+msgstr "Перевод"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Translate with AI"
+msgstr "Перевести с ИИ"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/StringTranslationPage.php
+msgid "Delete translation"
+msgstr "Удалить перевод"
+
+#: src/Admin/EditorPage.php
+msgid "Links in this block. The address applies to the current language only — other languages have their own."
+msgstr "Ссылки в этом блоке. Адрес относится только к текущему языку — на других языках он свой."
+
+#: src/Admin/EditorPage.php
+msgid "The paragraph is split into parts by inline tags. You can translate it as a whole, together with the markup."
+msgstr "Абзац разбит на части инлайновыми тегами. Его можно перевести целиком, вместе с разметкой."
+
+#: src/Admin/EditorPage.php
+#: src/Rendering/EditorContext.php
+msgid "Translate the whole paragraph"
+msgstr "Перевести абзац целиком"
+
+#: src/Admin/EditorPage.php
+msgid "Page preview"
+msgstr "Предпросмотр страницы"
+
+#: src/Admin/EditorPage.php
+#: src/Admin/PostListLanguages.php
+msgid "Fully translated"
+msgstr "Переведено полностью"
+
+#: src/Admin/EditorPage.php
+msgid "%d%% translated"
+msgstr "Переведено на %d%%"
+
+#: src/Admin/EditorPage.php
+msgid "Nothing translated yet"
+msgstr "Пока ничего не переведено"
+
+#: src/Admin/EditorPage.php
+msgid "This page has no strings yet"
+msgstr "Строк этой страницы пока нет"
+
+#: src/Admin/EditorPage.php
+msgid "Show this page in %s"
+msgstr "Показывать эту страницу на %s"
+
+#: src/Admin/StringTranslationPage.php
+msgid "You do not have permission to delete translations."
+msgstr "Недостаточно прав для удаления переводов."
+
+#: src/Admin/StringTranslationPage.php
+msgid "This additional language is not in the settings."
+msgstr "Такого дополнительного языка нет в настройках."
+
+#: src/Admin/StringTranslationPage.php
+msgid "You do not have sufficient permissions."
+msgstr "Недостаточно прав."
+
+#: src/Admin/StringTranslationPage.php
+msgid "String translation"
+msgstr "Перевод строк"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Searching…"
+msgstr "Ищу…"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Search failed"
+msgstr "Не удалось выполнить поиск"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Save error"
+msgstr "Ошибка сохранения"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Deleting…"
+msgstr "Удаляю…"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Suggested by AI — review and save"
+msgstr "Предложено ИИ — проверьте и сохраните"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Fields for search engines and social previews: meta description, Open Graph, Twitter Card and JSON-LD text fields. They are not visible on the page itself — Google and messengers read them when someone shares a link."
+msgstr "Поля для поисковиков и превью в соцсетях: meta description, Open Graph, Twitter Card и текстовые поля JSON-LD. На самой странице они не видны — их читают Google и мессенджеры, когда кто-то делится ссылкой."
+
+#: src/Admin/StringTranslationPage.php
+msgid "You do not need to translate the post title here: it is shared with the H1 and is translated once in the “Content” tab."
+msgstr "Заголовок записи переводить здесь не нужно: он общий с H1 и переводится один раз во вкладке «Контент»."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Where links lead in this language. On the left is the address from the original; on the right you can set a different one: for example, point the Bulgarian button to a Bulgarian landing page and the English one to an English page."
+msgstr "Куда ведут ссылки на этом языке. Слева — адрес из оригинала, справа можно указать другой: например, направить болгарскую кнопку на болгарский лендинг, а английскую — на английский."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Leave the field empty — the link stays as is and gets the language prefix automatically, as before. Fill it in only where the address must differ."
+msgstr "Оставьте поле пустым — ссылка останется прежней и получит языковой префикс автоматически, как раньше. Заполняйте только там, где адрес должен отличаться."
+
+#: src/Admin/StringTranslationPage.php
+msgid "What you wrote yourself: post and page text, titles, menu items, image captions, widget texts. This is the main tab — start here."
+msgstr "То, что вы написали сами: текст записей и страниц, заголовки, пункты меню, подписи к картинкам, тексты в виджетах. Это основная вкладка — с неё и начинайте."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Strings do not appear here right away: the plugin learns a page’s text only when the page is actually displayed. Open the page in an additional language and its strings will show up in the list."
+msgstr "Строки появляются здесь не сразу: плагин узнаёт текст страницы только когда она реально показана. Откройте страницу на дополнительном языке — и её строки окажутся в списке."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Source string"
+msgstr "Исходная строка"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Type"
+msgstr "Тип"
+
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "No strings found."
+msgstr "Строк не найдено."
+
+#. translators: %s: number of strings
+#: src/Admin/StringTranslationPage.php
+msgid "Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again."
+msgstr "Удалить %s строк без перевода? Переводы не пострадают; строки вернутся, если вы снова откроете эти страницы."
+
+#. translators: %s: number of strings
+#: src/Admin/StringTranslationPage.php
+msgid "Delete strings without a translation (%s)"
+msgstr "Удалить строки без перевода (%s)"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Useful if the list got cluttered with strings collected before the language pack was installed. Strings with your translation are not deleted."
+msgstr "Полезно, если список засорился строками, собранными до установки языкового пакета. Строки с вашим переводом не удаляются."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Removes link addresses only. Useful if the list got cluttered with technical addresses (for example, collected before this update). Links with your translation are not deleted."
+msgstr "Убирает только адреса ссылок. Полезно, если список засорился техническими адресами (например, собранными до этого обновления). Ссылки с вашим переводом не удаляются."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Cleans up “Content” and “SEO/GEO” at once — they live in one table. Useful if interface strings collected before the “Interface” tab existed ended up in the list. Translated strings are not deleted; the rest will be collected again."
+msgstr "Чистит «Контент» и «SEO/GEO» разом — они лежат в одной таблице. Полезно, если в список попали строки интерфейса, собранные до появления вкладки «Интерфейс». Переведённое не удаляется, остальное соберётся заново."
+
+#. translators: %s: number of deleted strings
+#: src/Admin/StringTranslationPage.php
+msgid "Strings deleted: %s."
+msgstr "Удалено строк: %s."
+
+#: src/Admin/StringTranslationPage.php
+msgid "Content"
+msgstr "Контент"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Interface"
+msgstr "Интерфейс"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Links"
+msgstr "Ссылки"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Fill the field with an AI translation — does not save automatically"
+msgstr "Заполнить поле переводом от ИИ — не сохраняет автоматически"
+
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Language"
+msgstr "Язык"
+
+#: src/Admin/StringTranslationPage.php
+msgid "All statuses"
+msgstr "Все статусы"
+
+#: src/Admin/StringTranslationPage.php
+msgid "String type"
+msgstr "Тип строки"
+
+#: src/Admin/StringTranslationPage.php
+msgid "All content"
+msgstr "Всё содержимое"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Attribute (alt, title, placeholder)"
+msgstr "Атрибут (alt, title, placeholder)"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Block (paragraph with markup)"
+msgstr "Блок (абзац с разметкой)"
+
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Search"
+msgstr "Поиск"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Search the source and the translation"
+msgstr "Поиск по исходнику и переводу"
+
+#: src/Admin/StringTranslationPage.php
+msgid "* — any characters: *blog/en/ means “ends with”, blog/en/* means “starts with”. More details in “Help” at the top right."
+msgstr "* — любые символы: *blog/en/ значит «кончается на», blog/en/* — «начинается с». Подробнее — в «Помощь» справа вверху."
+
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Show"
+msgstr "Показать"
+
+#. translators: %s: number of strings
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Strings found: %s"
+msgstr "Найдено строк: %s"
+
+#. translators: %s: language code
+#: src/Admin/StringTranslationPage.php
+msgid "Delete all translations for the language “%s”"
+msgstr "Удалить все переводы языка «%s»"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Source strings will stay — only translations into this language will be deleted."
+msgstr "Исходные строки останутся — удалятся только переводы на этот язык."
+
+#. translators: 1: language label, 2: language code
+#: src/Admin/StringTranslationPage.php
+msgid "Delete ALL translations for the language “%1$s” (%2$s)? This action cannot be undone."
+msgstr "Удалить ВСЕ переводы языка «%1$s» (%2$s)? Это действие нельзя отменить."
+
+#. translators: 1: comma-separated list of missing fields, 2: link to the settings page
+#: src/Admin/StringTranslationPage.php
+msgid "The “Translate with AI” button is not available: missing — %1$s. Fill it in on the %2$s page."
+msgstr "Кнопки «Перевести с ИИ» нет: не заполнено — %1$s. Впишите на странице %2$s."
+
+#: src/Admin/StringTranslationPage.php
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Multilingual → Languages"
+msgstr "Мультиязычность → Языки"
+
+#. translators: %s: number of deleted translations
+#: src/Admin/StringTranslationPage.php
+msgid "Translations deleted: %s."
+msgstr "Удалено переводов: %s."
+
+#. translators: %s: number of strings
+#: src/Admin/StringTranslationPage.php
+msgid "%s string"
+msgid_plural "%s strings"
+msgstr[0] "%s строка"
+msgstr[1] "%s строки"
+msgstr[2] "%s строк"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Current page"
+msgstr "Текущая страница"
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "pagination: page X of Y"
+msgid "of"
+msgstr "из"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Where it appears"
+msgstr "Где встречается"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Whole site"
+msgstr "Весь сайт"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Shared elements (menu, header, footer)"
+msgstr "Общие элементы (меню, шапка, подвал)"
+
+#: src/Admin/StringTranslationPage.php
+msgid "A specific post…"
+msgstr "Отдельная запись…"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Start typing a post title"
+msgstr "Начните вводить название записи"
+
+#: src/Admin/StringTranslationPage.php
+msgid "Block"
+msgstr "Блок"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "These are not your own content but the labels drawn by WordPress itself, the theme and plugins: \"Reply\", \"Leave a comment\", the trash buttons. You did not write them and rarely need to translate them by hand, because WordPress takes the translation from the official language pack."
+msgstr "Не ваш текст, а надписи, которые рисуют сам WordPress, тема и плагины: «Ответить», «Оставить комментарий», кнопки корзины. Их вы не писали и переводить вручную почти не нужно — WordPress берёт перевод из официального языкового пакета."
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Only strings that the language pack has no translation for (usually from a theme or a niche plugin) and strings you edited by hand appear here. Check the \"Source\" column: theme strings matter most because visitors see them on every page, while admin plugins such as Rank Math can be left alone, since their labels are only visible to you."
+msgstr "Сюда попадает только то, для чего перевода в пакете не нашлось (обычно у темы или нишевого плагина), и то, что вы поправили вручную. Смотрите по колонке «Источник»: строки темы важнее всего — их посетитель видит на каждой странице, а админские плагины вроде Rank Math можно не трогать вовсе, их надписи видны только вам."
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Source"
+msgstr "Источник"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Official translation"
+msgstr "Официальный перевод"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Your translation"
+msgstr "Ваш перевод"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Context: %s"
+msgstr "Контекст: %s"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Plural form no. %d"
+msgstr "Форма множественного числа №%d"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Remove your override and use the official translation again"
+msgstr "Убрать своё переопределение — вернётся официальный перевод"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Reset to official"
+msgstr "Сбросить к официальному"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "All sources"
+msgstr "Все источники"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "All strings"
+msgstr "Все строки"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Without your translation"
+msgstr "Без вашего перевода"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Overridden by hand"
+msgstr "Переопределены вручную"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Search the original and the translation"
+msgstr "Поиск по оригиналу и переводу"
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "English is the language of the originals themselves: the interface strings are already written in it and do not need translating. The list below is shared by all languages (it was collected wherever a translation was missing), so the strings show \"No translation\", which is normal for English. Switch the language to see where a translation is really needed."
+msgstr "Английский — язык самих оригиналов: строки интерфейса на нём уже написаны, и переводить их не нужно. Список ниже общий для всех языков (он собран там, где перевода не хватало), поэтому у строк стоит «Нет перевода» — на английском это нормально. Переключите язык, чтобы увидеть, где перевод действительно нужен."
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "The language pack for \"%1$s\" (%2$s) is not installed. Until it is, WordPress serves the English originals for all interface strings, and collecting them into the dictionary is pointless, so this list is not filled for this language."
+msgstr "Языковой пакет для «%1$s» (%2$s) не установлен. Пока его нет, WordPress отдаёт английские оригиналы вообще всех строк интерфейса, и собирать их в словарь бессмысленно — поэтому этот список для данного языка не пополняется."
+
+#: src/Admin/InterfaceStringsScreen.php
+msgid "Install the pack on the %s page; after that, only what it truly lacks will appear here."
+msgstr "Установите пакет на странице %s — после этого сюда попадёт только то, чего в нём действительно не хватает."
+
+#: src/Admin/PostListLanguages.php
+msgid "Show on language: %s"
+msgstr "Показывать на языке: %s"
+
+#: src/Admin/PostListLanguages.php
+msgid "Hide on language: %s"
+msgstr "Скрыть на языке: %s"
+
+#: src/Admin/PostListLanguages.php
+msgid "%1$s on %2$s: %3$s"
+msgstr "%1$s на %2$s: %3$s"
+
+#: src/Admin/PostListLanguages.php
+msgid "Shown"
+msgstr "Показано"
+
+#: src/Admin/PostListLanguages.php
+msgid "Hidden"
+msgstr "Скрыто"
+
+#: src/Admin/PostListLanguages.php
+msgid "%d post"
+msgid_plural "%d posts"
+msgstr[0] "%d запись"
+msgstr[1] "%d записи"
+msgstr[2] "%d записей"
+
+#: src/Admin/PostListLanguages.php
+msgid "(skipped, no permission or unsuitable post type: %d)"
+msgstr "(пропущено, нет прав или тип не подходит: %d)"
+
+#: src/Admin/PostListLanguages.php
+msgid "Translation: all"
+msgstr "Перевод: все"
+
+#: src/Admin/PostListLanguages.php
+msgid "Not fully translated: %s"
+msgstr "Не переведено полностью: %s"
+
+#: src/Admin/PostListLanguages.php
+msgid "Hidden on %s"
+msgstr "Скрыто на %s"
+
+#: src/Admin/PostListLanguages.php
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Shown on %s"
+msgstr "Показано на %s"
+
+#: src/Admin/PostListLanguages.php
+msgid "Unavailable: the post is not published"
+msgstr "Недоступно: запись не опубликована"
+
+#: src/Admin/PostListLanguages.php
+msgid "Visibility per language cannot be set for this post type"
+msgstr "Для этого типа записей показ на языке не настраивается"
+
+#: src/Admin/PostListLanguages.php
+msgid "You do not have permission to edit this post"
+msgstr "Нет прав на редактирование этой записи"
+
+#: src/Admin/PostListLanguages.php
+msgid "on site"
+msgstr "на сайте"
+
+#: src/Admin/PostListLanguages.php
+msgid "Strings translated: %1$d of %2$d"
+msgstr "Переведено строк: %1$d из %2$d"
+
+#: src/Admin/PostListLanguages.php
+msgid "no translation"
+msgstr "нет перевода"
+
+#: src/Admin/PostListLanguages.php
+msgid "Strings: %d, translated: 0"
+msgstr "Строк: %d, переведено: 0"
+
+#: src/Admin/PostListLanguages.php
+msgid "no strings yet"
+msgstr "строк пока нет"
+
+#: src/Admin/PostListLanguages.php
+msgid "The plugin has not collected the strings of this post yet: open it on the site in a secondary language or run \"Translate all content with AI\""
+msgstr "Плагин ещё не собрал строки этой записи: откройте её на сайте на дополнительном языке или запустите «Перевести весь материал с ИИ»"
+
+#: src/Admin/PostListLanguages.php
+msgid "draft language"
+msgstr "язык-черновик"
+
+#: src/Admin/PostListLanguages.php
+msgid "(draft)"
+msgstr "(черн.)"
+
+#: src/Admin/PostListLanguages.php
+msgid "Translate the strings of this post"
+msgstr "Перевод строк этой записи"
+
+#: src/Admin/PostListLanguages.php
+msgid "strings"
+msgstr "строки"
+
+#: src/Admin/PostListLanguages.php
+msgid "Untranslated SEO/GEO strings of this post"
+msgstr "Непереведённые SEO/GEO-строки этой записи"
+
+#: src/Admin/EditorPostLinks.php
+msgid "Translate"
+msgstr "Перевести"
+
+#: src/Admin/EditorPostLinks.php
+msgid "Publish the post to translate it in the visual editor."
+msgstr "Опубликуйте запись, чтобы перевести её в визуальном редакторе."
+
+#: src/Admin/EditorPostLinks.php
+#: src/Frontend/NavMenu.php
+msgid "First add at least one secondary language on the \"Languages\" page."
+msgstr "Сначала добавьте хотя бы один дополнительный язык на странице «Языки»."
+
+#: src/Admin/EditorPostLinks.php
+msgid "Open in the visual editor"
+msgstr "Открыть в визуальном редакторе"
+
+#: src/Admin/EditorPostLinks.php
+msgid "Show on the site"
+msgstr "Показывать на сайте"
+
+#: src/Admin/EditorPostLinks.php
+msgid "Check the languages in which this post is visible to visitors. In the other languages it is hidden: the link leads to the default-language version."
+msgstr "Отметьте языки, на которых эта запись видна посетителям. На остальных языках она скрыта: ссылка ведёт на русскую версию."
+
+#: src/Admin/VisibilityAssets.php
+msgid "Cannot reach the site. Please try again."
+msgstr "Нет связи с сайтом. Попробуйте ещё раз."
+
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Hidden on %s: visitors cannot see it"
+msgstr "Скрыто на %s — посетители не видят"
+
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Hide on %s"
+msgstr "Скрыть на %s"
+
+#: src/Frontend/VisibilityAdminBar.php
+msgid "Show on %s"
+msgstr "Показать на %s"
+
+#: src/Frontend/LanguageSwitcher.php
+msgid "Site language"
+msgstr "Язык сайта"
+
+#: src/Frontend/LanguageSwitcherWidget.php
+msgid "Links to the current page in the other languages of the site."
+msgstr "Ссылки на текущую страницу на других языках сайта."
+
+#: src/Frontend/LanguageSwitcherWidget.php
+msgid "Title:"
+msgstr "Заголовок:"
+
+#: src/Frontend/LanguageSwitcherWidget.php
+msgid "Hide the current language"
+msgstr "Скрыть текущий язык"
+
+#: src/Frontend/LanguageSwitcherWidget.php
+msgid "Show as a dropdown"
+msgstr "Выпадающим списком"
+
+#: src/Frontend/NavMenu.php
+msgid "First add languages on the \"Languages\" page."
+msgstr "Сначала добавьте языки на странице «Языки»."
+
+#: src/Frontend/NavMenu.php
+msgid "Dropdown list"
+msgstr "Выпадающий список"
+
+#: src/Frontend/NavMenu.php
+msgid "A single item; the languages open on hover or click, like a regular theme submenu."
+msgstr "Один пункт, языки открываются по наведению/клику — так же, как обычное подменю темы."
+
+#: src/Frontend/NavMenu.php
+msgid "In a row"
+msgstr "В ряд"
+
+#: src/Frontend/NavMenu.php
+msgid "The languages are visible right away as separate items in a row, with no dropdown."
+msgstr "Языки видны сразу, отдельными пунктами подряд, без раскрытия."
+
+#: src/Frontend/NavMenu.php
+msgid "Add to menu"
+msgstr "Добавить в меню"
+
+#: src/Frontend/NavMenu.php
+msgid "Custom link"
+msgstr "Произвольная ссылка"
+
+#: src/I18n/DomainLabel.php
+msgid "WordPress (core)"
+msgstr "WordPress (ядро)"
+
+#: src/I18n/DomainLabel.php
+msgid "Theme: %s"
+msgstr "Тема: %s"
+
+#: src/I18n/DomainLabel.php
+msgid "Plugin: %s"
+msgstr "Плагин: %s"
+
+#: src/Translation/ProviderFactory.php
+msgid "enter the key and the model in the plugin settings"
+msgstr "укажите ключ и модель в настройках плагина"
+
+#: src/Translation/ProviderFactory.php
+msgid "enter the model in the plugin settings"
+msgstr "укажите модель в настройках плагина"
+
+#: src/Translation/ProviderFactory.php
+msgid "enter the key in the plugin settings"
+msgstr "укажите ключ в настройках плагина"
+
+#: src/Translation/ProviderFactory.php
+msgid "AI translation is not set up: %s."
+msgstr "Перевод с ИИ не настроен: %s."
+
+#: src/Rest/TranslationsController.php
+msgid "Source string not found."
+msgstr "Исходная строка не найдена."
+
+#: src/Rest/TranslationsController.php
+#: src/Rest/PostTranslationController.php
+#: src/Rest/PostVisibilityController.php
+msgid "This secondary language is not in the settings."
+msgstr "Такого дополнительного языка нет в настройках."
+
+#: src/Rest/TranslationsController.php
+msgid "AI translation is not set up: enter the key in the plugin settings."
+msgstr "Перевод с ИИ не настроен: укажите ключ в настройках плагина."
+
+#: src/Rest/TranslationsController.php
+#: src/Rest/PostTranslationController.php
+msgid "The daily character limit for translation has been reached. Change the limit in the settings or try again tomorrow."
+msgstr "Дневной лимит символов на перевод исчерпан. Измените лимит в настройках или попробуйте завтра."
+
+#: src/Rest/TranslationsController.php
+#: src/Rest/PostTranslationController.php
+msgid "Could not get a translation from OpenAI: %s"
+msgstr "Не удалось получить перевод от OpenAI: %s"
+
+#: src/Rest/TranslationsController.php
+#: src/Rest/PostTranslationController.php
+msgid "Could not get a translation from OpenAI."
+msgstr "Не удалось получить перевод от OpenAI."
+
+#: src/Rest/TranslationsController.php
+msgid "Could not save the translation."
+msgstr "Не удалось сохранить перевод."
+
+#: src/Rest/PostTranslationController.php
+msgid "AI translation is not set up."
+msgstr "Перевод с ИИ не настроен."
+
+#: src/Rest/PostTranslationController.php
+msgid "The request contains no strings."
+msgstr "В запросе нет ни одной строки."
+
+#: src/Rest/PostTranslationController.php
+msgid "These strings were not found. Refresh the list and try again."
+msgstr "Эти строки не найдены — обновите список и попробуйте снова."
+
+#: src/Rest/PostTranslationController.php
+msgid "Could not save: the batch validation failed (%s). No translation was written."
+msgstr "Не удалось сохранить: проверка пакета не прошла (%s). Ни один перевод не записан."
+
+#: src/Rest/PostTranslationController.php
+msgid "Could not save the translation. The changes were rolled back and nothing was lost."
+msgstr "Не удалось сохранить перевод — изменения отменены, ничего не потеряно."
+
+#: src/Rest/PostTranslationController.php
+msgid "Post not found."
+msgstr "Запись не найдена."
+
+#: src/Rest/PostVisibilityController.php
+msgid "Pass an ids list: from 1 to %d positive integers."
+msgstr "Передайте список ids: от 1 до %d положительных целых чисел."
+
+#: src/Rest/PostVisibilityController.php
+msgid "The visible parameter must be true or false."
+msgstr "Параметр visible должен быть true или false."
+
+#: src/Rest/PostVisibilityController.php
+msgid "Post %d was not found or its type cannot be enabled for a language."
+msgstr "Запись %d не найдена или её тип нельзя включать для языка."
+
+#: src/Rest/BlocksController.php
+msgid "There is nothing to translate in this fragment."
+msgstr "В этом фрагменте нечего переводить."
+
+#: src/Rest/BlocksController.php
+msgid "Could not create the block."
+msgstr "Не удалось создать блок."
+
+#: src/Rest/BlocksController.php
+msgid "Block not found."
+msgstr "Блок не найден."
+
+#: src/Rest/EditorPagesController.php
+msgid "Home"
+msgstr "Главная"
+
+#: src/Rest/EditorPagesController.php
+msgid "URL"
+msgstr "Адрес"
+
+#: src/Rest/EditorPagesController.php
+msgid "(no title)"
+msgstr "(без названия)"
+
+#: src/Rest/OpenAiModelsController.php
+msgid "Save the OpenAI key first; the list of models will then appear here."
+msgstr "Сначала сохраните ключ OpenAI — тогда здесь появится список моделей."
+
+#: src/Rest/OpenAiModelsController.php
+msgid "Network error: "
+msgstr "Сетевая ошибка: "
+
+#: src/Rest/OpenAiModelsController.php
+msgid "The API address did not return the list of models in the expected format."
+msgstr "Адрес API не вернул список моделей в ожидаемом формате."
+
+#: src/Settings/Settings.php
+msgid "The language code \"%s\" is not valid: 2–8 Latin letters and hyphen-separated subtags are allowed."
+msgstr "Код языка «%s» недопустим: разрешены 2–8 латинских букв и субтеги через дефис."
+
+#: src/Settings/Settings.php
+msgid "The URL slug \"%s\" is not valid: lowercase Latin letters, digits and hyphens are allowed."
+msgstr "URL-слаг «%s» недопустим: разрешены строчные латинские буквы, цифры и дефис."
+
+#: src/Settings/Settings.php
+msgid "The URL slug \"%s\" is already used by another language."
+msgstr "URL-слаг «%s» уже занят другим языком."
+
+#: src/Settings/Settings.php
+msgid "The WordPress locale \"%s\" is not valid: Latin letters, digits and underscores are allowed, for example en_US."
+msgstr "Локаль WordPress «%s» недопустима: разрешены латинские буквы, цифры и подчёркивание, например en_US."
+
+#: src/Settings/Settings.php
+msgid "The default language must be in the list of languages. The default language settings were not changed."
+msgstr "Язык по умолчанию должен быть в списке языков. Настройки языка по умолчанию не изменены."
+
+#: src/Storage/TranslationStatus.php
+msgid "No translation"
+msgstr "Нет перевода"
+
+#: src/Storage/TranslationStatus.php
+msgid "Machine"
+msgstr "Машинный"
+
+#: src/Storage/TranslationStatus.php
+msgid "In review"
+msgstr "На проверке"
+
+#: src/Storage/TranslationStatus.php
+msgid "Ready"
+msgstr "Готов"
+
+#: src/Storage/TranslationStatus.php
+msgid "Outdated"
+msgstr "Устарел"
+
+#: src/Storage/TranslationStatus.php
+msgid "Rejected"
+msgstr "Отклонён"
+
+#: src/Storage/TranslationStatus.php
+msgid "From the language pack"
+msgstr "Из языкового пакета"

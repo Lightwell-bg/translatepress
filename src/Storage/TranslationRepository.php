@@ -12,6 +12,8 @@ namespace WpMlp\Storage;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Чтение и запись `wp_mlp_translations`.
  */
@@ -64,24 +66,24 @@ final class TranslationRepository {
 		$args[] = $now;
 		$args[] = $now;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$sql = $wpdb->prepare(
-			"INSERT INTO {$table}
-				(source_id, target_locale, translated_text, status, provider, model, source_revision, created_by, created_at, updated_at)
-			 VALUES (%d, %s, %s, %s, NULLIF(%s, ''), NULLIF(%s, ''), {$revisionSql}, NULLIF(%d, 0), %s, %s)
-			 ON DUPLICATE KEY UPDATE
-				translated_text = VALUES(translated_text),
-				status          = VALUES(status),
-				provider        = VALUES(provider),
-				model           = VALUES(model),
-				source_revision = VALUES(source_revision),
-				created_by      = VALUES(created_by),
-				updated_at      = VALUES(updated_at)",
-			$args
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- NULL/UNHEX(%s) выбирается из двух литералов; значения идут через prepare(), анализатор не считает параметры в array_merge().
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO %i
+					(source_id, target_locale, translated_text, status, provider, model, source_revision, created_by, created_at, updated_at)
+				 VALUES (%d, %s, %s, %s, NULLIF(%s, ''), NULLIF(%s, ''), {$revisionSql}, NULLIF(%d, 0), %s, %s)
+				 ON DUPLICATE KEY UPDATE
+					translated_text = VALUES(translated_text),
+					status          = VALUES(status),
+					provider        = VALUES(provider),
+					model           = VALUES(model),
+					source_revision = VALUES(source_revision),
+					created_by      = VALUES(created_by),
+					updated_at      = VALUES(updated_at)",
+				array_merge( array( $table ), $args )
+			)
 		);
-
-		$result = $wpdb->query( $sql );
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return false !== $result;
 	}
@@ -106,7 +108,8 @@ final class TranslationRepository {
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT id, source_id, target_locale, translated_text, status, provider, model, created_by, created_at, updated_at
-				 FROM {$table} WHERE source_id = %d AND target_locale = %s",
+				 FROM %i WHERE source_id = %d AND target_locale = %s",
+				$table,
 				$sourceId,
 				$locale
 			),
@@ -137,7 +140,7 @@ final class TranslationRepository {
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$deleted = $wpdb->query(
-			$wpdb->prepare( "DELETE FROM {$table} WHERE target_locale = %s", $locale )
+			$wpdb->prepare( 'DELETE FROM %i WHERE target_locale = %s', $table, $locale )
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 

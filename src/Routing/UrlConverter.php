@@ -13,6 +13,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Добавляет языковой префикс к адресам, которые генерирует WordPress.
  *

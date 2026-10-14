@@ -11,6 +11,8 @@ namespace WpMlp\I18n;
 
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Тонкая обёртка над механизмом переводов WordPress.
  *

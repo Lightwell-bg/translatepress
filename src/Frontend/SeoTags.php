@@ -17,6 +17,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * hreflang, canonical и атрибут `lang` (ТЗ 8.1–8.3).
  *

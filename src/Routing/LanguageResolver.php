@@ -12,6 +12,8 @@ namespace WpMlp\Routing;
 use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Разбирает путь запроса и решает, на каком языке отдавать страницу.
  *

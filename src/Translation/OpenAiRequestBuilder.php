@@ -12,6 +12,8 @@ namespace WpMlp\Translation;
 use WpMlp\Rendering\Segment;
 use WpMlp\Support\ShortcodeGuard;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Чистая логика вокруг Chat Completions API, без единого сетевого вызова.
  *

@@ -11,6 +11,8 @@ namespace WpMlp\I18n;
 
 use WpMlp\Support\Hash;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Тройка `(msgid, domain, context)` плюс форма множественного числа — то,
  * чем gettext-строка отличается от любой другой (ТЗ 4.8).

@@ -13,6 +13,8 @@ use WpMlp\Settings\Settings;
 use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Действие «Перевести» в строке списка и боковой метабокс «Перевод».
  *

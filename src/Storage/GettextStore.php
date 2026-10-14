@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * То, что {@see \WpMlp\I18n\GettextRegistry} требует от хранилища.
  *

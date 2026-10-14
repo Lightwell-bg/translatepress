@@ -12,6 +12,8 @@ namespace WpMlp\Routing;
 use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Дублирует все правила WordPress с языковым префиксом.
  *

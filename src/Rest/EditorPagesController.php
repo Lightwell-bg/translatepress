@@ -16,6 +16,8 @@ use WpMlp\Settings\Settings;
 use WpMlp\Support\Hookable;
 use WpMlp\Routing\UrlConverter;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * `GET /wp-json/mlp/v1/editor/pages?search=…`.
  *

@@ -14,6 +14,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Support\Assets;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Решает, показывается ли страница внутри редактора (ТЗ 10.1–10.2).
  *
@@ -151,10 +153,11 @@ final class EditorContext implements Hookable {
 	 * не пройдёт сверку и промолчит, а не отправит сообщение с мусором.
 	 */
 	public static function channelFromRequest(): string {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce режима редактора проверяется в detect().
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- nonce режима редактора проверяется в detect().
 		$raw = isset( $_GET[ self::QUERY_CHANNEL ] )
 			? sanitize_text_field( wp_unslash( (string) $_GET[ self::QUERY_CHANNEL ] ) )
 			: '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		return 1 === preg_match( '/^[A-Za-z0-9]{16,64}$/', $raw ) ? $raw : '';
 	}

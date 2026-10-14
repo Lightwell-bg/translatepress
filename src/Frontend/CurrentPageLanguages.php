@@ -13,6 +13,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Settings\Settings;
 use WpMlp\Storage\PostLanguageVisibility;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Отвечает переключателю языков и hreflang на вопрос «есть ли у этой страницы
  * версия на языке X».

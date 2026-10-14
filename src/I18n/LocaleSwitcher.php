@@ -14,6 +14,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Support\FrontendRequest;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Говорит WordPress, что текущая страница — на целевом языке, и ядро,
  * тема и плагины сами отдают свои строки из официального языкового пакета.

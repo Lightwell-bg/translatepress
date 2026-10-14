@@ -61,9 +61,15 @@ final class FakeWpdb {
 		$i = 0;
 
 		return (string) preg_replace_callback(
-			'/%[sd]/',
+			'/%[sdi]/',
 			static function ( array $m ) use ( &$i, $args ) {
 				$value = $args[ $i++ ] ?? '';
+
+				if ( '%i' === $m[0] ) {
+					// Идентификатор (WP 6.2+): в тестах подставляется как есть, без обратных кавычек,
+					// чтобы проверки вида `FROM wp_mlp_sources` не зависели от экранирования.
+					return (string) $value;
+				}
 
 				return '%d' === $m[0] ? (string) (int) $value : "'" . $value . "'";
 			},

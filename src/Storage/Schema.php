@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Создание и обновление схемы БД через dbDelta (ТЗ 6.1–6.4).
  *
@@ -44,7 +46,7 @@ final class Schema {
 		global $wpdb;
 
 		if ( ! in_array( $name, self::TABLES, true ) ) {
-			throw new \InvalidArgumentException( sprintf( 'Unknown table "%s".', $name ) );
+			throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown table "%s".', $name ) ) );
 		}
 
 		return $wpdb->prefix . 'mlp_' . $name;
@@ -90,8 +92,8 @@ final class Schema {
 
 		foreach ( self::TABLES as $name ) {
 			$table = self::table( $name );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- имя таблицы из allowlist.
-			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- удаление собственных таблиц плагина при деинсталляции, кэшировать нечего.
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 		}
 
 		delete_option( self::OPTION_VERSION );

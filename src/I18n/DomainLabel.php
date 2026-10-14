@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\I18n;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Превращает text domain в то, что понятно владельцу сайта.
  *

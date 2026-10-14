@@ -12,6 +12,8 @@ namespace WpMlp\Storage;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Чтение и запись `wp_mlp_occurrences` (ТЗ 6.3).
  *
@@ -76,19 +78,19 @@ final class OccurrenceRepository {
 
 			$valuesSql = implode( ', ', $values );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 			$wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO {$table}
+					"INSERT INTO %i
 						(source_id, object_type, object_id, url_hash, attribute_name, uniq_hash, first_seen_at, last_seen_at)
 					 VALUES {$valuesSql}
 					 ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at),
 						object_type = VALUES(object_type),
 						object_id = VALUES(object_id)",
-					$args
+					array_merge( array( $table ), $args )
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 		}
 	}
 
@@ -107,17 +109,18 @@ final class OccurrenceRepository {
 		$table = Schema::table( 'occurrences' );
 		$limit = max( 1, min( 1000, $limit ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT DISTINCT object_id FROM {$table}
+				"SELECT DISTINCT object_id FROM %i
 				 WHERE object_type = 'post' AND object_id IS NOT NULL AND object_id > 0
 				 ORDER BY object_id DESC
 				 LIMIT %d",
+				$table,
 				$limit
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array_map( 'intval', is_array( $rows ) ? $rows : array() );
 	}
@@ -143,22 +146,24 @@ final class OccurrenceRepository {
 		$occurrences  = Schema::table( 'occurrences' );
 		$translations = Schema::table( 'translations' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT o.object_id
-				 FROM {$occurrences} o
-				 INNER JOIN {$translations} t
+				 FROM %i o
+				 INNER JOIN %i t
 					ON t.source_id = o.source_id AND t.target_locale = %s
 				 WHERE o.object_type = 'post'
 					AND o.object_id IS NOT NULL
 					AND o.object_id > 0
 					AND t.translated_text IS NOT NULL
 					AND t.translated_text <> ''",
+				$occurrences,
+				$translations,
 				$locale
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array_map( 'intval', is_array( $rows ) ? $rows : array() );
 	}
@@ -185,18 +190,19 @@ final class OccurrenceRepository {
 		$translations = Schema::table( 'translations' );
 		$rows         = PostStringScope::ownRowsSql( 'o.object_id IS NOT NULL AND o.object_id > 0' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT x.object_id
 				 FROM ( {$rows} ) x
-				 LEFT JOIN {$translations} t ON t.source_id = x.source_id AND t.target_locale = %s
+				 LEFT JOIN %i t ON t.source_id = x.source_id AND t.target_locale = %s
 				 GROUP BY x.object_id
 				 HAVING SUM(CASE WHEN t.translated_text IS NOT NULL AND t.translated_text <> '' THEN 1 ELSE 0 END) = COUNT(*)",
+				$translations,
 				Locale::normalize( $locale )
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array_map( 'intval', is_array( $ids ) ? $ids : array() );
 	}
@@ -221,19 +227,20 @@ final class OccurrenceRepository {
 		$translations = Schema::table( 'translations' );
 		$rows         = PostStringScope::ownRowsSql( 'o.object_id = %d' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT COUNT(*) AS total,
 					SUM(CASE WHEN t.translated_text IS NOT NULL AND t.translated_text <> '' THEN 1 ELSE 0 END) AS done
 				 FROM ( {$rows} ) x
-				 LEFT JOIN {$translations} t ON t.source_id = x.source_id AND t.target_locale = %s",
+				 LEFT JOIN %i t ON t.source_id = x.source_id AND t.target_locale = %s",
 				$postId,
+				$translations,
 				Locale::normalize( $locale )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		if ( ! is_array( $row ) ) {
 			return array( 0, 0 );
@@ -266,12 +273,12 @@ final class OccurrenceRepository {
 		$occurrences  = Schema::table( 'occurrences' );
 		$translations = Schema::table( 'translations' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT o.object_id, MAX(t.updated_at) AS last_updated
-				 FROM {$occurrences} o
-				 INNER JOIN {$translations} t
+				 FROM %i o
+				 INNER JOIN %i t
 					ON t.source_id = o.source_id AND t.target_locale = %s
 				 WHERE o.object_type = 'post'
 					AND o.object_id IS NOT NULL
@@ -279,11 +286,13 @@ final class OccurrenceRepository {
 					AND t.translated_text IS NOT NULL
 					AND t.translated_text <> ''
 				 GROUP BY o.object_id",
+				$occurrences,
+				$translations,
 				$locale
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		$result = array();
 
@@ -311,15 +320,16 @@ final class OccurrenceRepository {
 
 		$table = Schema::table( 'occurrences' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT 1 FROM {$table} WHERE source_id = %d AND object_type = 'post' AND object_id = %d LIMIT 1",
+				"SELECT 1 FROM %i WHERE source_id = %d AND object_type = 'post' AND object_id = %d LIMIT 1",
+				$table,
 				$sourceId,
 				$objectId
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return null !== $found;
 	}
@@ -337,17 +347,18 @@ final class OccurrenceRepository {
 		$table = Schema::table( 'occurrences' );
 		$limit = max( 1, min( 50, $limit ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i; подзапрос PostStringScope::ownRowsSql() и VALUES собраны из кода (таблицы из allowlist, константы), значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT object_type, object_id, attribute_name, last_seen_at
-				 FROM {$table} WHERE source_id = %d ORDER BY last_seen_at DESC LIMIT %d",
+				 FROM %i WHERE source_id = %d ORDER BY last_seen_at DESC LIMIT %d",
+				$table,
 				$sourceId,
 				$limit
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return is_array( $rows ) ? $rows : array();
 	}

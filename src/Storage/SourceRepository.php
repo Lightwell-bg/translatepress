@@ -13,6 +13,8 @@ use WpMlp\Rendering\Segment;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Чтение и запись `wp_mlp_sources`.
  *
@@ -66,18 +68,18 @@ final class SourceRepository {
 		foreach ( array_chunk( $uniqHashes, self::CHUNK ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), 'UNHEX(%s)' ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- имена таблиц из allowlist, значения через prepare().
-			$sql = $wpdb->prepare(
-				"SELECT LOWER(HEX(s.uniq_hash)) AS uniq_hash, s.id, t.translated_text, t.status
-				 FROM {$sources} s
-				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
-				 WHERE s.uniq_hash IN ({$placeholders})",
-				array_merge( array( $targetLocale ), $chunk )
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- таблицы через %i, список UNHEX(%s) собран из литералов, значения через prepare(); анализатор не считает параметры в array_merge().
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT LOWER(HEX(s.uniq_hash)) AS uniq_hash, s.id, t.translated_text, t.status
+					 FROM %i s
+					 LEFT JOIN %i t ON t.source_id = s.id AND t.target_locale = %s
+					 WHERE s.uniq_hash IN ({$placeholders})",
+					array_merge( array( $sources, $translations, $targetLocale ), $chunk )
+				),
+				ARRAY_A
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- собственная таблица плагина.
-			$rows = $wpdb->get_results( $sql, ARRAY_A );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 			foreach ( (array) $rows as $row ) {
 				$result[ (string) $row['uniq_hash'] ] = array(
@@ -138,16 +140,16 @@ final class SourceRepository {
 
 			$valuesSql = implode( ', ', $values );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-			$sql = $wpdb->prepare(
-				"INSERT IGNORE INTO {$table}
-					(source_locale, kind, source_text, source_hash, context_hash, uniq_hash, created_at, last_seen_at)
-				 VALUES {$valuesSql}",
-				$args
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
+			$inserted += (int) $wpdb->query(
+				$wpdb->prepare(
+					"INSERT IGNORE INTO %i
+						(source_locale, kind, source_text, source_hash, context_hash, uniq_hash, created_at, last_seen_at)
+					 VALUES {$valuesSql}",
+					array_merge( array( $table ), $args )
+				)
 			);
-
-			$inserted += (int) $wpdb->query( $sql );
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 		}
 
 		return $inserted;
@@ -174,15 +176,15 @@ final class SourceRepository {
 		foreach ( array_chunk( $uniqHashes, self::CHUNK ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), 'UNHEX(%s)' ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT id, LOWER(HEX(uniq_hash)) AS uniq_hash FROM {$table} WHERE uniq_hash IN ({$placeholders})",
-					$chunk
+					"SELECT id, LOWER(HEX(uniq_hash)) AS uniq_hash FROM %i WHERE uniq_hash IN ({$placeholders})",
+					array_merge( array( $table ), $chunk )
 				),
 				ARRAY_A
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 			foreach ( (array) $rows as $row ) {
 				$result[ (string) $row['uniq_hash'] ] = (int) $row['id'];
@@ -211,14 +213,14 @@ final class SourceRepository {
 		foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET last_seen_at = %s WHERE id IN ({$placeholders})",
-					array_merge( array( gmdate( 'Y-m-d H:i:s' ) ), $chunk )
+					"UPDATE %i SET last_seen_at = %s WHERE id IN ({$placeholders})",
+					array_merge( array( $table, gmdate( 'Y-m-d H:i:s' ) ), $chunk )
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 		}
 	}
 
@@ -242,11 +244,11 @@ final class SourceRepository {
 
 		$table = Schema::table( 'sources' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_col(
-			$wpdb->prepare( "SELECT LOWER(HEX(source_hash)) FROM {$table} WHERE kind = %s", 'html_block' )
+			$wpdb->prepare( 'SELECT LOWER(HEX(source_hash)) FROM %i WHERE kind = %s', $table, 'html_block' )
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		$hashes = array_fill_keys( is_array( $rows ) ? $rows : array(), true );
 
@@ -315,15 +317,15 @@ final class SourceRepository {
 
 		list( $whereSql, $params ) = $this->cleanableWhere( $kinds, $occurrences );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		// Пустые записи переводов мешают проверке «перевода нет вовсе».
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE t FROM {$translations} t
-				 INNER JOIN {$sources} s ON s.id = t.source_id
+				"DELETE t FROM %i t
+				 INNER JOIN %i s ON s.id = t.source_id
 				 WHERE ({$whereSql})
 					AND (t.translated_text IS NULL OR t.translated_text = '')",
-				$params
+				array_merge( array( $translations, $sources ), $params )
 			)
 		);
 
@@ -338,11 +340,11 @@ final class SourceRepository {
 		do {
 			$ids = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT s.id FROM {$sources} s
+					"SELECT s.id FROM %i s
 					 WHERE ({$whereSql})
-						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)
-					 LIMIT " . self::DELETE_BATCH,
-					$params
+						AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = s.id)
+					 LIMIT %d",
+					array_merge( array( $sources ), $params, array( $translations, self::DELETE_BATCH ) )
 				)
 			);
 			$ids = array_values( array_filter( array_map( 'intval', is_array( $ids ) ? $ids : array() ) ) );
@@ -361,25 +363,25 @@ final class SourceRepository {
 			 */
 			$wpdb->query(
 				$wpdb->prepare(
-					"DELETE o FROM {$occurrences} o
+					"DELETE o FROM %i o
 					 WHERE o.source_id IN ({$placeholders})
-						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = o.source_id)",
-					$ids
+						AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = o.source_id)",
+					array_merge( array( $occurrences ), $ids, array( $translations ) )
 				)
 			);
 			$wpdb->query(
 				$wpdb->prepare(
-					"DELETE s FROM {$sources} s
+					"DELETE s FROM %i s
 					 WHERE s.id IN ({$placeholders})
-						AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-					$ids
+						AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = s.id)",
+					array_merge( array( $sources ), $ids, array( $translations ) )
 				)
 			);
 			$removed = (int) $wpdb->rows_affected;
 
 			$deleted += $removed;
 		} while ( count( $ids ) >= self::DELETE_BATCH && $removed > 0 );
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		// Список translation blocks кэшируется в опции — он мог измениться.
 		$this->flushBlockHashes();
@@ -409,19 +411,19 @@ final class SourceRepository {
 
 		list( $whereSql, $params ) = $this->cleanableWhere( $kinds, Schema::table( 'occurrences' ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$sources} s
+				"SELECT COUNT(*) FROM %i s
 				 WHERE ({$whereSql})
 					AND NOT EXISTS (
-						SELECT 1 FROM {$translations} t
+						SELECT 1 FROM %i t
 						WHERE t.source_id = s.id AND t.translated_text IS NOT NULL AND t.translated_text <> ''
 					)",
-				$params
+				array_merge( array( $sources ), $params, array( $translations ) )
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -437,6 +439,8 @@ final class SourceRepository {
 	 *
 	 * @param list<string> $kinds       Виды из cleanableKinds().
 	 * @param string       $occurrences Полное имя таблицы occurrences.
+	 * Имя таблицы `occurrences` подставляется плейсхолдером `%i` и лежит среди параметров.
+	 *
 	 * @return array{0: string, 1: list<string>}
 	 */
 	private function cleanableWhere( array $kinds, string $occurrences ): array {
@@ -448,9 +452,10 @@ final class SourceRepository {
 
 		if ( $isLinkCleanup ) {
 			$conditions[] = '(s.kind = %s AND EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o7 WHERE o7.source_id = s.id AND o7.attribute_name = %s"
+				. 'SELECT 1 FROM %i o7 WHERE o7.source_id = s.id AND o7.attribute_name = %s'
 				. '))';
 			$params[] = self::TYPE_ATTRIBUTE;
+			$params[] = $occurrences;
 			$params[] = self::LINK_ATTRIBUTE;
 		}
 
@@ -461,7 +466,7 @@ final class SourceRepository {
 			if ( in_array( self::TYPE_ATTRIBUTE, $plainKinds, true ) ) {
 				// Ссылки трогает только ветка выше, здесь их вычитаем явно.
 				$clause .= ' AND NOT (s.kind = %s AND EXISTS ('
-					. "SELECT 1 FROM {$occurrences} o8 WHERE o8.source_id = s.id AND o8.attribute_name = %s"
+					. 'SELECT 1 FROM %i o8 WHERE o8.source_id = s.id AND o8.attribute_name = %s'
 					. '))';
 			}
 
@@ -470,6 +475,7 @@ final class SourceRepository {
 
 			if ( in_array( self::TYPE_ATTRIBUTE, $plainKinds, true ) ) {
 				$params[] = self::TYPE_ATTRIBUTE;
+				$params[] = $occurrences;
 				$params[] = self::LINK_ATTRIBUTE;
 			}
 		}
@@ -488,12 +494,12 @@ final class SourceRepository {
 
 		$table = Schema::table( 'sources' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$row = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ),
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $id ),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return is_array( $row ) ? $row : null;
 	}
@@ -529,19 +535,19 @@ final class SourceRepository {
 		foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT id, source_locale, kind, source_text, last_seen_at,
 							LOWER(HEX(source_hash)) AS source_hash,
 							LOWER(HEX(context_hash)) AS context_hash,
 							LOWER(HEX(uniq_hash)) AS uniq_hash
-					 FROM {$table} WHERE id IN ({$placeholders})",
-					$chunk
+					 FROM %i WHERE id IN ({$placeholders})",
+					array_merge( array( $table ), $chunk )
 				),
 				ARRAY_A
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 			foreach ( (array) $rows as $row ) {
 				$result[ (int) $row['id'] ] = $row;
@@ -679,26 +685,33 @@ final class SourceRepository {
 		 * где записи нет вовсе (архивы, поиск, 404), дают 0 и попадают
 		 * в общие элементы — это и есть верное для них место.
 		 */
-		$distinctObjects = "(SELECT COUNT(DISTINCT o.object_id) FROM {$occurrences} o WHERE o.source_id = s.id AND o.object_type = '" . OccurrenceRepository::OBJECT_TYPE_POST . "')";
+		$distinctObjects = '(SELECT COUNT(DISTINCT o.object_id) FROM %i o WHERE o.source_id = s.id AND o.object_type = %s)';
 
 		if ( self::SCOPE_GLOBAL === $scope ) {
-			$where[] = $distinctObjects . ' <> 1';
+			$where[]  = $distinctObjects . ' <> 1';
+			$params[] = $occurrences;
+			$params[] = OccurrenceRepository::OBJECT_TYPE_POST;
 		} elseif ( self::SCOPE_OBJECT === $scope && $objectId > 0 ) {
 			// Только то, что принадлежит именно этой записи: общие элементы
 			// сайта показываются в своей вкладке и здесь только мешали бы.
-			$where[]  = "EXISTS (SELECT 1 FROM {$occurrences} o2 WHERE o2.source_id = s.id AND o2.object_type = '" . OccurrenceRepository::OBJECT_TYPE_POST . "' AND o2.object_id = %d)";
+			$where[]  = 'EXISTS (SELECT 1 FROM %i o2 WHERE o2.source_id = s.id AND o2.object_type = %s AND o2.object_id = %d)';
+			$params[] = $occurrences;
+			$params[] = OccurrenceRepository::OBJECT_TYPE_POST;
 			$params[] = $objectId;
 			$where[]  = $distinctObjects . ' = 1';
+			$params[] = $occurrences;
+			$params[] = OccurrenceRepository::OBJECT_TYPE_POST;
 		}
 
 		$type = (string) ( $args['type'] ?? self::TYPE_ALL );
 
 		if ( self::TYPE_SEO === $type ) {
 			$where[] = "(s.kind = %s OR (s.kind = %s AND EXISTS ("
-				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name = %s"
+				. 'SELECT 1 FROM %i o3 WHERE o3.source_id = s.id AND o3.attribute_name = %s'
 				. ')))';
 			$params[] = Segment::KIND_SEO;
 			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = $occurrences;
 			$params[] = 'content';
 		} elseif ( self::TYPE_ATTRIBUTE === $type ) {
 			// Meta-теги (attribute_name = content) — это TYPE_SEO, адреса
@@ -706,9 +719,10 @@ final class SourceRepository {
 			// строка встречалась бы в двух фильтрах сразу и запутывала
 			// счётчик найденных строк.
 			$where[] = '(s.kind = %s AND NOT EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o3 WHERE o3.source_id = s.id AND o3.attribute_name IN (%s, %s)"
+				. 'SELECT 1 FROM %i o3 WHERE o3.source_id = s.id AND o3.attribute_name IN (%s, %s)'
 				. '))';
 			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = $occurrences;
 			$params[] = 'content';
 			$params[] = self::LINK_ATTRIBUTE;
 		} elseif ( in_array( $type, array( self::TYPE_TEXT, self::TYPE_BLOCK ), true ) ) {
@@ -722,48 +736,54 @@ final class SourceRepository {
 			 * ссылки и вынесены на свою вкладку.
 			 */
 			$where[] = '(s.kind IN (%s, %s, %s) AND NOT EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o5 WHERE o5.source_id = s.id AND o5.attribute_name IN (%s, %s)"
+				. 'SELECT 1 FROM %i o5 WHERE o5.source_id = s.id AND o5.attribute_name IN (%s, %s)'
 				. '))';
 			$params[] = self::TYPE_TEXT;
 			$params[] = self::TYPE_ATTRIBUTE;
 			$params[] = self::TYPE_BLOCK;
+			$params[] = $occurrences;
 			$params[] = 'content';
 			$params[] = self::LINK_ATTRIBUTE;
 		} elseif ( self::TYPE_LINK === $type ) {
 			$where[] = '(s.kind = %s AND EXISTS ('
-				. "SELECT 1 FROM {$occurrences} o6 WHERE o6.source_id = s.id AND o6.attribute_name = %s"
+				. 'SELECT 1 FROM %i o6 WHERE o6.source_id = s.id AND o6.attribute_name = %s'
 				. '))';
 			$params[] = Segment::KIND_ATTRIBUTE;
+			$params[] = $occurrences;
 			$params[] = self::LINK_ATTRIBUTE;
 		}
 
 		$whereSql = implode( ' AND ', $where );
 		$select   = "s.id, s.kind, s.source_text, s.last_seen_at,
 						t.translated_text, t.status, t.updated_at,
-						(SELECT o4.attribute_name FROM {$occurrences} o4
+						(SELECT o4.attribute_name FROM %i o4
 						 WHERE o4.source_id = s.id AND o4.attribute_name IS NOT NULL LIMIT 1) AS attribute_name";
-		$from     = "FROM {$sources} s LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s";
+		$from     = 'FROM %i s LEFT JOIN %i t ON t.source_id = s.id AND t.target_locale = %s';
+
+		// Порядок параметров совпадает с порядком плейсхолдеров: колонки, FROM (таблицы + локаль), WHERE.
+		$selectParams = array( $occurrences );
+		$fromParams   = array( $sources, $translations );
 
 		if ( '' !== $search ) {
-			return $this->paginateBySearchPhrase( $select, $from, $whereSql, $params, $search, $perPage, $offset );
+			return $this->paginateBySearchPhrase( $select, $from, $whereSql, array_merge( $selectParams, $fromParams, $params ), $search, $perPage, $offset );
 		}
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- таблицы через %i, фрагменты SELECT/FROM/WHERE собраны из литералов с плейсхолдерами; анализатор не видит плейсхолдеры внутри переменных.
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) {$from} WHERE {$whereSql}",
-				$params
+				array_merge( $fromParams, $params )
 			)
 		);
 
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT {$select} {$from} WHERE {$whereSql} ORDER BY s.id DESC LIMIT %d OFFSET %d",
-				array_merge( $params, array( $perPage, $offset ) )
+				array_merge( $selectParams, $fromParams, $params, array( $perPage, $offset ) )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array(
 			'items' => is_array( $items ) ? $items : array(),
@@ -798,9 +818,9 @@ final class SourceRepository {
 	 * чем гадать, на какой версии MySQL окажется конкретный хостинг.
 	 *
 	 * @param string               $select   Список колонок `SELECT`.
-	 * @param string               $from     `FROM ... LEFT JOIN ...` с одним `%s` под локаль.
+	 * @param string               $from     `FROM %i s LEFT JOIN %i t ...` с `%s` под локаль.
 	 * @param string               $whereSql Условие `WHERE` без фразы поиска.
-	 * @param list<string|int>     $params   Параметры под `$whereSql` (локаль первой).
+	 * @param list<string|int>     $params   Параметры под `$select`, `$from` и `$whereSql` по порядку плейсхолдеров.
 	 * @param string               $search   Искомая фраза.
 	 * @param int                  $perPage  Строк на странице.
 	 * @param int                  $offset   Смещение страницы.
@@ -817,12 +837,12 @@ final class SourceRepository {
 	): array {
 		global $wpdb;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- таблицы через %i, фрагменты SELECT/FROM/WHERE собраны из литералов с плейсхолдерами; анализатор не видит плейсхолдеры внутри переменных.
 		$candidates = $wpdb->get_results(
 			$wpdb->prepare( "SELECT {$select} {$from} WHERE {$whereSql} ORDER BY s.id DESC", $params ),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		$matching = array_values(
 			array_filter(

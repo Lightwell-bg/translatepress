@@ -25,6 +25,8 @@ use WpMlp\Support\Hookable;
 use WpMlp\Support\Locale;
 use WpMlp\Translation\ProviderFactory;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Список языков сайта: код, URL-слаг, название, статус, язык по умолчанию.
  */
@@ -108,7 +110,7 @@ final class SettingsPage implements Hookable {
 
 			$field = 'flag_file_' . $index;
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен в handleSave().
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce проверен в handleSave(); содержимое файла проверяет и очищает FlagUpload (размер, разбор SVG), имя не используется.
 			$file = $_FILES[ $field ] ?? null;
 
 			if ( ! is_array( $file ) || UPLOAD_ERR_NO_FILE === ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
@@ -338,7 +340,7 @@ final class SettingsPage implements Hookable {
 			printf(
 				'<p class="mlp-vis-lang" data-locale="%1$s" data-count="%2$d">%3$s <strong class="mlp-vis-count">%2$d</strong> <button type="button" class="button mlp-enable-translated" data-locale="%1$s">%4$s</button> <span class="mlp-vis-msg" role="status" aria-live="polite"></span></p>',
 				esc_attr( $language->locale ),
-				$count,
+				absint( $count ),
 				/* translators: %s: language name */
 				esc_html( sprintf( __( 'Currently shown in %s — posts and pages:', 'wp-mlp' ), $language->label ) ),
 				/* translators: %s: language name */

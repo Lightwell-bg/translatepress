@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Allowlist полей JSON-LD (ТЗ 8.4: «только разрешённые текстовые поля и URL,
  * без слепого перевода ключей и идентификаторов»).

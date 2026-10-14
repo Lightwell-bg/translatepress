@@ -14,6 +14,8 @@ use WpMlp\Rendering\LinkTarget;
 use WpMlp\Rendering\Segment;
 use WpMlp\Support\Hash;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Удаляет из словаря строки, которые сборщик больше не создаёт.
  *
@@ -202,19 +204,22 @@ final class StaleStringsCleanup {
 
 		$likeSql = implode( ' OR ', $likes );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		list( $onlySql, $onlyArgs )                 = $this->onlyAttributeSql( 'href' );
+		list( $untranslatedSql, $untranslatedArgs ) = $this->untranslatedSql();
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- фрагменты WHERE собраны из литералов с плейсхолдерами %i/%s, значения идут параметрами; анализатор не видит плейсхолдеры внутри переменных и не считает параметры в array_merge().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT s.id, s.source_text FROM {$sources} s
+				"SELECT s.id, s.source_text FROM %i s
 				 WHERE s.kind = %s AND s.id > %d AND ({$likeSql})
-					AND " . $this->onlyAttributeSql( 'href' ) . '
-					AND ' . $this->untranslatedSql() . '
-				 ORDER BY s.id LIMIT ' . self::BATCH,
-				array_merge( array( 'attribute', $lastId ), $args )
+					AND {$onlySql}
+					AND {$untranslatedSql}
+				 ORDER BY s.id LIMIT %d",
+				array_merge( array( $sources, 'attribute', $lastId ), $args, $onlyArgs, $untranslatedArgs, array( self::BATCH ) )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		if ( $this->failed( $rows ) ) {
 			return null;
@@ -252,21 +257,22 @@ final class StaleStringsCleanup {
 
 		$sources = Schema::table( 'sources' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		list( $onlySql, $onlyArgs )                 = $this->onlyAttributeSql( 'title', false );
+		list( $untranslatedSql, $untranslatedArgs ) = $this->untranslatedSql();
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- фрагменты WHERE собраны из литералов с плейсхолдерами %i/%s, значения идут параметрами; анализатор не видит плейсхолдеры внутри переменных и не считает параметры в array_merge().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT s.id, s.source_locale, s.source_text FROM {$sources} s
+				"SELECT s.id, s.source_locale, s.source_text FROM %i s
 				 WHERE s.kind = %s AND s.id > %d AND s.source_text REGEXP %s
-					AND " . $this->onlyAttributeSql( 'title', false ) . '
-					AND ' . $this->untranslatedSql() . '
-				 ORDER BY s.id LIMIT ' . self::BATCH,
-				'attribute',
-				$lastId,
-				'[[:space:]][0-9]+$'
+					AND {$onlySql}
+					AND {$untranslatedSql}
+				 ORDER BY s.id LIMIT %d",
+				array_merge( array( $sources, 'attribute', $lastId, '[[:space:]][0-9]+$' ), $onlyArgs, $untranslatedArgs, array( self::BATCH ) )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		if ( $this->failed( $rows ) ) {
 			return null;
@@ -336,16 +342,16 @@ final class StaleStringsCleanup {
 
 		// Колонка kind не проверяется: строка из og:title хранится как attribute,
 		// но хешируется как текст.
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, список плейсхолдеров собран из литералов, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$found = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT s.source_locale, s.source_text, s.id FROM {$sources} s
+				"SELECT s.source_locale, s.source_text, s.id FROM %i s
 				 WHERE s.uniq_hash IN ({$hashSql})",
-				$hashList
+				array_merge( array( $sources ), $hashList )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		if ( $this->failed( $found ) ) {
 			return null;
@@ -406,29 +412,37 @@ final class StaleStringsCleanup {
 	 *
 	 * @param string $attribute  `href` или `title`.
 	 * @param bool   $requireOne Требовать хотя бы одно место использования.
+	 * @return array{0: string, 1: list<string>} SQL с плейсхолдерами `%i`/`%s` и параметры по порядку.
 	 */
-	private function onlyAttributeSql( string $attribute, bool $requireOne = true ): string {
+	private function onlyAttributeSql( string $attribute, bool $requireOne = true ): array {
 		$occurrences = Schema::table( 'occurrences' );
 		$attribute   = 'href' === $attribute ? 'href' : 'title';
 
-		$none = "NOT EXISTS (SELECT 1 FROM {$occurrences} ob WHERE ob.source_id = s.id AND (ob.attribute_name IS NULL OR ob.attribute_name <> '{$attribute}'))";
+		$none = 'NOT EXISTS (SELECT 1 FROM %i ob WHERE ob.source_id = s.id AND (ob.attribute_name IS NULL OR ob.attribute_name <> %s))';
 
 		if ( ! $requireOne ) {
 			// У старых строк мест использования может не быть вовсе.
-			return '(' . $none . ')';
+			return array( '(' . $none . ')', array( $occurrences, $attribute ) );
 		}
 
-		return "(EXISTS (SELECT 1 FROM {$occurrences} oa WHERE oa.source_id = s.id AND oa.attribute_name = '{$attribute}')"
-			. ' AND ' . $none . ')';
+		return array(
+			'(EXISTS (SELECT 1 FROM %i oa WHERE oa.source_id = s.id AND oa.attribute_name = %s)' . ' AND ' . $none . ')',
+			array( $occurrences, $attribute, $occurrences, $attribute ),
+		);
 	}
 
 	/**
 	 * Условие «ни одного непустого перевода».
+	 *
+	 * @return array{0: string, 1: list<string>} SQL с плейсхолдером `%i` и параметры.
 	 */
-	private function untranslatedSql(): string {
+	private function untranslatedSql(): array {
 		$translations = Schema::table( 'translations' );
 
-		return "NOT EXISTS (SELECT 1 FROM {$translations} tr WHERE tr.source_id = s.id AND tr.translated_text IS NOT NULL AND tr.translated_text <> '')";
+		return array(
+			"NOT EXISTS (SELECT 1 FROM %i tr WHERE tr.source_id = s.id AND tr.translated_text IS NOT NULL AND tr.translated_text <> '')",
+			array( $translations ),
+		);
 	}
 
 	/**
@@ -449,13 +463,13 @@ final class StaleStringsCleanup {
 
 		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, список плейсхолдеров собран из литералов, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		// Пустые записи перевода (след стёртого текста) переводом не считаются.
 		$first = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$translations}
+				"DELETE FROM %i
 				 WHERE source_id IN ({$placeholders}) AND (translated_text IS NULL OR translated_text = '')",
-				$ids
+				array_merge( array( $translations ), $ids )
 			)
 		);
 
@@ -465,10 +479,10 @@ final class StaleStringsCleanup {
 
 		$second = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE o FROM {$occurrences} o
+				"DELETE o FROM %i o
 				 WHERE o.source_id IN ({$placeholders})
-					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = o.source_id)",
-				$ids
+					AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = o.source_id)",
+				array_merge( array( $occurrences ), $ids, array( $translations ) )
 			)
 		);
 
@@ -478,13 +492,13 @@ final class StaleStringsCleanup {
 
 		$third = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE s FROM {$sources} s
+				"DELETE s FROM %i s
 				 WHERE s.id IN ({$placeholders})
-					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				$ids
+					AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = s.id)",
+				array_merge( array( $sources ), $ids, array( $translations ) )
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		if ( $this->failed( $third ) ) {
 			return null;

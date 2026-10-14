@@ -38,9 +38,13 @@ final class FakeCleanupWpdb {
 		$i = 0;
 
 		return (string) preg_replace_callback(
-			'/%[sd]/',
+			'/%[sdi]/',
 			static function ( array $m ) use ( &$i, $args ) {
 				$value = $args[ $i++ ] ?? '';
+
+				if ( '%i' === $m[0] ) {
+					return (string) $value; // Идентификатор без кавычек, как в FakeWpdb.
+				}
 
 				return '%d' === $m[0] ? (string) (int) $value : "'" . $value . "'";
 			},

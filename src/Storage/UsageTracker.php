@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Считает символы, отправленные в переводчик за сегодня (ТЗ 9.3: «лимит
  * символов/слов в день»).

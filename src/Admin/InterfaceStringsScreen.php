@@ -16,6 +16,8 @@ use WpMlp\Settings\Language;
 use WpMlp\Storage\GettextRepository;
 use WpMlp\Storage\TranslationStatus;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Строки WordPress, темы и плагинов — те, что пришли через `__()`/`_x()`.
  *

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Support;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Один ответ на вопрос «переводить ли этот запрос вообще» — для всех, кто
  * его задаёт.
@@ -64,7 +66,7 @@ final class FrontendRequest {
 	private static function isReadMethod(): bool {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение сравнивается со списком.
 		$method = isset( $_SERVER['REQUEST_METHOD'] )
-			? strtoupper( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) )
+			? strtoupper( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) )
 			: 'GET';
 
 		return in_array( $method, array( 'GET', 'HEAD' ), true );

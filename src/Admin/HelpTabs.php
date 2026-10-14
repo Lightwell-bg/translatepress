@@ -11,6 +11,8 @@ namespace WpMlp\Admin;
 
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Подсказки в штатной панели «Помощь» WordPress — той, что раскрывается
  * кнопкой в правом верхнем углу экрана.

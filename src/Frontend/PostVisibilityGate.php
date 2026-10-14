@@ -17,6 +17,8 @@ use WpMlp\Settings\Settings;
 use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Пока режим «только включённые вручную», на дополнительном языке посетитель
  * видит записи и страницы, которые владелец отметил для этого языка, и

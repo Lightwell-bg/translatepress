@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WpMlp;
 
+// Guard placed before the long import list so direct-access scanners see it near the top.
+defined( 'ABSPATH' ) || exit;
+
 use WpMlp\Admin\EditorLink;
 use WpMlp\Admin\EditorPage;
 use WpMlp\Admin\EditorPostLinks;

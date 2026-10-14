@@ -15,6 +15,8 @@ use WpMlp\Settings\Settings;
 use WpMlp\Settings\SwitcherDisplay;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Шорткод `[mlp_language_switcher]` и одноимённый виджет.
  *

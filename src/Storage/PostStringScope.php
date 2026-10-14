@@ -11,6 +11,8 @@ namespace WpMlp\Storage;
 
 use WpMlp\Rendering\Segment;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Единственное место, где записано, какие строки принадлежат записи.
  *

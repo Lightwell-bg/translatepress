@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Frontend;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Читает не хуки и не вывод SEO-плагина, а его собственное postmeta —
  * единственный способ узнать «эта страница технически исключена из

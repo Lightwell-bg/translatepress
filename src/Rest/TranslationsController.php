@@ -29,6 +29,8 @@ use WpMlp\Translation\ProviderFactory;
 use WpMlp\Translation\ProviderInterface;
 use WpMlp\Translation\TranslationContext;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * `PUT /wp-json/mlp/v1/translations/{source_id}/{locale}` (ТЗ 10.3).
  *

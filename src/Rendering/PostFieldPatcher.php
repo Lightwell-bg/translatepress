@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Rendering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Собирает патчи для {@see RawContentPatcher} из сегментов одного поля и
  * карты переводов.

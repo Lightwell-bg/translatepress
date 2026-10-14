@@ -15,6 +15,8 @@ use DOMElement;
 use DOMNode;
 use WpMlp\Frontend\Flags;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Принимает SVG-файл флага, чистит его и кладёт в загрузки.
  *

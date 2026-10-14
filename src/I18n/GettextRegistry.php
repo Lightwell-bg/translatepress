@@ -15,6 +15,8 @@ use WpMlp\Storage\TranslationCache;
 use WpMlp\Support\Hookable;
 use WpMlp\Support\Text;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Второй эшелон перевода интерфейса — для того, что не закрыл официальный
  * языковой пакет (см. {@see LocaleSwitcher}).

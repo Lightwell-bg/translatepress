@@ -13,6 +13,8 @@ use WpMlp\Routing\LanguageResolver;
 use WpMlp\Routing\UrlConverter;
 use WpMlp\Settings\Settings;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Общий помощник: превращает запись WordPress в путь и адрес редактора.
  *

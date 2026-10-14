@@ -16,6 +16,8 @@ use WpMlp\Support\Hash;
 use WpMlp\Support\ShortcodeGuard;
 use WpMlp\Support\UrlGuard;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Решает — до единой записи в БД — можно ли вообще сохранять пакет
  * переводов «Перевести весь материал с ИИ».

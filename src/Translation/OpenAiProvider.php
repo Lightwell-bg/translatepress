@@ -11,6 +11,8 @@ namespace WpMlp\Translation;
 
 use WpMlp\Support\Hash;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Отправляет строки в Chat Completions и возвращает переводы (ТЗ 9.1).
  *

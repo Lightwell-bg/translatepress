@@ -13,6 +13,8 @@ use WpMlp\I18n\GettextKey;
 use WpMlp\Support\Hash;
 use WpMlp\Support\Locale;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Чтение и запись строк с `kind = 'gettext'`.
  *
@@ -67,22 +69,24 @@ final class GettextRepository implements GettextStore {
 		$sources      = Schema::table( 'sources' );
 		$translations = Schema::table( 'translations' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT s.source_text, s.domain, s.gettext_context, s.plural_key, t.translated_text
-				 FROM {$sources} s
-				 INNER JOIN {$translations} t
+				 FROM %i s
+				 INNER JOIN %i t
 					ON t.source_id = s.id AND t.target_locale = %s
 				 WHERE s.kind = %s
 					AND t.translated_text IS NOT NULL
 					AND t.translated_text <> ''",
+				$sources,
+				$translations,
 				$locale,
 				GettextKey::KIND
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		$overrides = array();
 
@@ -116,16 +120,17 @@ final class GettextRepository implements GettextStore {
 
 		$table = Schema::table( 'sources' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$rows = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT DISTINCT domain FROM {$table}
+				"SELECT DISTINCT domain FROM %i
 				 WHERE kind = %s AND domain IS NOT NULL AND domain <> ''
 				 ORDER BY domain ASC",
+				$table,
 				GettextKey::KIND
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array_map( 'strval', is_array( $rows ) ? $rows : array() );
 	}
@@ -164,7 +169,7 @@ final class GettextRepository implements GettextStore {
 		$translations = Schema::table( 'translations' );
 
 		$where  = array( 's.kind = %s' );
-		$params = array( $locale, GettextKey::KIND );
+		$params = array( GettextKey::KIND );
 
 		if ( '' !== $domain ) {
 			$where[]  = 's.domain = %s';
@@ -193,14 +198,14 @@ final class GettextRepository implements GettextStore {
 
 		$whereSql = implode( ' AND ', $where );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*)
-				 FROM {$sources} s
-				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
+				 FROM %i s
+				 LEFT JOIN %i t ON t.source_id = s.id AND t.target_locale = %s
 				 WHERE {$whereSql}",
-				$params
+				array_merge( array( $sources, $translations, $locale ), $params )
 			)
 		);
 
@@ -208,16 +213,16 @@ final class GettextRepository implements GettextStore {
 			$wpdb->prepare(
 				"SELECT s.id, s.source_text, s.domain, s.gettext_context, s.plural_key,
 						t.translated_text, t.status, t.updated_at
-				 FROM {$sources} s
-				 LEFT JOIN {$translations} t ON t.source_id = s.id AND t.target_locale = %s
+				 FROM %i s
+				 LEFT JOIN %i t ON t.source_id = s.id AND t.target_locale = %s
 				 WHERE {$whereSql}
 				 ORDER BY s.domain ASC, s.source_text ASC, s.plural_key ASC
 				 LIMIT %d OFFSET %d",
-				array_merge( $params, array( $perPage, $offset ) )
+				array_merge( array( $sources, $translations, $locale ), $params, array( $perPage, $offset ) )
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return array(
 			'items' => is_array( $items ) ? $items : array(),
@@ -245,27 +250,31 @@ final class GettextRepository implements GettextStore {
 		$sources      = Schema::table( 'sources' );
 		$translations = Schema::table( 'translations' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		// Сначала пустые записи переводов: иначе они остались бы сиротами
 		// и не дали бы удалить сам источник проверкой ниже.
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE t FROM {$translations} t
-				 INNER JOIN {$sources} s ON s.id = t.source_id
+				"DELETE t FROM %i t
+				 INNER JOIN %i s ON s.id = t.source_id
 				 WHERE s.kind = %s AND (t.translated_text IS NULL OR t.translated_text = '')",
+				$translations,
+				$sources,
 				GettextKey::KIND
 			)
 		);
 
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE s FROM {$sources} s
+				"DELETE s FROM %i s
 				 WHERE s.kind = %s
-					AND NOT EXISTS (SELECT 1 FROM {$translations} t WHERE t.source_id = s.id)",
-				GettextKey::KIND
+					AND NOT EXISTS (SELECT 1 FROM %i t WHERE t.source_id = s.id)",
+				$sources,
+				GettextKey::KIND,
+				$translations
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 
 		return max( 0, (int) $deleted );
 	}
@@ -279,19 +288,21 @@ final class GettextRepository implements GettextStore {
 		$sources      = Schema::table( 'sources' );
 		$translations = Schema::table( 'translations' );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$sources} s
+				"SELECT COUNT(*) FROM %i s
 				 WHERE s.kind = %s
 					AND NOT EXISTS (
-						SELECT 1 FROM {$translations} t
+						SELECT 1 FROM %i t
 						WHERE t.source_id = s.id AND t.translated_text IS NOT NULL AND t.translated_text <> ''
 					)",
-				GettextKey::KIND
+				$sources,
+				GettextKey::KIND,
+				$translations
 			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -376,16 +387,16 @@ final class GettextRepository implements GettextStore {
 
 			$valuesSql = implode( ', ', $values );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- имена таблиц через %i, WHERE/VALUES собраны из литералов с плейсхолдерами, значения идут через prepare(); анализатор не считает параметры в array_merge().
 			$inserted += (int) $wpdb->query(
 				$wpdb->prepare(
-					"INSERT IGNORE INTO {$table}
+					"INSERT IGNORE INTO %i
 						(source_locale, kind, source_text, source_hash, context_hash, domain, gettext_context, plural_key, uniq_hash, created_at, last_seen_at)
 					 VALUES {$valuesSql}",
-					$args
+					array_merge( array( $table ), $args )
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery
 		}
 
 		return $inserted;

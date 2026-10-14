@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WpMlp\Storage;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Кэш «строка → перевод» поверх wp_cache (ТЗ 12.1).
  *

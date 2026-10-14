@@ -18,6 +18,8 @@ use WpMlp\Storage\PostLanguageVisibility;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Support\Hookable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Отдаёт карту сайта со всеми языковыми версиями (ТЗ 8.5).
  *

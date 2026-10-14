@@ -18,6 +18,8 @@ use WpMlp\Storage\SourceRepository;
 use WpMlp\Storage\TranslationCache;
 use WpMlp\Support\Hash;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Разбирает ответ страницы, подставляет переводы и собирает HTML обратно.
  *
