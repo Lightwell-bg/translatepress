@@ -243,11 +243,14 @@ final class FlagUpload {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		if ( ! WP_Filesystem() || ! is_object( $wp_filesystem ) ) {
-			return false;
+		$path = $directory . '/' . $name;
+
+		if ( 'direct' === get_filesystem_method( array(), dirname( $path ) ) && WP_Filesystem() && is_object( $wp_filesystem ) ) {
+			return (bool) $wp_filesystem->put_contents( $path, $svg, FS_CHMOD_FILE );
 		}
 
-		return (bool) $wp_filesystem->put_contents( $directory . '/' . $name, $svg, FS_CHMOD_FILE );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- uploads dir, non-direct FS method needs credentials we do not have in a REST/admin-post request
+		return false !== file_put_contents( $path, $svg );
 	}
 
 	/**

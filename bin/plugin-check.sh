@@ -67,8 +67,14 @@ for (const l of lines) {
 }
 const t = { ERROR: 0, WARNING: 0 }, codes = {};
 for (const r of rows) { t[r.type] = (t[r.type] || 0) + 1; const k = r.type + ' ' + r.code; codes[k] = (codes[k] || 0) + 1; }
+const parsed = lines.filter((l) => l.startsWith('FILE: ') || l.startsWith('[')).length;
+if (parsed === 0) { console.error('Report is malformed: no FILE:/JSON lines found'); process.exit(2); }
 console.log('ERROR=' + t.ERROR + ' WARNING=' + t.WARNING);
 Object.entries(codes).sort((a, b) => b[1] - a[1]).slice(0, 40).forEach(([k, n]) => console.log(String(n).padStart(5), k));
+process.exit((t.ERROR || 0) > 0 ? 1 : 0);
 JS
-node "$(win "$SUMMARY_JS")" "$(win "$REPORT")"
+# exit codes: 0 = no errors, 1 = errors found, 2 = report missing/malformed
+rc=0
+node "$(win "$SUMMARY_JS")" "$(win "$REPORT")" || rc=$?
 echo "Report: $REPORT"
+exit "$rc"

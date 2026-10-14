@@ -63,6 +63,39 @@ final class UrlGuardTest extends TestCase {
 		$this->assertTrue( UrlGuard::looksLikeUrl( '/blog/x/' ) );
 		$this->assertFalse( UrlGuard::looksLikeUrl( 'Read more' ) );
 		$this->assertFalse( UrlGuard::looksLikeUrl( '' ) );
+		$this->assertFalse( UrlGuard::looksLikeUrl( 'Company' ) );
+		$this->assertTrue( UrlGuard::looksLikeUrl( 'https://x.test/a' ) );
+	}
+
+	/**
+	 * Решение на сохранении: отклонять ли перевод (looksLikeUrl && !isSafe).
+	 */
+	private static function rejectedOnSave( string $source, string $translation ): bool {
+		return UrlGuard::looksLikeUrl( $source ) && ! UrlGuard::isSafe( $translation );
+	}
+
+	public function testSaveCheckAcceptsAttributeTranslationWithColon(): void {
+		$this->assertFalse( self::rejectedOnSave( 'Company', 'Company: Acme' ) );
+	}
+
+	public function testSaveCheckRejectsDangerousSchemes(): void {
+		$this->assertTrue( self::rejectedOnSave( '/about/', 'javascript:alert(1)' ) );
+		$this->assertTrue( self::rejectedOnSave( 'https://x.test/a', 'data:text/html,<script>alert(1)</script>' ) );
+	}
+
+	public function testSaveCheckLetsBareFilenameThroughButRenderBlocksIt(): void {
+		// Документированное ограничение: на сохранении «about.html» не опознаётся как адрес,
+		// но подстановка в href в Segment всё равно откажет.
+		$this->assertFalse( self::rejectedOnSave( 'about.html', 'javascript:alert(1)' ) );
+
+		$document = new DOMDocument();
+		$document->loadHTML( '<a href="about.html">x</a>' );
+		$link = $document->getElementsByTagName( 'a' )->item( 0 );
+		$this->assertNotNull( $link );
+
+		$segment = new Segment( $link, Segment::KIND_ATTRIBUTE, 'href', 'about.html', '', '', str_repeat( 'a', 64 ), str_repeat( 'b', 64 ) );
+		$segment->apply( 'javascript:alert(1)' );
+		$this->assertSame( 'about.html', $link->getAttribute( 'href' ) );
 	}
 
 	public function testSegmentDoesNotWriteUnsafeHref(): void {

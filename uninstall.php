@@ -99,33 +99,42 @@ function wp_mlp_uninstall_flags_directory(): void {
 	// Имя каталога совпадает с \WpMlp\Frontend\Flags::DIRECTORY.
 	$directory = trailingslashit( $base ) . 'wp-mlp-flags';
 
-	if ( ! is_dir( $directory ) ) {
+	// Симлинк или не каталог: ничего не трогаем (защита от выхода за пределы uploads).
+	if ( is_link( $directory ) || ! is_dir( $directory ) ) {
 		return;
 	}
 
-	global $wp_filesystem;
+	$real_directory = realpath( $directory );
+	$real_base      = realpath( $base );
 
-	if ( ! function_exists( 'WP_Filesystem' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-	}
-
-	if ( WP_Filesystem() && is_object( $wp_filesystem ) ) {
-		$wp_filesystem->rmdir( $directory, true );
-
+	if ( false === $real_directory || false === $real_base ) {
 		return;
 	}
 
-	// Файловая система недоступна напрямую (запрос учётных данных FTP): удаляем файлы по одному.
-	$files = glob( trailingslashit( $directory ) . '*' );
+	$real_base = rtrim( $real_base, '/\\' ) . DIRECTORY_SEPARATOR;
+
+	if ( 0 !== strpos( $real_directory . DIRECTORY_SEPARATOR, $real_base ) || $real_directory . DIRECTORY_SEPARATOR === $real_base ) {
+		return;
+	}
+
+	// Только обычные *.svg прямо в каталоге: без рекурсии, симлинки и подкаталоги пропускаем.
+	$files = glob( trailingslashit( $real_directory ) . '*.svg' );
 
 	foreach ( is_array( $files ) ? $files : array() as $file ) {
-		if ( is_file( $file ) ) {
-			wp_delete_file( $file );
+		if ( is_link( $file ) || is_dir( $file ) || ! is_file( $file ) ) {
+			continue;
 		}
+
+		wp_delete_file( $file );
 	}
 
-	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- запасной путь, когда WP_Filesystem недоступна.
-	rmdir( $directory );
+	// Каталог удаляем только если он стал пустым (нерекурсивно).
+	$left = scandir( $real_directory );
+
+	if ( is_array( $left ) && array() === array_diff( $left, array( '.', '..' ) ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- uninstall, direct fs, plugin-owned empty dir.
+		@rmdir( $real_directory );
+	}
 }
 
 if ( is_multisite() ) {

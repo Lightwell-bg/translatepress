@@ -209,16 +209,44 @@ function wp_mlp_i18n_key( array $e ): string {
 }
 
 /**
- * Нормализованный набор printf-плейсхолдеров строки.
+ * Printf-плейсхолдеры строки.
  *
- * @return list<string>
+ * 'u' — безпозиционные (%s, %d) как отсортированный список с повторами (мультимножество);
+ * 'n' — позиционные (%1$s) как карта «номер => тип», порядок в строке не важен.
+ *
+ * @return array{u: list<string>, n: array<int,string>}
  */
 function wp_mlp_i18n_placeholders( string $s ): array {
 	$s = str_replace( '%%', '', $s );
-	preg_match_all( '/%(?:\d+\$)?[-+ 0]*(?:\'.)?\d*(?:\.\d+)?[bcdeEfFgGosuxX]/', $s, $m );
-	$set = array_values( array_unique( $m[0] ) );
-	sort( $set, SORT_STRING );
-	return $set;
+	preg_match_all( '/%(?:(\d+)\$)?[-+ 0]*(?:\'.)?\d*(?:\.\d+)?([bcdeEfFgGosuxX])/', $s, $m, PREG_SET_ORDER );
+	$u = array();
+	$n = array();
+	foreach ( $m as $hit ) {
+		if ( '' !== $hit[1] ) {
+			$n[ (int) $hit[1] ] = $hit[2];
+		} else {
+			$u[] = '%' . $hit[2];
+		}
+	}
+	sort( $u, SORT_STRING );
+	ksort( $n );
+	return array(
+		'u' => $u,
+		'n' => $n,
+	);
+}
+
+/**
+ * Человекочитаемая запись набора плейсхолдеров.
+ *
+ * @param array{u: list<string>, n: array<int,string>} $p Набор.
+ */
+function wp_mlp_i18n_format_placeholders( array $p ): string {
+	$parts = $p['u'];
+	foreach ( $p['n'] as $num => $type ) {
+		$parts[] = '%' . $num . '$' . $type;
+	}
+	return implode( ' ', $parts );
 }
 
 /**
@@ -230,24 +258,49 @@ function wp_mlp_i18n_check_placeholders( array $e ): array {
 	$errors = array();
 	$idSet  = wp_mlp_i18n_placeholders( $e['id'] );
 	$plSet  = null !== $e['plural'] ? wp_mlp_i18n_placeholders( $e['plural'] ) : $idSet;
+	// Для множественного числа допустимо всё, что есть хотя бы в одной из форм исходника.
+	$srcN = $idSet['n'] + $plSet['n'];
+	$srcU = array_count_values( $idSet['u'] );
+	foreach ( array_count_values( $plSet['u'] ) as $type => $cnt ) {
+		$srcU[ $type ] = max( $srcU[ $type ] ?? 0, $cnt );
+	}
 	foreach ( $e['str'] as $i => $str ) {
 		if ( '' === $str ) {
 			continue;
 		}
 		$got = wp_mlp_i18n_placeholders( $str );
 		if ( null === $e['plural'] ) {
-			$bad = $got !== $idSet;
+			// Безпозиционные — то же мультимножество; позиционные — те же номера с теми же типами.
+			$bad = $got['u'] !== $idSet['u'] || $got['n'] !== $idSet['n'];
 		} else {
-			// Формы множественного числа могут опускать число, но не вводить чужих плейсхолдеров.
-			$bad = array() !== array_diff( $got, array_unique( array_merge( $idSet, $plSet ) ) );
+			// Формы множественного числа могут опускать число, но не требовать лишних аргументов.
+			$bad = false;
+			foreach ( array_count_values( $got['u'] ) as $type => $cnt ) {
+				if ( $cnt > ( $srcU[ $type ] ?? 0 ) ) {
+					$bad = true;
+				}
+			}
+			foreach ( $got['n'] as $num => $type ) {
+				if ( ( $srcN[ $num ] ?? null ) !== $type ) {
+					$bad = true;
+				}
+			}
 		}
 		if ( $bad ) {
+			$expected = null === $e['plural']
+				? wp_mlp_i18n_format_placeholders( $idSet )
+				: wp_mlp_i18n_format_placeholders(
+					array(
+						'u' => count( $plSet['u'] ) > count( $idSet['u'] ) ? $plSet['u'] : $idSet['u'],
+						'n' => $srcN,
+					)
+				);
 			$errors[] = sprintf(
 				'Несовпадение плейсхолдеров в msgstr[%d] для "%s": ожидалось [%s], получено [%s]',
 				$i,
 				$e['id'],
-				implode( ' ', null === $e['plural'] ? $idSet : array_unique( array_merge( $idSet, $plSet ) ) ),
-				implode( ' ', $got )
+				$expected,
+				wp_mlp_i18n_format_placeholders( $got )
 			);
 		}
 	}

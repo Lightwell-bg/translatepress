@@ -46,7 +46,15 @@ final class UrlGuard {
 	public static function looksLikeUrl( string $sourceText ): bool {
 		$sourceText = trim( $sourceText );
 
-		return '' !== $sourceText && 1 !== preg_match( '/\s/u', $sourceText );
+		if ( '' === $sourceText || 1 === preg_match( '/\s/u', $sourceText ) ) {
+			return false;
+		}
+
+		// Одно слово без признаков адреса («Company») адресом не считается, иначе перевод
+		// подписи вроде «Company: Acme» отклонялся бы. Это ранняя проверка: авторитетная
+		// защита — проверка при подстановке в Segment, где известно настоящее имя атрибута.
+		return 1 === preg_match( '/^(?:[a-z][a-z0-9+.\-]*:|\/|#|\?|\.{1,2}\/|www\.)/i', $sourceText )
+			|| str_contains( $sourceText, '/' );
 	}
 
 	/**

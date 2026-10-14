@@ -150,6 +150,46 @@ PO;
 		$this->assertStringContainsString( 'Hello %s', $r['errors'][0] );
 	}
 
+	public function test_extra_unnumbered_placeholder_is_detected(): void {
+		$po = <<<'PO'
+msgid ""
+msgstr ""
+"Language: ru_RU\n"
+
+msgid "Hello %s"
+msgstr "Привет %s %s"
+PO;
+		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$this->assertCount( 1, $r['errors'] );
+		$this->assertStringContainsString( 'Hello %s', $r['errors'][0] );
+	}
+
+	public function test_reordered_numbered_placeholders_are_allowed(): void {
+		$po = <<<'PO'
+msgid ""
+msgstr ""
+"Language: ru_RU\n"
+
+msgid "Count %1$d of %2$s"
+msgstr "Из %2$s счёт %1$d"
+PO;
+		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$this->assertSame( array(), $r['errors'] );
+	}
+
+	public function test_numbered_placeholder_type_change_is_detected(): void {
+		$po = <<<'PO'
+msgid ""
+msgstr ""
+"Language: ru_RU\n"
+
+msgid "Count %1$d of %2$s"
+msgstr "Из %2$d счёт %1$d"
+PO;
+		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$this->assertCount( 1, $r['errors'] );
+	}
+
 	public function test_conflicting_duplicates_are_an_error(): void {
 		$po = <<<'PO'
 msgid "A"

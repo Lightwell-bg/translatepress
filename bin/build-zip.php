@@ -210,19 +210,60 @@ if ( ! rename( $temp, $target ) ) {
 }
 
 if ( ! $noBump ) {
-	$originalMain = (string) file_get_contents( $mainFile );
+	/**
+	 * Атомарно заменяет файл: пишет во временный файл рядом, сверяет размер, переименовывает.
+	 *
+	 * @param string $path    Путь файла.
+	 * @param string $content Новое содержимое.
+	 */
+	function build_replace_file( string $path, string $content ): bool {
+		$tmp     = $path . '.tmp-' . getmypid();
+		$written = file_put_contents( $tmp, $content );
 
-	if ( false === file_put_contents( $mainFile, $source ) ) {
-		unlink( $target );
-		fwrite( STDERR, "Не удалось записать wp-mlp.php, архив удалён.\n" );
-		exit( 1 );
+		if ( strlen( $content ) !== $written || ! rename( $tmp, $path ) ) {
+			if ( is_file( $tmp ) ) {
+				unlink( $tmp );
+			}
+
+			return false;
+		}
+
+		return true;
 	}
 
-	if ( null !== $readmeNew && $readmeNew !== $readmeSource && false === file_put_contents( $readmeFile, $readmeNew ) ) {
-		// Откат wp-mlp.php, чтобы версия и Stable tag не разошлись.
-		file_put_contents( $mainFile, $originalMain );
-		unlink( $target );
-		fwrite( STDERR, "Не удалось записать readme.txt, wp-mlp.php возвращён, архив удалён.\n" );
+	// Оригиналы держим в памяти: при любом сбое возвращаем ОБА файла и удаляем новый архив.
+	$originalMain   = (string) file_get_contents( $mainFile );
+	$originalReadme = is_file( $readmeFile ) ? (string) file_get_contents( $readmeFile ) : null;
+
+	$failed = '';
+
+	if ( ! build_replace_file( $mainFile, $source ) ) {
+		$failed = 'wp-mlp.php';
+	} elseif ( null !== $readmeNew && $readmeNew !== $readmeSource && ! build_replace_file( $readmeFile, $readmeNew ) ) {
+		$failed = 'readme.txt';
+	}
+
+	if ( '' !== $failed ) {
+		$problems = array();
+
+		if ( ! build_replace_file( $mainFile, $originalMain ) ) {
+			$problems[] = 'wp-mlp.php';
+		}
+
+		if ( null !== $originalReadme && ! build_replace_file( $readmeFile, $originalReadme ) ) {
+			$problems[] = 'readme.txt';
+		}
+
+		if ( is_file( $target ) ) {
+			unlink( $target );
+		}
+
+		fwrite( STDERR, "Не удалось записать {$failed}, архив удалён.\n" );
+
+		if ( array() !== $problems ) {
+			fwrite( STDERR, 'ВНИМАНИЕ: не удалось восстановить исходные файлы: ' . implode( ', ', $problems ) . ". Проверьте их вручную (git diff).\n" );
+		}
+
 		exit( 1 );
 	}
 }
