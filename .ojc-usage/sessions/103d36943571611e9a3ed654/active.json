@@ -1,0 +1,6519 @@
+{
+  "run_id": "6f57c4a1-d569-4f95-a594-55b6a190e40c",
+  "session_id": "459ba43b-3de6-48f7-8488-fa47f17b7452",
+  "started_at": 1791987550202,
+  "prompt_id": "a9d75293d54f5e936694e3ba",
+  "transcript_path": "C:\\Users\\Vlad\\.claude\\projects\\d--1PythonProjects-1-WORDPRESS-translatepress\\459ba43b-3de6-48f7-8488-fa47f17b7452.jsonl",
+  "baseline": {
+    "messages": {
+      "3f1fd057ff06bbf7042ccb94": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 207,
+          "cache_read_input_tokens": 26537,
+          "cache_creation_input_tokens": 40990
+        }
+      },
+      "7c9f44516bdb56d833e8743c": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 529,
+          "cache_read_input_tokens": 67527,
+          "cache_creation_input_tokens": 4366
+        }
+      },
+      "dd626cf385f50b8e2306c031": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2259,
+          "cache_read_input_tokens": 71893,
+          "cache_creation_input_tokens": 10649
+        }
+      },
+      "251315e9faf157bbff321210": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1151,
+          "cache_read_input_tokens": 82542,
+          "cache_creation_input_tokens": 2912
+        }
+      },
+      "a5b9d9405f6ab6dfe15cf01d": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2937,
+          "cache_read_input_tokens": 85454,
+          "cache_creation_input_tokens": 2235
+        }
+      },
+      "173d9b011dd7fd1c4879dd51": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 442,
+          "cache_read_input_tokens": 87689,
+          "cache_creation_input_tokens": 5255
+        }
+      },
+      "60adf7a7b73f4ccbc459b50b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 671,
+          "cache_read_input_tokens": 92944,
+          "cache_creation_input_tokens": 1669
+        }
+      },
+      "88f2f027e9b478fee572df19": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3427,
+          "cache_read_input_tokens": 94613,
+          "cache_creation_input_tokens": 6701
+        }
+      },
+      "59ef4942a55d78e28be3bca8": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 291,
+          "cache_read_input_tokens": 101314,
+          "cache_creation_input_tokens": 3845
+        }
+      },
+      "6dc9303af0938c796dc186af": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 578,
+          "cache_read_input_tokens": 105159,
+          "cache_creation_input_tokens": 6206
+        }
+      },
+      "750349d9a3ca5ddae351bd19": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 690,
+          "cache_read_input_tokens": 111365,
+          "cache_creation_input_tokens": 1287
+        }
+      },
+      "54a0540ddcd0c14d0c173b54": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 112,
+          "cache_read_input_tokens": 112652,
+          "cache_creation_input_tokens": 780
+        }
+      },
+      "5ecb923143242e50bdfa7cae": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 143,
+          "cache_read_input_tokens": 113432,
+          "cache_creation_input_tokens": 3081
+        }
+      },
+      "f2f492df946f8b808f419984": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3278,
+          "cache_read_input_tokens": 116513,
+          "cache_creation_input_tokens": 4240
+        }
+      },
+      "735b0a725ae606ff0fd991c9": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4029,
+          "cache_read_input_tokens": 120753,
+          "cache_creation_input_tokens": 5116
+        }
+      },
+      "46340d4cdb212ddfd56a535a": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 353,
+          "cache_read_input_tokens": 125869,
+          "cache_creation_input_tokens": 4450
+        }
+      },
+      "618b28b9255f3955322aaffe": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1855,
+          "cache_read_input_tokens": 130319,
+          "cache_creation_input_tokens": 581
+        }
+      },
+      "7589b50438bd48f5f8cead03": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 91,
+          "cache_read_input_tokens": 130900,
+          "cache_creation_input_tokens": 2279
+        }
+      },
+      "4e3b29e0ae137a81259cfefa": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 184,
+          "cache_read_input_tokens": 133179,
+          "cache_creation_input_tokens": 1454
+        }
+      },
+      "a59830868aa797a29b5d83b2": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1466,
+          "cache_read_input_tokens": 134633,
+          "cache_creation_input_tokens": 5542
+        }
+      },
+      "ed68e8a8d981e48976eb15b7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 673,
+          "cache_read_input_tokens": 140175,
+          "cache_creation_input_tokens": 1828
+        }
+      },
+      "06f96e97024ff693fcf786b3": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 501,
+          "cache_read_input_tokens": 142003,
+          "cache_creation_input_tokens": 3618
+        }
+      },
+      "b0c3b3dcaa64c95210fd5cc6": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 248,
+          "cache_read_input_tokens": 145621,
+          "cache_creation_input_tokens": 1556
+        }
+      },
+      "703f96460ec934b070b5910b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 569,
+          "cache_read_input_tokens": 147177,
+          "cache_creation_input_tokens": 1253
+        }
+      },
+      "3b0c5b29d72ea5fa359be6e7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1203,
+          "cache_read_input_tokens": 148430,
+          "cache_creation_input_tokens": 1570
+        }
+      },
+      "71cc1b43104b7457428ed561": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6546,
+          "cache_read_input_tokens": 150000,
+          "cache_creation_input_tokens": 1364
+        }
+      },
+      "7e436faa48c86c12a7a9f443": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 60,
+          "cache_read_input_tokens": 151364,
+          "cache_creation_input_tokens": 8241
+        }
+      },
+      "86d2b3a0195c53d34c9b0b64": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 280,
+          "cache_read_input_tokens": 159605,
+          "cache_creation_input_tokens": 1463
+        }
+      },
+      "a305f743e9fcdc78ec37bd61": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1252,
+          "cache_read_input_tokens": 161068,
+          "cache_creation_input_tokens": 3655
+        }
+      },
+      "e89c97e01c715903d69ffcae": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 58,
+          "cache_read_input_tokens": 164723,
+          "cache_creation_input_tokens": 3834
+        }
+      },
+      "a22fc27fd15ed9b763b7ff60": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 85,
+          "cache_read_input_tokens": 168557,
+          "cache_creation_input_tokens": 2893
+        }
+      },
+      "a057c0f9dfbd72f728d0470e": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 426,
+          "cache_read_input_tokens": 171450,
+          "cache_creation_input_tokens": 2232
+        }
+      },
+      "abb0accef7bae983600a21e6": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 478,
+          "cache_read_input_tokens": 173682,
+          "cache_creation_input_tokens": 1580
+        }
+      },
+      "2eca74c84e86a4d9c9bd4200": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 584,
+          "cache_read_input_tokens": 175262,
+          "cache_creation_input_tokens": 643
+        }
+      },
+      "f49b9f2a10c99d7d1ccf37d8": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3771,
+          "cache_read_input_tokens": 175905,
+          "cache_creation_input_tokens": 2374
+        }
+      },
+      "b87a7263b561c04fbbe9656e": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 63,
+          "cache_read_input_tokens": 178279,
+          "cache_creation_input_tokens": 4637
+        }
+      },
+      "b56f8fe2a5a99faf99d71b3b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 272,
+          "cache_read_input_tokens": 182916,
+          "cache_creation_input_tokens": 1798
+        }
+      },
+      "296c33f48b1e5593f91db05b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1304,
+          "cache_read_input_tokens": 184714,
+          "cache_creation_input_tokens": 3452
+        }
+      },
+      "2c5ebc8da0f9e66d606c130b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2564,
+          "cache_read_input_tokens": 188166,
+          "cache_creation_input_tokens": 5969
+        }
+      },
+      "34213966a3c52c26e7cbd13e": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 708,
+          "cache_read_input_tokens": 194135,
+          "cache_creation_input_tokens": 2979
+        }
+      },
+      "2dbc6f6494ff89dec18bc1f5": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 42,
+          "cache_read_input_tokens": 197114,
+          "cache_creation_input_tokens": 781
+        }
+      },
+      "61da4798267c538e4b5c2763": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 498,
+          "cache_read_input_tokens": 197895,
+          "cache_creation_input_tokens": 3996
+        }
+      },
+      "0f98e96ea44f0cf3d592f7ff": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1164,
+          "cache_read_input_tokens": 201891,
+          "cache_creation_input_tokens": 1775
+        }
+      },
+      "0a1e8a5948c1f35cd876d2ab": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 66,
+          "cache_read_input_tokens": 203666,
+          "cache_creation_input_tokens": 1593
+        }
+      },
+      "5ae769ec729d2d45c2f29548": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1457,
+          "cache_read_input_tokens": 205259,
+          "cache_creation_input_tokens": 948
+        }
+      },
+      "ea781ef21ed571d8caefb4da": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 35,
+          "cache_read_input_tokens": 206207,
+          "cache_creation_input_tokens": 2398
+        }
+      },
+      "e18c3a436b7cb89cb6b81eee": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 196,
+          "cache_read_input_tokens": 208605,
+          "cache_creation_input_tokens": 725
+        }
+      },
+      "003d33945d11e8cb8e115081": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 785,
+          "cache_read_input_tokens": 209330,
+          "cache_creation_input_tokens": 420
+        }
+      },
+      "42b2a6dd4ead636170e0cf84": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 329,
+          "cache_read_input_tokens": 209750,
+          "cache_creation_input_tokens": 905
+        }
+      },
+      "02fada6711c94ee97e71d5e2": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 35,
+          "cache_read_input_tokens": 210655,
+          "cache_creation_input_tokens": 555
+        }
+      },
+      "9eb56591534e95c2705e0604": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 198,
+          "cache_read_input_tokens": 211210,
+          "cache_creation_input_tokens": 718
+        }
+      },
+      "277912ba3cc654a66977c717": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3662,
+          "cache_read_input_tokens": 211928,
+          "cache_creation_input_tokens": 1673
+        }
+      },
+      "1bb9dc9ea80aa33a8529ef6a": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 47,
+          "cache_read_input_tokens": 213601,
+          "cache_creation_input_tokens": 4076
+        }
+      },
+      "fe0f4418730889235a0b1ff7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 441,
+          "cache_read_input_tokens": 217677,
+          "cache_creation_input_tokens": 2081
+        }
+      },
+      "c4e4624d0b5bd51ae73b870d": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 338,
+          "cache_read_input_tokens": 219758,
+          "cache_creation_input_tokens": 1402
+        }
+      },
+      "14a993909829af994c64f740": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 673,
+          "cache_read_input_tokens": 221160,
+          "cache_creation_input_tokens": 1170
+        }
+      },
+      "5111817e412aca2372bea540": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 780,
+          "cache_read_input_tokens": 222330,
+          "cache_creation_input_tokens": 1121
+        }
+      },
+      "37e17965ed7856fd146fccfa": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2424,
+          "cache_read_input_tokens": 223451,
+          "cache_creation_input_tokens": 1493
+        }
+      },
+      "a32b26ad656c9d433590da33": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 461,
+          "cache_read_input_tokens": 224944,
+          "cache_creation_input_tokens": 2763
+        }
+      },
+      "219c6989e116e1836347f07d": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 484,
+          "cache_read_input_tokens": 227707,
+          "cache_creation_input_tokens": 600
+        }
+      },
+      "ebd0d2ed6cc5ec038de3b375": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9991,
+          "cache_read_input_tokens": 228307,
+          "cache_creation_input_tokens": 2129
+        }
+      },
+      "0e4e4c4ef7e4683072f9e3d9": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 362,
+          "cache_read_input_tokens": 230436,
+          "cache_creation_input_tokens": 10768
+        }
+      },
+      "c282e9750ce8f6050c83d332": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 146,
+          "cache_read_input_tokens": 241204,
+          "cache_creation_input_tokens": 428
+        }
+      },
+      "ffc29df61a5ed08d0f5f8877": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 265,
+          "cache_read_input_tokens": 241632,
+          "cache_creation_input_tokens": 482
+        }
+      },
+      "b78f93ba37e21cf52388eaaa": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 376,
+          "cache_read_input_tokens": 242114,
+          "cache_creation_input_tokens": 397
+        }
+      },
+      "2e8a6195ec582c0b5b8559dd": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 906,
+          "cache_read_input_tokens": 242511,
+          "cache_creation_input_tokens": 934
+        }
+      },
+      "b75984b8846c2c0ac62eac15": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 503,
+          "cache_read_input_tokens": 243445,
+          "cache_creation_input_tokens": 2231
+        }
+      },
+      "013e1bd218107a1ae97359d6": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3945,
+          "cache_read_input_tokens": 245676,
+          "cache_creation_input_tokens": 1537
+        }
+      },
+      "43d990bcee12434ac410b788": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1493,
+          "cache_read_input_tokens": 247213,
+          "cache_creation_input_tokens": 4035
+        }
+      },
+      "f4be3c1266f55c24dc83d4b1": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 404,
+          "cache_read_input_tokens": 251248,
+          "cache_creation_input_tokens": 1583
+        }
+      },
+      "74fa3892a7285446286f3885": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 353,
+          "cache_read_input_tokens": 252831,
+          "cache_creation_input_tokens": 524
+        }
+      },
+      "ccfe10fa3ddb782a674187b9": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5457,
+          "cache_read_input_tokens": 253355,
+          "cache_creation_input_tokens": 585
+        }
+      },
+      "5ab67b47f10fbd80a8516c97": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 720,
+          "cache_read_input_tokens": 253940,
+          "cache_creation_input_tokens": 5875
+        }
+      },
+      "6907c253cef9a631ecbedbda": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 62,
+          "cache_read_input_tokens": 259815,
+          "cache_creation_input_tokens": 793
+        }
+      },
+      "2d0fee8a555a90de86e7eee7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1827,
+          "cache_read_input_tokens": 260608,
+          "cache_creation_input_tokens": 3878
+        }
+      },
+      "23d7e3bdb15c6c47f641884e": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 543,
+          "cache_read_input_tokens": 264486,
+          "cache_creation_input_tokens": 2483
+        }
+      },
+      "d3600b7aefb983d70e680f1b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5159,
+          "cache_read_input_tokens": 266969,
+          "cache_creation_input_tokens": 2568
+        }
+      },
+      "cd9f025094a871614ab70e8c": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 93,
+          "cache_read_input_tokens": 269537,
+          "cache_creation_input_tokens": 6022
+        }
+      },
+      "21342c8b8354d86c831a363f": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 430,
+          "cache_read_input_tokens": 275559,
+          "cache_creation_input_tokens": 3909
+        }
+      },
+      "6df75df7d264070c7c5c4736": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 358,
+          "cache_read_input_tokens": 279468,
+          "cache_creation_input_tokens": 4205
+        }
+      },
+      "a97d122370bf2eddd16ddceb": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 578,
+          "cache_read_input_tokens": 283673,
+          "cache_creation_input_tokens": 975
+        }
+      },
+      "4eee3375078afe73e15c62b6": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 451,
+          "cache_read_input_tokens": 284648,
+          "cache_creation_input_tokens": 1587
+        }
+      },
+      "fa9a9f8b241880e6c7d30cf6": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1612,
+          "cache_read_input_tokens": 286235,
+          "cache_creation_input_tokens": 509
+        }
+      },
+      "86aa6fcb5b4e33bfd9a0ce43": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 963,
+          "cache_read_input_tokens": 286744,
+          "cache_creation_input_tokens": 2002
+        }
+      },
+      "d685ac3c3c2321a0deff60ec": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 201,
+          "cache_read_input_tokens": 288746,
+          "cache_creation_input_tokens": 1652
+        }
+      },
+      "3b5dff42c7a65e213d035cbe": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4264,
+          "cache_read_input_tokens": 290398,
+          "cache_creation_input_tokens": 1716
+        }
+      },
+      "b172fa60f05a47d49c769763": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 80,
+          "cache_read_input_tokens": 292114,
+          "cache_creation_input_tokens": 4682
+        }
+      },
+      "2e115348a65ec72a6bda944a": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 297,
+          "cache_read_input_tokens": 296796,
+          "cache_creation_input_tokens": 2410
+        }
+      },
+      "9905e52570e5b7fe72cbbce2": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 686,
+          "cache_read_input_tokens": 299206,
+          "cache_creation_input_tokens": 2280
+        }
+      },
+      "546ebb7c0e3537dc734f9c85": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 797,
+          "cache_read_input_tokens": 301486,
+          "cache_creation_input_tokens": 1246
+        }
+      },
+      "0f66fa48108c44af98318f43": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 603,
+          "cache_read_input_tokens": 302732,
+          "cache_creation_input_tokens": 1267
+        }
+      },
+      "f9f26d7e9cbe66f38cf82833": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3018,
+          "cache_read_input_tokens": 303999,
+          "cache_creation_input_tokens": 1737
+        }
+      },
+      "b07ad4018d88066fcf9d4b41": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 343,
+          "cache_read_input_tokens": 305736,
+          "cache_creation_input_tokens": 5640
+        }
+      },
+      "a717434cfc51d4a770b436d8": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 500,
+          "cache_read_input_tokens": 311376,
+          "cache_creation_input_tokens": 1105
+        }
+      },
+      "fcb6beec0ef6ae4a3ffdc04a": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1042,
+          "cache_read_input_tokens": 312481,
+          "cache_creation_input_tokens": 1624
+        }
+      },
+      "134a85ff9503aa07e9bac472": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 360,
+          "cache_read_input_tokens": 314105,
+          "cache_creation_input_tokens": 2388
+        }
+      },
+      "aa0ca97c0b977535f4afd573": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1954,
+          "cache_read_input_tokens": 316493,
+          "cache_creation_input_tokens": 988
+        }
+      },
+      "66616a5e36a36e50edceac38": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 319,
+          "cache_read_input_tokens": 317481,
+          "cache_creation_input_tokens": 2247
+        }
+      },
+      "5fcd5d6bc7e4f5202484e30a": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 776,
+          "cache_read_input_tokens": 319728,
+          "cache_creation_input_tokens": 1571
+        }
+      },
+      "abe9a4e945061bb819dda3f8": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 545,
+          "cache_read_input_tokens": 321299,
+          "cache_creation_input_tokens": 4869
+        }
+      },
+      "fa5ae20491f74698aed37848": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4854,
+          "cache_read_input_tokens": 326168,
+          "cache_creation_input_tokens": 1535
+        }
+      },
+      "eedb96e7ec17fb48a67926ab": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2274,
+          "cache_read_input_tokens": 327703,
+          "cache_creation_input_tokens": 5484
+        }
+      },
+      "833551cddcc5fbce593a1044": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1194,
+          "cache_read_input_tokens": 333187,
+          "cache_creation_input_tokens": 2369
+        }
+      },
+      "3588798291ca5b97a8d373f3": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 479,
+          "cache_read_input_tokens": 335556,
+          "cache_creation_input_tokens": 1384
+        }
+      },
+      "1e588f881354a492863bf06b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 265,
+          "cache_read_input_tokens": 336940,
+          "cache_creation_input_tokens": 852
+        }
+      },
+      "8bdcf493b957ed997f2cc42c": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4811,
+          "cache_read_input_tokens": 337792,
+          "cache_creation_input_tokens": 349
+        }
+      },
+      "c76fdf3ba0b96de724cabe7c": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 59,
+          "cache_read_input_tokens": 338141,
+          "cache_creation_input_tokens": 5667
+        }
+      },
+      "b5c10f3aec9222450da7a3a3": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 607,
+          "cache_read_input_tokens": 343808,
+          "cache_creation_input_tokens": 2612
+        }
+      },
+      "da15b72692aea4993a019bb7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 275,
+          "cache_read_input_tokens": 346420,
+          "cache_creation_input_tokens": 2383
+        }
+      },
+      "95754d24d3eb21944b7bc220": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 633,
+          "cache_read_input_tokens": 348803,
+          "cache_creation_input_tokens": 2879
+        }
+      },
+      "ded4a6bc3add7da376d3db43": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 671,
+          "cache_read_input_tokens": 351682,
+          "cache_creation_input_tokens": 2157
+        }
+      },
+      "1b489e0c2b4b0a1b5d8b509b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 448,
+          "cache_read_input_tokens": 353839,
+          "cache_creation_input_tokens": 963
+        }
+      },
+      "2ec8a1bf9d679c5b5266dd0f": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 821,
+          "cache_read_input_tokens": 354802,
+          "cache_creation_input_tokens": 823
+        }
+      },
+      "8cee40e0b702a4a779d3106b": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 330,
+          "cache_read_input_tokens": 355625,
+          "cache_creation_input_tokens": 1049
+        }
+      },
+      "4f1d218b72ef0937c2b21984": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 499,
+          "cache_read_input_tokens": 356674,
+          "cache_creation_input_tokens": 496
+        }
+      },
+      "69d1902771e4afc3438ac2c5": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 623,
+          "cache_read_input_tokens": 357170,
+          "cache_creation_input_tokens": 690
+        }
+      },
+      "156dbe72d8eb249a8e5fe3a7": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 603,
+          "cache_read_input_tokens": 357860,
+          "cache_creation_input_tokens": 904
+        }
+      },
+      "e3115b346f945ec4241b743d": {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2581,
+          "cache_read_input_tokens": 358764,
+          "cache_creation_input_tokens": 1860
+        }
+      },
+      "ed8a9bbee3aefac1c270e437": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 317,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15580
+        }
+      },
+      "2f83444b65a0659a9e56440b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 235,
+          "cache_read_input_tokens": 20988,
+          "cache_creation_input_tokens": 4606
+        }
+      },
+      "66e9b49d751ea283888237b8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 325,
+          "cache_read_input_tokens": 25594,
+          "cache_creation_input_tokens": 770
+        }
+      },
+      "eeac39d7e7ad96e1d082e2fa": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 21,
+          "cache_read_input_tokens": 26364,
+          "cache_creation_input_tokens": 1473
+        }
+      },
+      "617701c72ede003eae4eda47": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 27837,
+          "cache_creation_input_tokens": 6025
+        }
+      },
+      "5639b0b48971b37e74c488b6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 397,
+          "cache_read_input_tokens": 33862,
+          "cache_creation_input_tokens": 5468
+        }
+      },
+      "2116c1de014a6405d6044292": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 39330,
+          "cache_creation_input_tokens": 827
+        }
+      },
+      "c435245de741eadf7ca3e529": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 40157,
+          "cache_creation_input_tokens": 2029
+        }
+      },
+      "2e7904e3c2cf8edd1acedfb9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 42186,
+          "cache_creation_input_tokens": 659
+        }
+      },
+      "ed9637ad7b18185f76984350": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 42845,
+          "cache_creation_input_tokens": 1690
+        }
+      },
+      "304f2d7da074dcf0c30d8fe3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 44535,
+          "cache_creation_input_tokens": 6340
+        }
+      },
+      "a40797d2075c8cfeb9e245c3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 50875,
+          "cache_creation_input_tokens": 4147
+        }
+      },
+      "05fedfa3093a846dd1681c6f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 55022,
+          "cache_creation_input_tokens": 3257
+        }
+      },
+      "e4068b7077c11b0dac82f69c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 299,
+          "cache_read_input_tokens": 58279,
+          "cache_creation_input_tokens": 399
+        }
+      },
+      "e4a628ab1955638f3d4ac076": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 58678,
+          "cache_creation_input_tokens": 1237
+        }
+      },
+      "fa841210d4c1131bf701137d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 59915,
+          "cache_creation_input_tokens": 205
+        }
+      },
+      "ae7617afe501e38d7f764e86": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 32,
+          "cache_read_input_tokens": 60120,
+          "cache_creation_input_tokens": 412
+        }
+      },
+      "ca7d22b52ac7b5a1d48da1f2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 60532,
+          "cache_creation_input_tokens": 4471
+        }
+      },
+      "7e5c5f947b6873be523f6836": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2876,
+          "cache_read_input_tokens": 65003,
+          "cache_creation_input_tokens": 1816
+        }
+      },
+      "757030f08c4363fd8299ed82": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 66819,
+          "cache_creation_input_tokens": 4231
+        }
+      },
+      "aa417549ec99591a31b02c3e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 71050,
+          "cache_creation_input_tokens": 334
+        }
+      },
+      "feb77fe974a2b759cfeefb0e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 71384,
+          "cache_creation_input_tokens": 1599
+        }
+      },
+      "26e7c819c41c104dbfffd8f3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 72983,
+          "cache_creation_input_tokens": 3895
+        }
+      },
+      "4a0e8debdb5d95859fc0e73a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 76878,
+          "cache_creation_input_tokens": 1914
+        }
+      },
+      "ebd103966d5739732bf2d06e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 78792,
+          "cache_creation_input_tokens": 7332
+        }
+      },
+      "0ddc36e51f83dbb17be6ce41": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 86124,
+          "cache_creation_input_tokens": 3663
+        }
+      },
+      "e80ff95e2b133b8f6c307438": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 89787,
+          "cache_creation_input_tokens": 1313
+        }
+      },
+      "884d5b8ef52079c5f1f05c62": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 91100,
+          "cache_creation_input_tokens": 1032
+        }
+      },
+      "2d380f8d1e29875f95db36bf": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 92132,
+          "cache_creation_input_tokens": 7630
+        }
+      },
+      "0d0892a31acd0ba2724bfd2c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 99762,
+          "cache_creation_input_tokens": 5709
+        }
+      },
+      "37de3ca10483719f3fbb751d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 105471,
+          "cache_creation_input_tokens": 5025
+        }
+      },
+      "fb7a344991c9f1c5bb2375e4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 110496,
+          "cache_creation_input_tokens": 1704
+        }
+      },
+      "fa04c9322921d917f027a590": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 112200,
+          "cache_creation_input_tokens": 7311
+        }
+      },
+      "1ffa2a6fdd38cb4f80d0d6d0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 119511,
+          "cache_creation_input_tokens": 10477
+        }
+      },
+      "69fa3e7357e51a8fedc092d8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 129988,
+          "cache_creation_input_tokens": 389
+        }
+      },
+      "6e4b05d00905b6db0bedbac9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 130377,
+          "cache_creation_input_tokens": 585
+        }
+      },
+      "56048c9a826c6732897a000f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 334,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 16645
+        }
+      },
+      "041479599b53a27a71f0528b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 22053,
+          "cache_creation_input_tokens": 12814
+        }
+      },
+      "86b9621214ac72ffbc56b572": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 290,
+          "cache_read_input_tokens": 34867,
+          "cache_creation_input_tokens": 1605
+        }
+      },
+      "8a744a9c140dd340ab0f5290": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 36472,
+          "cache_creation_input_tokens": 22686
+        }
+      },
+      "f4452ec51f6b61bfc879928b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 269,
+          "cache_read_input_tokens": 59158,
+          "cache_creation_input_tokens": 4007
+        }
+      },
+      "8f9a108ad8fa58a0531b1fb9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 984,
+          "cache_read_input_tokens": 63165,
+          "cache_creation_input_tokens": 780
+        }
+      },
+      "e1efbf8ded061a2f97917db7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 666,
+          "cache_read_input_tokens": 63945,
+          "cache_creation_input_tokens": 7617
+        }
+      },
+      "0cdc957ce3cefe0de638029e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 71562,
+          "cache_creation_input_tokens": 3988
+        }
+      },
+      "886c2fa09d2dd5cbbc496a51": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3284,
+          "cache_read_input_tokens": 75550,
+          "cache_creation_input_tokens": 5779
+        }
+      },
+      "932b1f57ead7570fdf86c6a7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 81329,
+          "cache_creation_input_tokens": 4280
+        }
+      },
+      "8dc05be30f8bd9ff4408b120": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1853,
+          "cache_read_input_tokens": 85609,
+          "cache_creation_input_tokens": 473
+        }
+      },
+      "2e029ac26ea5fb33a2bbd4a6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1758,
+          "cache_read_input_tokens": 86082,
+          "cache_creation_input_tokens": 5518
+        }
+      },
+      "334aded49da5ec0bb0ee33b1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1094,
+          "cache_read_input_tokens": 91600,
+          "cache_creation_input_tokens": 3843
+        }
+      },
+      "807680b9441dc71341c405ce": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 212,
+          "cache_read_input_tokens": 95443,
+          "cache_creation_input_tokens": 1663
+        }
+      },
+      "d50b7f3082ced7cee93f009a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 97106,
+          "cache_creation_input_tokens": 358
+        }
+      },
+      "df6b7a217d2b2fec07b2f224": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 179,
+          "cache_read_input_tokens": 97464,
+          "cache_creation_input_tokens": 2175
+        }
+      },
+      "18fa1ef975a599a5fb1486b5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 99639,
+          "cache_creation_input_tokens": 543
+        }
+      },
+      "00f09118f1043613c300a8a0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 203,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15396
+        }
+      },
+      "5f58a6173c4397f87d565d70": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 87,
+          "cache_read_input_tokens": 20804,
+          "cache_creation_input_tokens": 2759
+        }
+      },
+      "a142a3bfe11b99dca27119cd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 23563,
+          "cache_creation_input_tokens": 21551
+        }
+      },
+      "6f18fcd49fca1a90741619b2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 45114,
+          "cache_creation_input_tokens": 11927
+        }
+      },
+      "65ad2a1708d424fd894aba30": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 57041,
+          "cache_creation_input_tokens": 2630
+        }
+      },
+      "c9242a3c20c23a93163a62f0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 59671,
+          "cache_creation_input_tokens": 6189
+        }
+      },
+      "800d1a49439429e1708f6dec": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 65860,
+          "cache_creation_input_tokens": 4514
+        }
+      },
+      "36ee992a5b669780b0e992f1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 70374,
+          "cache_creation_input_tokens": 6243
+        }
+      },
+      "328bd6355df7c60f408f81fd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 76617,
+          "cache_creation_input_tokens": 8761
+        }
+      },
+      "f734fcff54e147cd14e6b018": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 85378,
+          "cache_creation_input_tokens": 9338
+        }
+      },
+      "3a01d6a508a231067b9de312": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 94716,
+          "cache_creation_input_tokens": 9689
+        }
+      },
+      "8f0f4c5494b9cf6369e493e6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 104405,
+          "cache_creation_input_tokens": 13485
+        }
+      },
+      "957a4f83bb93c3d9466b5775": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 117890,
+          "cache_creation_input_tokens": 291
+        }
+      },
+      "025d35a7e2b0772f63eac380": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 118181,
+          "cache_creation_input_tokens": 2600
+        }
+      },
+      "86a3570313f8debbd9749c76": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 120781,
+          "cache_creation_input_tokens": 16678
+        }
+      },
+      "0a022f7dc16e613282616383": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 21905
+        }
+      },
+      "45aee4f9c812dc935d1d042a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 21905,
+          "cache_creation_input_tokens": 2776
+        }
+      },
+      "4e602404f8f87695d0750652": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 24681,
+          "cache_creation_input_tokens": 11659
+        }
+      },
+      "f4d4b4c050feb44a19012ab5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 36340,
+          "cache_creation_input_tokens": 12093
+        }
+      },
+      "93c9329c861c66b9d15baa84": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 48433,
+          "cache_creation_input_tokens": 3912
+        }
+      },
+      "519f8563c8ef94b1f54c2039": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 52345,
+          "cache_creation_input_tokens": 6619
+        }
+      },
+      "a8b3d3b7f00fb837f403ac2c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 58964,
+          "cache_creation_input_tokens": 9502
+        }
+      },
+      "139a9db45ccdd507da3e0b0d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 68466,
+          "cache_creation_input_tokens": 3765
+        }
+      },
+      "0dc4418f83cab140c3e93b0d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 72231,
+          "cache_creation_input_tokens": 3453
+        }
+      },
+      "a44607004f361f38aa897268": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 75684,
+          "cache_creation_input_tokens": 3372
+        }
+      },
+      "a71c2966bdba70a272b7cb8f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 79056,
+          "cache_creation_input_tokens": 7937
+        }
+      },
+      "374417d1ab66f6c2ca7b6f0b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 86993,
+          "cache_creation_input_tokens": 1376
+        }
+      },
+      "64e398f573f28f0114cffabe": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 88369,
+          "cache_creation_input_tokens": 2199
+        }
+      },
+      "56aca2511e05fe7bd60faf02": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 90568,
+          "cache_creation_input_tokens": 1206
+        }
+      },
+      "1630810b364c05424d99ed7c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 170,
+          "cache_read_input_tokens": 91774,
+          "cache_creation_input_tokens": 1012
+        }
+      },
+      "3031d5102273caf909e334c0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 92786,
+          "cache_creation_input_tokens": 302
+        }
+      },
+      "9db02101d450b057457d93d6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 93088,
+          "cache_creation_input_tokens": 1125
+        }
+      },
+      "8f3afd34a41037f16dfb5105": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 30,
+          "cache_read_input_tokens": 94213,
+          "cache_creation_input_tokens": 689
+        }
+      },
+      "8099dd42f3c300a6cb57e381": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2029,
+          "cache_read_input_tokens": 94902,
+          "cache_creation_input_tokens": 918
+        }
+      },
+      "e9fe7c254852c6f8acd75dc4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 95820,
+          "cache_creation_input_tokens": 3348
+        }
+      },
+      "0b4067a55298971acfe78fc0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 99168,
+          "cache_creation_input_tokens": 1894
+        }
+      },
+      "7ce0bbd3e178a0f83bf7a042": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 101062,
+          "cache_creation_input_tokens": 1966
+        }
+      },
+      "f2c283fb7e106d5b8eb1599d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 49,
+          "cache_read_input_tokens": 103028,
+          "cache_creation_input_tokens": 768
+        }
+      },
+      "ccd91d837f34444713f5bd2e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 103796,
+          "cache_creation_input_tokens": 506
+        }
+      },
+      "8ca8e7a28da4932eb286d8d3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 104302,
+          "cache_creation_input_tokens": 544
+        }
+      },
+      "36867481a2d99330b872baf1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 33,
+          "cache_read_input_tokens": 104846,
+          "cache_creation_input_tokens": 408
+        }
+      },
+      "9b98ac594faf54a8a1819a1d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 105254,
+          "cache_creation_input_tokens": 280
+        }
+      },
+      "6c93afae1ad15e8d6fc430f9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 33,
+          "cache_read_input_tokens": 105534,
+          "cache_creation_input_tokens": 1216
+        }
+      },
+      "a87be3cf9a4f52e2df6aaccb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 106750,
+          "cache_creation_input_tokens": 762
+        }
+      },
+      "20d3d75e00bde1a4cbc57638": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 107512,
+          "cache_creation_input_tokens": 663
+        }
+      },
+      "1ca66085d150ceb15903b3b5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 415,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 21876
+        }
+      },
+      "3ec543c74b90b736fa60b5bc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 371,
+          "cache_read_input_tokens": 21876,
+          "cache_creation_input_tokens": 7617
+        }
+      },
+      "838b1e19ed48c5185e94bb18": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1981,
+          "cache_read_input_tokens": 29493,
+          "cache_creation_input_tokens": 4473
+        }
+      },
+      "78b9c68880874e25c2f51465": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 33966,
+          "cache_creation_input_tokens": 2850
+        }
+      },
+      "284238104289183ec3fc7637": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 36816,
+          "cache_creation_input_tokens": 2234
+        }
+      },
+      "a6d060bf233fd135ccc4e77a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 39050,
+          "cache_creation_input_tokens": 2760
+        }
+      },
+      "46a3d5916d7a8c5d551cf634": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 41810,
+          "cache_creation_input_tokens": 571
+        }
+      },
+      "6272e7e47987719a5c73ddcd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 134,
+          "cache_read_input_tokens": 42381,
+          "cache_creation_input_tokens": 924
+        }
+      },
+      "17ba8c4b0bd49d5001bb7f94": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 43305,
+          "cache_creation_input_tokens": 493
+        }
+      },
+      "fbee71404ae8ee1a4f78e336": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 43798,
+          "cache_creation_input_tokens": 2587
+        }
+      },
+      "84893b6a608f85f094ae99af": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 46385,
+          "cache_creation_input_tokens": 1476
+        }
+      },
+      "879eebff4d601f0013b82057": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 47861,
+          "cache_creation_input_tokens": 1874
+        }
+      },
+      "3b52ab933cb932ff8c62697a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 49735,
+          "cache_creation_input_tokens": 683
+        }
+      },
+      "0c100d5b4126a462be96821b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 23497
+        }
+      },
+      "4c0a1554ca62aca59ac8a291": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 23497,
+          "cache_creation_input_tokens": 11280
+        }
+      },
+      "0603fb48333905bdce0b7c4c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 34777,
+          "cache_creation_input_tokens": 1542
+        }
+      },
+      "c05f46236e9aa942bbeefcb6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 36319,
+          "cache_creation_input_tokens": 712
+        }
+      },
+      "b20d0aa77911fba578cfab1c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 37031,
+          "cache_creation_input_tokens": 5149
+        }
+      },
+      "5f4798d1cb010fbfc929f3bd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 145,
+          "cache_read_input_tokens": 42180,
+          "cache_creation_input_tokens": 1238
+        }
+      },
+      "50d9483c56faa1d7c03d685d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 43418,
+          "cache_creation_input_tokens": 179
+        }
+      },
+      "7442386cac7b3b01c280280f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1317,
+          "cache_read_input_tokens": 43597,
+          "cache_creation_input_tokens": 265
+        }
+      },
+      "af533f3bdd931900a4d24cf2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 43862,
+          "cache_creation_input_tokens": 1695
+        }
+      },
+      "e69092e365ebaf9fa65f6dc1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1130,
+          "cache_read_input_tokens": 45557,
+          "cache_creation_input_tokens": 3209
+        }
+      },
+      "cdcdc17190afa65da95bc072": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 48766,
+          "cache_creation_input_tokens": 14436
+        }
+      },
+      "49ae7f8dc43c9e4a7edfefed": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 63202,
+          "cache_creation_input_tokens": 3463
+        }
+      },
+      "fd7a9e5bd46c03789eafe3fa": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 66665,
+          "cache_creation_input_tokens": 1855
+        }
+      },
+      "21d75e8f900363c06644376d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 723,
+          "cache_read_input_tokens": 68520,
+          "cache_creation_input_tokens": 1752
+        }
+      },
+      "2d261dea929211a5e2ff1b70": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 70272,
+          "cache_creation_input_tokens": 3022
+        }
+      },
+      "7ae973fb89df13a06ba2ebb8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 73294,
+          "cache_creation_input_tokens": 4362
+        }
+      },
+      "c33a9a2e782770f8c9c8d14f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1421,
+          "cache_read_input_tokens": 77656,
+          "cache_creation_input_tokens": 5832
+        }
+      },
+      "f684b11a93b3af77bd06782c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2149,
+          "cache_read_input_tokens": 83488,
+          "cache_creation_input_tokens": 4631
+        }
+      },
+      "2f40bc4d358d0c19a9646ffc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 88119,
+          "cache_creation_input_tokens": 7425
+        }
+      },
+      "d6056f897ae5099c584d1d1f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2388,
+          "cache_read_input_tokens": 95544,
+          "cache_creation_input_tokens": 1313
+        }
+      },
+      "23543677afda84ea0f52df07": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 96857,
+          "cache_creation_input_tokens": 4231
+        }
+      },
+      "46ce10db8c3752da6da6be68": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 101088,
+          "cache_creation_input_tokens": 2338
+        }
+      },
+      "20df2e0cde123fcca1cd82df": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 103426,
+          "cache_creation_input_tokens": 2861
+        }
+      },
+      "c70278f7359b0875885b48e9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 106287,
+          "cache_creation_input_tokens": 1309
+        }
+      },
+      "c6ba479145369c9664663cd4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 107596,
+          "cache_creation_input_tokens": 1620
+        }
+      },
+      "4bf2017fd76d46d61659c4fc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 109216,
+          "cache_creation_input_tokens": 572
+        }
+      },
+      "018a7d24106eb3031b97afe9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 109788,
+          "cache_creation_input_tokens": 3288
+        }
+      },
+      "e8c22be85ca2a20185dc90fb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 113076,
+          "cache_creation_input_tokens": 1501
+        }
+      },
+      "2f62991a894508a49a9d3ca8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 114577,
+          "cache_creation_input_tokens": 2817
+        }
+      },
+      "b6d3ccb85dca189e5ed83e97": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 373,
+          "cache_read_input_tokens": 117394,
+          "cache_creation_input_tokens": 3519
+        }
+      },
+      "e08c9ec5ff0327c13663de07": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 120913,
+          "cache_creation_input_tokens": 407
+        }
+      },
+      "09f41b22a7cf75487acad48a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 228,
+          "cache_read_input_tokens": 121320,
+          "cache_creation_input_tokens": 1082
+        }
+      },
+      "4d917ce4ed5a2c5295d1e058": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 122402,
+          "cache_creation_input_tokens": 526
+        }
+      },
+      "ec12e21e27ccb6a5d1872295": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 122928,
+          "cache_creation_input_tokens": 1550
+        }
+      },
+      "589c7d0918081587f6123559": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 124478,
+          "cache_creation_input_tokens": 3320
+        }
+      },
+      "5b5a978f704a91fa1b52319a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 127798,
+          "cache_creation_input_tokens": 412
+        }
+      },
+      "7e9a8ac1d965f484f5a63355": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 128210,
+          "cache_creation_input_tokens": 1395
+        }
+      },
+      "80f19ba69b6580fe1e7dec8b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 129605,
+          "cache_creation_input_tokens": 295
+        }
+      },
+      "b08ac088d450b2a777dbe1b1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 129900,
+          "cache_creation_input_tokens": 11217
+        }
+      },
+      "052544f05ae05e4faeebaa8c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 141117,
+          "cache_creation_input_tokens": 4827
+        }
+      },
+      "e4c87ff87e8be587160b0da5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 644,
+          "cache_read_input_tokens": 145944,
+          "cache_creation_input_tokens": 5213
+        }
+      },
+      "21b4ced8ad7c9b8331c66240": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 151157,
+          "cache_creation_input_tokens": 2223
+        }
+      },
+      "e57ca371371d96bc186a0234": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 153380,
+          "cache_creation_input_tokens": 3378
+        }
+      },
+      "4ca504a7e966899a461e9fd1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 156758,
+          "cache_creation_input_tokens": 2197
+        }
+      },
+      "d2e730f222654c19320a9648": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 158955,
+          "cache_creation_input_tokens": 662
+        }
+      },
+      "7fc78becff6d3b2b9e35f4a3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 159617,
+          "cache_creation_input_tokens": 2218
+        }
+      },
+      "d9583bf2442d30060dc4906b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 161835,
+          "cache_creation_input_tokens": 1125
+        }
+      },
+      "d39741d5b8b4794001f09bb4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 25,
+          "cache_read_input_tokens": 162960,
+          "cache_creation_input_tokens": 631
+        }
+      },
+      "1570c72e7d7ff62e8ff9cff9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 295,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15377
+        }
+      },
+      "dea35959951f99144f6d0226": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 20785,
+          "cache_creation_input_tokens": 2748
+        }
+      },
+      "c8e09f9e968533d1da3e306f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 23533,
+          "cache_creation_input_tokens": 5413
+        }
+      },
+      "7ef1523c9bcb56368fb89c24": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 462,
+          "cache_read_input_tokens": 28946,
+          "cache_creation_input_tokens": 5407
+        }
+      },
+      "eb62a4e132233fd9f89530ca": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1262,
+          "cache_read_input_tokens": 34353,
+          "cache_creation_input_tokens": 3454
+        }
+      },
+      "bdab99940ae233e7bc1c233f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 37807,
+          "cache_creation_input_tokens": 3335
+        }
+      },
+      "95c6991a6e5c5fba6372cedd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 41142,
+          "cache_creation_input_tokens": 4875
+        }
+      },
+      "945b14bf969f3d6bfe07d21c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 46017,
+          "cache_creation_input_tokens": 8397
+        }
+      },
+      "aa599033dae9074fc03e150f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 54414,
+          "cache_creation_input_tokens": 1833
+        }
+      },
+      "2025e88abd26311c4ccfd40b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1954,
+          "cache_read_input_tokens": 56247,
+          "cache_creation_input_tokens": 7388
+        }
+      },
+      "6dadbb752d5d1a6f5b95304f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 63635,
+          "cache_creation_input_tokens": 2962
+        }
+      },
+      "5dc6404ccebe279019228384": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 66597,
+          "cache_creation_input_tokens": 9591
+        }
+      },
+      "d949acf156ee7b34ec68bd5f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 76188,
+          "cache_creation_input_tokens": 4737
+        }
+      },
+      "a3898390ddb8e72917f12830": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 46,
+          "cache_read_input_tokens": 80925,
+          "cache_creation_input_tokens": 1058
+        }
+      },
+      "380c2460b2c17b5fe78e8b37": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 81983,
+          "cache_creation_input_tokens": 534
+        }
+      },
+      "9fe20b5a8559e09489ff22e5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 82517,
+          "cache_creation_input_tokens": 1968
+        }
+      },
+      "9797b75d50297252330b04c8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 84485,
+          "cache_creation_input_tokens": 932
+        }
+      },
+      "37681033639c33977303642f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 85417,
+          "cache_creation_input_tokens": 8839
+        }
+      },
+      "145fad8de262df76257a167b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 94256,
+          "cache_creation_input_tokens": 664
+        }
+      },
+      "e9fce3ce5df730603bd7f877": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 21,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15905
+        }
+      },
+      "d2a489de1138c47ce9e2f1ff": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 21313,
+          "cache_creation_input_tokens": 3307
+        }
+      },
+      "726543c508dfe2db45248232": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 24620,
+          "cache_creation_input_tokens": 12961
+        }
+      },
+      "680e8abcf1bbcef32bf0e1fc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1387,
+          "cache_read_input_tokens": 37581,
+          "cache_creation_input_tokens": 1073
+        }
+      },
+      "454b1c6db82a8fc3b1bcf0a6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 38654,
+          "cache_creation_input_tokens": 1765
+        }
+      },
+      "c4afec05c36c71751991265d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3070,
+          "cache_read_input_tokens": 40419,
+          "cache_creation_input_tokens": 3193
+        }
+      },
+      "013302ead15afa209b4862b8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 43612,
+          "cache_creation_input_tokens": 4045
+        }
+      },
+      "8ac2b63f7ff0898bcd7d84fb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 47657,
+          "cache_creation_input_tokens": 5918
+        }
+      },
+      "91159676ec1b4e5efd7d63e1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3648,
+          "cache_read_input_tokens": 53575,
+          "cache_creation_input_tokens": 1214
+        }
+      },
+      "e0239d1c83011061c4491c68": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 54789,
+          "cache_creation_input_tokens": 4664
+        }
+      },
+      "bd1eb05ddc133659dfb5d1a0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4034,
+          "cache_read_input_tokens": 59453,
+          "cache_creation_input_tokens": 8675
+        }
+      },
+      "69a7eb06be9ba157ebaea176": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 68128,
+          "cache_creation_input_tokens": 5021
+        }
+      },
+      "4e5abb9cfd716b5d94477da0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 34,
+          "cache_read_input_tokens": 73149,
+          "cache_creation_input_tokens": 8312
+        }
+      },
+      "9ee69c7dea9e95cec78e81d3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 81461,
+          "cache_creation_input_tokens": 331
+        }
+      },
+      "d35c8d94dc36186ab656795a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 81792,
+          "cache_creation_input_tokens": 781
+        }
+      },
+      "0e61c205bebbffe5a4314b2b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 82573,
+          "cache_creation_input_tokens": 1344
+        }
+      },
+      "1f4f63b60fa08e4b76e2c429": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 83917,
+          "cache_creation_input_tokens": 957
+        }
+      },
+      "4c0ef4ba6e6ab8c20ce77d9d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 84874,
+          "cache_creation_input_tokens": 7534
+        }
+      },
+      "bc04853a2071774e80cfe1f0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 400,
+          "cache_read_input_tokens": 92408,
+          "cache_creation_input_tokens": 385
+        }
+      },
+      "cdbb82c1b8dd4184b542fee9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 92793,
+          "cache_creation_input_tokens": 1754
+        }
+      },
+      "8aad9ca4f2e2bfb2481dbf63": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 94547,
+          "cache_creation_input_tokens": 601
+        }
+      },
+      "45bcfd53e20ae3ece5ba2f54": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 95148,
+          "cache_creation_input_tokens": 989
+        }
+      },
+      "2d393e21d0ebc48423a99a8e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 96137,
+          "cache_creation_input_tokens": 5807
+        }
+      },
+      "234cdd0c875144ca12026cb8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 383,
+          "cache_read_input_tokens": 101944,
+          "cache_creation_input_tokens": 1527
+        }
+      },
+      "34b0e96d23c34899ef576609": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 103471,
+          "cache_creation_input_tokens": 6686
+        }
+      },
+      "3ded6f33d86badca5b0e0f53": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 110157,
+          "cache_creation_input_tokens": 9251
+        }
+      },
+      "9c4a1008813c7f6a4260f930": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 119408,
+          "cache_creation_input_tokens": 8557
+        }
+      },
+      "ec1a2699dac575105be5b4c4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 127965,
+          "cache_creation_input_tokens": 5426
+        }
+      },
+      "fc9b327bbac191ba08510aa9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1719,
+          "cache_read_input_tokens": 133391,
+          "cache_creation_input_tokens": 4400
+        }
+      },
+      "c44884090eaacaa1ca8c9033": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 137791,
+          "cache_creation_input_tokens": 9362
+        }
+      },
+      "2f19a61700a803ef5ad31561": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 455,
+          "cache_read_input_tokens": 147153,
+          "cache_creation_input_tokens": 5299
+        }
+      },
+      "61ce172a710e768c286d0e0c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 152452,
+          "cache_creation_input_tokens": 823
+        }
+      },
+      "d12fbe578f5bcd7bcf3eb314": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 153275,
+          "cache_creation_input_tokens": 301
+        }
+      },
+      "dfcd3e25e6a1d1a5adcbf6a7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 153576,
+          "cache_creation_input_tokens": 1399
+        }
+      },
+      "42fc509adca2c08f08d96055": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 131,
+          "cache_read_input_tokens": 154975,
+          "cache_creation_input_tokens": 3188
+        }
+      },
+      "198c0fd0215ca342e59b188c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 158163,
+          "cache_creation_input_tokens": 701
+        }
+      },
+      "0c3d4053ebc59bc4ba7364f5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 158864,
+          "cache_creation_input_tokens": 1237
+        }
+      },
+      "390446e699cb49c4b90bab27": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 160101,
+          "cache_creation_input_tokens": 2947
+        }
+      },
+      "e8eabc92b97aeb01a6e21d73": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 163048,
+          "cache_creation_input_tokens": 1999
+        }
+      },
+      "f313735a84bfe7680d3f0eaa": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 165047,
+          "cache_creation_input_tokens": 1030
+        }
+      },
+      "674b280616df2666dc7ec6b0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 166077,
+          "cache_creation_input_tokens": 1034
+        }
+      },
+      "309e94d2a597e885796669f0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 167111,
+          "cache_creation_input_tokens": 685
+        }
+      },
+      "3429c74bc0c1a3f47a1533e3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 167796,
+          "cache_creation_input_tokens": 881
+        }
+      },
+      "9709ecbd3e7da2c62b1a09b1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 168677,
+          "cache_creation_input_tokens": 1579
+        }
+      },
+      "a4dbb4f5dd326ede7e7eb8c8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 170256,
+          "cache_creation_input_tokens": 2526
+        }
+      },
+      "e215a1ba15a4d6415f3bcf85": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 175,
+          "cache_read_input_tokens": 172782,
+          "cache_creation_input_tokens": 331
+        }
+      },
+      "b3eae6db365c221c6c79fbd5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 173113,
+          "cache_creation_input_tokens": 5857
+        }
+      },
+      "ede9552d5d702bd895b7d9b0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 178970,
+          "cache_creation_input_tokens": 4335
+        }
+      },
+      "cb59b83f832f8038b649884f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 183305,
+          "cache_creation_input_tokens": 803
+        }
+      },
+      "149652a0ee1e7826e696fd3d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 184108,
+          "cache_creation_input_tokens": 1989
+        }
+      },
+      "3303993bbdebc5a4e29735aa": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 387,
+          "cache_read_input_tokens": 186097,
+          "cache_creation_input_tokens": 2992
+        }
+      },
+      "ae81d66974e652fa1433099a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 189089,
+          "cache_creation_input_tokens": 5856
+        }
+      },
+      "f654688b4cd4fd274ab8a7c4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 194945,
+          "cache_creation_input_tokens": 3477
+        }
+      },
+      "e91480c5fc4fc58d1ee447af": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 420,
+          "cache_read_input_tokens": 198422,
+          "cache_creation_input_tokens": 3833
+        }
+      },
+      "fdeddaad27148c64306b127f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 202255,
+          "cache_creation_input_tokens": 4513
+        }
+      },
+      "e5f014ad70005fc6d030682b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 206768,
+          "cache_creation_input_tokens": 2935
+        }
+      },
+      "34d8d23bd68a4e8865c9ec88": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 172,
+          "cache_read_input_tokens": 209703,
+          "cache_creation_input_tokens": 1039
+        }
+      },
+      "51e84c2007bf7a2394232262": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 210742,
+          "cache_creation_input_tokens": 5698
+        }
+      },
+      "203ac628ba5588cdedcdf347": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 216440,
+          "cache_creation_input_tokens": 5155
+        }
+      },
+      "df047d703e39f98dc6a1dcaf": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 571,
+          "cache_read_input_tokens": 221595,
+          "cache_creation_input_tokens": 708
+        }
+      },
+      "13c94b76f2d41873957af1da": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 222303,
+          "cache_creation_input_tokens": 5314
+        }
+      },
+      "dc1e9a416d1e2a2190ef9e29": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1042,
+          "cache_read_input_tokens": 227617,
+          "cache_creation_input_tokens": 2583
+        }
+      },
+      "2adbde7b7376e0751f3819ac": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 230200,
+          "cache_creation_input_tokens": 1566
+        }
+      },
+      "88575be74c7dcc096b36eeb7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 50,
+          "cache_read_input_tokens": 231766,
+          "cache_creation_input_tokens": 1846
+        }
+      },
+      "0e3f563029f41de0c689e526": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 233612,
+          "cache_creation_input_tokens": 660
+        }
+      },
+      "6588423f8c3277853b802573": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 234272,
+          "cache_creation_input_tokens": 4645
+        }
+      },
+      "3b37b12b5335f0b3b87aece6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 238917,
+          "cache_creation_input_tokens": 2146
+        }
+      },
+      "0f99ac05744cbdd60eebaada": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 241063,
+          "cache_creation_input_tokens": 1349
+        }
+      },
+      "5a42e4d10bf9361d4e5db22e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 242412,
+          "cache_creation_input_tokens": 2577
+        }
+      },
+      "7dbc72d237900d3487e819b2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 244989,
+          "cache_creation_input_tokens": 501
+        }
+      },
+      "13b1b4e318ef3b31a3cf42ac": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 245490,
+          "cache_creation_input_tokens": 343
+        }
+      },
+      "abfdca33a0e1fa95872e77dd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 245833,
+          "cache_creation_input_tokens": 2006
+        }
+      },
+      "c8ec0e874e681302ab17b081": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 247839,
+          "cache_creation_input_tokens": 3713
+        }
+      },
+      "fe56d9bc9cfaebccaf1500bc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 614,
+          "cache_read_input_tokens": 251552,
+          "cache_creation_input_tokens": 1295
+        }
+      },
+      "0031bb9d03ac780008db533b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 252847,
+          "cache_creation_input_tokens": 1335
+        }
+      },
+      "310fed98e97f399895a99cb2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 254182,
+          "cache_creation_input_tokens": 3958
+        }
+      },
+      "b1168595d6899e7abd2418b1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 258140,
+          "cache_creation_input_tokens": 2402
+        }
+      },
+      "69c22f709ffffb1c009caa48": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 259,
+          "cache_read_input_tokens": 260542,
+          "cache_creation_input_tokens": 431
+        }
+      },
+      "d7b5612bee80808b825661d3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 28,
+          "cache_read_input_tokens": 260973,
+          "cache_creation_input_tokens": 875
+        }
+      },
+      "50f8449584df7367d7622d7e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1620,
+          "cache_read_input_tokens": 261848,
+          "cache_creation_input_tokens": 1572
+        }
+      },
+      "1adc2170192792e464c4a749": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 263420,
+          "cache_creation_input_tokens": 3036
+        }
+      },
+      "bc36e9a449dc09e5947f833d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 266456,
+          "cache_creation_input_tokens": 5778
+        }
+      },
+      "213bcd0fa8d5e6265123280c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 272234,
+          "cache_creation_input_tokens": 467
+        }
+      },
+      "026af6cebefd8725a7bb4867": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 272701,
+          "cache_creation_input_tokens": 1783
+        }
+      },
+      "c193b5aff6fb76ddf099bf93": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 20273
+        }
+      },
+      "5301b0e0329622bc3b38dadb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 20273,
+          "cache_creation_input_tokens": 2586
+        }
+      },
+      "bc988b15b00811f7e1b46f01": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 22859,
+          "cache_creation_input_tokens": 2739
+        }
+      },
+      "20b1d6c03388a219752969d2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 25598,
+          "cache_creation_input_tokens": 1815
+        }
+      },
+      "cc78affb9d88e227e4ce2678": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 27413,
+          "cache_creation_input_tokens": 654
+        }
+      },
+      "d771ae53271cbfc66b0118d2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 863,
+          "cache_read_input_tokens": 28067,
+          "cache_creation_input_tokens": 2161
+        }
+      },
+      "e4491d8358d329d0529ceb66": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 30228,
+          "cache_creation_input_tokens": 1456
+        }
+      },
+      "07435c69e1ebe439283bca39": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 31684,
+          "cache_creation_input_tokens": 485
+        }
+      },
+      "03e4d3f6b166ed71cd62e2c5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 32169,
+          "cache_creation_input_tokens": 954
+        }
+      },
+      "de7e8c1d7f1183c7e9c317aa": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 33123,
+          "cache_creation_input_tokens": 1177
+        }
+      },
+      "cb369c1879346f7b92efa1da": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 34300,
+          "cache_creation_input_tokens": 1612
+        }
+      },
+      "852c7ac0e4db39f9c73bf9d9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 35912,
+          "cache_creation_input_tokens": 1252
+        }
+      },
+      "8a1c207586d8224111bcca5f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 37164,
+          "cache_creation_input_tokens": 882
+        }
+      },
+      "1041dd21cda19866a0af9508": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 41,
+          "cache_read_input_tokens": 38046,
+          "cache_creation_input_tokens": 787
+        }
+      },
+      "2985167b5da76340ddb4399f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 38833,
+          "cache_creation_input_tokens": 2641
+        }
+      },
+      "ede5357e5df9aa08dc15af3b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 34,
+          "cache_read_input_tokens": 41474,
+          "cache_creation_input_tokens": 744
+        }
+      },
+      "b2ad2d4406cd62d02f631b17": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 42218,
+          "cache_creation_input_tokens": 1208
+        }
+      },
+      "bf9b004a7d26b7946c82db9a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 43426,
+          "cache_creation_input_tokens": 1001
+        }
+      },
+      "f688687ffd5a05c5fa0011b8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 44427,
+          "cache_creation_input_tokens": 1187
+        }
+      },
+      "127aadedc0e5b33109935779": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 45614,
+          "cache_creation_input_tokens": 525
+        }
+      },
+      "eeb19064e07b85ebf34c88c2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 46139,
+          "cache_creation_input_tokens": 456
+        }
+      },
+      "70dcc25d475caed4a146cc24": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 46595,
+          "cache_creation_input_tokens": 1491
+        }
+      },
+      "86a92c3cd1b3d76eaaa9dbd7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 175,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 17000
+        }
+      },
+      "d6a6ab9a60c3aae81e779742": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 22408,
+          "cache_creation_input_tokens": 6980
+        }
+      },
+      "aaa6cc47207273c1c677cdfb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 29388,
+          "cache_creation_input_tokens": 14211
+        }
+      },
+      "6753cf39781b2d05969d8c07": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 301,
+          "cache_read_input_tokens": 43599,
+          "cache_creation_input_tokens": 1921
+        }
+      },
+      "a72620e7b0353bf93d2ee1c5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 435,
+          "cache_read_input_tokens": 45520,
+          "cache_creation_input_tokens": 16023
+        }
+      },
+      "de81cd0bba80c12f0687be63": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 647,
+          "cache_read_input_tokens": 61543,
+          "cache_creation_input_tokens": 16005
+        }
+      },
+      "391beaed0e8f79bda809c1c5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 743,
+          "cache_read_input_tokens": 77548,
+          "cache_creation_input_tokens": 12842
+        }
+      },
+      "c13fcc91b5cb420100e53964": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 90390,
+          "cache_creation_input_tokens": 4894
+        }
+      },
+      "e01815fc64226f6b3f222804": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 95284,
+          "cache_creation_input_tokens": 1867
+        }
+      },
+      "e1b992d5c89f3a54a485a394": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 97151,
+          "cache_creation_input_tokens": 5030
+        }
+      },
+      "c30a9051b5afaf200a17d2a6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 102181,
+          "cache_creation_input_tokens": 5232
+        }
+      },
+      "ae3e03f3f4321ba653ecb51a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 107413,
+          "cache_creation_input_tokens": 3971
+        }
+      },
+      "29dfff6ac3b77809d81ab1ff": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 111384,
+          "cache_creation_input_tokens": 3467
+        }
+      },
+      "3a6634f038fada0afdfd3bd3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 114851,
+          "cache_creation_input_tokens": 1790
+        }
+      },
+      "192a218abfd869b702a7ea79": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 38,
+          "cache_read_input_tokens": 116641,
+          "cache_creation_input_tokens": 537
+        }
+      },
+      "b016510b5475c6791c97dd9f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 117178,
+          "cache_creation_input_tokens": 637
+        }
+      },
+      "790b05b5d177b2017ce59189": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 117815,
+          "cache_creation_input_tokens": 2938
+        }
+      },
+      "987a1b76c42f16ec80c73c0a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 120753,
+          "cache_creation_input_tokens": 3894
+        }
+      },
+      "6cf8046ee9d2871c4de27655": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 124647,
+          "cache_creation_input_tokens": 524
+        }
+      },
+      "b9c5120a4849221f24594d4e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 125171,
+          "cache_creation_input_tokens": 13968
+        }
+      },
+      "7cfff91514df8969f1e577e4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 139139,
+          "cache_creation_input_tokens": 467
+        }
+      },
+      "7bc7f2e110db06804a901494": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 139606,
+          "cache_creation_input_tokens": 798
+        }
+      },
+      "5e837331750225f1d50e23f2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 140404,
+          "cache_creation_input_tokens": 21385
+        }
+      },
+      "d90bdfbe0deeca10de3fb863": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 161789,
+          "cache_creation_input_tokens": 2025
+        }
+      },
+      "e416a136ebffd42a66a1835a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 163814,
+          "cache_creation_input_tokens": 5283
+        }
+      },
+      "a528f34680efd08cb3011ff8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 169097,
+          "cache_creation_input_tokens": 2031
+        }
+      },
+      "a420ce14da9a4113279ad01d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 171128,
+          "cache_creation_input_tokens": 2621
+        }
+      },
+      "8eff234e314544c981f733ad": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 173749,
+          "cache_creation_input_tokens": 1957
+        }
+      },
+      "10ee0fcef0c6e98ba793fd4e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 175706,
+          "cache_creation_input_tokens": 643
+        }
+      },
+      "cfd2e4561b4ca11c2b11a0e2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 176349,
+          "cache_creation_input_tokens": 1099
+        }
+      },
+      "6da6ad10f26d130b7a471dbc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 177448,
+          "cache_creation_input_tokens": 990
+        }
+      },
+      "4db3e8e72e20948374433121": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 178438,
+          "cache_creation_input_tokens": 1513
+        }
+      },
+      "2b7027f7575e525b80b15a43": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 179951,
+          "cache_creation_input_tokens": 1717
+        }
+      },
+      "cf1f7696d509ca0939b1e3d9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 181668,
+          "cache_creation_input_tokens": 965
+        }
+      },
+      "c8eaf869ebaff1280125cdc6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 182633,
+          "cache_creation_input_tokens": 1609
+        }
+      },
+      "61c2b728701997e0a3336a81": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 184242,
+          "cache_creation_input_tokens": 481
+        }
+      },
+      "eb45c26a1e5ad1c847b03499": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 184723,
+          "cache_creation_input_tokens": 363
+        }
+      },
+      "ed315cec8ad6cc0de62b62c3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 185086,
+          "cache_creation_input_tokens": 453
+        }
+      },
+      "087b6d3d8271eb2db80360b9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 185539,
+          "cache_creation_input_tokens": 2345
+        }
+      },
+      "49ee987096b7ffd8fc4f6bef": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 187884,
+          "cache_creation_input_tokens": 3444
+        }
+      },
+      "c3fb63dc4c1494ef292fabec": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 191328,
+          "cache_creation_input_tokens": 2956
+        }
+      },
+      "007efa0084055102c788d925": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 194284,
+          "cache_creation_input_tokens": 1001
+        }
+      },
+      "51062f12bb83b098100c11e2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 195285,
+          "cache_creation_input_tokens": 2094
+        }
+      },
+      "fca66bb7dcc2a724d0854d38": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 197379,
+          "cache_creation_input_tokens": 1048
+        }
+      },
+      "b67df8ffc0a9f0ff6b6eaf93": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 198427,
+          "cache_creation_input_tokens": 1630
+        }
+      },
+      "01e63236b12ac5e41001bcab": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 200057,
+          "cache_creation_input_tokens": 4966
+        }
+      },
+      "2bb3b7bc6e6835d225f2dcf2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 205023,
+          "cache_creation_input_tokens": 1902
+        }
+      },
+      "e8c2b5762a02c811a402f639": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 206925,
+          "cache_creation_input_tokens": 1121
+        }
+      },
+      "0b124c0e463a17eb03b8b7ca": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 17,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 21048
+        }
+      },
+      "00e297dc2307e0bcf4136075": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 25,
+          "cache_read_input_tokens": 21048,
+          "cache_creation_input_tokens": 3973
+        }
+      },
+      "870ff23be2a374d6bd442fa6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 330,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 16696
+        }
+      },
+      "07c90a41bffaea67687c0611": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 682,
+          "cache_read_input_tokens": 22104,
+          "cache_creation_input_tokens": 11183
+        }
+      },
+      "dddd5d4a43c9096c2c34a200": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 474,
+          "cache_read_input_tokens": 33287,
+          "cache_creation_input_tokens": 4791
+        }
+      },
+      "bf512bd379cd1ff1f2dbaa70": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 547,
+          "cache_read_input_tokens": 38078,
+          "cache_creation_input_tokens": 1693
+        }
+      },
+      "7a778725fb07c247369173ad": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 542,
+          "cache_read_input_tokens": 39771,
+          "cache_creation_input_tokens": 4467
+        }
+      },
+      "1a8aa844a83c032bd3cbe143": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 44238,
+          "cache_creation_input_tokens": 2254
+        }
+      },
+      "bc22fd7c98cb1b250a5fa127": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 46492,
+          "cache_creation_input_tokens": 1587
+        }
+      },
+      "bec3f4dc2029e2f088c7d728": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 48079,
+          "cache_creation_input_tokens": 1043
+        }
+      },
+      "c024d17295cc02bd984c72a5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 49122,
+          "cache_creation_input_tokens": 1489
+        }
+      },
+      "adb22f1b5a5d3b11f5064f45": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 50611,
+          "cache_creation_input_tokens": 3287
+        }
+      },
+      "dcd21cbbb04576e8ea9e7271": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 263,
+          "cache_read_input_tokens": 53898,
+          "cache_creation_input_tokens": 2566
+        }
+      },
+      "473a74f7105095ad74cb32b6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 56464,
+          "cache_creation_input_tokens": 2122
+        }
+      },
+      "5aadc6249b23353030d29834": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 58586,
+          "cache_creation_input_tokens": 3945
+        }
+      },
+      "c0b85ba57a0c8419e91f18b9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1203,
+          "cache_read_input_tokens": 62531,
+          "cache_creation_input_tokens": 1987
+        }
+      },
+      "124cd2f5034b3f4ff906d8cf": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 698,
+          "cache_read_input_tokens": 64518,
+          "cache_creation_input_tokens": 1670
+        }
+      },
+      "69750831407d9c9e6a49ba53": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 24,
+          "cache_read_input_tokens": 66188,
+          "cache_creation_input_tokens": 920
+        }
+      },
+      "fb3d93289e43056385dec068": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 67108,
+          "cache_creation_input_tokens": 551
+        }
+      },
+      "0902637781c9e8219172912c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 67659,
+          "cache_creation_input_tokens": 721
+        }
+      },
+      "6bea46e7fa0687159928b639": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 22,
+          "cache_read_input_tokens": 68380,
+          "cache_creation_input_tokens": 815
+        }
+      },
+      "c5b8085c155d8faa2e8766a4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 298,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15200
+        }
+      },
+      "2567e163137ca47331baa239": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 413,
+          "cache_read_input_tokens": 20608,
+          "cache_creation_input_tokens": 5109
+        }
+      },
+      "9f0f8d2862b4ba7f68d4fb18": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 25717,
+          "cache_creation_input_tokens": 928
+        }
+      },
+      "027ea3cca75c1b42ec2e58d3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 26645,
+          "cache_creation_input_tokens": 10514
+        }
+      },
+      "5bbc78dc90ddd505ac5e4129": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 37159,
+          "cache_creation_input_tokens": 3824
+        }
+      },
+      "b823031b1abe57fa35fa6907": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 40983,
+          "cache_creation_input_tokens": 1429
+        }
+      },
+      "42b763c4c94f3b2a3dc27e37": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 42412,
+          "cache_creation_input_tokens": 1319
+        }
+      },
+      "7994ea5d2c4345902a9765b8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 43731,
+          "cache_creation_input_tokens": 403
+        }
+      },
+      "a43a0a980f4da63c02347164": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 21,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 52733
+        }
+      },
+      "46a1b4e26bdfbe18a3bcf476": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 52733,
+          "cache_creation_input_tokens": 7796
+        }
+      },
+      "22d40d54f0a4542d66f5c2a8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 60529,
+          "cache_creation_input_tokens": 9294
+        }
+      },
+      "c7919b15928e599b4df9dc04": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 69823,
+          "cache_creation_input_tokens": 5898
+        }
+      },
+      "6ed75ea581aed0989a4cf0fb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 75721,
+          "cache_creation_input_tokens": 6162
+        }
+      },
+      "98d5f34f4b10ea5503dc493e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 81883,
+          "cache_creation_input_tokens": 1432
+        }
+      },
+      "6ddae9ef46ee7712c88d050a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 49,
+          "cache_read_input_tokens": 83315,
+          "cache_creation_input_tokens": 3991
+        }
+      },
+      "ce31c2f4c33a1b68f3918b6c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 87306,
+          "cache_creation_input_tokens": 1091
+        }
+      },
+      "fd8691663c88353d5706462e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 88397,
+          "cache_creation_input_tokens": 8977
+        }
+      },
+      "435a62711d1f85b7f881c75a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 97374,
+          "cache_creation_input_tokens": 3866
+        }
+      },
+      "233ff308133243cbd2b1d6cd": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 101240,
+          "cache_creation_input_tokens": 2903
+        }
+      },
+      "0b4ec5f493319c0466447a23": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 104143,
+          "cache_creation_input_tokens": 5168
+        }
+      },
+      "491699646de453f864851df5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 109311,
+          "cache_creation_input_tokens": 1667
+        }
+      },
+      "ddfe18accf33e12f9c3a008f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 110978,
+          "cache_creation_input_tokens": 3397
+        }
+      },
+      "087bcaa1bc8ff96b1010dd3f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 114375,
+          "cache_creation_input_tokens": 3648
+        }
+      },
+      "70759c2992fc7ad5cff5fb60": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 118023,
+          "cache_creation_input_tokens": 2591
+        }
+      },
+      "33f6385e6d1a8514389226e1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 120614,
+          "cache_creation_input_tokens": 3543
+        }
+      },
+      "d2972c7e0029e905a9e5e883": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 124157,
+          "cache_creation_input_tokens": 3808
+        }
+      },
+      "6c1e6895197d373cf92898d4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 127965,
+          "cache_creation_input_tokens": 4753
+        }
+      },
+      "14f0a9b461b1e8a20ec0ba04": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 132718,
+          "cache_creation_input_tokens": 3008
+        }
+      },
+      "24bdc6aef87270e1358217ec": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 135726,
+          "cache_creation_input_tokens": 1674
+        }
+      },
+      "e5fa78bf67ecfbb02d6ad1a1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 137400,
+          "cache_creation_input_tokens": 1064
+        }
+      },
+      "e5eb274cd2e843981e323240": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 138464,
+          "cache_creation_input_tokens": 1514
+        }
+      },
+      "5b4e0237331b4f2536a26ca2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 139978,
+          "cache_creation_input_tokens": 1457
+        }
+      },
+      "4b7c80635536142e9c96feac": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 141435,
+          "cache_creation_input_tokens": 2026
+        }
+      },
+      "fafd923f8ab2ed9a84ec6514": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 143461,
+          "cache_creation_input_tokens": 5041
+        }
+      },
+      "50a0686ae9cdcc645e6947db": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 79,
+          "cache_read_input_tokens": 148502,
+          "cache_creation_input_tokens": 2392
+        }
+      },
+      "432f34baba3dcadd013a04c6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 150894,
+          "cache_creation_input_tokens": 3159
+        }
+      },
+      "774ac4761c690a1f59f3ebb3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 154053,
+          "cache_creation_input_tokens": 2521
+        }
+      },
+      "95b41182fa2a9b34445739a1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 156574,
+          "cache_creation_input_tokens": 1343
+        }
+      },
+      "ae443234b87c996830ffe9d1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 157917,
+          "cache_creation_input_tokens": 1427
+        }
+      },
+      "2957fb344ccb6ea9cec9f4a1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 159344,
+          "cache_creation_input_tokens": 858
+        }
+      },
+      "59e37b79cd134e1b6dbb74bf": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 306,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15516
+        }
+      },
+      "95a6e6e6d9b4debf0921156d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 20924,
+          "cache_creation_input_tokens": 11968
+        }
+      },
+      "b3dccb76e94875c2da7c3dd3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 32892,
+          "cache_creation_input_tokens": 919
+        }
+      },
+      "d8afc2d5c9464e9840178e31": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 33811,
+          "cache_creation_input_tokens": 4480
+        }
+      },
+      "28ad1120577a93360bba9886": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 38291,
+          "cache_creation_input_tokens": 296
+        }
+      },
+      "08a6bee44524063cc63fa2b7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 38587,
+          "cache_creation_input_tokens": 1981
+        }
+      },
+      "f584559bb05e930cdaf75c0a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 40568,
+          "cache_creation_input_tokens": 1401
+        }
+      },
+      "6d3936d95e3003583990c595": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 41969,
+          "cache_creation_input_tokens": 2576
+        }
+      },
+      "bc22790f5660a36f03b7ce51": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 24,
+          "cache_read_input_tokens": 44545,
+          "cache_creation_input_tokens": 1483
+        }
+      },
+      "3e24229d024a67daa357f712": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 233,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 17086
+        }
+      },
+      "c3d1992df26b7b6b2372b8cb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 438,
+          "cache_read_input_tokens": 22494,
+          "cache_creation_input_tokens": 4655
+        }
+      },
+      "514c3dc32f9252f3990d4142": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 531,
+          "cache_read_input_tokens": 27149,
+          "cache_creation_input_tokens": 9029
+        }
+      },
+      "f35452893572640575f265e6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1136,
+          "cache_read_input_tokens": 36178,
+          "cache_creation_input_tokens": 1993
+        }
+      },
+      "f944480b63357178e1368eb3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 38171,
+          "cache_creation_input_tokens": 5206
+        }
+      },
+      "caabfe61a757241e4f675053": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 43377,
+          "cache_creation_input_tokens": 2237
+        }
+      },
+      "7d3909c5ba4da0c7687a7e9c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2693,
+          "cache_read_input_tokens": 45614,
+          "cache_creation_input_tokens": 640
+        }
+      },
+      "1b7bea85e1ab4c38898c29c6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 463,
+          "cache_read_input_tokens": 46254,
+          "cache_creation_input_tokens": 6067
+        }
+      },
+      "4a2b901d3a344851dcdd0fbe": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 454,
+          "cache_read_input_tokens": 52321,
+          "cache_creation_input_tokens": 1700
+        }
+      },
+      "a3dc7b1d4ea3af2928b238fc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 54021,
+          "cache_creation_input_tokens": 1344
+        }
+      },
+      "9a941499eb95e750abf682a3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 55365,
+          "cache_creation_input_tokens": 419
+        }
+      },
+      "03e520658583a7372be962d4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 154,
+          "cache_read_input_tokens": 55784,
+          "cache_creation_input_tokens": 2317
+        }
+      },
+      "245209b712db257cbc04b747": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 58101,
+          "cache_creation_input_tokens": 3571
+        }
+      },
+      "c12e130f52c7d71acfb80f0c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 61672,
+          "cache_creation_input_tokens": 514
+        }
+      },
+      "85a3b3eab365310e0ff92f7f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1420,
+          "cache_read_input_tokens": 62186,
+          "cache_creation_input_tokens": 881
+        }
+      },
+      "0d1e68e2ee3bbb13e3572202": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 63067,
+          "cache_creation_input_tokens": 2576
+        }
+      },
+      "221abfbabd936d4194e07bf4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 65643,
+          "cache_creation_input_tokens": 4400
+        }
+      },
+      "938775ce283ad970877b3591": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1610,
+          "cache_read_input_tokens": 70043,
+          "cache_creation_input_tokens": 741
+        }
+      },
+      "0f5da8ebfe0504c1bc20bbc0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 179,
+          "cache_read_input_tokens": 70784,
+          "cache_creation_input_tokens": 2598
+        }
+      },
+      "f15dc5fcbdc381a5d0db12a2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 686,
+          "cache_read_input_tokens": 73382,
+          "cache_creation_input_tokens": 1635
+        }
+      },
+      "9879d0cb68c73c8e08878183": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 75017,
+          "cache_creation_input_tokens": 2192
+        }
+      },
+      "357be7840b83e0bf579f2770": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 77209,
+          "cache_creation_input_tokens": 3064
+        }
+      },
+      "1759d7bc13f0b65e376b3fc8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 21,
+          "cache_read_input_tokens": 80273,
+          "cache_creation_input_tokens": 1327
+        }
+      },
+      "c25e79877de269b8932bc125": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1521,
+          "cache_read_input_tokens": 81600,
+          "cache_creation_input_tokens": 1005
+        }
+      },
+      "72de81a9888736f4a813c1c7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 82605,
+          "cache_creation_input_tokens": 2875
+        }
+      },
+      "ce7302a693a7fbbe3a51a7c2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 424,
+          "cache_read_input_tokens": 85480,
+          "cache_creation_input_tokens": 1260
+        }
+      },
+      "53f5b189ee14e92d819728ec": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 776,
+          "cache_read_input_tokens": 86740,
+          "cache_creation_input_tokens": 4282
+        }
+      },
+      "c18eac7f6ff9d9c5fe2e754e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2220,
+          "cache_read_input_tokens": 91022,
+          "cache_creation_input_tokens": 4113
+        }
+      },
+      "4232bf5d928917f3980e71a7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 719,
+          "cache_read_input_tokens": 95135,
+          "cache_creation_input_tokens": 4000
+        }
+      },
+      "20e66342a34cb0cd3be66597": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 99135,
+          "cache_creation_input_tokens": 3100
+        }
+      },
+      "085c5b59fdf9a02023319eda": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 102235,
+          "cache_creation_input_tokens": 4179
+        }
+      },
+      "046c942cb9affeea20ca00de": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 106414,
+          "cache_creation_input_tokens": 1954
+        }
+      },
+      "121d204626895a78ab04a575": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 792,
+          "cache_read_input_tokens": 108368,
+          "cache_creation_input_tokens": 4116
+        }
+      },
+      "d1ba5a530c20c423744363fb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 112484,
+          "cache_creation_input_tokens": 4475
+        }
+      },
+      "1c51528e78acffa96a397a90": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 116959,
+          "cache_creation_input_tokens": 3746
+        }
+      },
+      "7887d082dda5c718ffb23655": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 120705,
+          "cache_creation_input_tokens": 1469
+        }
+      },
+      "8676c3e91a22c9e04be1b9b8": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 24,
+          "cache_read_input_tokens": 122174,
+          "cache_creation_input_tokens": 1287
+        }
+      },
+      "5ee7bb4e903000e28aec18c6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 123461,
+          "cache_creation_input_tokens": 2944
+        }
+      },
+      "1e7d4dee5db15e7bab12840c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 126405,
+          "cache_creation_input_tokens": 825
+        }
+      },
+      "996bdd29223063681e1315eb": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 16587
+        }
+      },
+      "208b98f8df6103d8b8eed351": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 21995,
+          "cache_creation_input_tokens": 6959
+        }
+      },
+      "bebfb78e72c7320f472055a5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 28954,
+          "cache_creation_input_tokens": 1365
+        }
+      },
+      "649d91ea870c386f18251466": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 31477,
+          "cache_creation_input_tokens": 0
+        }
+      },
+      "223ce6e06859d1481d07da13": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 395,
+          "cache_read_input_tokens": 31477,
+          "cache_creation_input_tokens": 1113
+        }
+      },
+      "b9a42a1baff6be0fd9ad3942": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 17,
+          "cache_read_input_tokens": 32590,
+          "cache_creation_input_tokens": 683
+        }
+      },
+      "28a380cd38ce71e368259f2b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 33273,
+          "cache_creation_input_tokens": 1724
+        }
+      },
+      "0e102c599d3fd1270e8a6ae7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 34997,
+          "cache_creation_input_tokens": 564
+        }
+      },
+      "5f9f4be14182ccd828248280": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 35561,
+          "cache_creation_input_tokens": 791
+        }
+      },
+      "529ee616ca9081d738e5db2c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 36352,
+          "cache_creation_input_tokens": 7103
+        }
+      },
+      "de11f649728026b3d8fe2d9d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 43455,
+          "cache_creation_input_tokens": 2802
+        }
+      },
+      "e6899943ea35b4ba6c38ffa4": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 46257,
+          "cache_creation_input_tokens": 4846
+        }
+      },
+      "6b4a429f41b27c7003f1f0e6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 20,
+          "cache_read_input_tokens": 51103,
+          "cache_creation_input_tokens": 3777
+        }
+      },
+      "6d9c4ce5d27dcbc5425376bf": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 54880,
+          "cache_creation_input_tokens": 1778
+        }
+      },
+      "158725b2b0bf4248a61a0ad3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 56658,
+          "cache_creation_input_tokens": 3866
+        }
+      },
+      "16e361ce6369405bfa385bd7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 60524,
+          "cache_creation_input_tokens": 2715
+        }
+      },
+      "450fbcbca6dd88d222393033": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 9,
+          "cache_read_input_tokens": 63239,
+          "cache_creation_input_tokens": 7288
+        }
+      },
+      "4c7bc77c26d41bfcf0263c76": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 70527,
+          "cache_creation_input_tokens": 1437
+        }
+      },
+      "efe72571f4286b712ef091d6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 71964,
+          "cache_creation_input_tokens": 850
+        }
+      },
+      "581102107c4eae07fae26ef7": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 72814,
+          "cache_creation_input_tokens": 226
+        }
+      },
+      "5a7d08d6ecba6961ef56beab": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 73040,
+          "cache_creation_input_tokens": 435
+        }
+      },
+      "77fcdfcd2ed056ae1613172d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 73475,
+          "cache_creation_input_tokens": 1342
+        }
+      },
+      "40a22add04031ffaf4ba0f05": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 30,
+          "cache_read_input_tokens": 74817,
+          "cache_creation_input_tokens": 2668
+        }
+      },
+      "dffea4e02f2416041af709b6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 77485,
+          "cache_creation_input_tokens": 8794
+        }
+      },
+      "b268b6fed0ac7e170cd8f60a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 86279,
+          "cache_creation_input_tokens": 4323
+        }
+      },
+      "7a30136bc87a5f838808130f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 90602,
+          "cache_creation_input_tokens": 2874
+        }
+      },
+      "e08b680dca4c7e980d85bf88": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 93476,
+          "cache_creation_input_tokens": 297
+        }
+      },
+      "432a44a18381e332d650cfc3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 93773,
+          "cache_creation_input_tokens": 1195
+        }
+      },
+      "f2bff80cf28fb6f85944cc88": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 94968,
+          "cache_creation_input_tokens": 932
+        }
+      },
+      "0abc365620a80546bde6fe23": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 95900,
+          "cache_creation_input_tokens": 712
+        }
+      },
+      "2b4515b2f02d9e0a8ec76826": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 96612,
+          "cache_creation_input_tokens": 1532
+        }
+      },
+      "67a1e1605f4a9ff4a8020f22": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 98144,
+          "cache_creation_input_tokens": 2431
+        }
+      },
+      "aac08dc503a176a7296387cc": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 100575,
+          "cache_creation_input_tokens": 1283
+        }
+      },
+      "99eb9077d19e58236fd33847": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 10,
+          "cache_read_input_tokens": 101858,
+          "cache_creation_input_tokens": 1173
+        }
+      },
+      "493461a5172a67508b4d99fe": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 103031,
+          "cache_creation_input_tokens": 2285
+        }
+      },
+      "97b48af8cb1618389933d3f9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 105316,
+          "cache_creation_input_tokens": 320
+        }
+      },
+      "126c70adf1c4d97811dec822": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 105636,
+          "cache_creation_input_tokens": 3547
+        }
+      },
+      "7e497cb9eabbc8d281596ae5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 109183,
+          "cache_creation_input_tokens": 4878
+        }
+      },
+      "7cb856bead8ea33a26165436": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 114061,
+          "cache_creation_input_tokens": 3368
+        }
+      },
+      "c70d93f4705baa2696ef43d3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 117429,
+          "cache_creation_input_tokens": 3829
+        }
+      },
+      "863aeaf593818ac7546ff334": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 33,
+          "cache_read_input_tokens": 121258,
+          "cache_creation_input_tokens": 608
+        }
+      },
+      "d0e1aa4ef99d2a74695ff492": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 121866,
+          "cache_creation_input_tokens": 1095
+        }
+      },
+      "8f782ca29b18a605abfa61da": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 122961,
+          "cache_creation_input_tokens": 1514
+        }
+      },
+      "f4ef18fbeecdb7f4a81bb42a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 384,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 22534
+        }
+      },
+      "a2aa9b1fe4a55d37044dbb04": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 22534,
+          "cache_creation_input_tokens": 7952
+        }
+      },
+      "5a85bab6c6f8277a46397d26": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 30486,
+          "cache_creation_input_tokens": 2962
+        }
+      },
+      "270719e772239bd21e04a09d": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 501,
+          "cache_read_input_tokens": 33448,
+          "cache_creation_input_tokens": 2492
+        }
+      },
+      "03b229e49013b13691a2a083": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 35940,
+          "cache_creation_input_tokens": 712
+        }
+      },
+      "a353dc77af24cd884e07e056": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 36652,
+          "cache_creation_input_tokens": 1628
+        }
+      },
+      "d26a6dd427ccd3e3603427d2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 38280,
+          "cache_creation_input_tokens": 1351
+        }
+      },
+      "8804cf2b7b906c8a1d9ea772": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 39631,
+          "cache_creation_input_tokens": 1119
+        }
+      },
+      "5760c4410f0f759096386968": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 40750,
+          "cache_creation_input_tokens": 3939
+        }
+      },
+      "f9dc09f44f4838493f7a1f2b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 44689,
+          "cache_creation_input_tokens": 2044
+        }
+      },
+      "38a09b6e32525faed6ae0f30": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 46733,
+          "cache_creation_input_tokens": 4268
+        }
+      },
+      "ae4117514da04cdab5517ee3": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 51001,
+          "cache_creation_input_tokens": 320
+        }
+      },
+      "117bac12ba226c3e83ad0b73": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 51321,
+          "cache_creation_input_tokens": 831
+        }
+      },
+      "6b44afdd488d2b912230b01e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 52152,
+          "cache_creation_input_tokens": 962
+        }
+      },
+      "0e33c901d3225aa87dd8fc0c": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 6,
+          "cache_read_input_tokens": 53114,
+          "cache_creation_input_tokens": 1953
+        }
+      },
+      "d4be41a6e12b75bd2abc9e66": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 7,
+          "cache_read_input_tokens": 55067,
+          "cache_creation_input_tokens": 736
+        }
+      },
+      "b6ed494685c9aaedc0f905f1": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 388,
+          "cache_read_input_tokens": 55803,
+          "cache_creation_input_tokens": 2613
+        }
+      },
+      "7f599d1c965f25fd57e02d92": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 2,
+          "cache_read_input_tokens": 58416,
+          "cache_creation_input_tokens": 2940
+        }
+      },
+      "506aeaa9827867fb25d1cd5a": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 61356,
+          "cache_creation_input_tokens": 2639
+        }
+      },
+      "c1a348e3ccc0ac220d95c1a5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 63995,
+          "cache_creation_input_tokens": 723
+        }
+      },
+      "f0c8a62d0f206561a0129a13": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 64718,
+          "cache_creation_input_tokens": 2367
+        }
+      },
+      "bcf6fec940f901dfdd2fa49b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 67085,
+          "cache_creation_input_tokens": 559
+        }
+      },
+      "c3dd2f3cd26b04f85463d48b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 4,
+          "cache_read_input_tokens": 67644,
+          "cache_creation_input_tokens": 3643
+        }
+      },
+      "285aa7ecc46ab3471de2356e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 71287,
+          "cache_creation_input_tokens": 1856
+        }
+      },
+      "bdf9853e03775e252d79d1de": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 30,
+          "cache_read_input_tokens": 73143,
+          "cache_creation_input_tokens": 1307
+        }
+      },
+      "dacfed7f5a0c7121f4d0df5f": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 74450,
+          "cache_creation_input_tokens": 756
+        }
+      },
+      "7189a227446f8aeac2aece02": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 75206,
+          "cache_creation_input_tokens": 751
+        }
+      },
+      "dd0762db4c6f64ecd3793ba2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 75957,
+          "cache_creation_input_tokens": 390
+        }
+      },
+      "d75476ce28a964e2aa7d0121": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 76347,
+          "cache_creation_input_tokens": 427
+        }
+      },
+      "004c86dfa76a166280423493": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 16,
+          "cache_read_input_tokens": 76774,
+          "cache_creation_input_tokens": 360
+        }
+      },
+      "103c3ac0260a9c470f8f1d47": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 77134,
+          "cache_creation_input_tokens": 790
+        }
+      },
+      "edeac285ac74090d5635da81": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 77924,
+          "cache_creation_input_tokens": 1061
+        }
+      },
+      "7282c51b9a6506253466a0ef": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 4,
+          "output_tokens": 98,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 81483
+        }
+      },
+      "88d6ac6af0643f8d5bf673c9": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 75,
+          "cache_read_input_tokens": 81483,
+          "cache_creation_input_tokens": 258
+        }
+      },
+      "b613b8da08e5c4ec607e069e": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 17,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 53035
+        }
+      },
+      "1d466e285e33a2f1fdc0a4b2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 53035,
+          "cache_creation_input_tokens": 10942
+        }
+      },
+      "3718a089374e544b6ae22502": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 63977,
+          "cache_creation_input_tokens": 7758
+        }
+      },
+      "59ea4f5307b5154c6396479b": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 3,
+          "cache_read_input_tokens": 71735,
+          "cache_creation_input_tokens": 7662
+        }
+      },
+      "97a1ae6d44167b0b84a0b740": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 8,
+          "cache_read_input_tokens": 79397,
+          "cache_creation_input_tokens": 2788
+        }
+      },
+      "aa994c93af23debf03e5db99": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 82185,
+          "cache_creation_input_tokens": 1036
+        }
+      },
+      "69f7e171b59adc4b08437ae5": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 403,
+          "cache_read_input_tokens": 5408,
+          "cache_creation_input_tokens": 15554
+        }
+      },
+      "22780c6b90fe83751ee7c3af": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 688,
+          "cache_read_input_tokens": 20962,
+          "cache_creation_input_tokens": 39683
+        }
+      },
+      "df445282c01fe7b430c70ad6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 420,
+          "cache_read_input_tokens": 60645,
+          "cache_creation_input_tokens": 1740
+        }
+      },
+      "b535e3a11b4908e79b0696fe": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 261,
+          "cache_read_input_tokens": 62385,
+          "cache_creation_input_tokens": 1292
+        }
+      },
+      "931c9e34a94f9869d89492b2": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 192,
+          "cache_read_input_tokens": 63677,
+          "cache_creation_input_tokens": 440
+        }
+      },
+      "a02ba64d0153bb9712157bb0": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 150,
+          "cache_read_input_tokens": 64117,
+          "cache_creation_input_tokens": 427
+        }
+      },
+      "3635a5de9ce7111318c61f54": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 5,
+          "cache_read_input_tokens": 64544,
+          "cache_creation_input_tokens": 205
+        }
+      },
+      "5d344c7c610aff6ee26116e6": {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 26,
+          "cache_read_input_tokens": 64749,
+          "cache_creation_input_tokens": 4633
+        }
+      }
+    },
+    "warnings": [],
+    "readable": 21,
+    "files": 21,
+    "assistants_without_usage": 0
+  },
+  "before": null,
+  "ended_at": 1791987556465,
+  "after": null,
+  "status": "background_pending"
+}
