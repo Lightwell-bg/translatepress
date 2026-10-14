@@ -3,7 +3,7 @@
  * Plugin Name:       WP Multilang Press
  * Plugin URI:        https://github.com/Lightwell-bg/translatepress
  * Description:       Multilingual websites without duplicate posts: one WordPress post, a URL per language, string translations stored in dedicated tables, optional AI translation via OpenAI.
- * Version:           0.3.12
+ * Version:           0.3.13
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Lightwell
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const WP_MLP_VERSION = '0.3.12';
+const WP_MLP_VERSION = '0.3.13';
 const WP_MLP_MIN_PHP = '8.1';
 
 define( 'WP_MLP_FILE', __FILE__ );

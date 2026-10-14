@@ -17,7 +17,13 @@
 3. [x] Исправления соответствия и безопасности (ABSPATH-защита, putenv, файловые операции, санитизация, uninstall, заголовок, сборщик).
 4. [x] i18n: английские строки-источники (PHP и JS) + ru_RU `.po` → `.mo`/`.l10n.php` (`bin/`).
 5. [x] `readme.txt` (англ.), раздел External services (OpenAI).
-6. [ ] Тесты, повторный Plugin Check, финальное ревью, сборка ZIP.
+6. [x] Тесты (1034 OK), повторный Plugin Check (0 ERROR / 10 WARNING), smoke-тест OK, ревью Codex (6 находок исправлены), сборка `dist/_20wp-mlp.zip` (0.3.13).
+
+## Осталось перед подачей
+
+- Переименовать плагин (название, slug, text domain, префикс хуков `mlp_*` → по новому slug).
+- Заменить `Contributors: lightwell` в `readme.txt` на настоящий логин wordpress.org.
+- Проверить на MySQL: отображение сохранённого перевода на `/en/` (Playground на SQLite это не проверяет).
 
 ## Журнал
 
