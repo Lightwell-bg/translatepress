@@ -2,12 +2,12 @@
 /**
  * Слепок переведённых строк записи — для отметки «материал изменился».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -30,7 +30,12 @@ defined( 'ABSPATH' ) || exit;
  */
 final class PostTranslationSnapshot {
 
-	private const META_PREFIX = '_mlp_translated_segments_';
+	/**
+	 * Префикс ключа слепка (`_lingocanvas_translated_segments_`).
+	 */
+	public static function metaPrefix(): string {
+		return '_lingocanvas_translated_segments_';
+	}
 
 	/**
 	 * Хеши строк, сохранённые при прошлом массовом переводе записи.
@@ -88,6 +93,6 @@ final class PostTranslationSnapshot {
 	 * @param string $locale Целевой язык.
 	 */
 	private static function metaKey( string $locale ): string {
-		return self::META_PREFIX . $locale;
+		return self::metaPrefix() . $locale;
 	}
 }

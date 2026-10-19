@@ -2,24 +2,24 @@
 /**
  * Тесты блока «Показывать на сайте» в метабоксе записи и его сохранения.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Admin\EditorPostLinks;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Admin\EditorPostLinks;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 #[CoversClass( EditorPostLinks::class )]
 final class PostVisibilityMetaBoxTest extends TestCase {
@@ -27,7 +27,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['wpdb'] = new FakeWpdb();
 		$_POST           = array();
-		wp_mlp_test_postmeta( array() );
+		lingocanvas_test_postmeta( array() );
 		$this->configure( Settings::POSTS_MANUAL );
 		$this->world();
 	}
@@ -35,16 +35,16 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'] );
 		$_POST = array();
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -61,7 +61,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 	 * @param array<string, mixed> $extra Дополнительные ключи хранилища (caps, autosave, revision).
 	 */
 	private function world( array $extra = array() ): void {
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array_merge(
 				array(
 					'posts' => array(
@@ -99,7 +99,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 
 	private function box( int $id ): string {
 		ob_start();
-		$this->links()->renderMetaBox( wp_mlp_test_wp()['posts'][ $id ] );
+		$this->links()->renderMetaBox( lingocanvas_test_wp()['posts'][ $id ] );
 
 		return (string) ob_get_clean();
 	}
@@ -112,45 +112,45 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 		$html = $this->box( 4 );
 
 		$this->assertStringContainsString( 'Show on the site', $html );
-		$this->assertStringContainsString( 'name="mlp_visible[en]" value="1">', $html );
-		$this->assertStringContainsString( 'name="mlp_visible[de]" value="1" checked="checked">', $html );
-		$this->assertStringNotContainsString( 'mlp_visible[ru]', $html );
-		$this->assertStringContainsString( 'name="mlp_post_visibility_nonce"', $html );
+		$this->assertStringContainsString( 'name="lingocanvas_visible[en]" value="1">', $html );
+		$this->assertStringContainsString( 'name="lingocanvas_visible[de]" value="1" checked="checked">', $html );
+		$this->assertStringNotContainsString( 'lingocanvas_visible[ru]', $html );
+		$this->assertStringContainsString( 'name="lingocanvas_post_visibility_nonce"', $html );
 	}
 
 	public function testNoVisibilityBlockInAllModeOrWithoutService(): void {
 		$this->configure( Settings::POSTS_ALL );
-		$this->assertStringNotContainsString( 'mlp_visible', $this->box( 4 ) );
+		$this->assertStringNotContainsString( 'lingocanvas_visible', $this->box( 4 ) );
 
 		$this->configure( Settings::POSTS_MANUAL );
 		ob_start();
-		$this->links( false )->renderMetaBox( wp_mlp_test_wp()['posts'][4] );
-		$this->assertStringNotContainsString( 'mlp_visible', (string) ob_get_clean() );
+		$this->links( false )->renderMetaBox( lingocanvas_test_wp()['posts'][4] );
+		$this->assertStringNotContainsString( 'lingocanvas_visible', (string) ob_get_clean() );
 	}
 
 	public function testBlockAlsoShownForDraft(): void {
 		$html = $this->box( 5 );
 
 		$this->assertStringContainsString( 'Publish the post', $html );
-		$this->assertStringContainsString( 'name="mlp_visible[en]"', $html );
+		$this->assertStringContainsString( 'name="lingocanvas_visible[en]"', $html );
 	}
 
 	public function testBlockHiddenWithoutEditRight(): void {
 		$this->world( array( 'caps' => array( 'edit_post' => false ) ) );
 
-		$this->assertStringNotContainsString( 'mlp_visible', $this->box( 4 ) );
+		$this->assertStringNotContainsString( 'lingocanvas_visible', $this->box( 4 ) );
 	}
 
 	public function testBlockHiddenWithoutPluginRight(): void {
 		$this->world( array( 'caps' => array( 'manage_options' => false ) ) );
 
-		$this->assertStringNotContainsString( 'mlp_visible', $this->box( 4 ) );
+		$this->assertStringNotContainsString( 'lingocanvas_visible', $this->box( 4 ) );
 
 		// Блок видимости сам тоже проверяет оба права, не полагаясь на метабокс.
 		$method = new \ReflectionMethod( EditorPostLinks::class, 'renderVisibility' );
 
 		ob_start();
-		$method->invoke( $this->links(), wp_mlp_test_wp()['posts'][4] );
+		$method->invoke( $this->links(), lingocanvas_test_wp()['posts'][4] );
 		$this->assertSame( '', (string) ob_get_clean() );
 	}
 

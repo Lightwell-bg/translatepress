@@ -2,21 +2,21 @@
 /**
  * Тесты REST-маршрутов ручного включения записей на языках.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rest;
+namespace LingoCanvas\Tests\Rest;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rest\PostVisibilityController;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Rest\PostVisibilityController;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 #[CoversClass( PostVisibilityController::class )]
 final class PostVisibilityControllerTest extends TestCase {
@@ -27,12 +27,12 @@ final class PostVisibilityControllerTest extends TestCase {
 		$this->db        = new FakeWpdb();
 		$GLOBALS['wpdb'] = $this->db;
 
-		wp_mlp_test_postmeta( array() );
-		unset( $GLOBALS['wp_mlp_test_routes'] );
+		lingocanvas_test_postmeta( array() );
+		unset( $GLOBALS['lingocanvas_test_routes'] );
 
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru'    => array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский', 'status' => 'published' ),
@@ -43,7 +43,7 @@ final class PostVisibilityControllerTest extends TestCase {
 			)
 		);
 
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				'posts' => array(
 					10 => new \WP_Post( array( 'ID' => 10, 'post_type' => 'page' ) ),
@@ -55,10 +55,10 @@ final class PostVisibilityControllerTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['wpdb'], $GLOBALS['wp_mlp_test_routes'] );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
+		unset( $GLOBALS['wpdb'], $GLOBALS['lingocanvas_test_routes'] );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function controller(): PostVisibilityController {
@@ -85,18 +85,18 @@ final class PostVisibilityControllerTest extends TestCase {
 		$controller = $this->controller();
 		$controller->registerRoutes();
 
-		$routes = $GLOBALS['wp_mlp_test_routes'];
+		$routes = $GLOBALS['lingocanvas_test_routes'];
 
-		$this->assertSame( array( 'mlp/v1/posts/visibility', 'mlp/v1/posts/visibility/enable-translated' ), array_keys( $routes ) );
-		$this->assertSame( 'POST', $routes['mlp/v1/posts/visibility']['methods'] );
-		$this->assertSame( array( $controller, 'canEditPosts' ), $routes['mlp/v1/posts/visibility']['permission_callback'] );
-		$this->assertSame( array( $controller, 'canManage' ), $routes['mlp/v1/posts/visibility/enable-translated']['permission_callback'] );
+		$this->assertSame( array( 'lingocanvas/v1/posts/visibility', 'lingocanvas/v1/posts/visibility/enable-translated' ), array_keys( $routes ) );
+		$this->assertSame( 'POST', $routes['lingocanvas/v1/posts/visibility']['methods'] );
+		$this->assertSame( array( $controller, 'canEditPosts' ), $routes['lingocanvas/v1/posts/visibility']['permission_callback'] );
+		$this->assertSame( array( $controller, 'canManage' ), $routes['lingocanvas/v1/posts/visibility/enable-translated']['permission_callback'] );
 	}
 
 	// --- Права --------------------------------------------------------------
 
 	public function testEditPostIsCheckedForEveryId(): void {
-		wp_mlp_test_wp( array( 'caps' => array( 'edit_post:10' => true, 'edit_post:11' => false ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'edit_post:10' => true, 'edit_post:11' => false ) ) + lingocanvas_test_wp() );
 
 		$this->assertTrue( $this->controller()->canEditPosts( $this->request( array( 'ids' => array( 10 ) ) ) ) );
 		$this->assertFalse(
@@ -106,30 +106,30 @@ final class PostVisibilityControllerTest extends TestCase {
 	}
 
 	public function testMalformedIdsFallBackToEditPostsCapability(): void {
-		wp_mlp_test_wp( array( 'caps' => array( 'edit_posts' => false ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'edit_posts' => false ) ) + lingocanvas_test_wp() );
 		$this->assertFalse( $this->controller()->canEditPosts( $this->request( array( 'ids' => 'nope' ) ) ) );
 
-		wp_mlp_test_wp( array( 'caps' => array( 'edit_posts' => true ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'edit_posts' => true ) ) + lingocanvas_test_wp() );
 		$this->assertTrue( $this->controller()->canEditPosts( $this->request( array( 'ids' => 'nope' ) ) ) );
 	}
 
 	public function testManageOptionsIsRequiredInAdditionToEditPost(): void {
 		// Право править запись есть, права управлять плагином нет — отказ, как у остальных маршрутов плагина.
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => false, 'edit_post' => true, 'edit_posts' => true ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => false, 'edit_post' => true, 'edit_posts' => true ) ) + lingocanvas_test_wp() );
 
 		$this->assertFalse( $this->controller()->canEditPosts( $this->request( array( 'ids' => array( 10 ) ) ) ) );
 		$this->assertFalse( $this->controller()->canEditPosts( $this->request( array( 'ids' => 'nope' ) ) ) );
 
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => true, 'edit_post' => true ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => true, 'edit_post' => true ) ) + lingocanvas_test_wp() );
 
 		$this->assertTrue( $this->controller()->canEditPosts( $this->request( array( 'ids' => array( 10 ) ) ) ) );
 	}
 
 	public function testBulkEnableNeedsManageOptions(): void {
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => false ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => false ) ) + lingocanvas_test_wp() );
 		$this->assertFalse( $this->controller()->canManage() );
 
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => true ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => true ) ) + lingocanvas_test_wp() );
 		$this->assertTrue( $this->controller()->canManage() );
 	}
 
@@ -183,48 +183,48 @@ final class PostVisibilityControllerTest extends TestCase {
 			),
 			$response->get_data()
 		);
-		$this->assertSame( '1', wp_mlp_test_postmeta()[10]['_mlp_visible_en'] );
+		$this->assertSame( '1', lingocanvas_test_postmeta()[10]['_lingocanvas_visible_en'] );
 
 		// Выключение.
 		$off = $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'en', 'visible' => '0' ) ) );
 
 		$this->assertSame( 1, $off->get_data()['changed'] );
 		$this->assertSame( array( array( 'id' => 10, 'visible' => false ) ), $off->get_data()['states'] );
-		$this->assertArrayNotHasKey( '_mlp_visible_en', wp_mlp_test_postmeta()[10] );
+		$this->assertArrayNotHasKey( '_lingocanvas_visible_en', lingocanvas_test_postmeta()[10] );
 	}
 
 	public function testLanguageWithSubtagUsesNormalizedCode(): void {
 		$response = $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'PT_br', 'visible' => true ) ) );
 
 		$this->assertSame( 'pt-br', $response->get_data()['locale'] );
-		$this->assertSame( '1', wp_mlp_test_postmeta()[10]['_mlp_visible_pt_br'] );
+		$this->assertSame( '1', lingocanvas_test_postmeta()[10]['_lingocanvas_visible_pt_br'] );
 	}
 
 	public function testUnknownOrDefaultLocaleIsRejectedAndNothingIsWritten(): void {
 		foreach ( array( 'de', 'ru', '', "en'; DROP TABLE x", null, array( 'en' ) ) as $locale ) {
 			$result = $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => $locale, 'visible' => true ) ) );
 
-			$this->assertError( $result, 'mlp_unknown_locale' );
+			$this->assertError( $result, 'lingocanvas_unknown_locale' );
 		}
 
-		$this->assertSame( array(), wp_mlp_test_postmeta() );
+		$this->assertSame( array(), lingocanvas_test_postmeta() );
 	}
 
 	public function testInvalidIdsAndVisibleAreRejected(): void {
-		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'locale' => 'en', 'visible' => true ) ) ), 'mlp_invalid_ids' );
-		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => range( 1, 201 ), 'locale' => 'en', 'visible' => true ) ) ), 'mlp_invalid_ids' );
-		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'en', 'visible' => 'maybe' ) ) ), 'mlp_invalid_visible' );
-		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'en' ) ) ), 'mlp_invalid_visible' );
+		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'locale' => 'en', 'visible' => true ) ) ), 'lingocanvas_invalid_ids' );
+		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => range( 1, 201 ), 'locale' => 'en', 'visible' => true ) ) ), 'lingocanvas_invalid_ids' );
+		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'en', 'visible' => 'maybe' ) ) ), 'lingocanvas_invalid_visible' );
+		$this->assertError( $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10 ), 'locale' => 'en' ) ) ), 'lingocanvas_invalid_visible' );
 	}
 
 	public function testWholeRequestIsRejectedWhenOneIdIsNotAnEligiblePost(): void {
 		foreach ( array( 12, 999 ) as $bad ) {
 			$result = $this->controller()->setVisibility( $this->request( array( 'ids' => array( 10, $bad ), 'locale' => 'en', 'visible' => true ) ) );
 
-			$this->assertError( $result, 'mlp_invalid_post' );
+			$this->assertError( $result, 'lingocanvas_invalid_post' );
 		}
 
-		$this->assertSame( array(), wp_mlp_test_postmeta(), 'Частично запрос не применяется.' );
+		$this->assertSame( array(), lingocanvas_test_postmeta(), 'Частично запрос не применяется.' );
 	}
 
 	// --- Массовое включение ----------------------------------------------------
@@ -239,8 +239,8 @@ final class PostVisibilityControllerTest extends TestCase {
 	}
 
 	public function testEnableTranslatedRejectsUnknownLocale(): void {
-		$this->assertError( $this->controller()->enableTranslated( $this->request( array( 'locale' => 'de' ) ) ), 'mlp_unknown_locale' );
-		$this->assertError( $this->controller()->enableTranslated( $this->request( array() ) ), 'mlp_unknown_locale' );
+		$this->assertError( $this->controller()->enableTranslated( $this->request( array( 'locale' => 'de' ) ) ), 'lingocanvas_unknown_locale' );
+		$this->assertError( $this->controller()->enableTranslated( $this->request( array() ) ), 'lingocanvas_unknown_locale' );
 		$this->assertSame( array(), $this->db->queries, 'С неверным языком в базу не ходим.' );
 	}
 }

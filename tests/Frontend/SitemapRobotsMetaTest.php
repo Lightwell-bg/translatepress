@@ -2,16 +2,16 @@
 /**
  * Тесты решения «noindex ли запись» по meta трёх SEO-плагинов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\SitemapRobotsMeta;
+use LingoCanvas\Frontend\SitemapRobotsMeta;
 
 #[CoversClass( SitemapRobotsMeta::class )]
 final class SitemapRobotsMetaTest extends TestCase {

@@ -2,12 +2,12 @@
 /**
  * Что именно можно переводить в структурированных данных.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
 defined( 'ABSPATH' ) || exit;
 

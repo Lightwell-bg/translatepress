@@ -2,16 +2,16 @@
 /**
  * Тесты защиты шорткодов от порчи переводом.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\ShortcodeGuard;
+use LingoCanvas\Support\ShortcodeGuard;
 
 #[CoversClass( ShortcodeGuard::class )]
 final class ShortcodeGuardTest extends TestCase {

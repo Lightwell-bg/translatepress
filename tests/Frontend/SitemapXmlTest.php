@@ -2,16 +2,16 @@
 /**
  * Тесты сборки XML карты сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\SitemapXml;
+use LingoCanvas\Frontend\SitemapXml;
 
 #[CoversClass( SitemapXml::class )]
 final class SitemapXmlTest extends TestCase {

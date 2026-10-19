@@ -2,28 +2,28 @@
 /**
  * Тесты общего помощника ссылок на визуальный редактор.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( EditorLink::class )]
 final class EditorLinkTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский', 'status' => 'published' ),
@@ -32,12 +32,12 @@ final class EditorLinkTest extends TestCase {
 				),
 			)
 		);
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function link(): EditorLink {
@@ -56,7 +56,7 @@ final class EditorLinkTest extends TestCase {
 			)
 		);
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'posts' => ( wp_mlp_test_wp()['posts'] ?? array() ) + array( $id => $post ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'posts' => ( lingocanvas_test_wp()['posts'] ?? array() ) + array( $id => $post ) ) ) );
 
 		return $post;
 	}
@@ -94,7 +94,7 @@ final class EditorLinkTest extends TestCase {
 
 	public function testUnresolvablePermalinkIsRejected(): void {
 		$post = $this->post( 30 );
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'permalinks' => array( 30 => '' ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'permalinks' => array( 30 => '' ) ) ) );
 
 		$this->assertNull( $this->link()->pathForPost( $post ) );
 	}
@@ -103,7 +103,7 @@ final class EditorLinkTest extends TestCase {
 		$url = $this->link()->urlForPost( $this->post( 1 ) );
 
 		$this->assertSame(
-			'https://example.test/wp-admin/admin.php?page=wp-mlp-editor&mlp_locale=en&mlp_path=%2Fabout%2F',
+			'https://example.test/wp-admin/admin.php?page=lingocanvas-editor&lingocanvas_locale=en&lingocanvas_path=%2Fabout%2F',
 			$url
 		);
 	}
@@ -111,7 +111,7 @@ final class EditorLinkTest extends TestCase {
 	public function testUrlForPostWithExplicitLocale(): void {
 		$url = $this->link()->urlForPost( $this->post( 1 ), 'de' );
 
-		$this->assertStringContainsString( 'mlp_locale=de', (string) $url );
+		$this->assertStringContainsString( 'lingocanvas_locale=de', (string) $url );
 	}
 
 	public function testUrlForDraftIsNull(): void {
@@ -129,7 +129,7 @@ final class EditorLinkTest extends TestCase {
 	}
 
 	public function testNormalizeInputStripsSubdirectoryBaseBeforeLanguage(): void {
-		wp_mlp_test_options( array_merge( wp_mlp_test_options(), array( 'home' => 'https://example.test/blog' ) ) );
+		lingocanvas_test_options( array_merge( lingocanvas_test_options(), array( 'home' => 'https://example.test/blog' ) ) );
 		$link = $this->link();
 
 		$this->assertSame( '/about/', $link->normalizeInput( '/blog/en/about/' ) );

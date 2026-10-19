@@ -2,15 +2,15 @@
 /**
  * Виджет переключателя языков.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
 use WP_Widget;
-use WpMlp\Plugin;
+use LingoCanvas\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -25,8 +25,9 @@ final class LanguageSwitcherWidget extends WP_Widget {
 	 * Регистрирует виджет в WordPress.
 	 */
 	public function __construct() {
+		// id_base входит в имя опции widget_<id_base> и в sidebars_widgets: менять его нельзя.
 		parent::__construct(
-			'mlp_language_switcher',
+			'lingocanvas_language_switcher',
 			__( 'Language switcher', 'lingocanvas' ),
 			array( 'description' => __( 'Links to the current page in the other languages of the site.', 'lingocanvas' ) )
 		);

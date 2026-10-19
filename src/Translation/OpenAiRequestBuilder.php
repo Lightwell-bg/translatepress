@@ -2,15 +2,15 @@
 /**
  * Сборка запроса и разбор ответа OpenAI-совместимого API.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\ShortcodeGuard;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\ShortcodeGuard;
 
 defined( 'ABSPATH' ) || exit;
 

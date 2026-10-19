@@ -2,20 +2,20 @@
 /**
  * Ручной показ записей на дополнительных языках: списки, запись, меню.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
 use WP_Query;
-use WpMlp\Rendering\EditorContext;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Rendering\EditorContext;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
  * REST и cron; не вмешивается в предпросмотр визуального редактора
  * (EditorContext) — владельцу нужно видеть страницу, которую он как раз
  * переводит. Для остальных исключений (например, показ скрытых страниц
- * администратору) есть фильтр `mlp_visibility_bypass`.
+ * администратору) есть фильтр `lingocanvas_visibility_bypass`.
  */
 final class PostVisibilityGate implements Hookable {
 
@@ -42,18 +42,18 @@ final class PostVisibilityGate implements Hookable {
 	 * Имя именованного условия в meta_query: по нему его можно узнать и
 	 * при необходимости убрать из чужого кода.
 	 */
-	public const CLAUSE_KEY = 'mlp_visible';
+	public const CLAUSE_KEY = 'lingocanvas_visible';
 
 	/**
 	 * Переменная запроса «не фильтровать»: для внутренних выборок плагина
 	 * (карта сайта собирает видимость сама).
 	 */
-	public const SKIP_QUERY_VAR = 'mlp_ignore_visibility';
+	public const SKIP_QUERY_VAR = 'lingocanvas_ignore_visibility';
 
 	/**
 	 * Служебная отметка «условие уже добавлено» — запрос могут разобрать повторно.
 	 */
-	private const APPLIED_QUERY_VAR = 'mlp_visibility_applied';
+	private const APPLIED_QUERY_VAR = 'lingocanvas_visibility_applied';
 
 	/**
 	 * @param Settings               $settings   Настройки плагина.
@@ -93,7 +93,7 @@ final class PostVisibilityGate implements Hookable {
 	 * Нужно ли вообще ограничивать показ в этом запросе.
 	 *
 	 * Ответ намеренно не запоминается: первые запросы могут идти до `init`,
-	 * когда пользователь ещё не определён, и фильтр `mlp_visibility_bypass`
+	 * когда пользователь ещё не определён, и фильтр `lingocanvas_visibility_bypass`
 	 * с проверкой прав дал бы неверный ответ на весь остальной запрос.
 	 * Составные части (настройки, язык, режим редактора) запоминают себя сами.
 	 */
@@ -198,7 +198,7 @@ final class PostVisibilityGate implements Hookable {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- таблица метаполей из $wpdb, значение через prepare().
-		return $where . $wpdb->prepare( " AND EXISTS (SELECT 1 FROM {$wpdb->postmeta} mlp_pm WHERE mlp_pm.post_id = p.ID AND mlp_pm.meta_key = %s)", $key );
+		return $where . $wpdb->prepare( " AND EXISTS (SELECT 1 FROM {$wpdb->postmeta} lingocanvas_pm WHERE lingocanvas_pm.post_id = p.ID AND lingocanvas_pm.meta_key = %s)", $key );
 	}
 
 	/**
@@ -381,8 +381,8 @@ final class PostVisibilityGate implements Hookable {
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		$condition = $wpdb->prepare(
-			"( NOT EXISTS (SELECT 1 FROM {$wpdb->posts} mlp_cp WHERE mlp_cp.ID = {$wpdb->comments}.comment_post_ID AND mlp_cp.post_type IN ({$typeMarks}))"
-			. " OR EXISTS (SELECT 1 FROM {$wpdb->postmeta} mlp_cm WHERE mlp_cm.post_id = {$wpdb->comments}.comment_post_ID AND mlp_cm.meta_key = %s) )",
+			"( NOT EXISTS (SELECT 1 FROM {$wpdb->posts} lingocanvas_cp WHERE lingocanvas_cp.ID = {$wpdb->comments}.comment_post_ID AND lingocanvas_cp.post_type IN ({$typeMarks}))"
+			. " OR EXISTS (SELECT 1 FROM {$wpdb->postmeta} lingocanvas_cm WHERE lingocanvas_cm.post_id = {$wpdb->comments}.comment_post_ID AND lingocanvas_cm.meta_key = %s) )",
 			array_merge( $types, array( $key ) )
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
@@ -442,7 +442,7 @@ final class PostVisibilityGate implements Hookable {
 	 *
 	 * Обход касается только страницы самой записи. Списки, меню, карта сайта
 	 * и соседние записи фильтруются как обычно, поэтому глобальный фильтр
-	 * `mlp_visibility_bypass` для этого не годится: он снял бы и их. Админ-панель
+	 * `lingocanvas_visibility_bypass` для этого не годится: он снял бы и их. Админ-панель
 	 * обязательна: в ней плашка «Скрыто на DE — посетители не видят»; без неё
 	 * владелец принял бы скрытую страницу за опубликованную.
 	 *
@@ -476,16 +476,11 @@ final class PostVisibilityGate implements Hookable {
 		/**
 		 * Позволяет не скрывать записи в этом запросе (например, для администратора).
 		 *
-		 * Прежнее имя фильтра: `mlp_visibility_bypass` (устарело с 0.3.13,
-		 * работает как псевдоним `lingocanvas_visibility_bypass`).
-		 *
 		 * @since 0.3.13 Имя фильтра — `lingocanvas_visibility_bypass`.
 		 *
 		 * @param bool $bypass По умолчанию false.
 		 */
-		$bypass = apply_filters_deprecated( 'mlp_visibility_bypass', array( false ), '0.3.13', 'lingocanvas_visibility_bypass' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
-
-		if ( (bool) apply_filters( 'lingocanvas_visibility_bypass', $bypass ) ) {
+		if ( (bool) apply_filters( 'lingocanvas_visibility_bypass', false ) ) {
 			return false;
 		}
 

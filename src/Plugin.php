@@ -2,66 +2,66 @@
 /**
  * Точка сборки плагина: контейнер, сервисы, хуки жизненного цикла.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp;
+namespace LingoCanvas;
 
 // Guard placed before the long import list so direct-access scanners see it near the top.
 defined( 'ABSPATH' ) || exit;
 
-use WpMlp\Admin\EditorLink;
-use WpMlp\Admin\EditorPage;
-use WpMlp\Admin\EditorPostLinks;
-use WpMlp\Admin\PostListLanguages;
-use WpMlp\Admin\HelpTabs;
-use WpMlp\Admin\InterfaceStringsScreen;
-use WpMlp\Admin\SettingsPage;
-use WpMlp\Admin\StringTranslationPage;
-use WpMlp\Frontend\CommentsFeedTitle;
-use WpMlp\Frontend\CurrentPageLanguages;
-use WpMlp\Frontend\InternalLinks;
-use WpMlp\Frontend\LanguageSwitcher;
-use WpMlp\Frontend\NavMenu;
-use WpMlp\Frontend\PostVisibilityGate;
-use WpMlp\Frontend\SeoMeta;
-use WpMlp\Frontend\SeoTags;
-use WpMlp\Frontend\Sitemap;
-use WpMlp\Frontend\VisibilityAdminBar;
-use WpMlp\I18n\GettextRegistry;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\I18n\LocaleSwitcher;
-use WpMlp\Rendering\EditorContext;
-use WpMlp\Rendering\EditorMarkers;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\OutputBuffer;
-use WpMlp\Rendering\PostContentExtractor;
-use WpMlp\Rendering\Translator;
-use WpMlp\Rest\BlocksController;
-use WpMlp\Rest\EditorPagesController;
-use WpMlp\Rest\OpenAiModelsController;
-use WpMlp\Rest\PostTranslationController;
-use WpMlp\Rest\PostVisibilityController;
-use WpMlp\Rest\TranslationsController;
-use WpMlp\Routing\CanonicalRedirect;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\Rewrites;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\GettextRepository;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\PostTranslationSnapshot;
-use WpMlp\Storage\Schema;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Storage\TranslationRepository;
-use WpMlp\Storage\UsageTracker;
-use WpMlp\Support\Hookable;
-use WpMlp\Translation\ProviderFactory;
-use WpMlp\Translation\ProviderInterface;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Admin\EditorPage;
+use LingoCanvas\Admin\EditorPostLinks;
+use LingoCanvas\Admin\PostListLanguages;
+use LingoCanvas\Admin\HelpTabs;
+use LingoCanvas\Admin\InterfaceStringsScreen;
+use LingoCanvas\Admin\SettingsPage;
+use LingoCanvas\Admin\StringTranslationPage;
+use LingoCanvas\Frontend\CommentsFeedTitle;
+use LingoCanvas\Frontend\CurrentPageLanguages;
+use LingoCanvas\Frontend\InternalLinks;
+use LingoCanvas\Frontend\LanguageSwitcher;
+use LingoCanvas\Frontend\NavMenu;
+use LingoCanvas\Frontend\PostVisibilityGate;
+use LingoCanvas\Frontend\SeoMeta;
+use LingoCanvas\Frontend\SeoTags;
+use LingoCanvas\Frontend\Sitemap;
+use LingoCanvas\Frontend\VisibilityAdminBar;
+use LingoCanvas\I18n\GettextRegistry;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\I18n\LocaleSwitcher;
+use LingoCanvas\Rendering\EditorContext;
+use LingoCanvas\Rendering\EditorMarkers;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\OutputBuffer;
+use LingoCanvas\Rendering\PostContentExtractor;
+use LingoCanvas\Rendering\Translator;
+use LingoCanvas\Rest\BlocksController;
+use LingoCanvas\Rest\EditorPagesController;
+use LingoCanvas\Rest\OpenAiModelsController;
+use LingoCanvas\Rest\PostTranslationController;
+use LingoCanvas\Rest\PostVisibilityController;
+use LingoCanvas\Rest\TranslationsController;
+use LingoCanvas\Routing\CanonicalRedirect;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\Rewrites;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\GettextRepository;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\PostTranslationSnapshot;
+use LingoCanvas\Storage\Schema;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Storage\TranslationRepository;
+use LingoCanvas\Storage\UsageTracker;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Translation\ProviderFactory;
+use LingoCanvas\Translation\ProviderInterface;
 
 /**
  * Композиционный корень.
@@ -70,11 +70,6 @@ use WpMlp\Translation\ProviderInterface;
  * plugins_loaded. Ничего не делает сам — только связывает модули.
  */
 final class Plugin {
-
-	/**
-	 * Опция-флаг отложенной активации (после перехода с прежнего плагина).
-	 */
-	public const PENDING_ACTIVATION_OPTION = 'lingocanvas_pending_activation';
 
 	/**
 	 * Контейнер текущего запроса.
@@ -92,11 +87,6 @@ final class Plugin {
 		self::$container = self::buildContainer();
 
 		add_action( 'init', array( self::class, 'loadTextdomain' ), 0 );
-
-		// Активация, отложенная из-за прежнего плагина, доделывается, когда он уже выключен.
-		if ( get_option( self::PENDING_ACTIVATION_OPTION, false ) ) {
-			add_action( 'init', array( self::class, 'finishPendingActivation' ), 99 );
-		}
 
 		// Схема могла отстать, если плагин обновили копированием файлов.
 		if ( is_admin() ) {
@@ -126,6 +116,12 @@ final class Plugin {
 
 	/**
 	 * Подключает переводы интерфейса самого плагина.
+	 *
+	 * Plugin Check предупреждает (load_plugin_textdomainFound): для плагинов из
+	 * каталога WordPress.org переводы с translate.wordpress.org подгружаются
+	 * ядром сами. Вызов оставлен намеренно: русский перевод поставляется внутри
+	 * плагина (languages/lingocanvas-ru_RU.*), а не с translate.wordpress.org,
+	 * и без этого вызова он не загрузится. Убрать, когда перевод появится там.
 	 */
 	public static function loadTextdomain(): void {
 		load_plugin_textdomain( 'lingocanvas', false, dirname( LINGOCANVAS_BASENAME ) . '/languages' );
@@ -135,29 +131,9 @@ final class Plugin {
 	 * Активация плагина.
 	 */
 	public static function activate(): void {
-		self::install();
-	}
-
-	/**
-	 * Доделывает отложенную активацию (см. lingocanvas.php): схема и правила ссылок.
-	 *
-	 * Флаг снимается первым, чтобы сбой в установке не зациклил повторы.
-	 */
-	public static function finishPendingActivation(): void {
-		// delete_option() даёт false, если параллельный запрос уже снял флаг: установку делает один.
-		if ( ! delete_option( self::PENDING_ACTIVATION_OPTION ) ) {
-			return;
-		}
-
-		self::install();
-	}
-
-	/**
-	 * Общие шаги активации: настройки по умолчанию, схема, rewrite-правила.
-	 */
-	private static function install(): void {
-		if ( false === get_option( Settings::OPTION, false ) ) {
-			add_option( Settings::OPTION, Settings::defaults() );
+		// Настройки по умолчанию — только если опции ещё нет: существующие не затираются.
+		if ( false === get_option( Settings::optionName(), false ) ) {
+			add_option( Settings::optionName(), Settings::defaults() );
 		}
 
 		Schema::install();

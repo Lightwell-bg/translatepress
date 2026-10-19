@@ -2,12 +2,12 @@
 /**
  * Выбор более поздней из двух дат правки для карты сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 

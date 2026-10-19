@@ -2,14 +2,14 @@
 /**
  * Языковые пакеты WordPress: наличие и установка.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 

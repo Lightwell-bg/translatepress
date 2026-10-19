@@ -2,16 +2,16 @@
 /**
  * На каких языках текущая страница скрыта вручную.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
 
 defined( 'ABSPATH' ) || exit;
 

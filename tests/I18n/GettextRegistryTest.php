@@ -2,23 +2,23 @@
 /**
  * Тесты gettext-контура: приоритет источников и запись непокрытого.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\I18n;
+namespace LingoCanvas\Tests\I18n;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\I18n\GettextKey;
-use WpMlp\I18n\GettextRegistry;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\I18n\LocaleSwitcher;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\GettextStore;
-use WpMlp\Storage\TranslationCache;
+use LingoCanvas\I18n\GettextKey;
+use LingoCanvas\I18n\GettextRegistry;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\I18n\LocaleSwitcher;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\GettextStore;
+use LingoCanvas\Storage\TranslationCache;
 
 /**
  * Хранилище в памяти вместо `$wpdb` — см. Storage\GettextStore.
@@ -62,9 +62,9 @@ final class InMemoryGettextStore implements GettextStore {
 final class GettextRegistryTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'   => 'ru',
 					'discover_strings' => true,
 					'languages'        => array(
@@ -79,7 +79,7 @@ final class GettextRegistryTest extends TestCase {
 
 		// Пакет болгарского установлен: без него сбор строк намеренно
 		// выключен целиком (см. testMissingLanguagePackStopsCollecting).
-		wp_mlp_test_request( array( 'languages' => array( 'bg_BG' ) ) );
+		lingocanvas_test_request( array( 'languages' => array( 'bg_BG' ) ) );
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 
 		/*
@@ -93,8 +93,8 @@ final class GettextRegistryTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_request( array() );
 		unset( $_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'] );
 	}
 
@@ -275,12 +275,12 @@ final class GettextRegistryTest extends TestCase {
 	 * «colour» вместо «color», и такие строки в словарь попадать должны.
 	 */
 	public function testBritishEnglishIsNotTreatedAsTheSourceLanguage(): void {
-		$options = wp_mlp_test_options();
-		$options[ Settings::OPTION ]['languages']['en']['wp_locale'] = 'en_GB';
-		wp_mlp_test_options( $options );
+		$options = lingocanvas_test_options();
+		$options[ Settings::optionName() ]['languages']['en']['wp_locale'] = 'en_GB';
+		lingocanvas_test_options( $options );
 
 		// У британского английского пакет есть — иначе сбор выключен вовсе.
-		wp_mlp_test_request( array( 'languages' => array( 'en_GB' ) ) );
+		lingocanvas_test_request( array( 'languages' => array( 'en_GB' ) ) );
 
 		$_SERVER['REQUEST_URI'] = '/en/about/';
 
@@ -396,7 +396,7 @@ final class GettextRegistryTest extends TestCase {
 	 * объясняет, почему список пуст.
 	 */
 	public function testMissingLanguagePackStopsCollecting(): void {
-		wp_mlp_test_request( array( 'languages' => array() ) );
+		lingocanvas_test_request( array( 'languages' => array() ) );
 
 		$store    = new InMemoryGettextStore();
 		$registry = $this->registry( $store );
@@ -413,9 +413,9 @@ final class GettextRegistryTest extends TestCase {
 	 * распространяется и на gettext — иначе галочка врала бы.
 	 */
 	public function testDiscoveryCanBeTurnedOff(): void {
-		$options = wp_mlp_test_options();
-		$options[ Settings::OPTION ]['discover_strings'] = false;
-		wp_mlp_test_options( $options );
+		$options = lingocanvas_test_options();
+		$options[ Settings::optionName() ]['discover_strings'] = false;
+		lingocanvas_test_options( $options );
 
 		$store    = new InMemoryGettextStore();
 		$registry = $this->registry( $store );
@@ -431,7 +431,7 @@ final class GettextRegistryTest extends TestCase {
 	 * администратор: посетитель без прав ничего в словарь не пишет.
 	 */
 	public function testVisitorDoesNotFeedTheDictionary(): void {
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 
 		$store    = new InMemoryGettextStore();
 		$registry = $this->registry( $store );
@@ -439,16 +439,16 @@ final class GettextRegistryTest extends TestCase {
 		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
 		$registry->flush();
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array() ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array() ) ) );
 
 		$this->assertSame( array(), $store->inserted );
 	}
 
 	public function testVisitorFeedsTheDictionaryWhenAllowed(): void {
-		$options = wp_mlp_test_options();
-		$options[ Settings::OPTION ]['discover_from_visitors'] = true;
-		wp_mlp_test_options( $options );
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		$options = lingocanvas_test_options();
+		$options[ Settings::optionName() ]['discover_from_visitors'] = true;
+		lingocanvas_test_options( $options );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 
 		$store    = new InMemoryGettextStore();
 		$registry = $this->registry( $store );
@@ -456,7 +456,7 @@ final class GettextRegistryTest extends TestCase {
 		$registry->filterText( 'Download now', 'Download now', 'download-monitor' );
 		$registry->flush();
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array() ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array() ) ) );
 
 		$this->assertNotSame( array(), $store->inserted );
 	}

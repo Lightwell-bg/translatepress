@@ -2,17 +2,17 @@
 /**
  * Тесты нормализации и отбора строк.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\Text;
+use LingoCanvas\Support\Text;
 
 #[CoversClass( Text::class )]
 final class TextTest extends TestCase {

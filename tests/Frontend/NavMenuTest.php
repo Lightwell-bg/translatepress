@@ -2,20 +2,20 @@
 /**
  * Тесты достраивания языков в пункте меню WordPress.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\NavMenu;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Settings\SwitcherDisplay;
+use LingoCanvas\Frontend\NavMenu;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Settings\SwitcherDisplay;
 
 /**
  * Полноценный `WP_Query`/`wp_nav_menu()` в юнит-тестах недоступен, поэтому
@@ -27,9 +27,9 @@ use WpMlp\Settings\SwitcherDisplay;
 final class NavMenuTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский', 'status' => 'published' ),
@@ -47,7 +47,7 @@ final class NavMenuTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 		unset( $_SERVER['REQUEST_URI'] );
 	}
 
@@ -125,10 +125,10 @@ final class NavMenuTest extends TestCase {
 	 * пункты переключателя.
 	 */
 	public function testDropdownTriggerFollowsTheDisplaySetting(): void {
-		$raw                     = wp_mlp_test_options()[ Settings::OPTION ];
+		$raw                     = lingocanvas_test_options()[ Settings::optionName() ];
 		$raw['switcher_display'] = SwitcherDisplay::CODE;
 
-		wp_mlp_test_options( array( Settings::OPTION => $raw ) );
+		lingocanvas_test_options( array( Settings::optionName() => $raw ) );
 
 		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
 
@@ -140,31 +140,13 @@ final class NavMenuTest extends TestCase {
 	 * есть фильтр — вернуть его обратно.
 	 */
 	public function testTriggerTitleCanBeOverriddenByFilter(): void {
-		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', static fn(): string => 'Язык' );
+		lingocanvas_test_filter( 'lingocanvas_nav_menu_trigger_title', static fn(): string => 'Язык' );
 
 		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
 
 		$this->assertSame( 'Язык', $result[0]->title );
 
-		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', null );
-	}
-
-	/**
-	 * Старое имя фильтра работает; новое применяется после него и побеждает.
-	 */
-	public function testDeprecatedTriggerTitleFilterStillWorksAndNewNameRunsAfterIt(): void {
-		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', static fn(): string => 'old' );
-
-		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
-		$this->assertSame( 'old', $result[0]->title );
-
-		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', static fn( string $title ): string => $title . '+new' );
-
-		$result = $this->navMenu()->injectLanguages( array( $this->marker( '#mlp-language-switcher-dropdown' ) ) );
-		$this->assertSame( 'old+new', $result[0]->title );
-
-		wp_mlp_test_filter( 'mlp_nav_menu_trigger_title', null );
-		wp_mlp_test_filter( 'lingocanvas_nav_menu_trigger_title', null );
+		lingocanvas_test_filter( 'lingocanvas_nav_menu_trigger_title', null );
 	}
 
 	public function testDropdownDoesNotIncludeDraftLanguage(): void {
@@ -270,9 +252,9 @@ final class NavMenuTest extends TestCase {
 	 * целиком, а не остаётся пустой нерабочей ссылкой в меню.
 	 */
 	public function testMarkerIsRemovedWhenOnlyOneLanguageIsPublished(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),

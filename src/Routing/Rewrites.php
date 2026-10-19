@@ -2,15 +2,15 @@
 /**
  * Языковые rewrite-правила.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Routing;
+namespace LingoCanvas\Routing;
 
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 

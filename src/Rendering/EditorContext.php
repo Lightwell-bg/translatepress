@@ -2,17 +2,17 @@
 /**
  * Режим предпросмотра для визуального редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Language;
-use WpMlp\Support\Assets;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Support\Assets;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,21 +26,21 @@ defined( 'ABSPATH' ) || exit;
  */
 final class EditorContext implements Hookable {
 
-	public const QUERY_FLAG   = 'mlp_editor';
-	public const QUERY_NONCE  = 'mlp_nonce';
-	public const NONCE_ACTION = 'mlp_editor_preview';
+	public const QUERY_FLAG   = 'lingocanvas_editor';
+	public const QUERY_NONCE  = 'lingocanvas_nonce';
+	public const NONCE_ACTION = 'lingocanvas_editor_preview';
 	public const CAPABILITY   = 'manage_options';
 
 	/**
 	 * Общий секрет панели и предпросмотра на одну загрузку редактора.
 	 *
 	 * Обе стороны сверяют его в каждом сообщении postMessage. Проверять
-	 * только `event.origin` и строку-метку вида `wp-mlp-preview` мало:
+	 * только `event.origin` и строку-метку вида `lingocanvas-preview` мало:
 	 * метка не секрет, её знает кто угодно, прочитавший этот файл, а
 	 * происхождение у любого скрипта на той же странице админки такое же,
 	 * как у нас. Токен же знают только те двое, между кем идёт разговор.
 	 */
-	public const QUERY_CHANNEL = 'mlp_channel';
+	public const QUERY_CHANNEL = 'lingocanvas_channel';
 
 	/**
 	 * Мемоизированный ответ isActive().
@@ -108,12 +108,12 @@ final class EditorContext implements Hookable {
 	 * Подключает скрипт предпросмотра.
 	 */
 	public function enqueue(): void {
-		wp_enqueue_style( 'wp-mlp-editor-preview', Assets::url( 'assets/editor-preview.css' ), array(), Assets::version( 'assets/editor-preview.css' ) );
-		wp_enqueue_script( 'wp-mlp-editor-preview', Assets::url( 'assets/editor-preview.js' ), array(), Assets::version( 'assets/editor-preview.js' ), true );
+		wp_enqueue_style( 'lingocanvas-editor-preview', Assets::url( 'assets/editor-preview.css' ), array(), Assets::version( 'assets/editor-preview.css' ) );
+		wp_enqueue_script( 'lingocanvas-editor-preview', Assets::url( 'assets/editor-preview.js' ), array(), Assets::version( 'assets/editor-preview.js' ), true );
 
 		wp_localize_script(
-			'wp-mlp-editor-preview',
-			'wpMlpPreview',
+			'lingocanvas-editor-preview',
+			'lingocanvasPreview',
 			array(
 				'flag'    => self::QUERY_FLAG,
 				'nonce'   => self::QUERY_NONCE,

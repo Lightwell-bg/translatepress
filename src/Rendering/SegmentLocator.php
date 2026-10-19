@@ -2,14 +2,14 @@
 /**
  * Точное расположение сегмента в ещё не разобранной исходной строке.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Support\Text;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 

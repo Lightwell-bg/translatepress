@@ -2,19 +2,19 @@
 /**
  * Переключатель языков как один пункт меню WordPress.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Frontend\Flags;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Frontend\Flags;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -285,9 +285,6 @@ final class NavMenu implements Hookable {
 		 * Название пункта, заданное в «Внешний вид → Меню», при этом
 		 * теряется. Кому нужно именно оно — возвращает его этим фильтром.
 		 *
-		 * Прежнее имя фильтра: `mlp_nav_menu_trigger_title` (устарело с 0.3.13,
-		 * работает как псевдоним `lingocanvas_nav_menu_trigger_title`).
-		 *
 		 * @since 0.3.13 Имя фильтра — `lingocanvas_nav_menu_trigger_title`.
 		 *
 		 * @param string   $title   Подпись по умолчанию (может быть разметкой).
@@ -295,7 +292,6 @@ final class NavMenu implements Hookable {
 		 * @param object   $item    Сам пункт-маркер, с исходным `title`.
 		 */
 		$title = Flags::switcherMarkup( $current, $this->settings->switcherDisplay() );
-		$title = apply_filters_deprecated( 'mlp_nav_menu_trigger_title', array( $title, $current, $item ), '0.3.13', 'lingocanvas_nav_menu_trigger_title' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
 		$item->title = (string) apply_filters( 'lingocanvas_nav_menu_trigger_title', $title, $current, $item );
 
 		/**
@@ -307,9 +303,6 @@ final class NavMenu implements Hookable {
 		 * ждут свой класс или data-атрибут — фильтр позволяет его добавить,
 		 * не трогая код плагина.
 		 *
-		 * Прежнее имя фильтра: `mlp_nav_menu_dropdown_classes` (устарело с 0.3.13,
-		 * работает как псевдоним `lingocanvas_nav_menu_dropdown_classes`).
-		 *
 		 * @since 0.3.13 Имя фильтра — `lingocanvas_nav_menu_dropdown_classes`.
 		 *
 		 * @param list<string> $classes Классы пункта-триггера.
@@ -319,7 +312,6 @@ final class NavMenu implements Hookable {
 			is_array( $item->classes ) ? $item->classes : array(),
 			array( 'mlp-language-switcher-trigger', 'menu-item-has-children' )
 		);
-		$classes = apply_filters_deprecated( 'mlp_nav_menu_dropdown_classes', array( $classes, $item ), '0.3.13', 'lingocanvas_nav_menu_dropdown_classes' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
 		$item->classes = array_values( array_unique( apply_filters( 'lingocanvas_nav_menu_dropdown_classes', $classes, $item ) ) );
 
 		return $item;

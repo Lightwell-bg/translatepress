@@ -2,7 +2,7 @@
 
 [English](README.md) | [Русский](README_RU.md) · [Quick start (RU)](docs/QUICK_START.md)
 
-> LingoCanvas is the new name of **WP Multilang Press** (developer: CenterAI, WordPress.org contributor `centeraieu`). Plugin folder and text domain: `lingocanvas`. Existing sites switch without data loss, see [Migrating from WP Multilang Press](#migrating-from-wp-multilang-press).
+> LingoCanvas (developer: CenterAI, WordPress.org contributor `centeraieu`). Plugin folder and text domain: `lingocanvas`.
 
 > **Running a site, not developing the plugin?** You need the [user guide](docs/user-guide.md) — installation, language setup and translating posts without a single line of code. This file is written for people who work on the plugin.
 
@@ -33,7 +33,7 @@ Current state: **Stages 1, 2 and part of Stage 3**. Translations are still enter
 - **Interface translation without manual work**: on an additional language the plugin swaps the WordPress locale, and core, the theme and plugins serve their own strings from the official language pack — "Reply", "Leave a comment", cart buttons are translated without a single row in the database and without a single OpenAI token.
 - The "String translation" admin page: three tabs — "Content", "SEO/GEO" and "Interface", language and status filters, search, manual translation entry.
 - Deleting translations: one string at a time, or all translations of the selected language at once.
-- Language switcher: one WordPress menu item (dropdown or inline), the `[mlp_language_switcher]` shortcode and a widget. The language order is set by hand, and you can show the name, the language code, a flag or a flag with the code.
+- Language switcher: one WordPress menu item (dropdown or inline), the `[lingocanvas_language_switcher]` shortcode and a widget. The language order is set by hand, and you can show the name, the language code, a flag or a flag with the code.
 - The OpenAI key is stored in the database and entered in the admin — no access to the hosting files is needed.
 - On an additional language, lists show only translated posts.
 - A multilingual sitemap with mutual `hreflang` for search engines.
@@ -70,40 +70,13 @@ If the permalink structure is "Plain", the plugin shows a warning: language URLs
 
 For a step-by-step version see [docs/QUICK_START.md](docs/QUICK_START.md) (Russian).
 
-## Migrating from WP Multilang Press
+## Stored names
 
-LingoCanvas is the same code under a new name, and it **reuses all data as is**: tables, settings, translations, flags and post meta are not copied, converted or deleted. Safe order:
+All internal identifiers use the `lingocanvas` prefix: tables `{prefix}lingocanvas_*`, options `lingocanvas_*`, post meta `_lingocanvas_*`, the language switcher widget `lingocanvas_language_switcher`, REST namespace `lingocanvas/v1`, the PHP namespace `LingoCanvas`, the sitemap `/lingocanvas-sitemap.xml` and the folder `wp-content/uploads/lingocanvas-flags/`.
 
-1. Back up the database (at least the `{prefix}mlp_*` tables and `wp_options`). Note where the OpenAI key is stored: if it lives only in `wp-content/plugins/wp-mlp/.env`, move it to `wp-config.php` constants first.
-2. Do **not** delete or deactivate WP Multilang Press yet.
-3. "Plugins → Add New → Upload Plugin" → `lingocanvas-0.3.14.zip` → "Install Now" (WordPress installs it as a separate plugin).
-4. Activate LingoCanvas. It deactivates WP Multilang Press automatically (without running its deactivation code) and finishes its own setup on the next page load.
-5. Open any admin page once, then check "Multilingual → Languages", a translated page such as `/en/`, the sitemap and the language switcher.
-6. "Settings → Permalinks → Save" once (optional, refreshes the rewrite rules).
-7. Only after checking, delete WP Multilang Press via "Plugins → Delete". This is safe: LingoCanvas keeps the shared data even if "delete data on uninstall" is ticked.
+## Uninstalling
 
-Multisite: if WP Multilang Press is network-activated, network-activate LingoCanvas from Network Admin; activating it on a single site does not switch off a network-activated old plugin (LingoCanvas stays paused there).
-
-Rollback: deactivate LingoCanvas and activate WP Multilang Press again — it works with the same data.
-
-Never keep both plugins active. If they are, LingoCanvas pauses itself (loads nothing) and shows an admin notice; the old plugin keeps working.
-
-Theme or snippet code that uses the old `mlp_*` hooks keeps working (a deprecation notice appears only with `WP_DEBUG`); rename them to `lingocanvas_*` at your convenience.
-
-### Hooks: old and new names
-
-| Old name (deprecated since 0.3.13) | New name | Type |
-|---|---|---|
-| `mlp_nav_menu_trigger_title` | `lingocanvas_nav_menu_trigger_title` | filter |
-| `mlp_nav_menu_dropdown_classes` | `lingocanvas_nav_menu_dropdown_classes` | filter |
-| `mlp_visibility_bypass` | `lingocanvas_visibility_bypass` | filter |
-| `mlp_sitemap_post_ids` | `lingocanvas_sitemap_post_ids` | filter |
-| `mlp_translation_provider` | `lingocanvas_translation_provider` | filter |
-| `mlp_purge_page_cache` | `lingocanvas_purge_page_cache` | action |
-
-### Identifiers that stay unchanged (compatibility)
-
-Kept on purpose so that existing data and integrations keep working: tables `{prefix}mlp_*`, options `mlp_*`, post meta `_mlp_*`, REST namespace `mlp/v1`, the shortcode `[mlp_language_switcher]`, constants `WP_MLP_OPENAI_API_KEY` / `WP_MLP_OPENAI_MODEL` / `WP_MLP_OPENAI_BASE_URL`, environment files `wp-content/wp-mlp.env.php` and `wp-mlp.env` (above the WordPress root), the folder `wp-content/uploads/wp-mlp-flags/`, the sitemap address `/wp-mlp-sitemap.xml`, admin page slugs and the PHP namespace `WpMlp`.
+Deleting the plugin removes no data by default: translations are manual work. To remove everything, tick "Delete all translations and tables when the plugin is uninstalled" in "Multilingual → Languages" before deleting the plugin: the four tables, the `lingocanvas_*` options, the post meta, the transients and the `lingocanvas-flags` folder are removed. Without the tick only the service options are removed.
 
 ## Where to start and in what order
 
@@ -179,7 +152,7 @@ Where to get them: [lipis/flag-icons](https://github.com/lipis/flag-icons) — a
 
 Only **SVG up to 64 KB** is accepted. The uploaded file is sanitized of executable content: SVG is XML with DOM access, and it may contain `<script>`, `onload` handlers and `javascript:` links. The file lives in uploads and opens by a direct link, so without sanitizing such a script would run on your domain — which is exactly why WordPress does not allow SVG uploads without a plugin. The plugin parses the file, cuts out the dangerous parts and saves the already safe version; whatever does not parse as SVG is not saved at all.
 
-The files themselves are in `wp-content/uploads/wp-mlp-flags/`, not in the plugin directory: the plugin directory is overwritten on every update, and flags kept there would one day vanish without warning.
+The files themselves are in `wp-content/uploads/lingocanvas-flags/`, not in the plugin directory: the plugin directory is overwritten on every update, and flags kept there would one day vanish without warning.
 
 If there is no image, the plugin shows the emoji from the same field, and if that is empty too, the language code. The switcher is never left empty.
 
@@ -209,7 +182,7 @@ For a specific post or page — instead of translating block by block by clickin
 4. The list is a draft, not a final result: any string can be edited by hand right in the panel, and so can its status.
 5. "Save all" writes the whole list in one operation. If saving is interrupted by an error, none of the strings of that operation are saved, and whatever was translated earlier (by hand or last time) is not touched.
 
-`post_content` in the database is not changed at all — neither during translation nor after "Save all": as everywhere in the plugin, the translation lives in the separate table `wp_mlp_translations` and is substituted only when the page is shown to a visitor. The title, excerpt and content are parsed into segments with a stable `uniq_hash` — the same way as an ordinary page (spec 4.4) — but the source is the post's own fields, not the rendered HTML: the wrapper comment `<!-- wp:... -->` does not survive block rendering (core strips it on display), so it can only be taken from `post_content` directly.
+`post_content` in the database is not changed at all — neither during translation nor after "Save all": as everywhere in the plugin, the translation lives in the separate table `{prefix}lingocanvas_translations` and is substituted only when the page is shown to a visitor. The title, excerpt and content are parsed into segments with a stable `uniq_hash` — the same way as an ordinary page (spec 4.4) — but the source is the post's own fields, not the rendered HTML: the wrapper comment `<!-- wp:... -->` does not survive block rendering (core strips it on display), so it can only be taken from `post_content` directly.
 
 The format around the translated text is not touched by a single character — and this is not "we try not to change more than needed" but a consequence of how substitution works: the translation of each segment is found in the source string as an exact substring and replaced in place, with no parsing and no HTML reassembly. Everything else is copied from the source one to one, including what any tool that reconstructs markup through the DOM used to spoil: self-closing tags (`<img ... />` does not turn into `<img ...>`), the exact quote style and attribute order, Gutenberg comments with JSON parameters, classes, inline styles, `id`, `data-*`, links and images. If an exact substring for a segment cannot be found (for example, a character in the text is encoded with an unusual HTML entity) — the operation for that field stops explicitly instead of putting the translation "roughly there".
 
@@ -298,9 +271,9 @@ Both items can be added at the same time, and both can be removed like an ordina
 **Shortcode** in content or a template:
 
 ```
-[mlp_language_switcher]
-[mlp_language_switcher type="dropdown"]
-[mlp_language_switcher show_current="no"]
+[lingocanvas_language_switcher]
+[lingocanvas_language_switcher type="dropdown"]
+[lingocanvas_language_switcher show_current="no"]
 ```
 
 **Widget** "Language switcher" in "Appearance → Widgets".
@@ -311,7 +284,7 @@ The dropdown is designed for themes with the standard WordPress submenu markup (
 
 ### Sitemap
 
-The plugin serves its own sitemap at `/wp-mlp-sitemap.xml`. It contains all language versions with mutual `xhtml:link hreflang` — Google uses them to understand that `/about/` and `/en/about/` are one page in two languages, not two duplicates.
+The plugin serves its own sitemap at `/lingocanvas-sitemap.xml`. It contains all language versions with mutual `xhtml:link hreflang` — Google uses them to understand that `/about/` and `/en/about/` are one page in two languages, not two duplicates.
 
 Untranslated pages do not get into the sitemap: their `/en/` address serves Russian text, and for a search engine that would be a duplicate. If a post in the sitemap has no pair in some language, it almost always means "not translated into this language yet", not an error: as soon as at least one translation appears (manual or via "Translate the whole content with AI"), its language version appears in the sitemap on the next generation.
 
@@ -363,7 +336,7 @@ A separate pass over the finished HTML finds such links to your own domain and a
 
 A separate case is menu items saved with a literal address before this plugin appeared on the site (for example `<a href="/ru/kontakty/">`, where `/ru/` is the old way of marking the Russian section). If you just prepend the new prefix to such a link, you get `/en/ru/kontakty/` — double localization. The plugin recognizes the first path segment as the slug of ANOTHER known language and replaces it with the target one instead of adding on top.
 
-The language switcher's own links (the NavMenu item, the `[mlp_language_switcher]` shortcode and widget) are not touched by this pass: each of them already leads to ITS OWN language, not to the current page's language — they are marked with the `mlp-language-item` class right on the `<a>`, and the pass skips them by it. Without this mark the switcher would look like an ordinary theme link on the second pass and get the current page's prefix on top of an already correct address — ru/bg/en would all lead to the same place.
+The language switcher's own links (the NavMenu item, the `[lingocanvas_language_switcher]` shortcode and widget) are not touched by this pass: each of them already leads to ITS OWN language, not to the current page's language — they are marked with the `mlp-language-item` class right on the `<a>`, and the pass skips them by it. Without this mark the switcher would look like an ordinary theme link on the second pass and get the current page's prefix on top of an already correct address — ru/bg/en would all lead to the same place.
 
 Footer text (copyright, slogans, any phrases) is translated by the same common mechanism as all other page text: for the string extractor `<footer>` is no different from `<main>` — there is no separate tag or flag for the footer in the code and none is needed. If a footer phrase in an additional language is still untranslated, it means it has not yet been translated in "String translation" (or you have not scrolled to it), not that the plugin skipped it; you need to visit a page with that footer in the needed language at least once — then the string appears in the list. The only practical nuance: if the footer has a widget like "Recent posts", it shows titles of OTHER posts of the site in their own text (usually in the source language) — if a particular post has no title translation yet, it will appear untranslated in the footer until such a translation exists (in the same way as for H1 — see "One post title translation — everywhere" above).
 
@@ -374,7 +347,7 @@ Footer text (copyright, slogans, any phrases) is translated by the same common m
 - **Show all posts (translated or not)** — an additional language shows every post and page of the site.
 - **Show on a language only posts enabled by hand (recommended)** — a post or page appears on an additional language (blog, categories, search, widgets, menus, previous/next links, the sitemap and its own address) only when you have switched it on for that language. A hidden post's address on the language redirects (302) to the same page in the default language.
 
-Enabling in manual mode (a post is stored as the `_mlp_visible_<language>` meta key):
+Enabling in manual mode (a post is stored as the `_lingocanvas_visible_<language>` meta key):
 
 - the **"on site" switch** next to each language in the "Languages" column of the posts and pages list;
 - a bulk action in the list: "Show on language: X" / "Hide on language: X";
@@ -414,7 +387,7 @@ Without this step the plugin works as usual — the "Translate with AI" button i
 3. Save. In the same block "Key saved, ends with «…»" appears — the key itself is never shown again, and the field for entering a new value is always empty. To replace the key, enter a new one; to keep it as is, just do not touch the field when saving other settings; to delete it, tick "Delete the saved key".
 4. Set the daily character limit (100,000 by default) — this is protection against accidental spending, not automation: the plugin translates nothing by itself, the limit just caps the amount you can spend by pressing the button.
 
-The key is stored in the site database (the `mlp_settings` option) and is never printed to HTML, JS, REST responses or logs (spec, section 13) — only the last 4 characters, to confirm "this is the key you entered". This is more convenient than `.env`, but this storage has a different risk profile: the key ends up in the DB dump and in site backups if they are not encrypted — keep this in mind when moving the site or exporting the DB to third parties.
+The key is stored in the site database (the `lingocanvas_settings` option) and is never printed to HTML, JS, REST responses or logs (spec, section 13) — only the last 4 characters, to confirm "this is the key you entered". This is more convenient than `.env`, but this storage has a different risk profile: the key ends up in the DB dump and in site backups if they are not encrypted — keep this in mind when moving the site or exporting the DB to third parties.
 
 ### Where to store the key, model and API address
 
@@ -423,13 +396,13 @@ For each of the three fields (key, model, API address) the sources are checked i
 1. **Constants in `wp-config.php`** (before the "That's all, stop editing!" line). The admin field is not used in this case:
 
    ```php
-   define( 'WP_MLP_OPENAI_API_KEY', 'sk-...' );
-   define( 'WP_MLP_OPENAI_BASE_URL', 'https://api.openai.com/v1' ); // or https://openrouter.ai/api/v1
-   define( 'WP_MLP_OPENAI_MODEL', 'gpt-5.6-terra' );
+   define( 'LINGOCANVAS_OPENAI_API_KEY', 'sk-...' );
+   define( 'LINGOCANVAS_OPENAI_BASE_URL', 'https://api.openai.com/v1' ); // or https://openrouter.ai/api/v1
+   define( 'LINGOCANVAS_OPENAI_MODEL', 'gpt-5.6-terra' );
    ```
 
 2. **Admin settings** ("Multilingual → Languages") — stored in the database.
-3. **The file `wp-content/wp-mlp.env.php`** — the format is like `.env.example` (`OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`), but **the first line must be `<?php exit; ?>`**. The file lies inside the web root, and this line makes a direct request to it execute PHP and print nothing. Without the guard line the file is not read, and a warning appears on the settings page:
+3. **The file `wp-content/lingocanvas.env.php`** — the format is like `.env.example` (`OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`), but **the first line must be `<?php exit; ?>`**. The file lies inside the web root, and this line makes a direct request to it execute PHP and print nothing. Without the guard line the file is not read, and a warning appears on the settings page:
 
    ```
    <?php exit; ?>
@@ -437,12 +410,12 @@ For each of the three fields (key, model, API address) the sources are checked i
    OPENAI_MODEL=gpt-5.6-terra
    ```
 
-4. **The file `wp-mlp.env` one level above the WordPress root** (`dirname( ABSPATH )`) — the same `KEY=VALUE` format, without the guard line: it is not reachable from the web.
+4. **The file `lingocanvas.env` one level above the WordPress root** (`dirname( ABSPATH )`) — the same `KEY=VALUE` format, without the guard line: it is not reachable from the web.
 5. **The `.env` file in the plugin folder** (legacy method). Real server environment variables take precedence over all files.
 
-**Never put an ordinary `.env` or `wp-mlp.env` inside `wp-content`** — that folder is served by the web server, and a file with the key can be downloaded by a direct link. The most reliable option is constants in `wp-config.php`.
+**Never put an ordinary `.env` or `lingocanvas.env` inside `wp-content`** — that folder is served by the web server, and a file with the key can be downloaded by a direct link. The most reliable option is constants in `wp-config.php`.
 
-Methods 1–4 survive replacing the plugin. **Replacing the plugin through "Upload plugin" (ZIP) deletes the whole plugin folder — together with the `.env` inside it, and the key is lost.** If the key currently lives in the plugin's `.env`, a warning appears on the settings page: paste the key into the field or move it to `wp-content/wp-mlp.env.php`. The key source status (without the key itself) is visible on the "Languages" page.
+Methods 1–4 survive replacing the plugin. **Replacing the plugin through "Upload plugin" (ZIP) deletes the whole plugin folder — together with the `.env` inside it, and the key is lost.** If the key currently lives in the plugin's `.env`, a warning appears on the settings page: paste the key into the field or move it to `wp-content/lingocanvas.env.php`. The key source status (without the key itself) is visible on the "Languages" page.
 
 API address: an empty field in the admin means "not set" (taken from the environment, otherwise `https://api.openai.com/v1`); any non-empty value, including the standard address, is set explicitly and takes precedence over the environment.
 
@@ -458,7 +431,7 @@ add_filter( 'lingocanvas_translation_provider', function () {
 } );
 ```
 
-The class must implement `WpMlp\Translation\ProviderInterface`.
+The class must implement `LingoCanvas\Translation\ProviderInterface`.
 
 ### If "Translate with AI" fails with a network error
 
@@ -474,7 +447,7 @@ If the error is not a one-off but stable, the translation spoils nothing in any 
 ## Structure
 
 ```
-lingocanvas.php             bootstrap: plugin header, migration guard from WP Multilang Press, autoloader, startup
+lingocanvas.php             bootstrap: plugin header, autoloader, startup
 uninstall.php               data removal — only with an explicit checkbox
 src/
   Plugin.php                composition root: container and hooks
@@ -497,10 +470,10 @@ docs/PROMPTS.md             tasks by stage
 
 | Table | Purpose |
 |---|---|
-| `{prefix}mlp_sources` | source strings: text, hashes, kind, language |
-| `{prefix}mlp_translations` | translations: text, status, author, provider |
-| `{prefix}mlp_occurrences` | where a string occurred |
-| `{prefix}mlp_routes` | localized slugs (filled in at Stage 4) |
+| `{prefix}lingocanvas_sources` | source strings: text, hashes, kind, language |
+| `{prefix}lingocanvas_translations` | translations: text, status, author, provider |
+| `{prefix}lingocanvas_occurrences` | where a string occurred |
+| `{prefix}lingocanvas_routes` | localized slugs (filled in at Stage 4) |
 
 String uniqueness is ensured by the `uniq_hash` column — a SHA-256 of all parts of the key. The composite unique index from spec 6.1 contains nullable columns, and MySQL treats `NULL` values as distinct, so it would not stop duplicates.
 
@@ -510,17 +483,17 @@ All endpoints require the `manage_options` capability and a REST nonce.
 
 | Method | Address | Purpose |
 |---|---|---|
-| `GET` | `/wp-json/mlp/v1/sources/{id}` | a string and its translations in all languages |
-| `PUT` | `/wp-json/mlp/v1/translations/{id}/{locale}` | save a translation |
-| `DELETE` | `/wp-json/mlp/v1/translations/{id}/{locale}` | delete a translation |
-| `POST` | `/wp-json/mlp/v1/translations/{id}/{locale}/suggest` | get a translation from AI without saving |
-| `POST` | `/wp-json/mlp/v1/blocks` | merge a paragraph into a translation block |
-| `DELETE` | `/wp-json/mlp/v1/blocks/{id}` | split a block back into parts |
-| `POST` | `/wp-json/mlp/v1/posts/visibility` | `{ids, locale, visible}` — show/hide posts on a language (`manage_options` AND the right to edit EACH post; up to 200 ids) |
-| `POST` | `/wp-json/mlp/v1/posts/visibility/enable-translated` | `{locale}` — enable all fully translated posts on a language (`manage_options`) |
-| `GET` | `/wp-json/mlp/v1/posts/{post_id}/summary` | "Translate the whole content": parse the post, create missing strings, return the segment list and chunk boundaries |
-| `POST` | `/wp-json/mlp/v1/posts/{post_id}/chunk` | translate one chunk via AI, saving nothing |
-| `POST` | `/wp-json/mlp/v1/posts/{post_id}/commit` | save the whole list as one atomic operation |
+| `GET` | `/wp-json/lingocanvas/v1/sources/{id}` | a string and its translations in all languages |
+| `PUT` | `/wp-json/lingocanvas/v1/translations/{id}/{locale}` | save a translation |
+| `DELETE` | `/wp-json/lingocanvas/v1/translations/{id}/{locale}` | delete a translation |
+| `POST` | `/wp-json/lingocanvas/v1/translations/{id}/{locale}/suggest` | get a translation from AI without saving |
+| `POST` | `/wp-json/lingocanvas/v1/blocks` | merge a paragraph into a translation block |
+| `DELETE` | `/wp-json/lingocanvas/v1/blocks/{id}` | split a block back into parts |
+| `POST` | `/wp-json/lingocanvas/v1/posts/visibility` | `{ids, locale, visible}` — show/hide posts on a language (`manage_options` AND the right to edit EACH post; up to 200 ids) |
+| `POST` | `/wp-json/lingocanvas/v1/posts/visibility/enable-translated` | `{locale}` — enable all fully translated posts on a language (`manage_options`) |
+| `GET` | `/wp-json/lingocanvas/v1/posts/{post_id}/summary` | "Translate the whole content": parse the post, create missing strings, return the segment list and chunk boundaries |
+| `POST` | `/wp-json/lingocanvas/v1/posts/{post_id}/chunk` | translate one chunk via AI, saving nothing |
+| `POST` | `/wp-json/lingocanvas/v1/posts/{post_id}/commit` | save the whole list as one atomic operation |
 
 ### Performance
 
@@ -599,7 +572,7 @@ winget install PHP.PHP.8.4
 
 | Service | Why | Where to get a key | Where to enter it |
 |---|---|---|---|
-| OpenAI (optional) | the "Translate with AI" button | <https://platform.openai.com/api-keys> ([docs](https://platform.openai.com/docs)) | "Multilingual → Languages → OpenAI key" (stored in the database), or `WP_MLP_OPENAI_API_KEY` in `wp-config.php` — see "Connecting OpenAI" above |
+| OpenAI (optional) | the "Translate with AI" button | <https://platform.openai.com/api-keys> ([docs](https://platform.openai.com/docs)) | "Multilingual → Languages → OpenAI key" (stored in the database), or `LINGOCANVAS_OPENAI_API_KEY` in `wp-config.php` — see "Connecting OpenAI" above |
 
 ## License
 

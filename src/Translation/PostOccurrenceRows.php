@@ -2,15 +2,15 @@
 /**
  * Записи «места использования» строк массового перевода записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
-use WpMlp\Rendering\PostSegment;
-use WpMlp\Support\Hash;
+use LingoCanvas\Rendering\PostSegment;
+use LingoCanvas\Support\Hash;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -2,29 +2,29 @@
 /**
  * REST-эндпоинты translation blocks.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rest;
+namespace LingoCanvas\Rest;
 
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-use WpMlp\Rendering\BlockSanitizer;
-use WpMlp\Rendering\Segment;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Text;
+use LingoCanvas\Rendering\BlockSanitizer;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `POST /wp-json/mlp/v1/blocks` и `DELETE /wp-json/mlp/v1/blocks/{id}` (ТЗ 10.3).
+ * `POST /wp-json/lingocanvas/v1/blocks` и `DELETE /wp-json/lingocanvas/v1/blocks/{id}` (ТЗ 10.3).
  *
  * Блок — это целый элемент, который переводится вместе с разметкой внутри.
  * Нужен, когда абзац разорван тегами `<b>` и `<a>`: по кускам такой текст
@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class BlocksController implements Hookable {
 
-	public const NAMESPACE  = 'mlp/v1';
+	public const NAMESPACE  = 'lingocanvas/v1';
 	public const CAPABILITY = 'manage_options';
 
 	/**
@@ -110,7 +110,7 @@ final class BlocksController implements Hookable {
 
 		if ( ! Text::isTranslatable( wp_strip_all_tags( $html ) ) ) {
 			return new WP_Error(
-				'mlp_empty_block',
+				'lingocanvas_empty_block',
 				__( 'There is nothing to translate in this fragment.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
@@ -138,7 +138,7 @@ final class BlocksController implements Hookable {
 
 		if ( ! isset( $ids[ $uniqHash ] ) ) {
 			return new WP_Error(
-				'mlp_block_failed',
+				'lingocanvas_block_failed',
 				__( 'Could not create the block.', 'lingocanvas' ),
 				array( 'status' => 500 )
 			);
@@ -172,7 +172,7 @@ final class BlocksController implements Hookable {
 
 		if ( null === $source || Segment::KIND_HTML_BLOCK !== (string) $source['kind'] ) {
 			return new WP_Error(
-				'mlp_block_not_found',
+				'lingocanvas_block_not_found',
 				__( 'Block not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);

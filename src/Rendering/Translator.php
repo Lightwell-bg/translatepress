@@ -2,21 +2,21 @@
 /**
  * Перевод готового HTML.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Frontend\InternalLinks;
-use WpMlp\I18n\GettextRegistry;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Support\Hash;
+use LingoCanvas\Frontend\InternalLinks;
+use LingoCanvas\I18n\GettextRegistry;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Support\Hash;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -329,7 +329,7 @@ final class Translator {
 		 * о ней просто не появилось бы, и отличить общий элемент сайта от
 		 * содержимого конкретной страницы было бы нечем.
 		 */
-		$refresh = false === get_transient( 'mlp_touched_' . $urlHash );
+		$refresh = false === get_transient( 'lingocanvas_touched_' . $urlHash );
 		$record  = $refresh ? $unique : $missing;
 
 		if ( array() !== $record ) {
@@ -338,7 +338,7 @@ final class Translator {
 
 		if ( $refresh ) {
 			$this->sources->touch( array_values( $ids ) );
-			set_transient( 'mlp_touched_' . $urlHash, 1, self::TOUCH_INTERVAL );
+			set_transient( 'lingocanvas_touched_' . $urlHash, 1, self::TOUCH_INTERVAL );
 		}
 	}
 
@@ -402,8 +402,7 @@ final class Translator {
 	 * Путь текущей страницы — им помечаются места использования строк.
 	 */
 	private function currentUrlKey(): string {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение только хешируется.
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '/';
 
 		return (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '/' );
 	}
@@ -415,8 +414,7 @@ final class Translator {
 	 * вырастут на строках, которых живой человек никогда не увидит (ТЗ 4.6).
 	 */
 	private function isCrawler(): bool {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение только сопоставляется с шаблоном.
-		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? strtolower( wp_unslash( (string) $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? strtolower( sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_USER_AGENT'] ) ) ) : '';
 
 		if ( '' === $agent ) {
 			return false;

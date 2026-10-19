@@ -2,18 +2,18 @@
 /**
  * Тесты проверки пакета переводов перед сохранением.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Translation;
+namespace LingoCanvas\Tests\Translation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Segment;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Translation\PostCommitValidator;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Translation\PostCommitValidator;
 
 #[CoversClass( PostCommitValidator::class )]
 final class PostCommitValidatorTest extends TestCase {

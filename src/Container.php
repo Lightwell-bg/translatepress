@@ -2,12 +2,12 @@
 /**
  * Минимальный DI-контейнер (ТЗ 4.1: «небольшой dependency container»).
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp;
+namespace LingoCanvas;
 
 use RuntimeException;
 

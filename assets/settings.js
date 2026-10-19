@@ -289,7 +289,7 @@
 
 	var wrap = document.querySelector( '.mlp-model-field' );
 	var input = document.getElementById( 'mlp-openai-model' );
-	var cfg = window.mlpSettings;
+	var cfg = window.lingocanvasSettings;
 
 	if ( ! wrap || ! input || ! cfg || '1' !== wrap.getAttribute( 'data-enhance' ) ) {
 		return;
@@ -444,7 +444,7 @@
 ( function () {
 	'use strict';
 
-	var cfg = window.mlpSettings;
+	var cfg = window.lingocanvasSettings;
 	var box = document.querySelector( '.mlp-vis-counts' );
 
 	if ( ! cfg || ! box ) {

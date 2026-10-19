@@ -2,12 +2,12 @@
 /**
  * Подделка $wpdb для тестов, которым нужны prepare() и выборки.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Doubles;
+namespace LingoCanvas\Tests\Doubles;
 
 if ( ! defined( 'ARRAY_A' ) ) {
 	define( 'ARRAY_A', 'ARRAY_A' );
@@ -67,7 +67,7 @@ final class FakeWpdb {
 
 				if ( '%i' === $m[0] ) {
 					// Идентификатор (WP 6.2+): в тестах подставляется как есть, без обратных кавычек,
-					// чтобы проверки вида `FROM wp_mlp_sources` не зависели от экранирования.
+					// чтобы проверки вида `FROM wp_lingocanvas_sources` не зависели от экранирования.
 					return (string) $value;
 				}
 

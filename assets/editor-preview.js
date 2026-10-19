@@ -10,15 +10,15 @@
 ( function () {
 	'use strict';
 
-	var settings = window.wpMlpPreview;
+	var settings = window.lingocanvasPreview;
 
 	if ( ! settings ) {
 		return;
 	}
 
-	var ID_ATTR = 'data-mlp-source-id';
-	var KIND_ATTR = 'data-mlp-kind';
-	var ATTR_PREFIX = 'data-mlp-source-id-';
+	var ID_ATTR = 'data-lingocanvas-source-id';
+	var KIND_ATTR = 'data-lingocanvas-kind';
+	var ATTR_PREFIX = 'data-lingocanvas-source-id-';
 	var selected = null;
 
 	/**
@@ -78,7 +78,7 @@
 
 		Array.prototype.forEach.call( clone.querySelectorAll( '*' ), function ( node ) {
 			Array.prototype.slice.call( node.attributes ).forEach( function ( attribute ) {
-				if ( 0 === attribute.name.indexOf( 'data-mlp-' ) ) {
+				if ( 0 === attribute.name.indexOf( 'data-lingocanvas-' ) ) {
 					node.removeAttribute( attribute.name );
 				}
 			} );
@@ -139,7 +139,7 @@
 	function notify( type, data ) {
 		window.parent.postMessage(
 			Object.assign(
-				{ source: 'wp-mlp-preview', type: type, channel: settings.channel },
+				{ source: 'lingocanvas-preview', type: type, channel: settings.channel },
 				data || {}
 			),
 			window.location.origin
@@ -203,9 +203,9 @@
 
 				// Кандидатом в блок может быть родитель кликнутого узла:
 				// маркер стоит на куске текста, а объединять нужно абзац.
-				var candidate = element.hasAttribute( 'data-mlp-block' )
+				var candidate = element.hasAttribute( 'data-lingocanvas-block' )
 					? element
-					: element.closest( '[data-mlp-block]' );
+					: element.closest( '[data-lingocanvas-block]' );
 
 				notify( 'select', {
 					strings: stringsOf( element ),
@@ -222,7 +222,7 @@
 			 * маркер отсутствует и клик иначе не дал бы вообще ничего —
 			 * молчание тут хуже отказа, пользователь решил бы, что сломано.
 			 */
-			var gettext = event.target.closest( '[data-mlp-gettext]' );
+			var gettext = event.target.closest( '[data-lingocanvas-gettext]' );
 
 			if ( gettext ) {
 				if ( link ) {
@@ -230,7 +230,7 @@
 				}
 
 				notify( 'gettext', {
-					domain: gettext.getAttribute( 'data-mlp-gettext' ) || '',
+					domain: gettext.getAttribute( 'data-lingocanvas-gettext' ) || '',
 					text: ( gettext.textContent || '' ).trim().slice( 0, 200 )
 				} );
 
@@ -297,7 +297,7 @@
 			return;
 		}
 
-		if ( 'wp-mlp-editor' !== event.data.source ) {
+		if ( 'lingocanvas-editor' !== event.data.source ) {
 			return;
 		}
 

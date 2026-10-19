@@ -2,12 +2,12 @@
 /**
  * Очистка разметки translation block.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -80,7 +80,7 @@ final class BlockSanitizer {
 		$clean = wp_kses( $html, self::allowed() );
 
 		// Служебные маркеры редактора в словарь попадать не должны.
-		$clean = (string) preg_replace( '/\s*data-mlp-[\w-]+="[^"]*"/', '', $clean );
+		$clean = (string) preg_replace( '/\s*data-lingocanvas-[\w-]+="[^"]*"/', '', $clean );
 		$clean = (string) preg_replace( '/\s*class="mlp-marker"/', '', $clean );
 
 		return trim( (string) preg_replace( '/\s+/u', ' ', $clean ) );

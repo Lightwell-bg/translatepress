@@ -2,12 +2,12 @@
 /**
  * Контекст запроса на перевод.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -8,8 +8,7 @@
  *    well-formed chat.completions body: the user message is a JSON object id => source text,
  *    the reply content is a JSON object with the same ids and "MOCK-EN: <source>" values.
  *    No network access happens.
- * 3. Counts calls of the deprecated filter alias mlp_sitemap_post_ids and of its replacement
- *    lingocanvas_sitemap_post_ids (one line per call in /out/hook-old.txt and /out/hook-new.txt).
+ * 3. Counts calls of the filter lingocanvas_sitemap_post_ids (one line per call in /out/hook-new.txt).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,12 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const LINGOCANVAS_SMOKE_FAKE_KEY = 'sk-smoke-FAKEKEY-9f8e7d6c5b4a';
 
-if ( ! defined( 'WP_MLP_OPENAI_API_KEY' ) ) {
-	define( 'WP_MLP_OPENAI_API_KEY', LINGOCANVAS_SMOKE_FAKE_KEY );
+if ( ! defined( 'LINGOCANVAS_OPENAI_API_KEY' ) ) {
+	define( 'LINGOCANVAS_OPENAI_API_KEY', LINGOCANVAS_SMOKE_FAKE_KEY );
 }
 
-if ( ! defined( 'WP_MLP_OPENAI_MODEL' ) ) {
-	define( 'WP_MLP_OPENAI_MODEL', 'smoke-model' );
+if ( ! defined( 'LINGOCANVAS_OPENAI_MODEL' ) ) {
+	define( 'LINGOCANVAS_OPENAI_MODEL', 'smoke-model' );
 }
 
 add_filter(
@@ -85,15 +84,6 @@ add_filter(
 	},
 	10,
 	3
-);
-
-add_filter(
-	'mlp_sitemap_post_ids',
-	static function ( $ids ) {
-		file_put_contents( '/out/hook-old.txt', "1\n", FILE_APPEND );
-
-		return $ids;
-	}
 );
 
 add_filter(

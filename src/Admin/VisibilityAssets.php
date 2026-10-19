@@ -2,15 +2,15 @@
 /**
  * Скрипт и стили переключателей «показывать на сайте» в админке.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Rest\PostVisibilityController;
-use WpMlp\Support\Assets;
+use LingoCanvas\Rest\PostVisibilityController;
+use LingoCanvas\Support\Assets;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 final class VisibilityAssets {
 
 	/** Имя скрипта и стиля. */
-	public const HANDLE = 'wp-mlp-post-visibility';
+	public const HANDLE = 'lingocanvas-post-visibility';
 
 	/**
 	 * Подключает скрипт и стиль переключателей.
@@ -44,7 +44,7 @@ final class VisibilityAssets {
 		);
 		wp_localize_script(
 			self::HANDLE,
-			'mlpVisibility',
+			'lingocanvasVisibility',
 			array(
 				'url'   => esc_url_raw( rest_url( PostVisibilityController::NAMESPACE . '/posts/visibility' ) ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),

@@ -2,27 +2,27 @@
 /**
  * Тесты translation blocks.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\BlockSanitizer;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\Hash;
+use LingoCanvas\Rendering\BlockSanitizer;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\Hash;
 
 #[CoversClass( BlockSanitizer::class )]
 #[CoversClass( Extractor::class )]
 final class BlockTest extends TestCase {
 
 	public function testSanitizerStripsEditorMarkers(): void {
-		$clean = BlockSanitizer::sanitize( '<span data-mlp-source-id="12" class="mlp-marker">Привет</span> <b>мир</b>' );
+		$clean = BlockSanitizer::sanitize( '<span data-lingocanvas-source-id="12" class="mlp-marker">Привет</span> <b>мир</b>' );
 
 		$this->assertStringNotContainsString( 'data-mlp', $clean );
 		$this->assertStringNotContainsString( 'mlp-marker', $clean );
@@ -58,7 +58,7 @@ final class BlockTest extends TestCase {
 
 		( new Extractor() )->extract( $document, 'ru', array(), true );
 
-		$this->assertStringContainsString( 'data-mlp-block="1"', $document->html() );
+		$this->assertStringContainsString( 'data-lingocanvas-block="1"', $document->html() );
 	}
 
 	/**
@@ -73,7 +73,7 @@ final class BlockTest extends TestCase {
 
 		( new Extractor() )->extract( $document, 'ru', array(), true );
 
-		$this->assertStringNotContainsString( 'data-mlp-block', $document->html() );
+		$this->assertStringNotContainsString( 'data-lingocanvas-block', $document->html() );
 	}
 
 	/**

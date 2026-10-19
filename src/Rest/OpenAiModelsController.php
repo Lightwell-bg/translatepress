@@ -2,24 +2,24 @@
 /**
  * REST-список моделей OpenAI для выпадающего списка на странице настроек.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rest;
+namespace LingoCanvas\Rest;
 
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-use WpMlp\Support\Hookable;
-use WpMlp\Translation\OpenAiProvider;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Translation\OpenAiProvider;
+use LingoCanvas\Translation\ProviderFactory;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `GET /wp-json/mlp/v1/openai/models[?refresh=1]`.
+ * `GET /wp-json/lingocanvas/v1/openai/models[?refresh=1]`.
  *
  * Сервер сам идёт в `GET {адрес API}/models` с сохранённым ключом: ключ не
  * покидает сервер и не попадает ни в ответ, ни в лог. Удачный список кешируется
@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class OpenAiModelsController implements Hookable {
 
-	public const NAMESPACE  = 'mlp/v1';
+	public const NAMESPACE  = 'lingocanvas/v1';
 	public const CAPABILITY = 'manage_options';
 	public const CACHE_TTL  = 43200;
 	public const TIMEOUT    = 10;
@@ -107,14 +107,14 @@ final class OpenAiModelsController implements Hookable {
 
 		if ( '' === $key ) {
 			return new WP_Error(
-				'mlp_openai_no_key',
+				'lingocanvas_openai_no_key',
 				__( 'Save the OpenAI key first; the list of models will then appear here.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
 		}
 
 		$base      = rtrim( trim( $this->providers->baseUrl() ), '/' );
-		$cacheKey  = 'mlp_openai_models_' . md5( $base . substr( $key, -8 ) );
+		$cacheKey  = 'lingocanvas_openai_models_' . md5( $base . substr( $key, -8 ) );
 		$refresh   = '' !== (string) $request->get_param( 'refresh' ) && '0' !== (string) $request->get_param( 'refresh' );
 		$cached    = $refresh ? false : get_transient( $cacheKey );
 
@@ -215,6 +215,6 @@ final class OpenAiModelsController implements Hookable {
 		$message = (string) OpenAiProvider::maskKey( $message, $key );
 		$message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 300 ) : substr( $message, 0, 300 );
 
-		return new WP_Error( 'mlp_openai_models', $message, array( 'status' => 400 ) );
+		return new WP_Error( 'lingocanvas_openai_models', $message, array( 'status' => 400 ) );
 	}
 }

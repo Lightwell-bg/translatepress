@@ -2,12 +2,12 @@
 /**
  * Служебные gettext-строки, которые не являются переводом.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * язык, — но владельцу сайта в списке «переведите интерфейс» они не нужны
  * и только прячут за собой настоящие строки.
  *
- * {@see \WpMlp\Support\Text::isTranslatable()} их не ловит: там правило
+ * {@see \LingoCanvas\Support\Text::isTranslatable()} их не ловит: там правило
  * «есть ли хоть одна буква», а в `'tain't,'twere,'twas…` буквы есть.
  * Отличает их не содержимое, а КОНТЕКСТ — ядро в нём прямо пишет, что это
  * список или символ, а не фраза.

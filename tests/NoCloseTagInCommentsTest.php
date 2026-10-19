@@ -5,12 +5,12 @@
  * `// ... ?> ...` завершает PHP-режим, и остаток файла выводится как HTML
  * (так лёг живой сайт из-за главного файла плагина).
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests;
+namespace LingoCanvas\Tests;
 
 use PHPUnit\Framework\TestCase;
 

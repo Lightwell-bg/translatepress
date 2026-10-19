@@ -2,14 +2,14 @@
 /**
  * Провайдер перевода через OpenAI-совместимый API.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
-use WpMlp\Support\Hash;
+use LingoCanvas\Support\Hash;
 
 defined( 'ABSPATH' ) || exit;
 

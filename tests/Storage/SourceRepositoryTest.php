@@ -2,17 +2,17 @@
 /**
  * Тесты чистой логики SourceRepository.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\SourceRepository;
+use LingoCanvas\Storage\SourceRepository;
 
 #[CoversClass( SourceRepository::class )]
 final class SourceRepositoryTest extends TestCase {

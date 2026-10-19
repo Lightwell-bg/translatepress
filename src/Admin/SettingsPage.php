@@ -2,28 +2,28 @@
 /**
  * Админ-страница «Языки».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Frontend\Flags;
-use WpMlp\Rest\OpenAiModelsController;
-use WpMlp\Frontend\Sitemap;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Settings\SwitcherDisplay;
-use WpMlp\Rest\PostVisibilityController;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Support\Assets;
-use WpMlp\Support\Env;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Frontend\Flags;
+use LingoCanvas\Rest\OpenAiModelsController;
+use LingoCanvas\Frontend\Sitemap;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Settings\SwitcherDisplay;
+use LingoCanvas\Rest\PostVisibilityController;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Support\Assets;
+use LingoCanvas\Support\Env;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
+use LingoCanvas\Translation\ProviderFactory;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -32,9 +32,9 @@ defined( 'ABSPATH' ) || exit;
  */
 final class SettingsPage implements Hookable {
 
-	public const MENU_SLUG   = 'wp-mlp';
+	public const MENU_SLUG   = 'lingocanvas';
 	public const CAPABILITY  = 'manage_options';
-	public const ACTION_SAVE = 'mlp_save_settings';
+	public const ACTION_SAVE = 'lingocanvas_save_settings';
 
 	/**
 	 * Имя submit-кнопки «Скачать языковой пакет»; её значение — локаль.
@@ -45,7 +45,7 @@ final class SettingsPage implements Hookable {
 	 * для неё пакет. Отдельным действием пришлось бы либо дублировать всё
 	 * это, либо качать пакет для старого, ещё не сохранённого значения.
 	 */
-	private const FIELD_DOWNLOAD_PACK = 'mlp_download_pack';
+	private const FIELD_DOWNLOAD_PACK = 'lingocanvas_download_pack';
 
 	/**
 	 * @param Settings      $settings Настройки плагина.
@@ -173,21 +173,21 @@ final class SettingsPage implements Hookable {
 		}
 
 		wp_enqueue_style(
-			'wp-mlp-settings',
+			'lingocanvas-settings',
 			Assets::url( 'assets/settings.css' ),
 			array(),
 			Assets::version( 'assets/settings.css' )
 		);
 		wp_enqueue_script(
-			'wp-mlp-settings',
+			'lingocanvas-settings',
 			Assets::url( 'assets/settings.js' ),
 			array(),
 			Assets::version( 'assets/settings.js' ),
 			true
 		);
 		wp_localize_script(
-			'wp-mlp-settings',
-			'mlpSettings',
+			'lingocanvas-settings',
+			'lingocanvasSettings',
 			array(
 				'modelsUrl' => esc_url_raw( rest_url( OpenAiModelsController::NAMESPACE . '/openai/models' ) ),
 				'enableUrl' => esc_url_raw( rest_url( PostVisibilityController::NAMESPACE . '/posts/visibility/enable-translated' ) ),
@@ -253,6 +253,111 @@ final class SettingsPage implements Hookable {
 	}
 
 	/**
+	 * Поля формы настроек, которые читаются как одна строка (см. postedInput()).
+	 */
+	private const TEXT_FIELDS = array(
+		'default_locale',
+		'switcher_display',
+		'discover_strings',
+		'discover_from_visitors',
+		'delete_data_on_uninstall',
+		'openai_daily_char_limit',
+		'openai_api_key',
+		'openai_api_key_clear',
+		'openai_model',
+		self::FIELD_DOWNLOAD_PACK,
+	);
+
+	/**
+	 * Ключи строки таблицы языков, которые понимает Settings::sanitize() и handleFlagFiles().
+	 */
+	private const LANGUAGE_ROW_FIELDS = array( 'locale', 'slug', 'label', 'flag', 'wp_locale', 'status', 'delete', 'flag_remove' );
+
+	/**
+	 * Собирает из $_POST только те поля, которые читают Settings::sanitize(), handleFlagFiles()
+	 * и кнопка скачивания языкового пакета. Чужие ключи отбрасываются, значения очищаются
+	 * в момент чтения; Settings::sanitize() остаётся вторым слоем защиты.
+	 *
+	 * Вызывать только после проверки прав и nonce (handleSave()).
+	 *
+	 * @return array<string, mixed> Данные без слешей в форме, которую ждёт Settings::sanitize().
+	 */
+	public function postedInput(): array {
+		$input = array();
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce проверен в handleSave() до вызова; значения очищаются в той же строке чтения (массив языков — через map_deep() + sanitize_text_field).
+		foreach ( self::TEXT_FIELDS as $field ) {
+			if ( isset( $_POST[ $field ] ) && is_scalar( $_POST[ $field ] ) ) {
+				$input[ $field ] = sanitize_text_field( wp_unslash( (string) $_POST[ $field ] ) );
+			}
+		}
+
+		if ( isset( $_POST['untranslated_posts_mode'] ) && is_scalar( $_POST['untranslated_posts_mode'] ) ) {
+			$input['untranslated_posts_mode'] = sanitize_key( wp_unslash( (string) $_POST['untranslated_posts_mode'] ) );
+		}
+
+		if ( isset( $_POST['openai_base_url'] ) && is_scalar( $_POST['openai_base_url'] ) ) {
+			$input['openai_base_url'] = esc_url_raw( trim( wp_unslash( (string) $_POST['openai_base_url'] ) ) );
+		}
+
+		/*
+		 * Слаги для карты сайта вводят по одному на строку. Процентное кодирование
+		 * (так выглядит кириллический адрес, скопированный из адресной строки)
+		 * sanitize_textarea_field() вырезает целиком, поэтому оно декодируется заранее;
+		 * Settings::sanitize() снова кодирует слаг через sanitize_title() так же, как
+		 * ядро делает это для post_name.
+		 */
+		if ( isset( $_POST['sitemap_excluded_slugs'] ) && is_scalar( $_POST['sitemap_excluded_slugs'] ) ) {
+			$input['sitemap_excluded_slugs'] = sanitize_textarea_field( rawurldecode( wp_unslash( (string) $_POST['sitemap_excluded_slugs'] ) ) );
+		}
+
+		if ( isset( $_POST['languages'] ) && is_array( $_POST['languages'] ) ) {
+			$input['languages'] = $this->postedLanguages( map_deep( wp_unslash( $_POST['languages'] ), 'sanitize_text_field' ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		return $input;
+	}
+
+	/**
+	 * Оставляет в таблице языков только известные поля строк. Номера строк сохраняются:
+	 * по ним handleFlagFiles() находит файл `flag_file_<номер>`.
+	 *
+	 * @param mixed $rows Уже очищенный через sanitize_text_field() массив строк.
+	 * @return array<int|string, array<string, string>>
+	 */
+	private function postedLanguages( mixed $rows ): array {
+		$clean = array();
+
+		foreach ( is_array( $rows ) ? $rows : array() as $index => $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$key = is_int( $index ) ? $index : sanitize_key( (string) $index );
+
+			if ( '' === $key ) {
+				continue;
+			}
+
+			foreach ( self::LANGUAGE_ROW_FIELDS as $field ) {
+				if ( ! isset( $row[ $field ] ) || ! is_scalar( $row[ $field ] ) ) {
+					continue;
+				}
+
+				$value = (string) $row[ $field ];
+
+				$clean[ $key ][ $field ] = 'status' === $field ? sanitize_key( $value ) : $value;
+			}
+
+			// Строка без известных полей всё равно строка: номер нужен для flag_file_<номер>.
+			$clean[ $key ] ??= array();
+		}
+
+		return $clean;
+	}
+
+	/**
 	 * Принимает форму настроек.
 	 */
 	public function handleSave(): void {
@@ -262,9 +367,8 @@ final class SettingsPage implements Hookable {
 
 		check_admin_referer( self::ACTION_SAVE );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce проверен выше (check_admin_referer); каждое поле санируется в Settings::sanitize().
-		$input  = wp_unslash( $_POST );
-		$result = $this->settings->sanitize( is_array( $input ) ? $input : array() );
+		$input  = $this->postedInput();
+		$result = $this->settings->sanitize( $input );
 
 		$modeBefore = $this->settings->untranslatedPostsMode();
 
@@ -284,7 +388,7 @@ final class SettingsPage implements Hookable {
 		 * языка, а его могли ввести или поправить прямо сейчас, этой же
 		 * отправкой формы.
 		 */
-		$flagErrors = $this->handleFlagFiles( is_array( $input ) ? $input : array() );
+		$flagErrors = $this->handleFlagFiles( $input );
 
 		// Слаги языков входят в rewrite-правила — их нужно пересобрать.
 		flush_rewrite_rules();
@@ -297,20 +401,19 @@ final class SettingsPage implements Hookable {
 		 * Пакет качается уже ПОСЛЕ сохранения: локаль могли ввести прямо
 		 * сейчас, в этой же отправке формы, и качать нужно именно её.
 		 */
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
 		$requestedPack = isset( $input[ self::FIELD_DOWNLOAD_PACK ] )
 			? Locale::sanitizeWpLocale( (string) $input[ self::FIELD_DOWNLOAD_PACK ] )
 			: '';
 
 		if ( '' !== $requestedPack ) {
-			$query['mlp-pack'] = $this->packs->install( $requestedPack ) ? 'ok' : 'failed';
+			$query['lingocanvas-pack'] = $this->packs->install( $requestedPack ) ? 'ok' : 'failed';
 		}
 
 		if ( array() === $result['errors'] ) {
-			$query['mlp-updated'] = '1';
+			$query['lingocanvas-updated'] = '1';
 		} else {
-			set_transient( 'mlp_settings_errors_' . get_current_user_id(), $result['errors'], MINUTE_IN_SECONDS );
-			$query['mlp-errors'] = '1';
+			set_transient( 'lingocanvas_settings_errors_' . get_current_user_id(), $result['errors'], MINUTE_IN_SECONDS );
+			$query['lingocanvas-errors'] = '1';
 		}
 
 		wp_safe_redirect( add_query_arg( $query, admin_url( 'admin.php' ) ) );
@@ -699,17 +802,17 @@ final class SettingsPage implements Hookable {
 				);
 
 			case ProviderFactory::SOURCE_CONTENT_ENV:
-				$html = $plain( __( 'The key is read from wp-content/wp-mlp.env.php and survives plugin updates.', 'lingocanvas' ) );
+				$html = $plain( __( 'The key is read from wp-content/lingocanvas.env.php and survives plugin updates.', 'lingocanvas' ) );
 				break;
 
 			case ProviderFactory::SOURCE_PARENT_ENV:
-				$html = $plain( __( 'The key is read from a wp-mlp.env file above the WordPress root and survives plugin updates.', 'lingocanvas' ) );
+				$html = $plain( __( 'The key is read from a lingocanvas.env file above the WordPress root and survives plugin updates.', 'lingocanvas' ) );
 				break;
 
 			case ProviderFactory::SOURCE_PLUGIN_ENV:
 				$html = sprintf(
 					'<div class="notice notice-warning inline"><p>%s</p></div>',
-					esc_html__( 'The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/wp-mlp.env.php.', 'lingocanvas' )
+					esc_html__( 'The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/lingocanvas.env.php.', 'lingocanvas' )
 				);
 				break;
 
@@ -725,7 +828,7 @@ final class SettingsPage implements Hookable {
 		if ( array() !== Env::unguardedFiles() ) {
 			$html .= sprintf(
 				'<div class="notice notice-error inline"><p>%s</p></div>',
-				esc_html__( 'The wp-mlp.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>', 'lingocanvas' )
+				esc_html__( 'The lingocanvas.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>', 'lingocanvas' )
 			);
 		}
 
@@ -852,7 +955,7 @@ final class SettingsPage implements Hookable {
 					 * браузер показал новую картинку, а не ту же из кэша:
 					 * имя файла при замене не меняется.
 					 */
-					$version = (string) @filemtime( Flags::directoryPath() . '/' . Flags::fileName( $language->locale ) );
+					$version = (string) @filemtime( Flags::filePath( $language->locale ) );
 					?>
 					<img class="mlp-flag-preview" src="<?php echo esc_url( add_query_arg( 'v', $version, $flagUrl ) ); ?>"
 						alt="" width="24" height="18">
@@ -975,15 +1078,15 @@ final class SettingsPage implements Hookable {
 	 */
 	private function renderNotices(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- только чтение флагов из URL.
-		if ( isset( $_GET['mlp-updated'] ) ) {
+		if ( isset( $_GET['lingocanvas-updated'] ) ) {
 			printf(
 				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
 				esc_html__( 'Settings saved.', 'lingocanvas' )
 			);
 		}
 
-		if ( isset( $_GET['mlp-pack'] ) ) {
-			$installed = 'ok' === sanitize_text_field( wp_unslash( (string) $_GET['mlp-pack'] ) );
+		if ( isset( $_GET['lingocanvas-pack'] ) ) {
+			$installed = 'ok' === sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas-pack'] ) );
 
 			printf(
 				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
@@ -996,12 +1099,12 @@ final class SettingsPage implements Hookable {
 			);
 		}
 
-		if ( ! isset( $_GET['mlp-errors'] ) ) {
+		if ( ! isset( $_GET['lingocanvas-errors'] ) ) {
 			return;
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		$key    = 'mlp_settings_errors_' . get_current_user_id();
+		$key    = 'lingocanvas_settings_errors_' . get_current_user_id();
 		$errors = get_transient( $key );
 		delete_transient( $key );
 

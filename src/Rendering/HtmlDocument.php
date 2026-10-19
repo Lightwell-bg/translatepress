@@ -2,12 +2,12 @@
 /**
  * Обёртка над HTML-парсером.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
 // Псевдоним обязателен: имена классов в PHP регистронезависимы, и импорт
 // Dom\HTMLDocument столкнулся бы с именем этого класса.

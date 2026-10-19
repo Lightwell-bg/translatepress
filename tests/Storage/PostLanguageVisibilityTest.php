@@ -2,20 +2,20 @@
 /**
  * Тесты ручного включения записей на дополнительных языках.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\PostStringScope;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\PostStringScope;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 #[CoversClass( PostLanguageVisibility::class )]
 #[CoversClass( PostStringScope::class )]
@@ -28,12 +28,12 @@ final class PostLanguageVisibilityTest extends TestCase {
 		$this->db        = new FakeWpdb();
 		$GLOBALS['wpdb'] = $this->db;
 
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_actions( null, true );
-		unset( $GLOBALS['wp_mlp_test_meta_primed'] );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_actions( null, true );
+		unset( $GLOBALS['lingocanvas_test_meta_primed'] );
 
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				'posts' => array(
 					10 => new \WP_Post( array( 'ID' => 10, 'post_type' => 'page' ) ),
@@ -46,10 +46,10 @@ final class PostLanguageVisibilityTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['wpdb'], $GLOBALS['wp_mlp_test_meta_primed'] );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
+		unset( $GLOBALS['wpdb'], $GLOBALS['lingocanvas_test_meta_primed'] );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function service(): PostLanguageVisibility {
@@ -57,15 +57,15 @@ final class PostLanguageVisibilityTest extends TestCase {
 	}
 
 	public function testMetaKeyIsBuiltFromSanitizedLocale(): void {
-		$this->assertSame( '_mlp_visible_de', PostLanguageVisibility::metaKey( 'de' ) );
-		$this->assertSame( '_mlp_visible_pt_br', PostLanguageVisibility::metaKey( 'pt-BR' ) );
-		$this->assertSame( '_mlp_visible_pt_br', PostLanguageVisibility::metaKey( ' pt_br ' ) );
+		$this->assertSame( '_lingocanvas_visible_de', PostLanguageVisibility::metaKey( 'de' ) );
+		$this->assertSame( '_lingocanvas_visible_pt_br', PostLanguageVisibility::metaKey( 'pt-BR' ) );
+		$this->assertSame( '_lingocanvas_visible_pt_br', PostLanguageVisibility::metaKey( ' pt_br ' ) );
 
 		// Цифры остаются (es-419), всё остальное, кроме букв и подчёркивания, выпадает: кавычкам в имени метаполя не место.
-		$this->assertSame( '_mlp_visible_es_419', PostLanguageVisibility::metaKey( 'es-419' ) );
-		$this->assertSame( '_mlp_visible_zh_hans', PostLanguageVisibility::metaKey( 'zh-Hans' ) );
-		$this->assertSame( '_mlp_visible_dedrop', PostLanguageVisibility::metaKey( "de';DROP" ) );
-		$this->assertSame( '_mlp_visible_123', PostLanguageVisibility::metaKey( '123' ) );
+		$this->assertSame( '_lingocanvas_visible_es_419', PostLanguageVisibility::metaKey( 'es-419' ) );
+		$this->assertSame( '_lingocanvas_visible_zh_hans', PostLanguageVisibility::metaKey( 'zh-Hans' ) );
+		$this->assertSame( '_lingocanvas_visible_dedrop', PostLanguageVisibility::metaKey( "de';DROP" ) );
+		$this->assertSame( '_lingocanvas_visible_123', PostLanguageVisibility::metaKey( '123' ) );
 		$this->assertSame( '', PostLanguageVisibility::metaKey( '' ) );
 		$this->assertSame( '', PostLanguageVisibility::metaKey( "';!" ) );
 	}
@@ -73,7 +73,9 @@ final class PostLanguageVisibilityTest extends TestCase {
 	public function testMetaPrefixMatchesUninstallPattern(): void {
 		$uninstall = (string) file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' );
 
-		$this->assertStringContainsString( PostLanguageVisibility::META_PREFIX, $uninstall );
+		// uninstall.php удаляет метаполя по тому же префиксу.
+		$this->assertSame( '_lingocanvas_visible_', PostLanguageVisibility::metaPrefix() );
+		$this->assertStringContainsString( "'_lingocanvas_visible_'", $uninstall );
 		$this->assertStringContainsString( 'esc_like', $uninstall );
 	}
 
@@ -88,19 +90,19 @@ final class PostLanguageVisibilityTest extends TestCase {
 		$this->assertFalse( $service->isVisible( 11, 'en' ) );
 
 		// Хранится как ключ-на-язык, чтобы выбирать через EXISTS.
-		$this->assertSame( '1', wp_mlp_test_postmeta()[10]['_mlp_visible_en'] );
+		$this->assertSame( '1', lingocanvas_test_postmeta()[10]['_lingocanvas_visible_en'] );
 
 		$this->assertTrue( $service->set( 10, 'en', false ) );
 		$this->assertFalse( $service->isVisible( 10, 'en' ) );
-		$this->assertArrayNotHasKey( '_mlp_visible_en', wp_mlp_test_postmeta()[10] );
+		$this->assertArrayNotHasKey( '_lingocanvas_visible_en', lingocanvas_test_postmeta()[10] );
 	}
 
 	public function testSettingSameStateChangesNothingAndDoesNotFlush(): void {
 		$service = $this->service();
 
 		$this->assertFalse( $service->set( 10, 'en', false ) );
-		$this->assertSame( array(), wp_mlp_test_actions(), 'Без изменений кэш страниц не сбрасывается.' );
-		$this->assertSame( array(), wp_mlp_test_options() );
+		$this->assertSame( array(), lingocanvas_test_actions(), 'Без изменений кэш страниц не сбрасывается.' );
+		$this->assertSame( array(), lingocanvas_test_options() );
 
 		$service->set( 10, 'en', true );
 
@@ -112,8 +114,8 @@ final class PostLanguageVisibilityTest extends TestCase {
 
 		$service->setMany( array( 10, 11, 10 ), 'en', true );
 
-		$this->assertSame( 1, array_count_values( wp_mlp_test_actions() )['lingocanvas_purge_page_cache'] ?? 0 );
-		$this->assertSame( 2, wp_mlp_test_options()[ TranslationCache::OPTION_VERSION ], 'Версия кэша выросла — карта сайта пересоберётся.' );
+		$this->assertSame( 1, array_count_values( lingocanvas_test_actions() )['lingocanvas_purge_page_cache'] ?? 0 );
+		$this->assertSame( 2, lingocanvas_test_options()[ TranslationCache::versionOption() ], 'Версия кэша выросла — карта сайта пересоберётся.' );
 	}
 
 	public function testSetManyCountsOnlyRealChangesAndSkipsGarbage(): void {
@@ -130,8 +132,8 @@ final class PostLanguageVisibilityTest extends TestCase {
 		$states = $service->states( array( 10, 11, 12 ), 'en' );
 
 		$this->assertSame( array( 10 => false, 11 => false, 12 => false ), $states );
-		$this->assertCount( 1, $GLOBALS['wp_mlp_test_meta_primed'] );
-		$this->assertSame( array( 'post', array( 10, 11, 12 ) ), $GLOBALS['wp_mlp_test_meta_primed'][0] );
+		$this->assertCount( 1, $GLOBALS['lingocanvas_test_meta_primed'] );
+		$this->assertSame( array( 'post', array( 10, 11, 12 ) ), $GLOBALS['lingocanvas_test_meta_primed'][0] );
 	}
 
 	public function testVisibleAmongKeepsOnlyEnabled(): void {
@@ -146,7 +148,7 @@ final class PostLanguageVisibilityTest extends TestCase {
 		$this->db->var = '7';
 
 		$this->assertSame( 7, $this->service()->count( 'pt-br' ) );
-		$this->assertStringContainsString( "meta_key = '_mlp_visible_pt_br'", $this->db->queries[0] );
+		$this->assertStringContainsString( "meta_key = '_lingocanvas_visible_pt_br'", $this->db->queries[0] );
 		$this->assertSame( 0, $this->service()->count( "';!" ) );
 	}
 
@@ -225,7 +227,7 @@ final class PostLanguageVisibilityTest extends TestCase {
 		$sql = $this->db->queries[0];
 
 		$this->assertStringContainsString( "t.target_locale = 'en'", $sql );
-		$this->assertStringContainsString( 'FROM ( SELECT DISTINCT o.object_id, o.source_id FROM wp_mlp_occurrences o', $sql );
+		$this->assertStringContainsString( 'FROM ( SELECT DISTINCT o.object_id, o.source_id FROM wp_lingocanvas_occurrences o', $sql );
 		$this->assertStringContainsString( "t.translated_text IS NOT NULL AND t.translated_text <> ''", $sql );
 		$this->assertStringContainsString( 'HAVING SUM(', $sql );
 		$this->assertStringContainsString( '= COUNT(*)', $sql );
@@ -267,11 +269,11 @@ final class PostLanguageVisibilityTest extends TestCase {
 
 	public function testColumnAndBulkEnableShareOneDefinition(): void {
 		$this->assertSame(
-			\WpMlp\Admin\PostListLanguages::notLinkSql( 'a.source_id' ),
+			\LingoCanvas\Admin\PostListLanguages::notLinkSql( 'a.source_id' ),
 			PostStringScope::notLinkSql( 'a.source_id' )
 		);
 		$this->assertSame(
-			\WpMlp\Admin\PostListLanguages::isSeoSql( 'o.source_id' ),
+			\LingoCanvas\Admin\PostListLanguages::isSeoSql( 'o.source_id' ),
 			PostStringScope::isSeoSql( 'o.source_id' )
 		);
 	}

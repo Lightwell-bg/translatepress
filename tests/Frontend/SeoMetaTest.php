@@ -2,28 +2,28 @@
 /**
  * Тесты правки SEO-метатегов под текущий язык.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\SeoMeta;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Frontend\SeoMeta;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( SeoMeta::class )]
 final class SeoMetaTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
@@ -38,7 +38,7 @@ final class SeoMetaTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 		unset( $_SERVER['REQUEST_URI'] );
 	}
 
@@ -49,7 +49,7 @@ final class SeoMetaTest extends TestCase {
 		return new SeoMeta( $settings, $resolver, new UrlConverter( $settings, $resolver ) );
 	}
 
-	private function target(): \WpMlp\Settings\Language {
+	private function target(): \LingoCanvas\Settings\Language {
 		return ( new Settings() )->get( 'en' );
 	}
 

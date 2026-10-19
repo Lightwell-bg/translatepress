@@ -2,20 +2,20 @@
 /**
  * Тесты отбора адресов ссылок для словаря.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\LinkTarget;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\LinkTarget;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( LinkTarget::class )]
 final class LinkTargetTest extends TestCase {
@@ -116,17 +116,17 @@ final class LinkTargetTest extends TestCase {
 	public static function editorArgs(): array {
 		return array(
 			'all three' => array(
-				'https://centerai.eu/blog/en/page/2/?mlp_editor=1&mlp_nonce=f5b3290520&mlp_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO',
+				'https://centerai.eu/blog/en/page/2/?lingocanvas_editor=1&lingocanvas_nonce=f5b3290520&lingocanvas_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO',
 				'https://centerai.eu/blog/en/page/2/',
 			),
-			'only editor args, no dangling ?' => array( '/page/2/?mlp_editor=1&mlp_nonce=x', '/page/2/' ),
-			'other args kept' => array( '/s/?q=a&mlp_editor=1&page=2&mlp_nonce=x', '/s/?q=a&page=2' ),
-			'fragment kept' => array( '/p/?mlp_editor=1#comments', '/p/#comments' ),
-			'fragment and other args' => array( '/p/?a=1&mlp_channel=zz#top', '/p/?a=1#top' ),
-			'relative url' => array( 'page/2/?mlp_nonce=abc', 'page/2/' ),
+			'only editor args, no dangling ?' => array( '/page/2/?lingocanvas_editor=1&lingocanvas_nonce=x', '/page/2/' ),
+			'other args kept' => array( '/s/?q=a&lingocanvas_editor=1&page=2&lingocanvas_nonce=x', '/s/?q=a&page=2' ),
+			'fragment kept' => array( '/p/?lingocanvas_editor=1#comments', '/p/#comments' ),
+			'fragment and other args' => array( '/p/?a=1&lingocanvas_channel=zz#top', '/p/?a=1#top' ),
+			'relative url' => array( 'page/2/?lingocanvas_nonce=abc', 'page/2/' ),
 			'untouched without editor args' => array( '/p/?q=a%20b&x=', '/p/?q=a%20b&x=' ),
-			'similar name is not stripped' => array( '/p/?mlp_editor_x=1', '/p/?mlp_editor_x=1' ),
-			'question mark inside fragment' => array( '/p/#a?mlp_editor=1', '/p/#a?mlp_editor=1' ),
+			'similar name is not stripped' => array( '/p/?lingocanvas_editor_x=1', '/p/?lingocanvas_editor_x=1' ),
+			'question mark inside fragment' => array( '/p/#a?lingocanvas_editor=1', '/p/#a?lingocanvas_editor=1' ),
 		);
 	}
 
@@ -141,8 +141,8 @@ final class LinkTargetTest extends TestCase {
 	 */
 	public function testHrefThatBecomesEmptyIsNotCollected(): void {
 		$segments = $this->segments(
-			'<!DOCTYPE html><html><body><a href="?mlp_editor=1&mlp_nonce=x">Наверх</a>'
-			. '<a href="?mlp_editor=1#top">Якорь</a></body></html>'
+			'<!DOCTYPE html><html><body><a href="?lingocanvas_editor=1&lingocanvas_nonce=x">Наверх</a>'
+			. '<a href="?lingocanvas_editor=1#top">Якорь</a></body></html>'
 		);
 
 		foreach ( $segments as $segment ) {
@@ -156,7 +156,7 @@ final class LinkTargetTest extends TestCase {
 	 * навигация внутри предпросмотра потеряла бы режим редактора.
 	 */
 	public function testPreviewPaginationHrefIsCollectedWithoutEditorArgs(): void {
-		$html     = '<!DOCTYPE html><html><body><a href="https://centerai.eu/blog/en/page/2/?mlp_editor=1&amp;mlp_nonce=f5b3290520&amp;mlp_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO">2</a></body></html>';
+		$html     = '<!DOCTYPE html><html><body><a href="https://centerai.eu/blog/en/page/2/?lingocanvas_editor=1&amp;lingocanvas_nonce=f5b3290520&amp;lingocanvas_channel=ue1lpPg628Wr0bB9xo1UsLFQ1a4tdTMO">2</a></body></html>';
 		$document = HtmlDocument::parse( $html );
 
 		$this->assertNotNull( $document );
@@ -168,7 +168,7 @@ final class LinkTargetTest extends TestCase {
 
 		$this->assertCount( 1, $hrefs );
 		$this->assertSame( 'https://centerai.eu/blog/en/page/2/', $hrefs[0]->text );
-		$this->assertStringContainsString( 'mlp_editor=1', $document->html() );
+		$this->assertStringContainsString( 'lingocanvas_editor=1', $document->html() );
 	}
 
 	/**
@@ -260,8 +260,8 @@ final class LinkTargetTest extends TestCase {
 		$this->assertNotNull( $document );
 
 		$paragraph = $document->document()->getElementsByTagName( 'p' )->item( 0 );
-		$blockHash = \WpMlp\Support\Hash::of(
-			\WpMlp\Rendering\BlockSanitizer::sanitize( $document->innerHtml( $paragraph ) )
+		$blockHash = \LingoCanvas\Support\Hash::of(
+			\LingoCanvas\Rendering\BlockSanitizer::sanitize( $document->innerHtml( $paragraph ) )
 		);
 
 		$segments = ( new Extractor() )->extract( $document, 'ru', array( $blockHash => true ) );

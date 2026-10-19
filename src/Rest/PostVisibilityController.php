@@ -2,31 +2,31 @@
 /**
  * REST: ручное включение записей на дополнительных языках.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rest;
+namespace LingoCanvas\Rest;
 
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Два маршрута для экрана управления видимостью записей:
  *
- * - `POST /wp-json/mlp/v1/posts/visibility` — тело `{ids: [int…], locale, visible: bool}`.
+ * - `POST /wp-json/lingocanvas/v1/posts/visibility` — тело `{ids: [int…], locale, visible: bool}`.
  *   Включает или выключает записи на языке. Право: `edit_post` на КАЖДУЮ
  *   запись из списка; если не хватает хотя бы на одну, отклоняется весь
  *   запрос целиком (ничего не применяется частично). Не более 200 записей.
- * - `POST /wp-json/mlp/v1/posts/visibility/enable-translated` — тело
+ * - `POST /wp-json/lingocanvas/v1/posts/visibility/enable-translated` — тело
  *   `{locale}`. Включает все записи, переведённые полностью. Право:
  *   `manage_options`.
  *
@@ -36,7 +36,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class PostVisibilityController implements Hookable {
 
-	public const NAMESPACE  = 'mlp/v1';
+	public const NAMESPACE  = 'lingocanvas/v1';
 	public const CAPABILITY = 'manage_options';
 
 	/**
@@ -134,7 +134,7 @@ final class PostVisibilityController implements Hookable {
 
 		if ( null === $ids ) {
 			return new WP_Error(
-				'mlp_invalid_ids',
+				'lingocanvas_invalid_ids',
 				/* translators: %d: maximum number of posts per request */
 				sprintf( /* translators: %d: maximum number of ids */ __( 'Pass an ids list: from 1 to %d positive integers.', 'lingocanvas' ), self::MAX_IDS ),
 				array( 'status' => 400 )
@@ -150,13 +150,13 @@ final class PostVisibilityController implements Hookable {
 		$visible = self::parseBool( $request->get_param( 'visible' ) );
 
 		if ( null === $visible ) {
-			return new WP_Error( 'mlp_invalid_visible', __( 'The visible parameter must be true or false.', 'lingocanvas' ), array( 'status' => 400 ) );
+			return new WP_Error( 'lingocanvas_invalid_visible', __( 'The visible parameter must be true or false.', 'lingocanvas' ), array( 'status' => 400 ) );
 		}
 
 		foreach ( $ids as $id ) {
 			if ( ! $this->visibility->isEligiblePost( $id ) ) {
 				return new WP_Error(
-					'mlp_invalid_post',
+					'lingocanvas_invalid_post',
 					/* translators: %d: post ID */
 					sprintf( /* translators: %d: post ID */ __( 'Post %d was not found or its type cannot be enabled for a language.', 'lingocanvas' ), $id ),
 					array( 'status' => 400 )
@@ -283,6 +283,6 @@ final class PostVisibilityController implements Hookable {
 	 * Ошибка «язык не настроен».
 	 */
 	private function unknownLocale(): WP_Error {
-		return new WP_Error( 'mlp_unknown_locale', __( 'This secondary language is not in the settings.', 'lingocanvas' ), array( 'status' => 400 ) );
+		return new WP_Error( 'lingocanvas_unknown_locale', __( 'This secondary language is not in the settings.', 'lingocanvas' ), array( 'status' => 400 ) );
 	}
 }

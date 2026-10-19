@@ -2,21 +2,21 @@
 /**
  * Тесты перевода заголовка ссылки на RSS-фид комментариев записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\CommentsFeedTitle;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Text;
+use LingoCanvas\Frontend\CommentsFeedTitle;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Text;
 
 #[CoversClass( CommentsFeedTitle::class )]
 final class CommentsFeedTitleTest extends TestCase {

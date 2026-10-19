@@ -2,12 +2,12 @@
 /**
  * Что переключатель языков показывает посетителю.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Settings;
+namespace LingoCanvas\Settings;
 
 defined( 'ABSPATH' ) || exit;
 

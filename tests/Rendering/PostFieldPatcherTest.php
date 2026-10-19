@@ -2,18 +2,18 @@
 /**
  * Тесты подстановки переводов в сырое поле записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\PostContentExtractor;
-use WpMlp\Rendering\PostFieldPatcher;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\PostContentExtractor;
+use LingoCanvas\Rendering\PostFieldPatcher;
 
 #[CoversClass( PostFieldPatcher::class )]
 final class PostFieldPatcherTest extends TestCase {

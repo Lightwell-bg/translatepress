@@ -2,18 +2,18 @@
 /**
  * Языковой префикс для ссылок, не построенных через home_url().
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Rendering\DocumentFilter;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
+use LingoCanvas\Rendering\DocumentFilter;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -56,7 +56,7 @@ final class InternalLinks implements DocumentFilter {
 	 * Атрибут служебный и до разметки не доходит — Translator снимает его
 	 * сразу после пост-обработчиков.
 	 */
-	public const TRANSLATED_ATTRIBUTE = 'data-mlp-translated-href';
+	public const TRANSLATED_ATTRIBUTE = 'data-lingocanvas-translated-href';
 
 	/**
 	 * @param UrlConverter $urls Построение языковых адресов.

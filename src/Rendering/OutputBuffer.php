@@ -2,17 +2,17 @@
 /**
  * Перехват готового HTML страницы.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
 use Throwable;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Support\FrontendRequest;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Support\FrontendRequest;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,8 +22,18 @@ defined( 'ABSPATH' ) || exit;
  * Буфер ставится на раннем `init`: к этому моменту тема ещё ничего не вывела,
  * но настройки и язык запроса уже известны. Перевод через `the_content` не
  * подошёл бы — он не покрывает меню, шапку, подвал, виджеты и формы.
+ *
+ * Закрывается буфер явно и парно: на `shutdown` с приоритетом 0 (раньше
+ * `wp_ob_end_flush_all()` ядра с приоритетом 1) вызывается `finish()`, который
+ * сбрасывает буферы, открытые поверх нашего, и затем сам наш буфер. Если наш
+ * буфер к этому моменту уже закрыт кем-то другим, ничего не делается.
  */
 final class OutputBuffer implements Hookable {
+
+	/**
+	 * Уровень вложенности нашего буфера сразу после ob_start(); 0 — не открыт.
+	 */
+	private int $level = 0;
 
 	/**
 	 * @param LanguageResolver $resolver   Язык текущего запроса.
@@ -40,6 +50,8 @@ final class OutputBuffer implements Hookable {
 	 */
 	public function register(): void {
 		add_action( 'init', array( $this, 'start' ), 1 );
+		// Приоритет 0: раньше wp_ob_end_flush_all() ядра (shutdown, приоритет 1).
+		add_action( 'shutdown', array( $this, 'finish' ), 0 );
 	}
 
 	/**
@@ -50,7 +62,57 @@ final class OutputBuffer implements Hookable {
 			return;
 		}
 
+		$this->open();
+	}
+
+	/**
+	 * Открывает буфер и запоминает его уровень.
+	 */
+	private function open(): void {
+		if ( 0 !== $this->level ) {
+			return;
+		}
+
 		ob_start( array( $this, 'process' ) );
+
+		$this->level = ob_get_level();
+	}
+
+	/**
+	 * Закрывает наш буфер, отдавая обработанный ответ.
+	 *
+	 * Сначала сбрасываются буферы, открытые поверх нашего, затем он сам.
+	 * Если наш буфер уже закрыт (или на его месте чужой), ничего не делается.
+	 * Повторный вызов безопасен.
+	 */
+	public function finish(): void {
+		$level = $this->level;
+
+		if ( $level <= 0 ) {
+			return;
+		}
+
+		$this->level = 0;
+
+		if ( ob_get_level() < $level ) {
+			return;
+		}
+
+		$handlers = ob_list_handlers();
+
+		if ( ( $handlers[ $level - 1 ] ?? '' ) !== self::class . '::process' ) {
+			return;
+		}
+
+		while ( ob_get_level() > $level ) {
+			if ( ! ob_end_flush() ) {
+				break;
+			}
+		}
+
+		if ( ob_get_level() === $level ) {
+			ob_end_flush();
+		}
 	}
 
 	/**

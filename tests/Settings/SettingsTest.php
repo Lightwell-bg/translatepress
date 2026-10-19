@@ -2,28 +2,28 @@
 /**
  * Тесты разбора и очистки настроек.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Settings;
+namespace LingoCanvas\Tests\Settings;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( Settings::class )]
 #[CoversClass( Language::class )]
 final class SettingsTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options( array( Settings::OPTION => Settings::defaults() ) );
+		lingocanvas_test_options( array( Settings::optionName() => Settings::defaults() ) );
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 	}
 
 	public function testDefaultLanguageIsFoundByItsFlagNotByPosition(): void {
@@ -45,7 +45,7 @@ final class SettingsTest extends TestCase {
 			'ru' => $raw['languages']['ru'],
 		);
 
-		wp_mlp_test_options( array( Settings::OPTION => $raw ) );
+		lingocanvas_test_options( array( Settings::optionName() => $raw ) );
 
 		$settings = new Settings();
 
@@ -103,7 +103,7 @@ final class SettingsTest extends TestCase {
 	public function testDraftLanguageIsNotPublished(): void {
 		$raw                                    = Settings::defaults();
 		$raw['languages']['en']['status']       = Language::STATUS_DRAFT;
-		wp_mlp_test_options( array( Settings::OPTION => $raw ) );
+		lingocanvas_test_options( array( Settings::optionName() => $raw ) );
 
 		$settings = new Settings();
 
@@ -118,7 +118,7 @@ final class SettingsTest extends TestCase {
 	public function testFreshInstallDefaultsToManualMode(): void {
 		$this->assertSame( Settings::POSTS_MANUAL, Settings::defaults()['untranslated_posts_mode'] );
 
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 
 		$settings = new Settings();
 
@@ -133,9 +133,9 @@ final class SettingsTest extends TestCase {
 	 */
 	public function testSiteWithOldCheckboxMigratesToShowAll(): void {
 		foreach ( array( true, false ) as $old ) {
-			wp_mlp_test_options(
+			lingocanvas_test_options(
 				array(
-					Settings::OPTION => array(
+					Settings::optionName() => array(
 						'default_locale'          => 'ru',
 						'hide_untranslated_posts' => $old,
 					),
@@ -150,14 +150,14 @@ final class SettingsTest extends TestCase {
 	}
 
 	public function testStoredModeIsRespected(): void {
-		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'manual' ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => array( 'untranslated_posts_mode' => 'manual' ) ) );
 		$this->assertSame( Settings::POSTS_MANUAL, ( new Settings() )->untranslatedPostsMode() );
 
-		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'all' ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => array( 'untranslated_posts_mode' => 'all' ) ) );
 		$this->assertSame( Settings::POSTS_ALL, ( new Settings() )->untranslatedPostsMode() );
 
 		// Повреждённое значение — безопасное «показывать все», а не опустошённый язык.
-		wp_mlp_test_options( array( Settings::OPTION => array( 'untranslated_posts_mode' => 'bogus' ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => array( 'untranslated_posts_mode' => 'bogus' ) ) );
 		$this->assertSame( Settings::POSTS_ALL, ( new Settings() )->untranslatedPostsMode() );
 	}
 
@@ -229,9 +229,9 @@ final class SettingsTest extends TestCase {
 	 * причём молча.
 	 */
 	public function testLanguageWithoutStoredWpLocaleDerivesItFromTheCode(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						// Ровно то, что лежит в БД у существующих установок:
@@ -255,9 +255,9 @@ final class SettingsTest extends TestCase {
 	 * руками (например `en_GB` вместо угаданного `en_US`).
 	 */
 	public function testStoredWpLocaleWinsOverTheDerivedDefault(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
@@ -356,7 +356,7 @@ final class SettingsTest extends TestCase {
 	public function testBlankApiKeyFieldKeepsExistingKey(): void {
 		$stored                     = Settings::defaults();
 		$stored['openai_api_key']   = 'sk-existing';
-		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+		lingocanvas_test_options( array( Settings::optionName() => $stored ) );
 
 		$settings = new Settings();
 
@@ -374,7 +374,7 @@ final class SettingsTest extends TestCase {
 	public function testNonEmptyApiKeyFieldReplacesExistingKey(): void {
 		$stored                   = Settings::defaults();
 		$stored['openai_api_key'] = 'sk-old';
-		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+		lingocanvas_test_options( array( Settings::optionName() => $stored ) );
 
 		$settings = new Settings();
 
@@ -392,7 +392,7 @@ final class SettingsTest extends TestCase {
 	public function testExplicitClearCheckboxWipesTheKeyEvenIfFieldIsBlank(): void {
 		$stored                   = Settings::defaults();
 		$stored['openai_api_key'] = 'sk-existing';
-		wp_mlp_test_options( array( Settings::OPTION => $stored ) );
+		lingocanvas_test_options( array( Settings::optionName() => $stored ) );
 
 		$settings = new Settings();
 
@@ -611,6 +611,25 @@ final class SettingsTest extends TestCase {
 		$this->assertSame( array( 'oformlenie-zakaza' ), $result['settings']['sitemap_excluded_slugs'] );
 	}
 
+	public function testSanitizeSlugsCleansMarkupDuplicatesAndLongEntries(): void {
+		$settings = new Settings();
+
+		$tooLong = str_repeat( 'a', Settings::SITEMAP_SLUG_MAX_LENGTH + 1 );
+		$result  = $this->sanitizeWithSlugsField( $settings, "<b>Cart</b>\ncart\nCheckout Page\n{$tooLong}\n!!!\n%d0%bf" );
+
+		$this->assertSame( array( 'cart', 'checkout-page', '%d0%bf' ), $result['settings']['sitemap_excluded_slugs'] );
+	}
+
+	public function testSanitizeSlugsAreCappedInNumber(): void {
+		$settings = new Settings();
+
+		$lines  = array_map( static fn( int $i ): string => 'page-' . $i, range( 1, Settings::SITEMAP_SLUGS_MAX + 50 ) );
+		$result = $this->sanitizeWithSlugsField( $settings, implode( "\n", $lines ) );
+
+		$this->assertCount( Settings::SITEMAP_SLUGS_MAX, $result['settings']['sitemap_excluded_slugs'] );
+		$this->assertSame( 'page-1', $result['settings']['sitemap_excluded_slugs'][0] );
+	}
+
 	public function testSanitizeEmptySlugsFieldGivesEmptyList(): void {
 		$settings = new Settings();
 
@@ -625,9 +644,9 @@ final class SettingsTest extends TestCase {
 	 * каждом чтении.
 	 */
 	public function testSitemapExcludedSlugsGetterReadsStoredValue(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array_merge(
+				Settings::optionName() => array_merge(
 					Settings::defaults(),
 					array( 'sitemap_excluded_slugs' => array( 'oformlenie-zakaza', 'net-dostupa' ) )
 				),

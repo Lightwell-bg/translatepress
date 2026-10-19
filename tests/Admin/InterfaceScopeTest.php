@@ -2,19 +2,19 @@
 /**
  * Тесты вкладок «Перевода строк» и статуса gettext-строки.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\InterfaceStringsScreen;
-use WpMlp\Admin\StringTranslationPage;
-use WpMlp\I18n\DomainLabel;
-use WpMlp\Storage\TranslationStatus;
+use LingoCanvas\Admin\InterfaceStringsScreen;
+use LingoCanvas\Admin\StringTranslationPage;
+use LingoCanvas\I18n\DomainLabel;
+use LingoCanvas\Storage\TranslationStatus;
 
 #[CoversClass( StringTranslationPage::class )]
 #[CoversClass( InterfaceStringsScreen::class )]
@@ -35,7 +35,7 @@ final class InterfaceScopeTest extends TestCase {
 		$this->assertSame( StringTranslationPage::TAB_CONTENT, StringTranslationPage::parseTab( '' ) );
 		$this->assertSame( StringTranslationPage::TAB_CONTENT, StringTranslationPage::parseTab( 'INTERFACE' ) );
 		$this->assertSame( StringTranslationPage::TAB_CONTENT, StringTranslationPage::parseTab( 'gettext' ) );
-		$this->assertSame( StringTranslationPage::TAB_CONTENT, StringTranslationPage::parseTab( "interface'; DROP TABLE wp_mlp_sources" ) );
+		$this->assertSame( StringTranslationPage::TAB_CONTENT, StringTranslationPage::parseTab( "interface'; DROP TABLE wp_lingocanvas_sources" ) );
 	}
 
 	/**

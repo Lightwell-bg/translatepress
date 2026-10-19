@@ -2,16 +2,16 @@
 /**
  * Тесты разбивки строк на чанки для провайдера перевода.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Translation;
+namespace LingoCanvas\Tests\Translation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Translation\BatchChunker;
+use LingoCanvas\Translation\BatchChunker;
 
 #[CoversClass( BatchChunker::class )]
 final class BatchChunkerTest extends TestCase {

@@ -2,18 +2,18 @@
 /**
  * Тесты REST-списка моделей OpenAI.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rest;
+namespace LingoCanvas\Tests\Rest;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rest\OpenAiModelsController;
-use WpMlp\Settings\Settings;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Rest\OpenAiModelsController;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Translation\ProviderFactory;
 
 #[CoversClass( OpenAiModelsController::class )]
 final class OpenAiModelsControllerTest extends TestCase {
@@ -21,21 +21,21 @@ final class OpenAiModelsControllerTest extends TestCase {
 	private const KEY = 'sk-test-secret-key-12345678';
 
 	protected function setUp(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_http( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_http( array() );
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_http( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_http( array() );
 	}
 
 	private function controller( string $key = self::KEY, string $base = '' ): OpenAiModelsController {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'openai_api_key'  => $key,
 					'openai_base_url' => $base,
 				),
@@ -61,10 +61,10 @@ final class OpenAiModelsControllerTest extends TestCase {
 	public function testRequiresManageOptions(): void {
 		$controller = $this->controller();
 
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => false ) ) );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => false ) ) );
 		$this->assertFalse( $controller->canManage() );
 
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => true ) ) );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => true ) ) );
 		$this->assertTrue( $controller->canManage() );
 	}
 
@@ -72,14 +72,14 @@ final class OpenAiModelsControllerTest extends TestCase {
 		$result = $this->controller( '' )->models( new \WP_REST_Request() );
 
 		$this->assertInstanceOf( \WP_Error::class, $result );
-		$this->assertSame( 'mlp_openai_no_key', $result->get_error_code() );
+		$this->assertSame( 'lingocanvas_openai_no_key', $result->get_error_code() );
 		$this->assertStringContainsString( 'key', $result->get_error_message() );
 		$this->assertSame( array( 'status' => 400 ), $result->get_error_data() );
-		$this->assertSame( array(), wp_mlp_test_http()['calls'] );
+		$this->assertSame( array(), lingocanvas_test_http()['calls'] );
 	}
 
 	public function testFiltersAndSortsNewestFirst(): void {
-		wp_mlp_test_http_set(
+		lingocanvas_test_http_set(
 			'response',
 			$this->ok(
 				array(
@@ -113,11 +113,11 @@ final class OpenAiModelsControllerTest extends TestCase {
 	}
 
 	public function testRequestUsesBaseUrlKeyAndTimeout(): void {
-		wp_mlp_test_http_set( 'response', $this->ok( array() ) );
+		lingocanvas_test_http_set( 'response', $this->ok( array() ) );
 
 		$this->controller( self::KEY, 'https://gateway.test/v1/' )->models( new \WP_REST_Request() );
 
-		$call = wp_mlp_test_http()['calls'][0];
+		$call = lingocanvas_test_http()['calls'][0];
 
 		$this->assertSame( 'https://gateway.test/v1/models', $call[0] );
 		$this->assertSame( 'Bearer ' . self::KEY, $call[1]['headers']['Authorization'] );
@@ -125,20 +125,20 @@ final class OpenAiModelsControllerTest extends TestCase {
 	}
 
 	public function testSuccessIsCachedAndRefreshBypassesCache(): void {
-		wp_mlp_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-a', 'created' => 1 ) ) ) );
+		lingocanvas_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-a', 'created' => 1 ) ) ) );
 		$controller = $this->controller();
 
 		$controller->models( new \WP_REST_Request() );
 		$second = $controller->models( new \WP_REST_Request() );
 
-		$this->assertCount( 1, wp_mlp_test_http()['calls'] );
-		$this->assertSame( OpenAiModelsController::CACHE_TTL, wp_mlp_test_http()['transient_ttl'] );
+		$this->assertCount( 1, lingocanvas_test_http()['calls'] );
+		$this->assertSame( OpenAiModelsController::CACHE_TTL, lingocanvas_test_http()['transient_ttl'] );
 		$this->assertSame( 'gpt-a', $second->get_data()[0]['id'] );
 
-		wp_mlp_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-b', 'created' => 2 ) ) ) );
+		lingocanvas_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-b', 'created' => 2 ) ) ) );
 		$fresh = $controller->models( new \WP_REST_Request( array( 'refresh' => '1' ) ) );
 
-		$this->assertCount( 2, wp_mlp_test_http()['calls'] );
+		$this->assertCount( 2, lingocanvas_test_http()['calls'] );
 		$this->assertSame( 'gpt-b', $fresh->get_data()[0]['id'] );
 
 		$again = $controller->models( new \WP_REST_Request() );
@@ -146,21 +146,21 @@ final class OpenAiModelsControllerTest extends TestCase {
 	}
 
 	public function testCacheKeyDependsOnBaseUrlAndKeyTail(): void {
-		wp_mlp_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-a', 'created' => 1 ) ) ) );
+		lingocanvas_test_http_set( 'response', $this->ok( array( array( 'id' => 'gpt-a', 'created' => 1 ) ) ) );
 
 		$this->controller( self::KEY, '' )->models( new \WP_REST_Request() );
 		$this->controller( self::KEY, 'https://other.test/v1' )->models( new \WP_REST_Request() );
 
-		$this->assertCount( 2, wp_mlp_test_http()['calls'] );
-		$this->assertCount( 2, wp_mlp_test_http()['transients'] );
+		$this->assertCount( 2, lingocanvas_test_http()['calls'] );
+		$this->assertCount( 2, lingocanvas_test_http()['transients'] );
 
-		foreach ( array_keys( wp_mlp_test_http()['transients'] ) as $name ) {
+		foreach ( array_keys( lingocanvas_test_http()['transients'] ) as $name ) {
 			$this->assertStringNotContainsString( self::KEY, $name );
 		}
 	}
 
 	public function testNetworkErrorGivesWpErrorWithoutKey(): void {
-		wp_mlp_test_http_set( 'response', new \WP_Error( 'http_request_failed', 'cURL error 28 for Bearer ' . self::KEY ) );
+		lingocanvas_test_http_set( 'response', new \WP_Error( 'http_request_failed', 'cURL error 28 for Bearer ' . self::KEY ) );
 
 		$result = $this->controller()->models( new \WP_REST_Request() );
 
@@ -168,11 +168,11 @@ final class OpenAiModelsControllerTest extends TestCase {
 		$this->assertSame( array( 'status' => 400 ), $result->get_error_data() );
 		$this->assertStringContainsString( 'cURL error 28', $result->get_error_message() );
 		$this->assertStringNotContainsString( self::KEY, $result->get_error_message() );
-		$this->assertSame( array(), wp_mlp_test_http()['transients'] );
+		$this->assertSame( array(), lingocanvas_test_http()['transients'] );
 	}
 
 	public function testHttpErrorShowsApiMessageAndIsNotCached(): void {
-		wp_mlp_test_http_set(
+		lingocanvas_test_http_set(
 			'response',
 			array(
 				'response' => array( 'code' => 401 ),
@@ -186,11 +186,11 @@ final class OpenAiModelsControllerTest extends TestCase {
 		$this->assertStringContainsString( 'HTTP 401', $result->get_error_message() );
 		$this->assertStringContainsString( 'Incorrect API key', $result->get_error_message() );
 		$this->assertStringNotContainsString( self::KEY, $result->get_error_message() );
-		$this->assertSame( array(), wp_mlp_test_http()['transients'] );
+		$this->assertSame( array(), lingocanvas_test_http()['transients'] );
 	}
 
 	public function testUnexpectedBodyGivesError(): void {
-		wp_mlp_test_http_set( 'response', array( 'response' => array( 'code' => 200 ), 'body' => '<html>' ) );
+		lingocanvas_test_http_set( 'response', array( 'response' => array( 'code' => 200 ), 'body' => '<html>' ) );
 
 		$result = $this->controller()->models( new \WP_REST_Request() );
 

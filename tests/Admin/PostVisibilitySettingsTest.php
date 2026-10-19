@@ -3,26 +3,26 @@
  * Тесты экрана настроек (режим показа записей, счётчики по языкам) и
  * переключателя показа в визуальном редакторе.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorPage;
-use WpMlp\Admin\SettingsPage;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Admin\EditorPage;
+use LingoCanvas\Admin\SettingsPage;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Translation\ProviderFactory;
 
 #[CoversClass( SettingsPage::class )]
 #[CoversClass( EditorPage::class )]
@@ -33,9 +33,9 @@ final class PostVisibilitySettingsTest extends TestCase {
 	protected function setUp(): void {
 		$this->db        = new FakeWpdb();
 		$GLOBALS['wpdb'] = $this->db;
-		wp_mlp_test_postmeta( array() );
+		lingocanvas_test_postmeta( array() );
 		$this->configure( Settings::POSTS_MANUAL );
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				'posts' => array(
 					10 => new \WP_Post( array( 'ID' => 10, 'post_type' => 'page', 'post_status' => 'publish', 'post_name' => 'about' ) ),
@@ -47,16 +47,16 @@ final class PostVisibilitySettingsTest extends TestCase {
 
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'] );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -178,15 +178,15 @@ final class PostVisibilitySettingsTest extends TestCase {
 		$this->assertSame( '', $this->editorBlock( 10 ), 'Режим «все».' );
 
 		$this->configure( Settings::POSTS_MANUAL );
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'edit_post' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'edit_post' => false ) ) ) );
 		$this->assertSame( '', $this->editorBlock( 10 ), 'Нет права править запись.' );
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 		$this->assertSame( '', $this->editorBlock( 10 ), 'Нет права управлять плагином.' );
 	}
 
 	public function testCountsAndBulkButtonNeedManageOptions(): void {
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 
 		$this->assertSame( '', $this->counts( $this->settingsPage() ) );
 	}

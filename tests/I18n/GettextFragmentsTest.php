@@ -2,16 +2,16 @@
 /**
  * Тесты разбора gettext-строки на куски будущих текстовых узлов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\I18n;
+namespace LingoCanvas\Tests\I18n;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\I18n\GettextFragments;
+use LingoCanvas\I18n\GettextFragments;
 
 #[CoversClass( GettextFragments::class )]
 final class GettextFragmentsTest extends TestCase {

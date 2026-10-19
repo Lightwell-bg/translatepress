@@ -2,17 +2,17 @@
 /**
  * Тесты правил перевода структурированных данных.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\JsonLdRules;
+use LingoCanvas\Rendering\JsonLdRules;
 
 #[CoversClass( JsonLdRules::class )]
 final class JsonLdRulesTest extends TestCase {

@@ -2,22 +2,22 @@
 /**
  * Тесты чистой логики маршрутизации.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Routing;
+namespace LingoCanvas\Tests\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\InternalLinks;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\Rewrites;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Frontend\InternalLinks;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\Rewrites;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( LanguageResolver::class )]
 #[CoversClass( UrlConverter::class )]
@@ -422,9 +422,9 @@ final class RoutingTest extends TestCase {
 	 * @return list<string>
 	 */
 	private function localizedHrefs( string $html ): array {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
@@ -453,7 +453,7 @@ final class RoutingTest extends TestCase {
 			$hrefs[] = (string) $link->getAttribute( 'href' );
 		}
 
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 		unset( $_SERVER['REQUEST_URI'] );
 
 		return $hrefs;

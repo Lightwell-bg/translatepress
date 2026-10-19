@@ -2,18 +2,18 @@
 /**
  * Тесты извлечения метатегов соцсетей.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( Extractor::class )]
 final class SocialMetaTest extends TestCase {

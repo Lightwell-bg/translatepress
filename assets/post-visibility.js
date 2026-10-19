@@ -12,7 +12,7 @@
 ( function () {
 	'use strict';
 
-	var config = window.mlpVisibility;
+	var config = window.lingocanvasVisibility;
 
 	if ( ! config || ! config.url ) {
 		return;

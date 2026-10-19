@@ -2,24 +2,24 @@
 /**
  * Тесты ручного показа записей на дополнительных языках (фронтенд).
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\PostVisibilityGate;
-use WpMlp\Rendering\EditorContext;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Frontend\PostVisibilityGate;
+use LingoCanvas\Rendering\EditorContext;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 /**
  * Запрос без БД: достаточно get()/set() и двух условных тегов.
@@ -80,15 +80,15 @@ final class PostVisibilityGateTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['wpdb'] = new FakeWpdb();
 
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_request( array() );
-		unset( $GLOBALS['wp_mlp_test_meta_primed'] );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_request( array() );
+		unset( $GLOBALS['lingocanvas_test_meta_primed'] );
 		$_GET                   = array();
 		$_SERVER['REQUEST_URI'] = '/en/about/';
 
 		$this->configure( Settings::POSTS_MANUAL );
 
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				// Посетитель: права править записи у него нет, поэтому скрытая запись уводит на русскую версию.
 				'caps'  => array( 'edit_post' => false ),
@@ -102,21 +102,20 @@ final class PostVisibilityGateTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['wpdb'], $GLOBALS['wp_mlp_test_meta_primed'], $_SERVER['REQUEST_URI'] );
+		unset( $GLOBALS['wpdb'], $GLOBALS['lingocanvas_test_meta_primed'], $_SERVER['REQUEST_URI'] );
 		$_GET = array();
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_request( array() );
-		wp_mlp_test_filter( 'mlp_visibility_bypass', null );
-		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', null );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_request( array() );
+		lingocanvas_test_filter( 'lingocanvas_visibility_bypass', null );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -158,7 +157,7 @@ final class PostVisibilityGateTest extends TestCase {
 		$this->gate()->filterQuery( $query );
 
 		$this->assertSame(
-			array( PostVisibilityGate::CLAUSE_KEY => array( 'key' => '_mlp_visible_en', 'compare' => 'EXISTS' ) ),
+			array( PostVisibilityGate::CLAUSE_KEY => array( 'key' => '_lingocanvas_visible_en', 'compare' => 'EXISTS' ) ),
 			$this->queryMeta( $query )
 		);
 	}
@@ -168,7 +167,7 @@ final class PostVisibilityGateTest extends TestCase {
 
 		$this->gate()->filterQuery( $query );
 
-		$this->assertSame( '_mlp_visible_en', $this->queryMeta( $query )[ PostVisibilityGate::CLAUSE_KEY ]['key'] );
+		$this->assertSame( '_lingocanvas_visible_en', $this->queryMeta( $query )[ PostVisibilityGate::CLAUSE_KEY ]['key'] );
 	}
 
 	public function testEmptyAndAnyPostTypeAreFiltered(): void {
@@ -264,7 +263,7 @@ final class PostVisibilityGateTest extends TestCase {
 
 	public function testNothingHappensInAdminAjaxOrCron(): void {
 		foreach ( array( 'is_admin', 'ajax', 'cron' ) as $context ) {
-			wp_mlp_test_request( array( $context => true ) );
+			lingocanvas_test_request( array( $context => true ) );
 			$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
 
 			$this->gate()->filterQuery( $query );
@@ -274,7 +273,7 @@ final class PostVisibilityGateTest extends TestCase {
 	}
 
 	public function testNothingHappensBeforeInit(): void {
-		wp_mlp_test_wp( array( 'did_action' => array( 'init' => 0 ) ) + wp_mlp_test_wp() );
+		lingocanvas_test_wp( array( 'did_action' => array( 'init' => 0 ) ) + lingocanvas_test_wp() );
 		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
 
 		$this->gate()->filterQuery( $query );
@@ -306,37 +305,12 @@ final class PostVisibilityGateTest extends TestCase {
 	}
 
 	public function testBypassFilterTurnsRestrictionOff(): void {
-		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', static fn(): bool => true );
+		lingocanvas_test_filter( 'lingocanvas_visibility_bypass', static fn(): bool => true );
 		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
 
 		$this->gate()->filterQuery( $query );
 
 		$this->assertNull( $this->queryMeta( $query ) );
-	}
-
-	/**
-	 * Фильтр со старым именем продолжает работать (обратная совместимость).
-	 */
-	public function testDeprecatedBypassFilterStillTurnsRestrictionOff(): void {
-		wp_mlp_test_filter( 'mlp_visibility_bypass', static fn(): bool => true );
-		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
-
-		$this->gate()->filterQuery( $query );
-
-		$this->assertNull( $this->queryMeta( $query ) );
-	}
-
-	/**
-	 * Старое имя применяется первым, новое получает его результат и может его изменить.
-	 */
-	public function testNewBypassFilterRunsAfterDeprecatedOneAndCanOverrideIt(): void {
-		wp_mlp_test_filter( 'mlp_visibility_bypass', static fn(): bool => true );
-		wp_mlp_test_filter( 'lingocanvas_visibility_bypass', static fn( bool $value ): bool => ! $value );
-		$query = new FakeGateQuery( array( 'post_type' => 'post' ) );
-
-		$this->gate()->filterQuery( $query );
-
-		$this->assertNotNull( $this->queryMeta( $query ) );
 	}
 
 	// --- Редирект одиночной записи ---------------------------------------
@@ -389,12 +363,12 @@ final class PostVisibilityGateTest extends TestCase {
 	// --- Обход редиректа для редактора записи --------------------------------
 
 	private function asEditor( bool $adminBar = true ): void {
-		$store = wp_mlp_test_wp();
+		$store = lingocanvas_test_wp();
 
 		$store['caps']      = array( 'edit_post' => true );
 		$store['admin_bar'] = $adminBar;
 
-		wp_mlp_test_wp( $store );
+		lingocanvas_test_wp( $store );
 	}
 
 	public function testEditorOfHiddenPostIsNotRedirected(): void {
@@ -404,10 +378,10 @@ final class PostVisibilityGateTest extends TestCase {
 	}
 
 	public function testEditorRightIsPerPost(): void {
-		$store                      = wp_mlp_test_wp();
+		$store                      = lingocanvas_test_wp();
 		$store['caps']              = array( 'edit_post' => false, 'edit_post:10' => true );
 		$store['admin_bar']         = true;
-		wp_mlp_test_wp( $store );
+		lingocanvas_test_wp( $store );
 
 		$this->assertNull( $this->gate()->redirectTarget( 10 ) );
 		$this->assertSame( 'https://example.test/about/', $this->gate()->redirectTarget( 11 ) );
@@ -433,7 +407,7 @@ final class PostVisibilityGateTest extends TestCase {
 
 		// Обход касается только страницы самой записи: списки и меню фильтруются как у посетителя.
 		$this->assertSame(
-			array( PostVisibilityGate::CLAUSE_KEY => array( 'key' => '_mlp_visible_en', 'compare' => 'EXISTS' ) ),
+			array( PostVisibilityGate::CLAUSE_KEY => array( 'key' => '_lingocanvas_visible_en', 'compare' => 'EXISTS' ) ),
 			$this->queryMeta( $query )
 		);
 		$this->assertTrue( $this->gate()->isEnforced() );
@@ -496,8 +470,8 @@ final class PostVisibilityGateTest extends TestCase {
 
 		$this->gate()->filterMenuItems( $items );
 
-		$this->assertCount( 1, $GLOBALS['wp_mlp_test_meta_primed'] );
-		$this->assertSame( array( 10, 11 ), $GLOBALS['wp_mlp_test_meta_primed'][0][1] );
+		$this->assertCount( 1, $GLOBALS['lingocanvas_test_meta_primed'] );
+		$this->assertSame( array( 10, 11 ), $GLOBALS['lingocanvas_test_meta_primed'][0][1] );
 	}
 
 	public function testMenuUntouchedInModeAllOrOnDefaultLanguage(): void {
@@ -572,8 +546,8 @@ final class PostVisibilityGateTest extends TestCase {
 		$gate->filterNavigationBlock( '<li>a</li>', $block );
 		$gate->filterNavigationBlock( '<li>b</li>', $block );
 
-		$this->assertCount( 1, $GLOBALS['wp_mlp_test_meta_primed'] );
-		$this->assertSame( array( 11 ), $GLOBALS['wp_mlp_test_meta_primed'][0][1] );
+		$this->assertCount( 1, $GLOBALS['lingocanvas_test_meta_primed'] );
+		$this->assertSame( array( 11 ), $GLOBALS['lingocanvas_test_meta_primed'][0][1] );
 	}
 
 	// --- Комментарии ---------------------------------------------------------------
@@ -586,9 +560,9 @@ final class PostVisibilityGateTest extends TestCase {
 		$this->assertStringStartsWith( "comment_approved = '1' AND ( NOT EXISTS", $where );
 		$this->assertStringContainsString( 'wp_comments.comment_post_ID', $where );
 		// Не трогаем комментарии к записям неподходящих типов: условие только по подходящим.
-		$this->assertStringContainsString( "mlp_cp.post_type IN ('post','page')", $where );
+		$this->assertStringContainsString( "lingocanvas_cp.post_type IN ('post','page')", $where );
 		$this->assertStringNotContainsString( 'attachment', $where );
-		$this->assertStringContainsString( "mlp_cm.meta_key = '_mlp_visible_en'", $where );
+		$this->assertStringContainsString( "lingocanvas_cm.meta_key = '_lingocanvas_visible_en'", $where );
 	}
 
 	public function testCommentsClausesWithEmptyWhere(): void {
@@ -609,10 +583,10 @@ final class PostVisibilityGateTest extends TestCase {
 		$this->assertSame( $clauses, $this->gate()->filterCommentsClauses( $clauses, $query ), 'Язык по умолчанию.' );
 
 		$_SERVER['REQUEST_URI'] = '/en/about/';
-		wp_mlp_test_request( array( 'is_admin' => true ) );
+		lingocanvas_test_request( array( 'is_admin' => true ) );
 		$this->assertSame( $clauses, $this->gate()->filterCommentsClauses( $clauses, $query ), 'Админка.' );
 
-		wp_mlp_test_request( array() );
+		lingocanvas_test_request( array() );
 		$_GET[ EditorContext::QUERY_FLAG ]  = '1';
 		$_GET[ EditorContext::QUERY_NONCE ] = wp_create_nonce( EditorContext::NONCE_ACTION );
 		$this->assertSame( $clauses, $this->gate()->filterCommentsClauses( $clauses, $query ), 'Предпросмотр редактора.' );
@@ -654,7 +628,7 @@ final class PostVisibilityGateTest extends TestCase {
 		$where = $this->gate()->filterAdjacentWhere( "WHERE p.post_date < 'x'", false, '', 'category', $post );
 
 		$this->assertStringStartsWith( "WHERE p.post_date < 'x' AND EXISTS", $where );
-		$this->assertStringContainsString( "mlp_pm.post_id = p.ID AND mlp_pm.meta_key = '_mlp_visible_en'", $where );
+		$this->assertStringContainsString( "lingocanvas_pm.post_id = p.ID AND lingocanvas_pm.meta_key = '_lingocanvas_visible_en'", $where );
 	}
 
 	public function testAdjacentPostWhereUntouchedWhenNotEnforcedOrForOtherTypes(): void {

@@ -1,5 +1,5 @@
 {
-    "name": "wp-mlp/wp-multilang-press",
+    "name": "lingocanvas/lingocanvas",
     "description": "LingoCanvas: WordPress multilingual plugin with one post, a URL per language and string translations stored in dedicated tables",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
@@ -11,12 +11,12 @@
     },
     "autoload": {
         "psr-4": {
-            "WpMlp\\": "src/"
+            "LingoCanvas\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "WpMlp\\Tests\\": "tests/"
+            "LingoCanvas\\Tests\\": "tests/"
         }
     },
     "scripts": {

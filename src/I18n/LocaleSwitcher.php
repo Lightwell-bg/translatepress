@@ -2,17 +2,17 @@
 /**
  * Подмена локали WordPress на дополнительных языках.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Language;
-use WpMlp\Support\FrontendRequest;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Support\FrontendRequest;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 

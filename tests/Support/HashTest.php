@@ -2,16 +2,16 @@
 /**
  * Тесты хеширования строк.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\Hash;
+use LingoCanvas\Support\Hash;
 
 #[CoversClass( Hash::class )]
 final class HashTest extends TestCase {

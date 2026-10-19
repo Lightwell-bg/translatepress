@@ -2,17 +2,18 @@
 /**
  * Удаление данных плагина.
  *
- * По умолчанию не делает ничего: переводы — результат ручной работы, и
- * потерять их из-за случайного удаления плагина нельзя (критерий приёмки 16).
- * Таблицы удаляются, только если владелец сайта явно включил галочку
- * «Удалить все переводы» на странице настроек.
+ * По умолчанию данные пользователя не трогаются: переводы — результат ручной
+ * работы, и потерять их из-за случайного удаления плагина нельзя (критерий
+ * приёмки 16). Таблицы, опции, мета и папка флагов удаляются, только если
+ * владелец сайта явно включил галочку «Удалить все переводы» на странице
+ * настроек. Служебные опции (без данных пользователя) убираются всегда.
  *
  * Схема БД привязана к префиксу сайта ($wpdb->prefix), а настройки и флаг
  * согласия хранятся в опциях сайта, поэтому в мультисайте проход делается
  * по каждому сайту отдельно: удаляются данные только тех сайтов, где
  * владелец дал согласие.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
@@ -22,151 +23,152 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 /*
- * Имена функций здесь с префиксом lingocanvas_: при удалении обоих плагинов
- * за один запрос выполняются оба uninstall.php, а прежний объявляет свои
- * функции без защиты от повторного объявления. По той же причине класс
- * WpMlp\Storage\Schema этот файл сам не объявляет (см. ниже): прежний
- * uninstall.php, выполненный после нашего, должен суметь объявить его сам.
+ * Классы плагина в uninstall.php не загружены, поэтому все имена здесь
+ * перечислены явно. Список таблиц должен совпадать с
+ * \LingoCanvas\Storage\Schema::TABLES (это проверяет тест).
  */
 
 /**
- * Активен ли прежний плагин «WP Multilang Press» (главный файл wp-mlp.php)
- * на ТЕКУЩЕМ сайте (в мультисайте вызывается после switch_to_blog()).
- *
- * Он пользуется теми же таблицами и опциями, поэтому, пока он активен,
- * данные сайта удалять нельзя. Сравнивается имя главного файла, а не путь целиком.
+ * Удаляет служебные опции прошлых версий. Данных пользователя в них нет,
+ * поэтому они убираются независимо от согласия на удаление данных.
  */
-if ( ! function_exists( 'lingocanvas_uninstall_legacy_plugin_active' ) ) {
-	function lingocanvas_uninstall_legacy_plugin_active(): bool {
-		$active = (array) get_option( 'active_plugins', array() );
+if ( ! function_exists( 'lingocanvas_uninstall_service_options' ) ) {
+	function lingocanvas_uninstall_service_options(): void {
+		global $wpdb;
 
-		if ( is_multisite() ) {
-			$active = array_merge( $active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+		foreach ( array(
+			'lingocanvas_data_prefix',
+			'lingocanvas_migration',
+			'lingocanvas_migration_lock',
+			'lingocanvas_write_freeze',
+			'lingocanvas_prefix_conflicts',
+			'lingocanvas_pending_activation',
+			'lingocanvas_legacy_dir',
+		) as $option ) {
+			delete_option( $option );
 		}
 
-		foreach ( $active as $basename ) {
-			if ( is_string( $basename ) && 'wp-mlp.php' === basename( $basename ) ) {
-				return true;
+		// Версии, курсоры и замки разовых чисток версии 0.4.x.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- служебные опции собственных разовых чисток плагина.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+				$wpdb->esc_like( 'lingocanvas_cleanup_' ) . '%',
+				$wpdb->esc_like( 'lingocanvas_objtype_' ) . '%'
+			)
+		);
+	}
+}
+
+/**
+ * Удаляет таблицы плагина текущего сайта: четыре рабочие и резервные
+ * `{prefix}lingocanvas_bak_*` (если остались от прошлых версий).
+ */
+if ( ! function_exists( 'lingocanvas_uninstall_tables' ) ) {
+	function lingocanvas_uninstall_tables(): void {
+		global $wpdb;
+
+		$tables = array();
+
+		foreach ( array( 'sources', 'translations', 'occurrences', 'routes' ) as $name ) {
+			$tables[] = $wpdb->prefix . 'lingocanvas_' . $name;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- поиск резервных таблиц собственного плагина при деинсталляции.
+		$backups = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix . 'lingocanvas_bak_' ) . '%' ) );
+
+		foreach ( is_array( $backups ) ? $backups : array() as $backup ) {
+			// Имя пришло из БД, но в запрос идёт через %i; чужие имена отсекаем.
+			if ( is_string( $backup ) && 1 === preg_match( '/^[A-Za-z0-9_$]+$/D', $backup ) && str_starts_with( $backup, $wpdb->prefix . 'lingocanvas_bak_' ) ) {
+				$tables[] = $backup;
 			}
 		}
 
-		return false;
+		foreach ( $tables as $table ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- удаление собственных таблиц плагина при деинсталляции.
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		}
 	}
 }
 
 /**
- * Удаляет таблицы плагина текущего сайта.
- *
- * Если класс Schema уже загружен (прежним плагином в этом же запросе), берём
- * его. Иначе таблицы удаляются напрямую по списку ниже, а класс не объявляется.
- * Список должен совпадать с \WpMlp\Storage\Schema::TABLES (это проверяет тест).
+ * Удаляет опции, мета записей и транзиенты плагина текущего сайта.
  */
-if ( ! function_exists( 'lingocanvas_uninstall_drop_tables' ) ) {
-	function lingocanvas_uninstall_drop_tables(): void {
+if ( ! function_exists( 'lingocanvas_uninstall_options_and_meta' ) ) {
+	function lingocanvas_uninstall_options_and_meta(): void {
 		global $wpdb;
 
-		if ( class_exists( 'WpMlp\Storage\Schema', false ) ) {
-			\WpMlp\Storage\Schema::drop();
-
-			return;
+		foreach ( array( 'settings', 'db_version', 'cache_version', 'block_hashes' ) as $suffix ) {
+			delete_option( 'lingocanvas_' . $suffix );
 		}
 
-		foreach ( array( 'sources', 'translations', 'occurrences', 'routes' ) as $name ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- удаление собственных таблиц плагина при деинсталляции.
-			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . 'mlp_' . $name ) );
-		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
 
-		delete_option( 'mlp_db_version' );
+		// Счётчики расхода OpenAI по дням (UsageTracker::optionPrefix()), копии опций
+		// `lingocanvas_bak_<метка>_options` от прошлых версий (рядом с резервными таблицами) и служебные транзиенты.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+				$wpdb->esc_like( 'lingocanvas_usage_' ) . '%',
+				$wpdb->esc_like( 'lingocanvas_bak_' ) . '%',
+				$wpdb->esc_like( '_transient_lingocanvas_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_lingocanvas_' ) . '%'
+			)
+		);
+
+		// Метаполя записей: флаги «запись показывается на языке»
+		// (PostLanguageVisibility::metaPrefix()) и снимки переведённых сегментов
+		// (PostTranslationSnapshot::metaPrefix()).
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
+				$wpdb->esc_like( '_lingocanvas_visible_' ) . '%',
+				$wpdb->esc_like( '_lingocanvas_translated_segments_' ) . '%'
+			)
+		);
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 	}
 }
 
 /**
- * Удаляет данные плагина текущего сайта, если владелец это разрешил.
+ * Удаляет данные плагина текущего сайта.
+ *
+ * Служебные опции убираются всегда. Остальное (таблицы, опции, мета,
+ * транзиенты, папка флагов) — только если владелец включил «Удалить все
+ * переводы». Чужие таблицы, опции и папки (не `lingocanvas_*`) не затрагиваются никогда.
  */
 if ( ! function_exists( 'lingocanvas_uninstall_current_site' ) ) {
 	function lingocanvas_uninstall_current_site(): void {
-		global $wpdb;
+		lingocanvas_uninstall_service_options();
 
-		// Служебные опции перехода не содержат данных пользователя: убираем всегда.
-		delete_option( 'lingocanvas_pending_activation' );
-		delete_option( 'lingocanvas_legacy_dir' );
-
-		// Прежний плагин активен на этом сайте и использует те же данные.
-		if ( lingocanvas_uninstall_legacy_plugin_active() ) {
-			return;
-		}
-
-		$settings = get_option( 'mlp_settings', array() );
+		$settings = get_option( 'lingocanvas_settings', array() );
 
 		if ( ! is_array( $settings ) || empty( $settings['delete_data_on_uninstall'] ) ) {
 			return;
 		}
 
-		lingocanvas_uninstall_drop_tables();
-
-		// Опции с фиксированными именами (mlp_db_version при прямом удалении таблиц убирается там же).
-		$options = array(
-			'mlp_settings',
-			'mlp_db_version',
-			'mlp_cache_version',
-			'mlp_cleanup_version',
-			'mlp_cleanup_cursor',
-			'mlp_cleanup_cursor_v2',
-			'mlp_cleanup_lock',
-			'mlp_objtype_version',
-			'mlp_objtype_cursor',
-			'mlp_objtype_lock',
-			'mlp_block_hashes',
-		);
-
-		foreach ( $options as $option ) {
-			delete_option( $option );
-		}
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery
-
-		// Семейства опций с динамическим именем: счётчики расхода OpenAI по дням
-		// (UsageTracker::OPTION_PREFIX) и служебные транзиенты «страницу уже отметили».
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
-				$wpdb->esc_like( 'mlp_usage_' ) . '%',
-				$wpdb->esc_like( '_transient_mlp_' ) . '%',
-				$wpdb->esc_like( '_transient_timeout_mlp_' ) . '%'
-			)
-		);
-
-		// Метаполя записей: флаги «запись показывается на языке»
-		// (PostLanguageVisibility::META_PREFIX) и снимки переведённых сегментов
-		// (PostTranslationSnapshot::META_PREFIX).
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
-				$wpdb->esc_like( '_mlp_visible_' ) . '%',
-				$wpdb->esc_like( '_mlp_translated_segments_' ) . '%'
-			)
-		);
-
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery
-
-		lingocanvas_uninstall_flags_directory();
+		lingocanvas_uninstall_tables();
+		lingocanvas_uninstall_options_and_meta();
+		lingocanvas_uninstall_flags_directory( 'lingocanvas-flags' );
 	}
 }
 
 /**
- * Удаляет каталог загруженных флагов (Flags::DIRECTORY) из uploads текущего сайта.
+ * Удаляет каталог загруженных флагов из uploads текущего сайта.
+ *
+ * @param string $name Имя каталога (Flags::DIRECTORY).
  */
 if ( ! function_exists( 'lingocanvas_uninstall_flags_directory' ) ) {
-	function lingocanvas_uninstall_flags_directory(): void {
+	function lingocanvas_uninstall_flags_directory( string $name ): void {
 		$uploads = wp_upload_dir( null, false );
 		$base    = (string) ( $uploads['basedir'] ?? '' );
 
-		if ( '' === $base ) {
+		if ( '' === $base || 'lingocanvas-flags' !== $name ) {
 			return;
 		}
 
-		// Имя каталога совпадает с \WpMlp\Frontend\Flags::DIRECTORY.
-		$directory = trailingslashit( $base ) . 'wp-mlp-flags';
+		$directory = trailingslashit( $base ) . $name;
 
 		// Симлинк или не каталог: ничего не трогаем (защита от выхода за пределы uploads).
 		if ( is_link( $directory ) || ! is_dir( $directory ) ) {
@@ -208,15 +210,15 @@ if ( ! function_exists( 'lingocanvas_uninstall_flags_directory' ) ) {
 }
 
 if ( is_multisite() ) {
-	$wp_mlp_site_ids = get_sites(
+	$lingocanvas_site_ids = get_sites(
 		array(
 			'fields' => 'ids',
 			'number' => 0,
 		)
 	);
 
-	foreach ( $wp_mlp_site_ids as $wp_mlp_site_id ) {
-		switch_to_blog( (int) $wp_mlp_site_id );
+	foreach ( $lingocanvas_site_ids as $lingocanvas_site_id ) {
+		switch_to_blog( (int) $lingocanvas_site_id );
 		lingocanvas_uninstall_current_site();
 		restore_current_blog();
 	}

@@ -2,16 +2,16 @@
 /**
  * Тесты выбора сегментов для «Перевести весь материал с ИИ».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Translation;
+namespace LingoCanvas\Tests\Translation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Translation\BulkTranslationMode;
+use LingoCanvas\Translation\BulkTranslationMode;
 
 #[CoversClass( BulkTranslationMode::class )]
 final class BulkTranslationModeTest extends TestCase {

@@ -2,28 +2,28 @@
 /**
  * Тесты подмены локали WordPress.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\I18n;
+namespace LingoCanvas\Tests\I18n;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\I18n\LocaleSwitcher;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\FrontendRequest;
+use LingoCanvas\I18n\LocaleSwitcher;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\FrontendRequest;
 
 #[CoversClass( LocaleSwitcher::class )]
 #[CoversClass( FrontendRequest::class )]
 final class LocaleSwitcherTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published', 'wp_locale' => 'ru_RU' ),
@@ -35,13 +35,13 @@ final class LocaleSwitcherTest extends TestCase {
 			)
 		);
 
-		wp_mlp_test_request( array() );
+		lingocanvas_test_request( array() );
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_request( array() );
 		unset( $_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'] );
 	}
 
@@ -83,7 +83,7 @@ final class LocaleSwitcherTest extends TestCase {
 	 * wp-admin у владельца сайта внезапно станет англоязычным.
 	 */
 	public function testAdminIsNeverSwitched(): void {
-		wp_mlp_test_request( array( 'is_admin' => true ) );
+		lingocanvas_test_request( array( 'is_admin' => true ) );
 
 		$switcher = $this->switcherFor( '/en/about/' );
 
@@ -92,13 +92,13 @@ final class LocaleSwitcherTest extends TestCase {
 	}
 
 	public function testAjaxIsNeverSwitched(): void {
-		wp_mlp_test_request( array( 'ajax' => true ) );
+		lingocanvas_test_request( array( 'ajax' => true ) );
 
 		$this->assertNull( $this->switcherFor( '/en/about/' )->targetLocale() );
 	}
 
 	public function testCronIsNeverSwitched(): void {
-		wp_mlp_test_request( array( 'cron' => true ) );
+		lingocanvas_test_request( array( 'cron' => true ) );
 
 		$this->assertNull( $this->switcherFor( '/en/about/' )->targetLocale() );
 	}
@@ -126,9 +126,9 @@ final class LocaleSwitcherTest extends TestCase {
 	 * значения не найдёт вообще никаких переводов, включая исходные.
 	 */
 	public function testEmptyWordPressLocaleFallsBackToTheSiteLocale(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
@@ -151,9 +151,9 @@ final class LocaleSwitcherTest extends TestCase {
 	 * отдаёт для него язык по умолчанию), значит и локаль не меняется.
 	 */
 	public function testDraftLanguageDoesNotSwitchTheLocale(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published', 'wp_locale' => 'ru_RU' ),

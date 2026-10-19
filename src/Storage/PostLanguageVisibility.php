@@ -2,21 +2,21 @@
 /**
  * Ручной выбор: на каких дополнительных языках запись видна посетителям.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Флаг «запись показывается на языке X» в метаполях записи.
  *
- * Один ключ на язык: `_mlp_visible_<язык>` со значением `1`. Выключенный
+ * Один ключ на язык: `_lingocanvas_visible_<язык>` со значением `1`. Выключенный
  * флаг — не `0`, а отсутствие ключа: так выборку «видна на языке» можно
  * строить через `meta_query` с `EXISTS` (индекс по ключу), а не сравнением
  * значений. Код языка в ключе — только `[a-z0-9_]` (`pt-BR` → `pt_br`,
@@ -38,9 +38,12 @@ defined( 'ABSPATH' ) || exit;
 final class PostLanguageVisibility {
 
 	/**
-	 * Префикс ключа метаполя; на нём же строится удаление при uninstall.
+	 * Префикс ключа метаполя (`_lingocanvas_visible_`); на нём же строится
+	 * удаление при uninstall.
 	 */
-	public const META_PREFIX = '_mlp_visible_';
+	public static function metaPrefix(): string {
+		return '_lingocanvas_visible_';
+	}
 
 	/**
 	 * Значение включённого флага.
@@ -79,7 +82,7 @@ final class PostLanguageVisibility {
 	public static function metaKey( string $locale ): string {
 		$suffix = (string) preg_replace( '/[^a-z0-9_]/', '', str_replace( '-', '_', strtolower( trim( $locale ) ) ) );
 
-		return '' === $suffix ? '' : self::META_PREFIX . $suffix;
+		return '' === $suffix ? '' : self::metaPrefix() . $suffix;
 	}
 
 	/**
@@ -195,7 +198,7 @@ final class PostLanguageVisibility {
 		$typeMarks = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- таблицы через %i, список типов собран из литералов %s; анализатор не считает параметры в array_merge().
-		$count =$wpdb->get_var(
+		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT pm.post_id) FROM %i pm
 				 INNER JOIN %i p ON p.ID = pm.post_id

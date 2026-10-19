@@ -10,21 +10,21 @@
  * текст записи, а разметка, Gutenberg-блоки, ссылки, изображения, классы
  * и инлайн-стили не меняются ни на символ.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\PostContentExtractor;
-use WpMlp\Rendering\PostExtractionResult;
-use WpMlp\Rendering\PostFieldPatcher;
-use WpMlp\Rendering\PostSegment;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\PostContentExtractor;
+use LingoCanvas\Rendering\PostExtractionResult;
+use LingoCanvas\Rendering\PostFieldPatcher;
+use LingoCanvas\Rendering\PostSegment;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( PostContentExtractor::class )]
 #[CoversClass( PostExtractionResult::class )]
@@ -120,7 +120,7 @@ final class PostContentExtractorTest extends TestCase {
 
 	public function testThumbnailAltHashMatchesFrontendExtraction(): void {
 		$alt      = 'Кот на диване';
-		$document = \WpMlp\Rendering\HtmlDocument::parse(
+		$document = \LingoCanvas\Rendering\HtmlDocument::parse(
 			'<!DOCTYPE html><html><body><img src="x.jpg" alt="' . $alt . '"></body></html>'
 		);
 		$this->assertNotNull( $document );
@@ -143,7 +143,7 @@ final class PostContentExtractorTest extends TestCase {
 	public function testThumbnailAltWithEntitiesHashMatchesEscAttrOutput(): void {
 		foreach ( array( 'Кот &amp; собака', 'Say &quot;hi&quot;', 'Caf&#233; menu' ) as $alt ) {
 			$escaped  = htmlspecialchars( $alt, ENT_QUOTES, 'UTF-8', false );
-			$document = \WpMlp\Rendering\HtmlDocument::parse(
+			$document = \LingoCanvas\Rendering\HtmlDocument::parse(
 				'<!DOCTYPE html><html><body><img src="x.jpg" alt="' . $escaped . '"></body></html>'
 			);
 			$this->assertNotNull( $document );
@@ -240,7 +240,7 @@ final class PostContentExtractorTest extends TestCase {
 
 		// Хеш translation block считается от СОДЕРЖИМОГО элемента, без его
 		// собственных тегов <p></p> — ровно как это делает Extractor::blockSegment().
-		$hash = \WpMlp\Support\Hash::of( \WpMlp\Rendering\BlockSanitizer::sanitize( 'Читайте <b>наш</b> блог' ) );
+		$hash = \LingoCanvas\Support\Hash::of( \LingoCanvas\Rendering\BlockSanitizer::sanitize( 'Читайте <b>наш</b> блог' ) );
 
 		$result = $this->extractor()->extract( $this->post( '', '', $content ), 'ru', array( $hash => true ) );
 

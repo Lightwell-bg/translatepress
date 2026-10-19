@@ -2,19 +2,19 @@
 /**
  * Тесты поиска точного расположения сегмента в исходной строке.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Rendering\SegmentLocator;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Rendering\SegmentLocator;
 
 #[CoversClass( SegmentLocator::class )]
 final class SegmentLocatorTest extends TestCase {

@@ -2,16 +2,16 @@
 /**
  * Тесты разбора .env.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\Env;
+use LingoCanvas\Support\Env;
 
 #[CoversClass( Env::class )]
 final class EnvTest extends TestCase {
@@ -197,15 +197,15 @@ final class EnvTest extends TestCase {
 	public function testFileOutsideWebRootIsLoadedPlain(): void {
 		$dir = sys_get_temp_dir() . '/mlp-' . uniqid();
 		mkdir( $dir );
-		file_put_contents( $dir . '/wp-mlp.env', "MLP_TEST_OUTSIDE=yes\n" );
+		file_put_contents( $dir . '/lingocanvas.env', "MLP_TEST_OUTSIDE=yes\n" );
 
 		Env::reset();
-		Env::load( $dir . '/wp-mlp.env' );
+		Env::load( $dir . '/lingocanvas.env' );
 
 		$this->assertSame( 'yes', Env::get( 'MLP_TEST_OUTSIDE' ) );
 
 		Env::reset();
-		unlink( $dir . '/wp-mlp.env' );
+		unlink( $dir . '/lingocanvas.env' );
 		rmdir( $dir );
 	}
 

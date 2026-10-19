@@ -2,16 +2,16 @@
 /**
  * Картинки флагов для переключателя языков.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Settings\Language;
-use WpMlp\Settings\SwitcherDisplay;
-use WpMlp\Support\Locale;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\SwitcherDisplay;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +37,7 @@ final class Flags {
 	/**
 	 * Каталог внутри `wp-content/uploads`.
 	 */
-	public const DIRECTORY = 'wp-mlp-flags';
+	public const DIRECTORY = 'lingocanvas-flags';
 
 	/**
 	 * Имя файла флага для кода языка. Чистая функция.
@@ -60,7 +60,7 @@ final class Flags {
 	}
 
 	/**
-	 * Путь к каталогу с флагами на диске.
+	 * Путь к каталогу флагов в загрузках WordPress.
 	 */
 	public static function directoryPath(): string {
 		$uploads = wp_upload_dir();
@@ -69,12 +69,29 @@ final class Flags {
 	}
 
 	/**
-	 * Адрес каталога с флагами.
+	 * Адрес каталога флагов.
 	 */
 	public static function directoryUrl(): string {
 		$uploads = wp_upload_dir();
 
 		return trailingslashit( (string) ( $uploads['baseurl'] ?? '' ) ) . self::DIRECTORY;
+	}
+
+	/**
+	 * Путь к файлу флага или пустая строка, если флага нет.
+	 *
+	 * @param string $locale Код языка.
+	 */
+	public static function filePath( string $locale ): string {
+		$name = self::fileName( $locale );
+
+		if ( '' === $name ) {
+			return '';
+		}
+
+		$path = self::directoryPath() . '/' . $name;
+
+		return is_readable( $path ) ? $path : '';
 	}
 
 	/**
@@ -166,12 +183,9 @@ final class Flags {
 	 */
 	public static function url( string $locale ): string {
 		$name = self::fileName( $locale );
+		$path = self::filePath( $locale );
 
-		if ( '' === $name ) {
-			return '';
-		}
-
-		if ( ! is_readable( self::directoryPath() . '/' . $name ) ) {
+		if ( '' === $name || '' === $path ) {
 			return '';
 		}
 

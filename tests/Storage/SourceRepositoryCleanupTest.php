@@ -2,16 +2,16 @@
 /**
  * Чистка исходных строк без перевода: SQL и партии.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\SourceRepository;
+use LingoCanvas\Storage\SourceRepository;
 
 /**
  * Подделка $wpdb: запоминает запросы, отдаёт заготовленные ответы.
@@ -55,7 +55,7 @@ final class FakeCleanupWpdb {
 	public function query( string $sql ): int {
 		$this->queries[] = $sql;
 
-		if ( str_starts_with( $sql, 'DELETE s FROM wp_mlp_sources' ) ) {
+		if ( str_starts_with( $sql, 'DELETE s FROM wp_lingocanvas_sources' ) ) {
 			$this->rows_affected = substr_count( $sql, ',' ) + 1;
 		}
 
@@ -88,7 +88,7 @@ final class SourceRepositoryCleanupTest extends TestCase {
 
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'] );
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 	}
 
 	public function testDeletesOnlySourcesWithoutAnyTranslationInBatches(): void {
@@ -101,16 +101,16 @@ final class SourceRepositoryCleanupTest extends TestCase {
 		$select = array_values( array_filter( $this->db->queries, static fn( string $q ): bool => str_starts_with( ltrim( $q ), 'SELECT s.id' ) ) );
 
 		$this->assertCount( 2, $select );
-		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_mlp_translations t WHERE t.source_id = s.id)', $select[0] );
+		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_lingocanvas_translations t WHERE t.source_id = s.id)', $select[0] );
 		$this->assertStringContainsString( 'LIMIT 500', $select[0] );
 
-		$occurrences = array_values( array_filter( $this->db->queries, static fn( string $q ): bool => str_starts_with( $q, 'DELETE o FROM wp_mlp_occurrences' ) ) );
+		$occurrences = array_values( array_filter( $this->db->queries, static fn( string $q ): bool => str_starts_with( $q, 'DELETE o FROM wp_lingocanvas_occurrences' ) ) );
 		$this->assertCount( 2, $occurrences );
-		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_mlp_translations t WHERE t.source_id = o.source_id)', $occurrences[0] );
+		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_lingocanvas_translations t WHERE t.source_id = o.source_id)', $occurrences[0] );
 
-		$sources = array_values( array_filter( $this->db->queries, static fn( string $q ): bool => str_starts_with( $q, 'DELETE s FROM wp_mlp_sources' ) ) );
+		$sources = array_values( array_filter( $this->db->queries, static fn( string $q ): bool => str_starts_with( $q, 'DELETE s FROM wp_lingocanvas_sources' ) ) );
 		$this->assertCount( 2, $sources );
-		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_mlp_translations t WHERE t.source_id = s.id)', $sources[0] );
+		$this->assertStringContainsString( 'NOT EXISTS (SELECT 1 FROM wp_lingocanvas_translations t WHERE t.source_id = s.id)', $sources[0] );
 	}
 
 	public function testNothingToDeleteStopsAtOnce(): void {
@@ -123,11 +123,11 @@ final class SourceRepositoryCleanupTest extends TestCase {
 	}
 
 	public function testBlockHashCacheIsFlushed(): void {
-		wp_mlp_test_options( array( SourceRepository::BLOCKS_OPTION => array( 'abc' => true ) ) );
+		lingocanvas_test_options( array( SourceRepository::blocksOption() => array( 'abc' => true ) ) );
 
 		( new SourceRepository() )->deleteUntranslated( array( SourceRepository::TYPE_BLOCK ) );
 
-		$this->assertArrayNotHasKey( SourceRepository::BLOCKS_OPTION, wp_mlp_test_options() );
+		$this->assertArrayNotHasKey( SourceRepository::blocksOption(), lingocanvas_test_options() );
 	}
 
 	public function testCountUsesNonEmptyTranslationCheck(): void {

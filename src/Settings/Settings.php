@@ -2,26 +2,31 @@
 /**
  * Чтение и запись настроек плагина.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Settings;
+namespace LingoCanvas\Settings;
 
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Единственная точка доступа к списку языков.
  *
- * Все настройки лежат в одной опции `mlp_settings` (ТЗ 4.1/11): это один
+ * Все настройки лежат в одной опции `lingocanvas_settings` (ТЗ 4.1/11): это один
  * автозагружаемый ключ вместо десятка и один атомарный update при сохранении.
  */
 final class Settings {
 
-	public const OPTION = 'mlp_settings';
+	/**
+	 * Имя опции с настройками.
+	 */
+	public static function optionName(): string {
+		return 'lingocanvas_settings';
+	}
 
 	/**
 	 * Режим показа записей на дополнительных языках: показывать все.
@@ -37,6 +42,16 @@ final class Settings {
 	 * Адрес API по умолчанию, если владелец сайта не указал свой.
 	 */
 	public const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
+
+	/**
+	 * Сколько слагов можно исключить из карты сайта вручную.
+	 */
+	public const SITEMAP_SLUGS_MAX = 200;
+
+	/**
+	 * Максимальная длина слага (колонка `post_name` — varchar(200)).
+	 */
+	public const SITEMAP_SLUG_MAX_LENGTH = 200;
 
 	/**
 	 * Разобранные языки, ключ — код языка.
@@ -97,7 +112,7 @@ final class Settings {
 	 */
 	public function raw(): array {
 		if ( null === $this->raw ) {
-			$stored    = get_option( self::OPTION, array() );
+			$stored    = get_option( self::optionName(), array() );
 			$this->raw = is_array( $stored ) ? array_merge( self::defaults(), $stored ) : self::defaults();
 
 			/*
@@ -429,7 +444,7 @@ final class Settings {
 	 * @param array<string, mixed> $settings Результат sanitize().
 	 */
 	public function save( array $settings ): void {
-		update_option( self::OPTION, $settings );
+		update_option( self::optionName(), $settings );
 		$this->reset();
 	}
 
@@ -564,12 +579,13 @@ final class Settings {
 	/**
 	 * Разбирает список слагов из textarea формы — по одному на строку.
 	 *
-	 * Только нижний регистр и обрезка пробелов/слешей по краям — без
-	 * `sanitize_title()`: он транслитерирует кириллицу не всегда так же, как
-	 * это когда-то сделал WordPress при создании страницы, и слаг перестал
-	 * бы совпадать с `post_name`. Ожидается, что владелец сайта скопирует
-	 * слаг из адресной строки (последний сегмент пути), а не впишет
-	 * заголовок страницы.
+	 * Слаг сравнивается с `post_name` (Sitemap::manuallyExcludedIds), а ядро
+	 * получает `post_name` тем же `sanitize_title()`, поэтому и здесь каждая
+	 * строка проходит через него: латиница и цифры остаются как есть, прочие
+	 * символы кодируются так же, как в базе. Ожидается, что владелец сайта
+	 * скопирует слаг из адресной строки (последний сегмент пути), а не впишет
+	 * заголовок страницы. Пустые строки и повторы отбрасываются, число записей
+	 * и длина слага ограничены (колонка `post_name` — varchar(200)).
 	 *
 	 * @param array<string, mixed> $input Сырые данные из $_POST.
 	 * @return list<string>
@@ -581,14 +597,21 @@ final class Settings {
 		$slugs = array();
 
 		foreach ( is_array( $lines ) ? $lines : array() as $line ) {
-			$slug = strtolower( trim( (string) $line, " \t\n\r\0\x0B/" ) );
+			$slug = sanitize_title( trim( (string) $line, " \t\n\r\0\x0B/" ) );
 
-			if ( '' !== $slug ) {
-				$slugs[] = $slug;
+			// Слаг длиннее колонки post_name не совпадёт ни с одной записью.
+			if ( '' === $slug || strlen( $slug ) > self::SITEMAP_SLUG_MAX_LENGTH ) {
+				continue;
+			}
+
+			$slugs[ $slug ] = $slug;
+
+			if ( count( $slugs ) >= self::SITEMAP_SLUGS_MAX ) {
+				break;
 			}
 		}
 
-		return array_values( array_unique( $slugs ) );
+		return array_values( $slugs );
 	}
 
 	/**

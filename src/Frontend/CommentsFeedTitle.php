@@ -2,21 +2,21 @@
 /**
  * Перевод заголовка ссылки на RSS-фид комментариев записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Rendering\DocumentFilter;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Text;
+use LingoCanvas\Rendering\DocumentFilter;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 

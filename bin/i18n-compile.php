@@ -22,7 +22,7 @@ declare( strict_types=1 );
 /**
  * Раскодирует содержимое строки PO (без внешних кавычек).
  */
-function wp_mlp_i18n_unescape( string $s ): string {
+function lingocanvas_i18n_unescape( string $s ): string {
 	return (string) preg_replace_callback(
 		'/\\\\(.)/s',
 		static function ( array $m ): string {
@@ -48,12 +48,12 @@ function wp_mlp_i18n_unescape( string $s ): string {
 /**
  * Достаёт текст из строки вида `"..."`.
  */
-function wp_mlp_i18n_unquote( string $line ): string {
+function lingocanvas_i18n_unquote( string $line ): string {
 	$line = trim( $line );
 	if ( strlen( $line ) >= 2 && '"' === $line[0] && '"' === substr( $line, -1 ) ) {
 		$line = substr( $line, 1, -1 );
 	}
-	return wp_mlp_i18n_unescape( $line );
+	return lingocanvas_i18n_unescape( $line );
 }
 
 /**
@@ -61,7 +61,7 @@ function wp_mlp_i18n_unquote( string $line ): string {
  *
  * @return array{header: array<string,string>, entries: list<array{ctxt: ?string, id: string, plural: ?string, str: array<int,string>, fuzzy: bool, refs: list<string>, comments: list<string>}>}
  */
-function wp_mlp_i18n_parse_po( string $content ): array {
+function lingocanvas_i18n_parse_po( string $content ): array {
 	$content = (string) preg_replace( '/^\xEF\xBB\xBF/', '', $content );
 	$lines   = preg_split( '/\r\n|\n|\r/', $content );
 	$lines   = false === $lines ? array() : $lines;
@@ -128,7 +128,7 @@ function wp_mlp_i18n_parse_po( string $content ): array {
 		}
 		if ( '"' === $line[0] ) {
 			if ( null !== $cur && null !== $field ) {
-				$text = wp_mlp_i18n_unquote( $line );
+				$text = lingocanvas_i18n_unquote( $line );
 				if ( 'str' === $field[0] ) {
 					$cur['str'][ $field[1] ] = ( $cur['str'][ $field[1] ] ?? '' ) . $text;
 				} elseif ( 'ctxt' === $field[0] ) {
@@ -142,7 +142,7 @@ function wp_mlp_i18n_parse_po( string $content ): array {
 		if ( 1 === preg_match( '/^(msgctxt|msgid_plural|msgid|msgstr)(?:\[(\d+)\])?\s*(".*")?\s*$/s', $line, $m ) ) {
 			$kw   = $m[1];
 			$idx  = isset( $m[2] ) && '' !== $m[2] ? (int) $m[2] : 0;
-			$text = isset( $m[3] ) ? wp_mlp_i18n_unquote( $m[3] ) : '';
+			$text = isset( $m[3] ) ? lingocanvas_i18n_unquote( $m[3] ) : '';
 
 			if ( 'str' === $state && in_array( $kw, array( 'msgctxt', 'msgid' ), true ) ) {
 				$flush();
@@ -200,7 +200,7 @@ function wp_mlp_i18n_parse_po( string $content ): array {
 /**
  * Ключ записи в .mo / .l10n.php.
  */
-function wp_mlp_i18n_key( array $e ): string {
+function lingocanvas_i18n_key( array $e ): string {
 	$key = null !== $e['ctxt'] ? $e['ctxt'] . "\x04" . $e['id'] : $e['id'];
 	if ( null !== $e['plural'] ) {
 		$key .= "\0" . $e['plural'];
@@ -216,7 +216,7 @@ function wp_mlp_i18n_key( array $e ): string {
  *
  * @return array{u: list<string>, n: array<int,string>}
  */
-function wp_mlp_i18n_placeholders( string $s ): array {
+function lingocanvas_i18n_placeholders( string $s ): array {
 	$s = str_replace( '%%', '', $s );
 	preg_match_all( '/%(?:(\d+)\$)?[-+ 0]*(?:\'.)?\d*(?:\.\d+)?([bcdeEfFgGosuxX])/', $s, $m, PREG_SET_ORDER );
 	$u = array();
@@ -241,7 +241,7 @@ function wp_mlp_i18n_placeholders( string $s ): array {
  *
  * @param array{u: list<string>, n: array<int,string>} $p Набор.
  */
-function wp_mlp_i18n_format_placeholders( array $p ): string {
+function lingocanvas_i18n_format_placeholders( array $p ): string {
 	$parts = $p['u'];
 	foreach ( $p['n'] as $num => $type ) {
 		$parts[] = '%' . $num . '$' . $type;
@@ -254,10 +254,10 @@ function wp_mlp_i18n_format_placeholders( array $p ): string {
  *
  * @return list<string>
  */
-function wp_mlp_i18n_check_placeholders( array $e ): array {
+function lingocanvas_i18n_check_placeholders( array $e ): array {
 	$errors = array();
-	$idSet  = wp_mlp_i18n_placeholders( $e['id'] );
-	$plSet  = null !== $e['plural'] ? wp_mlp_i18n_placeholders( $e['plural'] ) : $idSet;
+	$idSet  = lingocanvas_i18n_placeholders( $e['id'] );
+	$plSet  = null !== $e['plural'] ? lingocanvas_i18n_placeholders( $e['plural'] ) : $idSet;
 	// Для множественного числа допустимо всё, что есть хотя бы в одной из форм исходника.
 	$srcN = $idSet['n'] + $plSet['n'];
 	$srcU = array_count_values( $idSet['u'] );
@@ -268,7 +268,7 @@ function wp_mlp_i18n_check_placeholders( array $e ): array {
 		if ( '' === $str ) {
 			continue;
 		}
-		$got = wp_mlp_i18n_placeholders( $str );
+		$got = lingocanvas_i18n_placeholders( $str );
 		if ( null === $e['plural'] ) {
 			// Безпозиционные — то же мультимножество; позиционные — те же номера с теми же типами.
 			$bad = $got['u'] !== $idSet['u'] || $got['n'] !== $idSet['n'];
@@ -288,8 +288,8 @@ function wp_mlp_i18n_check_placeholders( array $e ): array {
 		}
 		if ( $bad ) {
 			$expected = null === $e['plural']
-				? wp_mlp_i18n_format_placeholders( $idSet )
-				: wp_mlp_i18n_format_placeholders(
+				? lingocanvas_i18n_format_placeholders( $idSet )
+				: lingocanvas_i18n_format_placeholders(
 					array(
 						'u' => count( $plSet['u'] ) > count( $idSet['u'] ) ? $plSet['u'] : $idSet['u'],
 						'n' => $srcN,
@@ -300,7 +300,7 @@ function wp_mlp_i18n_check_placeholders( array $e ): array {
 				$i,
 				$e['id'],
 				$expected,
-				wp_mlp_i18n_format_placeholders( $got )
+				lingocanvas_i18n_format_placeholders( $got )
 			);
 		}
 	}
@@ -312,7 +312,7 @@ function wp_mlp_i18n_check_placeholders( array $e ): array {
  *
  * @return array{messages: array<string,string>, errors: list<string>}
  */
-function wp_mlp_i18n_messages( array $parsed ): array {
+function lingocanvas_i18n_messages( array $parsed ): array {
 	$messages = array();
 	$errors   = array();
 	foreach ( $parsed['entries'] as $e ) {
@@ -323,8 +323,8 @@ function wp_mlp_i18n_messages( array $parsed ): array {
 		if ( array() === $forms || in_array( '', $forms, true ) ) {
 			continue;
 		}
-		$errors = array_merge( $errors, wp_mlp_i18n_check_placeholders( $e ) );
-		$key    = wp_mlp_i18n_key( $e );
+		$errors = array_merge( $errors, lingocanvas_i18n_check_placeholders( $e ) );
+		$key    = lingocanvas_i18n_key( $e );
 		$value  = implode( "\0", $forms );
 		if ( array_key_exists( $key, $messages ) ) {
 			if ( $messages[ $key ] !== $value ) {
@@ -350,7 +350,7 @@ function wp_mlp_i18n_messages( array $parsed ): array {
  * @param array<string,string> $messages Отсортированные key => translation.
  * @param array<string,string> $header   Заголовки .po.
  */
-function wp_mlp_i18n_build_mo( array $messages, array $header ): string {
+function lingocanvas_i18n_build_mo( array $messages, array $header ): string {
 	$all = array();
 	if ( array() !== $header ) {
 		$hs = '';
@@ -398,7 +398,7 @@ function wp_mlp_i18n_build_mo( array $messages, array $header ): string {
  * @param array<string,string> $messages
  * @param array<string,string> $header
  */
-function wp_mlp_i18n_build_php( array $messages, array $header, string $language ): string {
+function lingocanvas_i18n_build_php( array $messages, array $header, string $language ): string {
 	$data = array(
 		'domain'             => $header['X-Domain'] ?? 'lingocanvas',
 		'plural-forms'       => $header['Plural-Forms'] ?? 'nplurals=2; plural=(n != 1);',
@@ -420,7 +420,7 @@ function wp_mlp_i18n_build_php( array $messages, array $header, string $language
 /**
  * Язык: заголовок Language или хвост имени файла (lingocanvas-ru_RU.po -> ru_RU).
  */
-function wp_mlp_i18n_language( array $header, string $poPath ): string {
+function lingocanvas_i18n_language( array $header, string $poPath ): string {
 	if ( ! empty( $header['Language'] ) ) {
 		return $header['Language'];
 	}
@@ -431,7 +431,7 @@ function wp_mlp_i18n_language( array $header, string $poPath ): string {
 /**
  * Строка в кавычках PO; многострочные значения разбиваются по \n.
  */
-function wp_mlp_i18n_quote( string $s ): string {
+function lingocanvas_i18n_quote( string $s ): string {
 	$esc = static fn( string $p ): string => '"' . str_replace( array( '\\', '"', "\n", "\t", "\r" ), array( '\\\\', '\\"', '\\n', '\\t', '\\r' ), $p ) . '"';
 	if ( false === strpos( $s, "\n" ) || strlen( $s ) === strpos( $s, "\n" ) + 1 && substr_count( $s, "\n" ) === 1 ) {
 		return $esc( $s );
@@ -443,7 +443,7 @@ function wp_mlp_i18n_quote( string $s ): string {
 /**
  * Содержимое .pot из разобранного .po.
  */
-function wp_mlp_i18n_build_pot( array $parsed ): string {
+function lingocanvas_i18n_build_pot( array $parsed ): string {
 	$h   = $parsed['header'];
 	$n   = 3;
 	$pf  = $h['Plural-Forms'] ?? '';
@@ -463,11 +463,11 @@ function wp_mlp_i18n_build_pot( array $parsed ): string {
 	$hdr .= 'X-Domain: ' . $domain . "\n";
 
 	$out  = "# Translation template for LingoCanvas.\n";
-	$out .= "msgid \"\"\nmsgstr " . wp_mlp_i18n_quote( $hdr ) . "\n";
+	$out .= "msgid \"\"\nmsgstr " . lingocanvas_i18n_quote( $hdr ) . "\n";
 
 	$seen = array();
 	foreach ( $parsed['entries'] as $e ) {
-		$key = wp_mlp_i18n_key( $e );
+		$key = lingocanvas_i18n_key( $e );
 		if ( isset( $seen[ $key ] ) ) {
 			continue;
 		}
@@ -480,11 +480,11 @@ function wp_mlp_i18n_build_pot( array $parsed ): string {
 			$out .= '#: ' . $r . "\n";
 		}
 		if ( null !== $e['ctxt'] ) {
-			$out .= 'msgctxt ' . wp_mlp_i18n_quote( $e['ctxt'] ) . "\n";
+			$out .= 'msgctxt ' . lingocanvas_i18n_quote( $e['ctxt'] ) . "\n";
 		}
-		$out .= 'msgid ' . wp_mlp_i18n_quote( $e['id'] ) . "\n";
+		$out .= 'msgid ' . lingocanvas_i18n_quote( $e['id'] ) . "\n";
 		if ( null !== $e['plural'] ) {
-			$out .= 'msgid_plural ' . wp_mlp_i18n_quote( $e['plural'] ) . "\n";
+			$out .= 'msgid_plural ' . lingocanvas_i18n_quote( $e['plural'] ) . "\n";
 			for ( $i = 0; $i < $n; $i++ ) {
 				$out .= 'msgstr[' . $i . "] \"\"\n";
 			}
@@ -500,7 +500,7 @@ function wp_mlp_i18n_build_pot( array $parsed ): string {
  *
  * @return array{entries: int, written: list<string>, errors: list<string>}
  */
-function wp_mlp_i18n_process( string $poPath, bool $pot, ?string $potPath = null ): array {
+function lingocanvas_i18n_process( string $poPath, bool $pot, ?string $potPath = null ): array {
 	$content = file_get_contents( $poPath );
 	if ( false === $content ) {
 		return array(
@@ -509,11 +509,11 @@ function wp_mlp_i18n_process( string $poPath, bool $pot, ?string $potPath = null
 			'errors'  => array( 'Не удалось прочитать ' . $poPath ),
 		);
 	}
-	$parsed  = wp_mlp_i18n_parse_po( $content );
+	$parsed  = lingocanvas_i18n_parse_po( $content );
 	$written = array();
 	if ( $pot ) {
 		$potPath = $potPath ?? dirname( $poPath ) . '/' . ( $parsed['header']['X-Domain'] ?? 'lingocanvas' ) . '.pot';
-		file_put_contents( $potPath, wp_mlp_i18n_build_pot( $parsed ) );
+		file_put_contents( $potPath, lingocanvas_i18n_build_pot( $parsed ) );
 		return array(
 			'entries' => count( $parsed['entries'] ),
 			'written' => array( $potPath ),
@@ -521,14 +521,14 @@ function wp_mlp_i18n_process( string $poPath, bool $pot, ?string $potPath = null
 		);
 	}
 
-	$res      = wp_mlp_i18n_messages( $parsed );
+	$res      = lingocanvas_i18n_messages( $parsed );
 	$dir      = dirname( $poPath );
 	$name     = basename( $poPath, '.po' );
 	$mo       = $dir . '/' . $name . '.mo';
 	$php      = $dir . '/' . $name . '.l10n.php';
-	$language = wp_mlp_i18n_language( $parsed['header'], $poPath );
-	file_put_contents( $mo, wp_mlp_i18n_build_mo( $res['messages'], $parsed['header'] ) );
-	file_put_contents( $php, wp_mlp_i18n_build_php( $res['messages'], $parsed['header'], $language ) );
+	$language = lingocanvas_i18n_language( $parsed['header'], $poPath );
+	file_put_contents( $mo, lingocanvas_i18n_build_mo( $res['messages'], $parsed['header'] ) );
+	file_put_contents( $php, lingocanvas_i18n_build_php( $res['messages'], $parsed['header'], $language ) );
 	$written = array( $mo, $php );
 
 	return array(
@@ -543,7 +543,7 @@ function wp_mlp_i18n_process( string $poPath, bool $pot, ?string $potPath = null
  *
  * @param list<string> $argv
  */
-function wp_mlp_i18n_main( array $argv ): int {
+function lingocanvas_i18n_main( array $argv ): int {
 	$args  = array_slice( $argv, 1 );
 	$pot   = in_array( '--pot', $args, true );
 	$files = array_values( array_filter( $args, static fn( string $a ): bool => '--pot' !== $a ) );
@@ -561,7 +561,7 @@ function wp_mlp_i18n_main( array $argv ): int {
 
 	$failed = false;
 	foreach ( $files as $file ) {
-		$r = wp_mlp_i18n_process( $file, $pot );
+		$r = lingocanvas_i18n_process( $file, $pot );
 		echo $file . ': ' . $r['entries'] . " entries\n";
 		foreach ( $r['written'] as $w ) {
 			echo '  -> ' . $w . "\n";
@@ -575,5 +575,5 @@ function wp_mlp_i18n_main( array $argv ): int {
 }
 
 if ( 'cli' === PHP_SAPI && realpath( $argv[0] ?? '' ) === __FILE__ ) {
-	exit( wp_mlp_i18n_main( $argv ) );
+	exit( lingocanvas_i18n_main( $argv ) );
 }

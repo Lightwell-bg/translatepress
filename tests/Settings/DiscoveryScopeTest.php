@@ -2,31 +2,31 @@
 /**
  * Кто может пополнять список строк: владелец сайта или ещё и посетители.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Settings;
+namespace LingoCanvas\Tests\Settings;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( Settings::class )]
 final class DiscoveryScopeTest extends TestCase {
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array() ) ) );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array() ) ) );
 	}
 
 	/**
 	 * @param array<string, mixed> $settings Сохранённые настройки.
 	 */
 	private function settings( array $settings, bool $isAdmin ): Settings {
-		wp_mlp_test_options( array( Settings::OPTION => $settings ) );
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => $isAdmin ) ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => $settings ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => $isAdmin ) ) ) );
 
 		return new Settings();
 	}
@@ -88,11 +88,11 @@ final class DiscoveryScopeTest extends TestCase {
 	public function testSpecialRequestsAreNeverCollected( string $flag ): void {
 		$settings = $this->settings( array( 'discover_strings' => true, 'discover_from_visitors' => true ), true );
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( $flag => true ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( $flag => true ) ) );
 
 		$this->assertFalse( $settings->shouldDiscoverForCurrentUser() );
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( $flag => false ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( $flag => false ) ) );
 
 		$this->assertTrue( $settings->shouldDiscoverForCurrentUser() );
 	}

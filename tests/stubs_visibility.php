@@ -2,39 +2,39 @@
 /**
  * Заглушки WordPress для тестов ручного показа записей на языках (админка и админ-панель).
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
 if ( ! function_exists( 'is_admin_bar_showing' ) ) {
 	/**
-	 * Показана ли админ-панель: по умолчанию да, тест выключает через `wp_mlp_test_wp()['admin_bar'] = false`.
+	 * Показана ли админ-панель: по умолчанию да, тест выключает через `lingocanvas_test_wp()['admin_bar'] = false`.
 	 */
 	function is_admin_bar_showing(): bool {
-		return (bool) ( wp_mlp_test_wp()['admin_bar'] ?? true );
+		return (bool) ( lingocanvas_test_wp()['admin_bar'] ?? true );
 	}
 }
 
 if ( ! function_exists( 'wp_is_post_autosave' ) ) {
 	/**
-	 * Автосохранение: тест задаёт id через `wp_mlp_test_wp()['autosave'][ id ] = true`.
+	 * Автосохранение: тест задаёт id через `lingocanvas_test_wp()['autosave'][ id ] = true`.
 	 *
 	 * @param int $postId Запись.
 	 */
 	function wp_is_post_autosave( $postId ) {
-		return ! empty( wp_mlp_test_wp()['autosave'][ (int) $postId ] ) ? 1 : false;
+		return ! empty( lingocanvas_test_wp()['autosave'][ (int) $postId ] ) ? 1 : false;
 	}
 }
 
 if ( ! function_exists( 'wp_is_post_revision' ) ) {
 	/**
-	 * Ревизия: тест задаёт id через `wp_mlp_test_wp()['revision'][ id ] = true`.
+	 * Ревизия: тест задаёт id через `lingocanvas_test_wp()['revision'][ id ] = true`.
 	 *
 	 * @param int $postId Запись.
 	 */
 	function wp_is_post_revision( $postId ) {
-		return ! empty( wp_mlp_test_wp()['revision'][ (int) $postId ] ) ? 1 : false;
+		return ! empty( lingocanvas_test_wp()['revision'][ (int) $postId ] ) ? 1 : false;
 	}
 }
 

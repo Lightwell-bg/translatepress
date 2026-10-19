@@ -2,16 +2,16 @@
 /**
  * Тесты вычисления ключа дневного бюджета.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\UsageTracker;
+use LingoCanvas\Storage\UsageTracker;
 
 /**
  * Сама запись и чтение счётчика идёт через $wpdb/wp_options и здесь не
@@ -22,7 +22,7 @@ use WpMlp\Storage\UsageTracker;
 final class UsageTrackerTest extends TestCase {
 
 	public function testKeyIncludesTheDate(): void {
-		$this->assertSame( 'mlp_usage_2026-08-07', UsageTracker::optionKey( '2026-08-07' ) );
+		$this->assertSame( 'lingocanvas_usage_2026-08-07', UsageTracker::optionKey( '2026-08-07' ) );
 	}
 
 	public function testDifferentDatesGiveDifferentKeys(): void {

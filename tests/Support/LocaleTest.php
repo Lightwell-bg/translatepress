@@ -2,17 +2,17 @@
 /**
  * Тесты валидации языковых кодов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Locale;
 
 #[CoversClass( Locale::class )]
 final class LocaleTest extends TestCase {

@@ -2,16 +2,16 @@
 /**
  * Тесты версионирования скриптов и стилей.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Support\Assets;
+use LingoCanvas\Support\Assets;
 
 #[CoversClass( Assets::class )]
 final class AssetsTest extends TestCase {

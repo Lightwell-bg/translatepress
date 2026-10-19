@@ -2,17 +2,17 @@
 /**
  * Тесты токена канала между панелью редактора и предпросмотром.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\EditorContext;
+use LingoCanvas\Rendering\EditorContext;
 
 #[CoversClass( EditorContext::class )]
 final class EditorChannelTest extends TestCase {
@@ -61,7 +61,7 @@ final class EditorChannelTest extends TestCase {
 			 * и всё, что могло бы там что-то значить — разделители запроса,
 			 * кавычки, угловые скобки, — до адреса не доходит вовсе.
 			 */
-			array( 'abcdefghijklmnop&mlp_editor=1', '' ),
+			array( 'abcdefghijklmnop&lingocanvas_editor=1', '' ),
 			array( 'abcdefghijklmnop"onload=alert(1)', '' ),
 			array( '<script>abcdefghijklmnop</script>', '' ),
 			array( 'abcdefghijklmnop/../../etc', '' ),

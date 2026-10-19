@@ -2,16 +2,16 @@
 /**
  * Тесты поиска официального перевода чужой строки в объекте переводов домена.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\I18n;
+namespace LingoCanvas\Tests\I18n;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\I18n\OfficialTranslation;
+use LingoCanvas\I18n\OfficialTranslation;
 
 /**
  * Объект в стиле классических `Translations`/`MO`: есть select_plural_form()

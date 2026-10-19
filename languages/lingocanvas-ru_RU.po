@@ -345,16 +345,16 @@ msgid "The key is stored in the database and survives plugin updates. Ends with 
 msgstr "Ключ хранится в базе данных — переживает обновление плагина. Заканчивается на «%s»."
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from wp-content/wp-mlp.env.php and survives plugin updates."
-msgstr "Ключ берётся из wp-content/wp-mlp.env.php — переживает обновление плагина."
+msgid "The key is read from wp-content/lingocanvas.env.php and survives plugin updates."
+msgstr "Ключ берётся из wp-content/lingocanvas.env.php — переживает обновление плагина."
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from a wp-mlp.env file above the WordPress root and survives plugin updates."
-msgstr "Ключ берётся из файла wp-mlp.env выше корня WordPress — переживает обновление плагина."
+msgid "The key is read from a lingocanvas.env file above the WordPress root and survives plugin updates."
+msgstr "Ключ берётся из файла lingocanvas.env выше корня WordPress — переживает обновление плагина."
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/wp-mlp.env.php."
-msgstr "Ключ берётся из .env в папке плагина — он будет удалён при замене плагина через ZIP. Вставьте ключ в поле ниже или перенесите его в wp-content/wp-mlp.env.php."
+msgid "The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/lingocanvas.env.php."
+msgstr "Ключ берётся из .env в папке плагина — он будет удалён при замене плагина через ZIP. Вставьте ключ в поле ниже или перенесите его в wp-content/lingocanvas.env.php."
 
 #: src/Admin/SettingsPage.php
 msgid "The key is set by a server environment variable."
@@ -365,8 +365,8 @@ msgid "No key saved."
 msgstr "Ключ не сохранён."
 
 #: src/Admin/SettingsPage.php
-msgid "The wp-mlp.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>"
-msgstr "Файл wp-mlp.env.php без защитной первой строки — не используется. Первой строкой должно быть: <?php exit; ?>"
+msgid "The lingocanvas.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>"
+msgstr "Файл lingocanvas.env.php без защитной первой строки — не используется. Первой строкой должно быть: <?php exit; ?>"
 
 #: src/Admin/SettingsPage.php
 msgid "Add language"
@@ -531,8 +531,8 @@ msgid "\"Appearance → Menus\", the \"Languages\" box: tick \"Dropdown\" or \"I
 msgstr "«Внешний вид → Меню», блок «Языки»: отметьте «Выпадающий список» или «В ряд» и добавьте в меню. Один пункт — плагин сам достроит под ним все языки."
 
 #: src/Admin/HelpTabs.php
-msgid "The [mlp_language_switcher] shortcode in the text."
-msgstr "Шорткод [mlp_language_switcher] в тексте."
+msgid "The [lingocanvas_language_switcher] shortcode in the text."
+msgstr "Шорткод [lingocanvas_language_switcher] в тексте."
 
 #: src/Admin/HelpTabs.php
 msgid "The \"Language switcher\" widget."
@@ -1756,14 +1756,6 @@ msgstr "Из языкового пакета"
 #: lingocanvas.php
 msgid "LingoCanvas requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
 msgstr "LingoCanvas требует PHP %1$s или новее. На сервере установлен PHP %2$s — плагин отключён."
-
-#: lingocanvas.php
-msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is network-activated. LingoCanvas must be network-activated by a network administrator (Network Admin → Plugins) to take over; activating it on a single site does not switch the old plugin off."
-msgstr "LingoCanvas приостановлен, потому что прежняя версия этого плагина («WP Multilang Press») включена на всю сеть. Чтобы LingoCanvas её заменил, сетевой администратор должен включить его на всю сеть («Сетевая админка → Плагины»); включение на отдельном сайте старый плагин не выключит."
-
-#: lingocanvas.php
-msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active."
-msgstr "LingoCanvas приостановлен, потому что прежняя версия этого плагина («WP Multilang Press») всё ещё активна. Отключите «WP Multilang Press»: LingoCanvas продолжит работу с теми же переводами и настройками. Не удаляйте старый плагин, пока LingoCanvas не активен."
 
 #: src/Admin/StringTranslationPage.php
 msgid "SEO/GEO"

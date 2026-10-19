@@ -2,16 +2,16 @@
 /**
  * Ссылки на визуальный редактор в списках записей и на экране правки.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -24,13 +24,13 @@ defined( 'ABSPATH' ) || exit;
 final class EditorPostLinks implements Hookable {
 
 	/** Действие nonce метабокса «Показывать на сайте». */
-	public const NONCE_ACTION = 'mlp_post_visibility';
+	public const NONCE_ACTION = 'lingocanvas_post_visibility';
 
 	/** Имя поля с nonce. */
-	public const NONCE_FIELD = 'mlp_post_visibility_nonce';
+	public const NONCE_FIELD = 'lingocanvas_post_visibility_nonce';
 
-	/** Имя массива чекбоксов `mlp_visible[<язык>]`. */
-	public const FIELD = 'mlp_visible';
+	/** Имя массива чекбоксов `lingocanvas_visible[<язык>]`. */
+	public const FIELD = 'lingocanvas_visible';
 
 	/**
 	 * @param Settings                    $settings   Настройки плагина.
@@ -61,7 +61,7 @@ final class EditorPostLinks implements Hookable {
 	 * автосохранение и ревизия, отсутствие nonce метабокса (быстрое
 	 * редактирование, REST-сохранение блочного редактора, импорт), нехватка
 	 * прав, не ручной режим, неподходящий тип. Снятый чекбокс не приходит
-	 * вовсе — отсутствие языка в `mlp_visible` означает «скрыть».
+	 * вовсе — отсутствие языка в `lingocanvas_visible` означает «скрыть».
 	 *
 	 * @param int|mixed      $postId Запись.
 	 * @param \WP_Post|mixed $post   Запись целиком (может не прийти).
@@ -77,14 +77,15 @@ final class EditorPostLinks implements Hookable {
 			return;
 		}
 
+		// Права проверяются раньше, чем читается любое поле запроса.
+		if ( ! current_user_can( 'edit_post', $postId ) || ! current_user_can( EditorPage::CAPABILITY ) ) {
+			return;
+		}
+
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce проверяется ниже, до чтения остальных полей.
 		$nonce = isset( $_POST[ self::NONCE_FIELD ] ) ? sanitize_text_field( wp_unslash( (string) $_POST[ self::NONCE_FIELD ] ) ) : '';
 
 		if ( '' === $nonce || ! wp_verify_nonce( $nonce, self::NONCE_ACTION ) ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $postId ) || ! current_user_can( EditorPage::CAPABILITY ) ) {
 			return;
 		}
 
@@ -127,7 +128,7 @@ final class EditorPostLinks implements Hookable {
 			return $actions;
 		}
 
-		$actions['mlp_translate'] = sprintf(
+		$actions['lingocanvas_translate'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
 			esc_html__( 'Translate', 'lingocanvas' )

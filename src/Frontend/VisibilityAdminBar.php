@@ -2,20 +2,20 @@
 /**
  * Плашка в админ-панели сайта: показана ли страница на этом языке.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Admin\EditorPage;
-use WpMlp\Rest\PostVisibilityController;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Support\Assets;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Admin\EditorPage;
+use LingoCanvas\Rest\PostVisibilityController;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Support\Assets;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -153,15 +153,15 @@ final class VisibilityAdminBar implements Hookable {
 		list( $postId, $locale, $visible ) = $context;
 
 		wp_enqueue_script(
-			'wp-mlp-adminbar-visibility',
+			'lingocanvas-adminbar-visibility',
 			Assets::url( 'assets/adminbar-visibility.js' ),
 			array(),
 			Assets::version( 'assets/adminbar-visibility.js' ),
 			true
 		);
 		wp_localize_script(
-			'wp-mlp-adminbar-visibility',
-			'mlpAdminBarVisibility',
+			'lingocanvas-adminbar-visibility',
+			'lingocanvasAdminBarVisibility',
 			array(
 				'url'     => esc_url_raw( rest_url( PostVisibilityController::NAMESPACE . '/posts/visibility' ) ),
 				'nonce'   => wp_create_nonce( 'wp_rest' ),

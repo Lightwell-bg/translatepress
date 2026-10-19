@@ -2,37 +2,37 @@
 /**
  * REST-эндпоинты переводов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rest;
+namespace LingoCanvas\Rest;
 
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-use WpMlp\Rendering\BlockSanitizer;
-use WpMlp\Rendering\Segment;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Storage\TranslationRepository;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Storage\UsageTracker;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
-use WpMlp\Support\UrlGuard;
-use WpMlp\Translation\OpenAiProvider;
-use WpMlp\Translation\ProviderFactory;
-use WpMlp\Translation\ProviderInterface;
-use WpMlp\Translation\TranslationContext;
+use LingoCanvas\Rendering\BlockSanitizer;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Storage\TranslationRepository;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Storage\UsageTracker;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
+use LingoCanvas\Support\UrlGuard;
+use LingoCanvas\Translation\OpenAiProvider;
+use LingoCanvas\Translation\ProviderFactory;
+use LingoCanvas\Translation\ProviderInterface;
+use LingoCanvas\Translation\TranslationContext;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `PUT /wp-json/mlp/v1/translations/{source_id}/{locale}` (ТЗ 10.3).
+ * `PUT /wp-json/lingocanvas/v1/translations/{source_id}/{locale}` (ТЗ 10.3).
  *
  * Все проверки из раздела 13 ТЗ выполняются до записи: capability, REST-nonce
  * (его проверяет ядро при cookie-авторизации), допустимость языка по списку
@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class TranslationsController implements Hookable {
 
-	public const NAMESPACE  = 'mlp/v1';
+	public const NAMESPACE  = 'lingocanvas/v1';
 	public const CAPABILITY = 'manage_options';
 
 	/**
@@ -165,7 +165,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $source ) {
 			return new WP_Error(
-				'mlp_source_not_found',
+				'lingocanvas_source_not_found',
 				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
@@ -209,7 +209,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
-				'mlp_invalid_locale',
+				'lingocanvas_invalid_locale',
 				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
@@ -245,7 +245,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
-				'mlp_invalid_locale',
+				'lingocanvas_invalid_locale',
 				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
@@ -255,7 +255,7 @@ final class TranslationsController implements Hookable {
 
 		if ( ! $this->provider->supports( $sourceLocale, $language->locale ) ) {
 			return new WP_Error(
-				'mlp_provider_unavailable',
+				'lingocanvas_provider_unavailable',
 				null !== $this->providers
 					? ProviderFactory::unavailableMessage( $this->providers->missing() )
 					: __( 'AI translation is not set up: enter the key in the plugin settings.', 'lingocanvas' ),
@@ -267,7 +267,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $source ) {
 			return new WP_Error(
-				'mlp_source_not_found',
+				'lingocanvas_source_not_found',
 				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
@@ -278,7 +278,7 @@ final class TranslationsController implements Hookable {
 
 		if ( $dailyLimit > 0 && $this->usage->remainingToday( $dailyLimit ) < mb_strlen( $sourceText ) ) {
 			return new WP_Error(
-				'mlp_daily_limit_reached',
+				'lingocanvas_daily_limit_reached',
 				__( 'The daily character limit for translation has been reached. Change the limit in the settings or try again tomorrow.', 'lingocanvas' ),
 				array( 'status' => 429 )
 			);
@@ -301,7 +301,7 @@ final class TranslationsController implements Hookable {
 			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->maskedLastError() : null;
 
 			return new WP_Error(
-				'mlp_suggest_failed',
+				'lingocanvas_suggest_failed',
 				null !== $detail
 					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
 					: __( 'Could not get a translation from OpenAI.', 'lingocanvas' ),
@@ -339,7 +339,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $language || $language->isDefault ) {
 			return new WP_Error(
-				'mlp_invalid_locale',
+				'lingocanvas_invalid_locale',
 				__( 'This secondary language is not in the settings.', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
@@ -349,7 +349,7 @@ final class TranslationsController implements Hookable {
 
 		if ( null === $source ) {
 			return new WP_Error(
-				'mlp_source_not_found',
+				'lingocanvas_source_not_found',
 				__( 'Source string not found.', 'lingocanvas' ),
 				array( 'status' => 404 )
 			);
@@ -373,7 +373,7 @@ final class TranslationsController implements Hookable {
 			&& ! UrlGuard::isSafe( $text )
 		) {
 			return new WP_Error(
-				'mlp_unsafe_url',
+				'lingocanvas_unsafe_url',
 				__( 'The link address uses a protocol that is not allowed (for example javascript: or data:).', 'lingocanvas' ),
 				array( 'status' => 400 )
 			);
@@ -397,7 +397,7 @@ final class TranslationsController implements Hookable {
 
 		if ( ! $saved ) {
 			return new WP_Error(
-				'mlp_save_failed',
+				'lingocanvas_save_failed',
 				__( 'Could not save the translation.', 'lingocanvas' ),
 				array( 'status' => 500 )
 			);

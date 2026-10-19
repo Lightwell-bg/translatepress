@@ -2,16 +2,16 @@
 /**
  * Тесты отсева служебных страниц из карты сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\SitemapPageFilter;
+use LingoCanvas\Frontend\SitemapPageFilter;
 
 #[CoversClass( SitemapPageFilter::class )]
 final class SitemapPageFilterTest extends TestCase {

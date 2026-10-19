@@ -4,26 +4,20 @@
 #
 # Usage (Git Bash, from anywhere):  bash bin/smoke-test.sh
 #   SMOKE_SCRATCH=/some/dir     override scratch dir (default: $TMPDIR/lingocanvas-smoke-test)
-#   SMOKE_SCENARIOS="S1 S3"     run only some scenarios (default: S1 S2 S3 S4 S5 S6)
+#   SMOKE_SCENARIOS="S1"        run only some scenarios (default: S1 S6)
 #   SMOKE_WP=6.4                WordPress version of Playground (default: latest; e.g. 6.4, 6.9, latest)
 #   SMOKE_PHP=8.1               PHP version (default: 8.3)
-#   SMOKE_OLD_ZIP=/path.zip     old "WP Multilang Press" build for S2-S5 (default: dist/_19wp-mlp.zip, folder wp-mlp/)
 #
-# Every scenario runs in a FRESH Playground instance (its own blueprint run, own scratch copies
-# of the plugins, own /out dir) with WP_DEBUG and WP_DEBUG_LOG on:
-#   S1  Fresh LingoCanvas: activation/tables, a post, front-end render in the default language and /en/,
-#       every GET route of mlp/v1, manual translation + unsafe href rejection, %i repository queries,
-#       bundled ru_RU translation, sitemap (200 XML with xhtml:link hreflang), [mlp_language_switcher]
+# Every scenario runs in a FRESH Playground instance (its own blueprint run, own scratch copy
+# of the plugin, own /out dir) with WP_DEBUG and WP_DEBUG_LOG on:
+#   S1  Fresh LingoCanvas: activation/tables (exactly the four lingocanvas_* tables, no service options),
+#       a post, front-end render in the default language and /en/,
+#       every GET route of lingocanvas/v1, manual translation + unsafe href rejection, %i repository queries,
+#       bundled ru_RU translation, sitemap (200 XML with xhtml:link hreflang), [lingocanvas_language_switcher]
 #       link to /en/, canonical + hreflang on /en/, English and Russian UI + settings page in ru_RU,
 #       AI translation through a mocked OpenAI endpoint (mu-plugin fixture, fake key, no network;
-#       the key must never appear in responses), deprecated hook alias mlp_sitemap_post_ids
-#       (both names run, deprecation logged), debug.log scan, finally the uninstall path.
-#   S2  Migration from the real old plugin: data created through the old plugin, then
-#       activate_plugin('lingocanvas/lingocanvas.php') in one request; next request: data, REST,
-#       rewrite rules, routes registered once, /en/ renders.
-#   S3  Both plugins active at once: old code runs, LingoCanvas is paused (notice), no duplicates.
-#   S4  Deleting the old plugin (delete_data_on_uninstall = true) keeps the data.
-#   S5  Deleting LingoCanvas while the old plugin is active keeps the data.
+#       the key must never appear in responses), the lingocanvas_sitemap_post_ids filter,
+#       debug.log scan, finally the uninstall path.
 #   S6  "Interface" tab: official translations of third-party gettext strings (fixture plugin
 #       lingocanvas-smoke-domain with a Russian .mo: singular, context, 3 plural forms, untranslated string),
 #       found through get_translations_for_domain() and not through the plugin's own gettext filters;
@@ -32,20 +26,20 @@
 #
 # What it does:
 #   1. Copies only the runtime files (lingocanvas.php, uninstall.php, readme.txt, src/, assets/,
-#      languages/) and unpacks the old plugin ZIP into the scratch dir; nothing is written into the
-#      plugin tree. S1-S5 each get their own copy (delete_plugins() may remove a mounted folder).
+#      languages/) into the scratch dir; nothing is written into the plugin tree.
+#      Each scenario gets its own copy (delete_plugins() may remove a mounted folder).
 #   2. Reuses the pinned @wp-playground/cli installed by bin/plugin-check.sh when present,
 #      otherwise installs it into the scratch dir.
 #   3. Runs the blueprints: bin/smoke-test-blueprint.json (S1) and bin/smoke-test-blueprint.cjs
-#      (generates S2-S5). The runPHP steps execute bin/smoke-test.php (S1) / bin/smoke-test-migration.php
-#      (S2-S5) with the helpers of bin/smoke-test-lib.php; front-end requests are simulated by
+#      (generates S6). The runPHP steps execute bin/smoke-test.php (S1) / bin/smoke-test-s6.php
+#      (S6) with the helpers of bin/smoke-test-lib.php; front-end requests are simulated by
 #      bin/smoke-test-render.php; the mu-plugin fixture bin/smoke-test-fixtures/mu-plugins/ is
 #      installed into S1 only (blueprint step copies it from /out).
 #   4. Prints a PASS/FAIL/SKIP line per check and a table of the scenarios; exit code 1 if any check
 #      failed or a scenario produced no result. SKIP = environment limitation (Playground runs
 #      WordPress on SQLite, where BINARY = UNHEX() lookups fail), the reason is printed.
 #      Full JSON result per scenario: $SCRATCH/out/<S>/smoke.json, Playground log: $SCRATCH/run-<S>.log
-# First run downloads WordPress (~1-2 min). Needs Node 24, unzip and internet.
+# First run downloads WordPress (~1-2 min). Needs Node 24 and internet.
 set -euo pipefail
 
 PLAYGROUND_VERSION="3.1.58"
@@ -54,30 +48,20 @@ export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
 SCRATCH="${SMOKE_SCRATCH:-${TMPDIR:-/tmp}/lingocanvas-smoke-test}"
-SCENARIOS="${SMOKE_SCENARIOS:-S1 S2 S3 S4 S5 S6}"
+SCENARIOS="${SMOKE_SCENARIOS:-S1 S6}"
 # WordPress / PHP versions of the Playground instance (read by smoke-test-blueprint.cjs and the S1 patch below).
 export SMOKE_WP="${SMOKE_WP:-latest}" SMOKE_PHP="${SMOKE_PHP:-8.3}"
-OLD_ZIP="${SMOKE_OLD_ZIP:-$ROOT/dist/_19wp-mlp.zip}"
 mkdir -p "$SCRATCH"
 SCRATCH="$(cd "$SCRATCH" && pwd)"
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
 START_TS=$(date +%s)
 
-# 1. clean sources: runtime copy of this plugin and the unpacked old plugin
-rm -rf "$SCRATCH/clean" "$SCRATCH/old" "$SCRATCH/out" "$SCRATCH/run" "$SCRATCH"/run-*.log
-mkdir -p "$SCRATCH/clean/lingocanvas" "$SCRATCH/old" "$SCRATCH/out" "$SCRATCH/run"
+# 1. clean sources: runtime copy of this plugin
+rm -rf "$SCRATCH/clean" "$SCRATCH/out" "$SCRATCH/run" "$SCRATCH"/run-*.log
+mkdir -p "$SCRATCH/clean/lingocanvas" "$SCRATCH/out" "$SCRATCH/run"
 for item in lingocanvas.php uninstall.php readme.txt src assets languages; do
 	[ -e "$ROOT/$item" ] && cp -r "$ROOT/$item" "$SCRATCH/clean/lingocanvas/"
 done
-
-case " $SCENARIOS " in
-	*" S2 "*|*" S3 "*|*" S4 "*|*" S5 "*)
-		[ -f "$OLD_ZIP" ] || { echo "Old plugin ZIP not found: $OLD_ZIP"; exit 1; }
-		command -v unzip >/dev/null 2>&1 || { echo "unzip is required to unpack $OLD_ZIP"; exit 1; }
-		unzip -q "$OLD_ZIP" -d "$SCRATCH/old"
-		[ -f "$SCRATCH/old/wp-mlp/wp-mlp.php" ] || { echo "$OLD_ZIP has no wp-mlp/wp-mlp.php"; exit 1; }
-		;;
-esac
 
 # 2. playground cli (reuse the plugin-check install if there is one)
 TOOL="$SCRATCH/tool"
@@ -95,7 +79,7 @@ run_scenario() {
 	local id="$1"
 	local out="$SCRATCH/out/$id" run="$SCRATCH/run/$id" log="$SCRATCH/run-$id.log" blueprint
 	mkdir -p "$out" "$run"
-	cp "$HERE/smoke-test.php" "$HERE/smoke-test-migration.php" "$HERE/smoke-test-lib.php" "$HERE/smoke-test-render.php" "$HERE/smoke-test-wpconfig.php" "$out/"
+	cp "$HERE/smoke-test.php" "$HERE/smoke-test-lib.php" "$HERE/smoke-test-render.php" "$HERE/smoke-test-wpconfig.php" "$out/"
 	cp -r "$SCRATCH/clean/lingocanvas" "$run/lingocanvas"
 
 	local mounts=(--mount-dir "$(win "$run/lingocanvas")" /wordpress/wp-content/plugins/lingocanvas)
@@ -107,15 +91,10 @@ run_scenario() {
 		# Mounting over wp-content/mu-plugins would hide Playground's own mu-plugin, so the fixture
 		# travels through /out and the blueprint copies it into mu-plugins.
 		cp "$HERE"/smoke-test-fixtures/mu-plugins/*.php "$out/"
-	elif [ "$id" = "S6" ]; then
-		blueprint="$run/blueprint.json"
-		node "$(win "$HERE/smoke-test-blueprint.cjs")" "$id" "$(win "$blueprint")"
-		cp "$HERE"/smoke-test-fixtures/s6/*.php "$out/"
 	else
 		blueprint="$run/blueprint.json"
 		node "$(win "$HERE/smoke-test-blueprint.cjs")" "$id" "$(win "$blueprint")"
-		cp -r "$SCRATCH/old/wp-mlp" "$run/wp-mlp"
-		mounts+=(--mount-dir "$(win "$run/wp-mlp")" /wordpress/wp-content/plugins/wp-mlp)
+		cp "$HERE"/smoke-test-fixtures/s6/*.php "$out/"
 	fi
 	mounts+=(--mount-dir "$(win "$out")" /out)
 

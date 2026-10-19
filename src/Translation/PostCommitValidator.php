@@ -2,19 +2,19 @@
 /**
  * Проверка пакета переводов перед сохранением — всё или ничего.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
-use WpMlp\Rendering\BlockSanitizer;
-use WpMlp\Rendering\Segment;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Support\Hash;
-use WpMlp\Support\ShortcodeGuard;
-use WpMlp\Support\UrlGuard;
+use LingoCanvas\Rendering\BlockSanitizer;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\ShortcodeGuard;
+use LingoCanvas\Support\UrlGuard;
 
 defined( 'ABSPATH' ) || exit;
 

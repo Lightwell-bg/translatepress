@@ -2,32 +2,32 @@
 /**
  * Тесты строки статуса ключа OpenAI на странице настроек.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\SettingsPage;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Env;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Admin\SettingsPage;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Env;
+use LingoCanvas\Translation\ProviderFactory;
 
 #[CoversClass( SettingsPage::class )]
 final class SettingsPageKeyStatusTest extends TestCase {
 
 	protected function setUp(): void {
 		Env::reset();
-		wp_mlp_test_options( array( Settings::OPTION => Settings::defaults() ) );
+		lingocanvas_test_options( array( Settings::optionName() => Settings::defaults() ) );
 	}
 
 	protected function tearDown(): void {
 		Env::reset();
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 	}
 
 	/**
@@ -36,7 +36,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 	 * @param array{content?: ?string, parent?: ?string}|null $envPaths Пути env-файлов.
 	 */
 	private function page( array $constants = array(), array $overrides = array(), ?array $envPaths = null ): SettingsPage {
-		wp_mlp_test_options( array( Settings::OPTION => array_merge( Settings::defaults(), $overrides ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => array_merge( Settings::defaults(), $overrides ) ) );
 
 		$settings = new Settings();
 
@@ -64,7 +64,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 	}
 
 	public function testClearCheckboxWipesDbKeyEvenUnderConstant(): void {
-		wp_mlp_test_options( array( Settings::OPTION => array_merge( Settings::defaults(), array( 'openai_api_key' => 'sk-old-db-key' ) ) ) );
+		lingocanvas_test_options( array( Settings::optionName() => array_merge( Settings::defaults(), array( 'openai_api_key' => 'sk-old-db-key' ) ) ) );
 
 		$result = ( new Settings() )->sanitize(
 			array(
@@ -105,15 +105,15 @@ final class SettingsPageKeyStatusTest extends TestCase {
 	public function testContentEnvAndNoneStatuses(): void {
 		$dir = sys_get_temp_dir() . '/mlp-' . uniqid();
 		mkdir( $dir );
-		file_put_contents( $dir . '/wp-mlp.env.php', "<?php exit; ?>\nOPENAI_API_KEY=sk-content\n" );
-		Env::loadGuarded( $dir . '/wp-mlp.env.php' );
+		file_put_contents( $dir . '/lingocanvas.env.php', "<?php exit; ?>\nOPENAI_API_KEY=sk-content\n" );
+		Env::loadGuarded( $dir . '/lingocanvas.env.php' );
 
-		$html = $this->page( array(), array(), array( 'content' => $dir . '/wp-mlp.env.php' ) )->keyStatusHtml();
+		$html = $this->page( array(), array(), array( 'content' => $dir . '/lingocanvas.env.php' ) )->keyStatusHtml();
 
-		$this->assertStringContainsString( 'wp-content/wp-mlp.env.php', $html );
+		$this->assertStringContainsString( 'wp-content/lingocanvas.env.php', $html );
 		$this->assertStringNotContainsString( 'notice-warning', $html );
 
-		unlink( $dir . '/wp-mlp.env.php' );
+		unlink( $dir . '/lingocanvas.env.php' );
 		rmdir( $dir );
 		Env::reset();
 
@@ -123,8 +123,8 @@ final class SettingsPageKeyStatusTest extends TestCase {
 	public function testUnguardedContentFileShowsWarning(): void {
 		$dir = sys_get_temp_dir() . '/mlp-' . uniqid();
 		mkdir( $dir );
-		file_put_contents( $dir . '/wp-mlp.env.php', "OPENAI_API_KEY=sk-leak\n" );
-		Env::loadGuarded( $dir . '/wp-mlp.env.php' );
+		file_put_contents( $dir . '/lingocanvas.env.php', "OPENAI_API_KEY=sk-leak\n" );
+		Env::loadGuarded( $dir . '/lingocanvas.env.php' );
 
 		$html = $this->page()->keyStatusHtml();
 
@@ -132,7 +132,7 @@ final class SettingsPageKeyStatusTest extends TestCase {
 		$this->assertStringContainsString( 'No key saved', $html );
 		$this->assertStringNotContainsString( 'sk-leak', $html );
 
-		unlink( $dir . '/wp-mlp.env.php' );
+		unlink( $dir . '/lingocanvas.env.php' );
 		rmdir( $dir );
 	}
 }

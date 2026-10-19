@@ -4,7 +4,7 @@ Tags: multilingual, translation, translate, language switcher, hreflang
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.14
+Stable tag: 0.4.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,7 +32,7 @@ The plugin takes the HTML that the theme has already rendered, parses it and rep
 * Interface strings (comment form, cart buttons and similar) are served from the official WordPress.org language packs: the plugin switches the WordPress locale on additional languages, and the pack can be downloaded from the languages screen.
 * "Languages" column in the post and page lists showing how completely each post is translated.
 * Per-language visibility: show on a language only the posts you have enabled by hand (switch in the posts list, bulk action, filter, edit screen box, visual editor). A hidden post redirects to the default language.
-* Language switcher: a navigation menu item (dropdown or inline), the [mlp_language_switcher] shortcode and a widget. Show the language name, code, flag or flag with code. Flags are uploaded as SVG files and sanitized.
+* Language switcher: a navigation menu item (dropdown or inline), the [lingocanvas_language_switcher] shortcode and a widget. Show the language name, code, flag or flag with code. Flags are uploaded as SVG files and sanitized.
 * Internal links in hard-coded theme blocks (for example the footer) get the language prefix.
 * Optional AI translation with OpenAI or an OpenAI-compatible service. It runs only when an administrator clicks a button (see "External services" below). Nothing is saved automatically: you review the suggestion and save it yourself. A daily character limit caps the usage.
 * Flushes the page cache of common caching plugins when a translation changes. A hook (lingocanvas_purge_page_cache) is available for other caches.
@@ -40,7 +40,7 @@ The plugin takes the HTML that the theme has already rendered, parses it and rep
 **SEO**
 
 * Self-canonical and mutual hreflang links, including x-default, and the html lang attribute.
-* A multilingual sitemap at /wp-mlp-sitemap.xml with hreflang alternates. Untranslated or hidden posts are not listed. Service pages (password-protected, noindex, WooCommerce cart and checkout, and slugs you exclude) are left out. The sitemap address is added to robots.txt.
+* A multilingual sitemap at /lingocanvas-sitemap.xml with hreflang alternates. Untranslated or hidden posts are not listed. Service pages (password-protected, noindex, WooCommerce cart and checkout, and slugs you exclude) are left out. The sitemap address is added to robots.txt.
 * Translation of SEO markup: meta description, Open Graph, Twitter Card, article tags and JSON-LD titles and descriptions. Identifiers, image URLs and brand names are protected from translation. Works with the output of Yoast SEO, Rank Math and SEOPress.
 * A post title is translated once and used for the page title, H1, og:title, twitter:title and JSON-LD headline.
 
@@ -58,11 +58,6 @@ The admin interface is in English and ships with a Russian translation.
 
 * Filters: lingocanvas_nav_menu_trigger_title, lingocanvas_nav_menu_dropdown_classes, lingocanvas_visibility_bypass, lingocanvas_sitemap_post_ids, lingocanvas_translation_provider.
 * Action: lingocanvas_purge_page_cache.
-* The earlier mlp_* names of these hooks still work but are deprecated since 0.3.13 (a notice is logged only when WP_DEBUG is on).
-
-**Previously published as WP Multilang Press**
-
-LingoCanvas continues WP Multilang Press and reuses its data as is: translations, settings, flags and tables are not copied or deleted. See the FAQ for the safe switch order.
 
 == External services ==
 
@@ -103,7 +98,7 @@ When an administrator adds a language or clicks "Download language pack", the pl
 2. On activation the plugin creates its database tables and default settings (the site's default language plus English at /en/).
 3. Go to Settings > Permalinks and choose any structure except "Plain" (the plugin shows a notice if "Plain" is selected, because language URLs do not work with it). Click Save to rebuild the URL rules.
 4. Open Multilingual > Languages. Add your languages with the "Add language" field, check the "WordPress locale" of each (for example en_US or en_GB) and click "Download language pack" where it says there is no pack. Save.
-5. Add the language switcher: Appearance > Menus > "Languages" block, or the [mlp_language_switcher] shortcode, or the "Language switcher" widget.
+5. Add the language switcher: Appearance > Menus > "Languages" block, or the [lingocanvas_language_switcher] shortcode, or the "Language switcher" widget.
 6. Open a page with a language prefix, for example /en/. Menus, comment forms and buttons should already be shown in that language from the official language pack.
 7. Translate your own content: Multilingual > Visual editor, choose a language and a page, click texts on the page and type translations.
 
@@ -113,22 +108,23 @@ AI translation is optional. Without a key the plugin works as usual and the AI b
 
 1. Constants in wp-config.php (recommended, survives plugin updates):
 
-    define( 'WP_MLP_OPENAI_API_KEY', 'your-key' );
-    define( 'WP_MLP_OPENAI_MODEL', 'model-id' );
-    define( 'WP_MLP_OPENAI_BASE_URL', 'https://api.openai.com/v1' );
+    define( 'LINGOCANVAS_OPENAI_API_KEY', 'your-key' );
+    define( 'LINGOCANVAS_OPENAI_MODEL', 'model-id' );
+    define( 'LINGOCANVAS_OPENAI_BASE_URL', 'https://api.openai.com/v1' );
 
 2. The fields on the Multilingual > Languages screen (stored in the site database; the key is never shown again after saving, only its last characters).
-3. The file wp-content/wp-mlp.env.php. Lines are KEY=VALUE (OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL) and the first line must be `<?php exit; ?>`. Without that line the file is not read.
-4. The file wp-mlp.env one level above the WordPress root (the same KEY=VALUE format, no guard line).
-5. A legacy .env file in the plugin folder (also in the folder of the previous WP Multilang Press plugin) and real server environment variables. A .env file inside the plugin folder is deleted when the plugin is replaced through "Upload Plugin".
+3. The file wp-content/lingocanvas.env.php. Lines are KEY=VALUE (OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL) and the first line must be `<?php exit; ?>`. Without that line the file is not read.
+4. The file lingocanvas.env one level above the WordPress root (the same KEY=VALUE format, no guard line).
 
-Security notes: never put an ordinary .env or wp-mlp.env file inside wp-content or any other folder served by your web server, because a file with the key could be downloaded by its URL. The protection described above (the exit line) is only for wp-mlp.env.php, and you should not rely on .htaccess-based protection of dot files: it is not applied on nginx. Constants in wp-config.php are the safest option.
+5. A .env file in the plugin folder and real server environment variables. A .env file inside the plugin folder is deleted when the plugin is replaced through "Upload Plugin".
+
+Security notes: never put an ordinary .env or lingocanvas.env file inside wp-content or any other folder served by your web server, because a file with the key could be downloaded by its URL. The protection described above (the exit line) is only for lingocanvas.env.php, and you should not rely on .htaccess-based protection of dot files: it is not applied on nginx. Constants in wp-config.php are the safest option.
 
 == Frequently Asked Questions ==
 
 = Does the plugin create a copy of every post for each language? =
 
-No. There is one post and N language URLs. Translations are stored in separate tables (mlp_sources, mlp_translations, mlp_occurrences and mlp_routes, with your database prefix) and are substituted when the page is displayed. The content of the post itself is never changed by translation.
+No. There is one post and N language URLs. Translations are stored in separate tables (lingocanvas_sources, lingocanvas_translations, lingocanvas_occurrences and lingocanvas_routes, with your database prefix) and are substituted when the page is displayed. The content of the post itself is never changed by translation.
 
 = Is anything sent to an external service automatically? =
 
@@ -136,7 +132,7 @@ No. Content is sent to OpenAI (or the compatible service you configured) only wh
 
 = Where are translations stored? =
 
-In the WordPress database, in the plugin's own tables. Uploaded flag images are stored in wp-content/uploads/wp-mlp-flags/. Per-language visibility flags are post meta keys named _mlp_visible_<language>. The OpenAI key, if you enter it in the admin, is stored in the plugin's settings option in the database.
+In the WordPress database, in the plugin's own tables. Uploaded flag images are stored in wp-content/uploads/lingocanvas-flags/. Per-language visibility flags are post meta keys named _lingocanvas_visible_<language>. The OpenAI key, if you enter it in the admin, is stored in the plugin's settings option in the database.
 
 = What happens when I delete the plugin? =
 
@@ -152,25 +148,11 @@ By default new strings are collected only when an administrator opens a page in 
 
 = Does it work with caching plugins? =
 
-When a translation is saved, deleted or machine-translated, the plugin tries to flush the page cache of WP Rocket, WP Fastest Cache, WP Super Cache, W3 Total Cache, LiteSpeed Cache, SiteGround Optimizer and WP Engine. This is implemented by checking each plugin's documented functions and has not been tested on live installations of all of them. For other caches (a CDN, Varnish, a reverse proxy) use the lingocanvas_purge_page_cache action (the old mlp_purge_page_cache name still works but is deprecated since 0.3.13). If a page still shows the old text, flush the cache once by hand.
-
-= I used WP Multilang Press. How do I switch to LingoCanvas? =
-
-Translations and settings are reused as is, and nothing is deleted. Safe order:
-
-1. Back up the database (at least the {prefix}mlp_* tables and wp_options). If your OpenAI key is only in wp-content/plugins/wp-mlp/.env, move it to wp-config.php constants first.
-2. Do not delete or deactivate WP Multilang Press yet.
-3. Plugins > Add New > Upload Plugin, choose lingocanvas-0.3.13.zip, click Install Now (WordPress installs it as a separate plugin).
-4. Activate LingoCanvas. It deactivates WP Multilang Press automatically and finishes its own setup on the next page load.
-5. Open any admin page once, then check Multilingual > Languages, a translated page such as /en/, the sitemap and the language switcher.
-6. Optional: Settings > Permalinks > Save once to refresh the rewrite rules.
-7. Only after checking, delete WP Multilang Press (Plugins > Delete). This is safe: LingoCanvas keeps the shared data even if "delete data on uninstall" was ticked.
-
-Rollback: deactivate LingoCanvas and activate WP Multilang Press; it uses the same data. Never keep both active: if they are, LingoCanvas pauses itself and shows a notice. Theme code that uses the old mlp_* hooks keeps working; rename them to lingocanvas_* when convenient.
+When a translation is saved, deleted or machine-translated, the plugin tries to flush the page cache of WP Rocket, WP Fastest Cache, WP Super Cache, W3 Total Cache, LiteSpeed Cache, SiteGround Optimizer and WP Engine. This is implemented by checking each plugin's documented functions and has not been tested on live installations of all of them. For other caches (a CDN, Varnish, a reverse proxy) use the lingocanvas_purge_page_cache action. If a page still shows the old text, flush the cache once by hand.
 
 = Does it work on WordPress Multisite? =
 
-Multisite has not been fully tested. The migration from WP Multilang Press does handle network activation: if the old plugin is network-activated, network-activate LingoCanvas from Network Admin. Activating LingoCanvas on a single site does not switch off a network-activated old plugin.
+Multisite has not been fully tested. The plugin is activated and configured per site, and its data is removed per site on uninstall.
 
 = Which PHP version is needed? =
 
@@ -178,20 +160,8 @@ PHP 8.1 or newer. On PHP 8.4+ the built-in HTML5 parser is used; on 8.1 to 8.3 t
 
 == Changelog ==
 
-= 0.3.14 =
-* Interface tab: the official translation of theme and plugin strings is now read from the loaded translation files of their text domain instead of through gettext filters, so a site owner's override is never shown as the official translation.
-* Correct official translation for each plural form.
-* Translators comments added to all strings with placeholders.
-* Flag emoji and the libxml fallback no longer need the optional mbstring extension (PHP fallback).
-
-= 0.3.13 =
-* Rebrand to LingoCanvas: plugin folder and text domain are now lingocanvas; public hooks renamed to lingocanvas_* (the old mlp_* names still work as deprecated aliases); automatic hand-over from WP Multilang Press (translations, settings and tables are reused, nothing is deleted).
-* Preparation for WordPress.org: English source strings with bundled Russian translation, security hardening (URL protocol validation for translated links, SVG flag sanitizing, API key masking in errors), full data cleanup on opted-in uninstall, readme.txt.
-
-== Upgrade Notice ==
-
-= 0.3.14 =
-Interface tab shows the real official translation of each plural form; works without the mbstring extension.
-
-= 0.3.13 =
-The plugin is now called LingoCanvas. Users of WP Multilang Press: see the FAQ for the safe switch order. Also security hardening and English source strings with a bundled Russian translation.
+= 0.4.3 =
+* First public release.
+* One post, a URL per language: visual translation editor, string translation screen, language switcher (menu item, shortcode, widget) and per-language visibility of posts.
+* SEO: hreflang, canonical, a multilingual sitemap and translation of SEO markup (meta description, Open Graph, Twitter Card, JSON-LD).
+* Interface strings served from the official WordPress.org language packs; optional AI translation with OpenAI, only on an administrator's click.

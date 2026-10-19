@@ -2,12 +2,12 @@
 /**
  * Решение «noindex ли запись» по meta трёх SEO-плагинов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 

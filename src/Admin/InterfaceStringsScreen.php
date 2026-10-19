@@ -2,20 +2,20 @@
 /**
  * Вкладка «Интерфейс» экрана «Перевод строк».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\I18n\DomainLabel;
-use WpMlp\I18n\GettextKey;
-use WpMlp\I18n\LanguagePacks;
-use WpMlp\I18n\OfficialTranslation;
-use WpMlp\Settings\Language;
-use WpMlp\Storage\GettextRepository;
-use WpMlp\Storage\TranslationStatus;
+use LingoCanvas\I18n\DomainLabel;
+use LingoCanvas\I18n\GettextKey;
+use LingoCanvas\I18n\LanguagePacks;
+use LingoCanvas\I18n\OfficialTranslation;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Storage\GettextRepository;
+use LingoCanvas\Storage\TranslationStatus;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -307,10 +307,10 @@ final class InterfaceStringsScreen {
 		?>
 		<form method="get" class="wp-mlp-filters">
 			<input type="hidden" name="page" value="<?php echo esc_attr( StringTranslationPage::MENU_SLUG ); ?>">
-			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( StringTranslationPage::TAB_INTERFACE ); ?>">
+			<input type="hidden" name="lingocanvas_tab" value="<?php echo esc_attr( StringTranslationPage::TAB_INTERFACE ); ?>">
 
-			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language','lingocanvas' ); ?></label>
-			<select name="mlp_locale" id="mlp-locale">
+			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language', 'lingocanvas' ); ?></label>
+			<select name="lingocanvas_locale" id="mlp-locale">
 				<?php foreach ( $secondary as $option ) : ?>
 					<option value="<?php echo esc_attr( $option->locale ); ?>" <?php selected( $option->locale, $language->locale ); ?>>
 						<?php echo esc_html( sprintf( '%s (%s)', $option->label, $option->locale ) ); ?>
@@ -319,7 +319,7 @@ final class InterfaceStringsScreen {
 			</select>
 
 			<label for="mlp-domain" class="screen-reader-text"><?php esc_html_e( 'Source', 'lingocanvas' ); ?></label>
-			<select name="mlp_domain" id="mlp-domain">
+			<select name="lingocanvas_domain" id="mlp-domain">
 				<option value=""><?php esc_html_e( 'All sources', 'lingocanvas' ); ?></option>
 				<?php foreach ( $labels as $domain => $label ) : ?>
 					<option value="<?php echo esc_attr( $domain ); ?>" <?php selected( $domain, $filters['domain'] ); ?>>
@@ -329,7 +329,7 @@ final class InterfaceStringsScreen {
 			</select>
 
 			<label for="mlp-gettext-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></label>
-			<select name="mlp_status" id="mlp-gettext-status">
+			<select name="lingocanvas_status" id="mlp-gettext-status">
 				<option value=""><?php esc_html_e( 'All strings', 'lingocanvas' ); ?></option>
 				<option value="<?php echo esc_attr( GettextRepository::STATUS_MISSING ); ?>" <?php selected( GettextRepository::STATUS_MISSING, $filters['status'] ); ?>>
 					<?php esc_html_e( 'Without your translation', 'lingocanvas' ); ?>
@@ -339,7 +339,7 @@ final class InterfaceStringsScreen {
 				</option>
 			</select>
 
-			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search','lingocanvas' ); ?></label>
+			<label for="mlp-search" class="screen-reader-text"><?php esc_html_e( 'Search', 'lingocanvas' ); ?></label>
 			<input type="search" name="s" id="mlp-search" value="<?php echo esc_attr( $filters['search'] ); ?>"
 				placeholder="<?php esc_attr_e( 'Search the original and the translation', 'lingocanvas' ); ?>">
 

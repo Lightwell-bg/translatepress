@@ -2,18 +2,18 @@
 /**
  * Тесты извлечения строк из DOM и подстановки перевода.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( Extractor::class )]
 #[CoversClass( HtmlDocument::class )]
@@ -576,8 +576,8 @@ final class ExtractorTest extends TestCase {
 		$this->assertNotNull( $title );
 		$this->assertSame( Segment::KIND_ATTRIBUTE, $title->kind );
 
-		$plain = \WpMlp\Support\Hash::ofParts(
-			array( 'ru', Segment::KIND_ATTRIBUTE, \WpMlp\Support\Hash::of( 'Обзор Windows 11' ), \WpMlp\Support\Hash::of( '' ), '', '', '' )
+		$plain = \LingoCanvas\Support\Hash::ofParts(
+			array( 'ru', Segment::KIND_ATTRIBUTE, \LingoCanvas\Support\Hash::of( 'Обзор Windows 11' ), \LingoCanvas\Support\Hash::of( '' ), '', '', '' )
 		);
 
 		$this->assertSame( $plain, $title->uniqHash );

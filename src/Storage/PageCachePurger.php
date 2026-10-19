@@ -2,12 +2,12 @@
 /**
  * Сброс кэша страниц сторонних плагинов после изменения перевода.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -49,13 +49,9 @@ final class PageCachePurger {
 		 * Точка расширения для кэшей, которых нет в списке выше (Cloudflare,
 		 * Varnish, кастомные reverse-proxy).
 		 *
-		 * Прежнее имя действия: `mlp_purge_page_cache` (устарело с 0.3.13,
-		 * вызывается следом как псевдоним).
-		 *
 		 * @since 0.3.13 Имя действия — `lingocanvas_purge_page_cache`.
 		 */
 		do_action( 'lingocanvas_purge_page_cache' );
-		do_action_deprecated( 'mlp_purge_page_cache', array(), '0.3.13', 'lingocanvas_purge_page_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
 	}
 
 	/**

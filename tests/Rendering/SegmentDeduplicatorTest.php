@@ -2,17 +2,17 @@
 /**
  * Тесты выбора сегмента-представителя при совпадении uniq_hash.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Segment;
-use WpMlp\Rendering\SegmentDeduplicator;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Rendering\SegmentDeduplicator;
 
 #[CoversClass( SegmentDeduplicator::class )]
 final class SegmentDeduplicatorTest extends TestCase {

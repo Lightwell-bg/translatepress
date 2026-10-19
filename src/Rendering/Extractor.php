@@ -2,15 +2,15 @@
 /**
  * Извлечение переводимых строк из DOM.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Support\Hash;
-use WpMlp\Support\Text;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -270,7 +270,7 @@ final class Extractor {
 				}
 
 				if ( $markBlockCandidates ) {
-					$node->setAttribute( 'data-mlp-block', '1' );
+					$node->setAttribute( 'data-lingocanvas-block', '1' );
 				}
 			}
 
@@ -499,7 +499,7 @@ final class Extractor {
 
 				// Проверяется уже очищенный адрес: ссылка, от которой после
 				// удаления параметров редактора ничего не осталось, не страница.
-				if ( ! LinkTarget::isTranslatable( $href ) ||$this->hasClass( $element, self::SWITCHER_CLASS ) ) {
+				if ( ! LinkTarget::isTranslatable( $href ) || $this->hasClass( $element, self::SWITCHER_CLASS ) ) {
 					continue;
 				}
 

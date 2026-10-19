@@ -2,22 +2,22 @@
 /**
  * Колонка «Языки» и фильтр «Перевод» в списках записей и страниц.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Frontend\Flags;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\PostStringScope;
-use WpMlp\Storage\Schema;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
+use LingoCanvas\Frontend\Flags;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\PostStringScope;
+use LingoCanvas\Storage\Schema;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,24 +38,24 @@ defined( 'ABSPATH' ) || exit;
 final class PostListLanguages implements Hookable {
 
 	/** Ключ колонки в списке. */
-	public const COLUMN = 'mlp_languages';
+	public const COLUMN = 'lingocanvas_languages';
 
 	/** Имя параметра фильтра в адресной строке. */
-	public const FILTER_PARAM = 'mlp_untranslated';
+	public const FILTER_PARAM = 'lingocanvas_untranslated';
 
 	/** Префиксы значений фильтра «Показано на / Скрыто на языке» (`shown:en`, `hidden:en`). */
 	public const FILTER_SHOWN  = 'shown:';
 	public const FILTER_HIDDEN = 'hidden:';
 
 	/** Префиксы массовых действий; после префикса идёт код языка. */
-	public const BULK_SHOW = 'mlp_show_';
-	public const BULK_HIDE = 'mlp_hide_';
+	public const BULK_SHOW = 'lingocanvas_show_';
+	public const BULK_HIDE = 'lingocanvas_hide_';
 
 	/** Параметры адреса возврата после массового действия. */
-	public const NOTICE_COUNT   = 'mlp_vis_done';
-	public const NOTICE_SKIPPED = 'mlp_vis_skipped';
-	public const NOTICE_LOCALE  = 'mlp_vis_locale';
-	public const NOTICE_STATE   = 'mlp_vis_state';
+	public const NOTICE_COUNT   = 'lingocanvas_vis_done';
+	public const NOTICE_SKIPPED = 'lingocanvas_vis_skipped';
+	public const NOTICE_LOCALE  = 'lingocanvas_vis_locale';
+	public const NOTICE_STATE   = 'lingocanvas_vis_state';
 
 	/** Запись открыть нельзя (не опубликована и т. п.). */
 	public const STATE_UNAVAILABLE = 'unavailable';
@@ -739,8 +739,8 @@ final class PostListLanguages implements Hookable {
 		$stringsUrl = add_query_arg(
 			array(
 				'page'       => StringTranslationPage::MENU_SLUG,
-				'mlp_locale' => $language->locale,
-				'mlp_scope'  => SourceRepository::SCOPE_OBJECT . ':' . $postId,
+				'lingocanvas_locale' => $language->locale,
+				'lingocanvas_scope'  => SourceRepository::SCOPE_OBJECT . ':' . $postId,
 			),
 			admin_url( 'admin.php' )
 		);
@@ -772,9 +772,9 @@ final class PostListLanguages implements Hookable {
 			$seoUrl = add_query_arg(
 				array(
 					'page'       => StringTranslationPage::MENU_SLUG,
-					'mlp_tab'    => StringTranslationPage::parseTab( StringTranslationPage::TAB_SEO ),
-					'mlp_locale' => $language->locale,
-					'mlp_scope'  => SourceRepository::SCOPE_OBJECT . ':' . $postId,
+					'lingocanvas_tab'    => StringTranslationPage::parseTab( StringTranslationPage::TAB_SEO ),
+					'lingocanvas_locale' => $language->locale,
+					'lingocanvas_scope'  => SourceRepository::SCOPE_OBJECT . ':' . $postId,
 				),
 				admin_url( 'admin.php' )
 			);
@@ -882,7 +882,7 @@ final class PostListLanguages implements Hookable {
 
 		// Подзапрос x — строки записи как на экране «Перевод строк» (область object:ID).
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- SQL собран из кода: таблицы из Schema::table() (allowlist), счётчики $i — целые, подзапрос PostStringScope собран из констант; значения идут через prepare().
-		$sql ="SELECT x.object_id AS object_id, COUNT(*) AS total{$selects}
+		$sql = "SELECT x.object_id AS object_id, COUNT(*) AS total{$selects}
 			FROM (
 				" . PostStringScope::ownRowsSql( "o.object_id IN ({$idMarks})", true ) . "
 			) x{$joins}

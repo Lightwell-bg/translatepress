@@ -2,16 +2,16 @@
 /**
  * Ссылки на визуальный редактор для конкретной записи или пути.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,7 +35,7 @@ final class EditorLink {
 	}
 
 	/**
-	 * Путь записи для `mlp_path` — без базового пути и языкового префикса.
+	 * Путь записи для `lingocanvas_path` — без базового пути и языкового префикса.
 	 *
 	 * Только опубликованные записи публичных типов: у черновика нет
 	 * фронтенд-адреса, который мог бы открыть предпросмотр.
@@ -96,8 +96,8 @@ final class EditorLink {
 		return add_query_arg(
 			array(
 				'page'       => EditorPage::MENU_SLUG,
-				'mlp_locale' => $locale,
-				'mlp_path'   => $path,
+				'lingocanvas_locale' => $locale,
+				'lingocanvas_path'   => $path,
 			),
 			admin_url( 'admin.php' )
 		);

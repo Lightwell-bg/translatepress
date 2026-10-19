@@ -2,18 +2,18 @@
 /**
  * Тесты каталога языков для выбора в таблице «Языки сайта».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\LanguageCatalog;
-use WpMlp\Admin\SettingsPage;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Admin\LanguageCatalog;
+use LingoCanvas\Admin\SettingsPage;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( LanguageCatalog::class )]
 final class LanguageCatalogTest extends TestCase {
@@ -142,7 +142,7 @@ final class LanguageCatalogTest extends TestCase {
 	}
 
 	public function testSettingsAcceptManyLanguagesAndRejectDuplicates(): void {
-		wp_mlp_test_options( array( Settings::OPTION => Settings::defaults() ) );
+		lingocanvas_test_options( array( Settings::optionName() => Settings::defaults() ) );
 
 		$settings = new Settings();
 		$rows     = array();
@@ -162,7 +162,7 @@ final class LanguageCatalogTest extends TestCase {
 		$this->assertCount( 6, $result2['settings']['languages'] );
 		$this->assertNotSame( array(), $result2['errors'] );
 
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 	}
 
 	public function testUtf8CharMatchesMbChrForAllRegionalIndicators(): void {

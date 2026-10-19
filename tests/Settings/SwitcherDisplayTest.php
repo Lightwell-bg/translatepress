@@ -2,18 +2,18 @@
 /**
  * Тесты того, что переключатель языков показывает посетителю.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Settings;
+namespace LingoCanvas\Tests\Settings;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\SwitcherDisplay;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\SwitcherDisplay;
 
 #[CoversClass( SwitcherDisplay::class )]
 #[CoversClass( Language::class )]

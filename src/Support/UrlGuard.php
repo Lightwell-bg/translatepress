@@ -2,12 +2,12 @@
 /**
  * Проверка протокола адреса, который попадёт в href/src.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Support;
+namespace LingoCanvas\Support;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -2,14 +2,14 @@
 /**
  * Общие SQL-правила «что считать строками записи».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Segment;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -54,7 +54,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php $_SERVER['REQUEST_URI']='/wp-mlp-sitemap.xml'; $GLOBALS['MLP_SMOKE_PAGE']='sitemap'; require '/out/smoke-test-render.php';"
+      "code": "<?php $_SERVER['REQUEST_URI']='/lingocanvas-sitemap.xml'; $GLOBALS['MLP_SMOKE_PAGE']='sitemap'; require '/out/smoke-test-render.php';"
     },
     {
       "step": "runPHP",

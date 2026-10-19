@@ -2,14 +2,14 @@
 /**
  * Служебные маркеры узлов для визуального редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Support\Text;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,13 +22,13 @@ defined( 'ABSPATH' ) || exit;
 final class EditorMarkers {
 
 	/** Идентификатор строки текстового узла или блока. */
-	public const ATTR_ID = 'data-mlp-source-id';
+	public const ATTR_ID = 'data-lingocanvas-source-id';
 
 	/** Вид строки: text или html_block. */
-	public const ATTR_KIND = 'data-mlp-kind';
+	public const ATTR_KIND = 'data-lingocanvas-kind';
 
-	/** Префикс для строк-атрибутов: data-mlp-source-id-placeholder. */
-	public const ATTR_PREFIX = 'data-mlp-source-id-';
+	/** Префикс для строк-атрибутов: data-lingocanvas-source-id-placeholder. */
+	public const ATTR_PREFIX = 'data-lingocanvas-source-id-';
 
 	/**
 	 * Домен строки интерфейса — она не переводится в редакторе на месте.
@@ -39,7 +39,7 @@ final class EditorMarkers {
 	 * предпросмотре просто ничего не делал бы — а это худший вид отказа:
 	 * пользователь не понимает, сломано оно или так задумано.
 	 */
-	public const ATTR_GETTEXT = 'data-mlp-gettext';
+	public const ATTR_GETTEXT = 'data-lingocanvas-gettext';
 
 	/**
 	 * Родители, чьё содержимое в предпросмотре не кликабельно.

@@ -2,14 +2,14 @@
 /**
  * Справка во вкладке «Помощь» на экранах плагина.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Support\Hookable;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -118,7 +118,7 @@ final class HelpTabs implements Hookable {
 				'content' => '<p>' . esc_html__( 'Three ways, take your pick:', 'lingocanvas' ) . '</p>'
 					. '<ul>'
 					. '<li>' . esc_html__( '"Appearance → Menus", the "Languages" box: tick "Dropdown" or "Inline" and add it to the menu. One item is enough — the plugin builds all the languages under it.', 'lingocanvas' ) . '</li>'
-					. '<li>' . esc_html__( 'The [mlp_language_switcher] shortcode in the text.', 'lingocanvas' ) . '</li>'
+					. '<li>' . esc_html__( 'The [lingocanvas_language_switcher] shortcode in the text.', 'lingocanvas' ) . '</li>'
 					. '<li>' . esc_html__( 'The "Language switcher" widget.', 'lingocanvas' ) . '</li>'
 					. '</ul>'
 					. '<p><strong>' . esc_html__( 'Language order', 'lingocanvas' ) . '</strong> '

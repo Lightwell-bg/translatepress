@@ -2,26 +2,26 @@
 /**
  * Тесты ссылок на страницу, скрытую на части языков: переключатель, меню, hreflang.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\CurrentPageLanguages;
-use WpMlp\Frontend\LanguageSwitcher;
-use WpMlp\Frontend\NavMenu;
-use WpMlp\Frontend\SeoTags;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Frontend\CurrentPageLanguages;
+use LingoCanvas\Frontend\LanguageSwitcher;
+use LingoCanvas\Frontend\NavMenu;
+use LingoCanvas\Frontend\SeoTags;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 #[CoversClass( CurrentPageLanguages::class )]
 #[CoversClass( LanguageSwitcher::class )]
@@ -38,14 +38,14 @@ final class HiddenPageLinksTest extends TestCase {
 		$GLOBALS['wpdb']   = new FakeWpdb();
 		$this->currentPost = 10;
 
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_request( array() );
 		$_SERVER['REQUEST_URI'] = '/about/';
 		unset( $_SERVER['QUERY_STRING'] );
 
 		$this->configure( Settings::POSTS_MANUAL );
 
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				'posts' => array(
 					10 => new \WP_Post( array( 'ID' => 10, 'post_type' => 'page' ) ),
@@ -57,9 +57,9 @@ final class HiddenPageLinksTest extends TestCase {
 
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'], $_SERVER['REQUEST_URI'] );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function configure( string $mode, bool $withGerman = true ): void {
@@ -72,10 +72,10 @@ final class HiddenPageLinksTest extends TestCase {
 			$languages['de'] = array( 'locale' => 'de', 'slug' => 'de', 'label' => 'Deutsch', 'status' => 'published' );
 		}
 
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => $languages,

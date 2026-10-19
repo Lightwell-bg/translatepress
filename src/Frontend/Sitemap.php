@@ -2,21 +2,21 @@
 /**
  * Мультиязычная карта сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,12 +38,12 @@ final class Sitemap implements Hookable {
 	/**
 	 * Имя файла карты сайта.
 	 */
-	public const FILE = 'wp-mlp-sitemap.xml';
+	public const FILE = 'lingocanvas-sitemap.xml';
 
 	/**
 	 * Группа объектного кэша.
 	 */
-	private const CACHE_GROUP = 'mlp_sitemap';
+	private const CACHE_GROUP = 'lingocanvas_sitemap';
 
 	/**
 	 * @param Settings             $settings    Настройки плагина.
@@ -110,7 +110,9 @@ final class Sitemap implements Hookable {
 	 * Отдаёт карту сайта, если запрошен именно её адрес.
 	 */
 	public function maybeRender(): void {
-		if ( untrailingslashit( LanguageResolver::currentPath() ) !== '/' . self::FILE ) {
+		$path = untrailingslashit( LanguageResolver::currentPath() );
+
+		if ( '/' . self::FILE !== $path ) {
 			return;
 		}
 
@@ -411,15 +413,10 @@ final class Sitemap implements Hookable {
 		 * id записи; хук ничего не решает сам, просто даёт исключить (или
 		 * вернуть) конкретные id без правки кода плагина.
 		 *
-		 * Прежнее имя фильтра: `mlp_sitemap_post_ids` (устарело с 0.3.13,
-		 * работает как псевдоним `lingocanvas_sitemap_post_ids`).
-		 *
 		 * @since 0.3.13 Имя фильтра — `lingocanvas_sitemap_post_ids`.
 		 *
 		 * @param list<int> $ids Идентификаторы записей, отобранные в карту сайта.
 		 */
-		$ids = apply_filters_deprecated( 'mlp_sitemap_post_ids', array( $ids ), '0.3.13', 'lingocanvas_sitemap_post_ids' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
-
 		return apply_filters( 'lingocanvas_sitemap_post_ids', $ids );
 	}
 

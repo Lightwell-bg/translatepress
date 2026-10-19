@@ -2,21 +2,21 @@
 /**
  * Доступ к таблице исходных строк.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Locale;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Чтение и запись `wp_mlp_sources`.
+ * Чтение и запись `wp_lingocanvas_sources`.
  *
  * Все методы работают пачками: на странице бывают сотни строк, и запрос на
  * каждую нарушил бы требование ТЗ 12.2 (не более 3–5 запросов на страницу).
@@ -43,7 +43,9 @@ final class SourceRepository {
 	 * автозагрузку и стоил бы двух лишних запросов на каждой странице, даже
 	 * когда блоков нет вовсе.
 	 */
-	public const BLOCKS_OPTION = 'mlp_block_hashes';
+	public static function blocksOption(): string {
+		return 'lingocanvas_block_hashes';
+	}
 
 	/**
 	 * Ищет строки и их переводы одним запросом.
@@ -234,7 +236,7 @@ final class SourceRepository {
 	 * @return array<string, true>
 	 */
 	public function blockHashes(): array {
-		$cached = get_option( self::BLOCKS_OPTION, null );
+		$cached = get_option( self::blocksOption(), null );
 
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -252,7 +254,7 @@ final class SourceRepository {
 
 		$hashes = array_fill_keys( is_array( $rows ) ? $rows : array(), true );
 
-		update_option( self::BLOCKS_OPTION, $hashes, true );
+		update_option( self::blocksOption(), $hashes, true );
 
 		return $hashes;
 	}
@@ -261,7 +263,7 @@ final class SourceRepository {
 	 * Сбрасывает список блоков — он пересоберётся при следующем показе страницы.
 	 */
 	public function flushBlockHashes(): void {
-		delete_option( self::BLOCKS_OPTION );
+		delete_option( self::blocksOption() );
 	}
 
 	/**

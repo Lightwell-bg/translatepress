@@ -2,16 +2,16 @@
 /**
  * Тесты точечной подстановки перевода в исходную строку.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\RawContentPatcher;
+use LingoCanvas\Rendering\RawContentPatcher;
 
 #[CoversClass( RawContentPatcher::class )]
 final class RawContentPatcherTest extends TestCase {

@@ -348,15 +348,15 @@ msgid "The key is stored in the database and survives plugin updates. Ends with 
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from wp-content/wp-mlp.env.php and survives plugin updates."
+msgid "The key is read from wp-content/lingocanvas.env.php and survives plugin updates."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from a wp-mlp.env file above the WordPress root and survives plugin updates."
+msgid "The key is read from a lingocanvas.env file above the WordPress root and survives plugin updates."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-msgid "The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/wp-mlp.env.php."
+msgid "The key is read from .env in the plugin folder; it will be deleted when the plugin is replaced via ZIP. Paste the key into the field below or move it to wp-content/lingocanvas.env.php."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
@@ -368,7 +368,7 @@ msgid "No key saved."
 msgstr ""
 
 #: src/Admin/SettingsPage.php
-msgid "The wp-mlp.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>"
+msgid "The lingocanvas.env.php file has no protective first line and is not used. The first line must be: <?php exit; ?>"
 msgstr ""
 
 #: src/Admin/SettingsPage.php
@@ -534,7 +534,7 @@ msgid "\"Appearance → Menus\", the \"Languages\" box: tick \"Dropdown\" or \"I
 msgstr ""
 
 #: src/Admin/HelpTabs.php
-msgid "The [mlp_language_switcher] shortcode in the text."
+msgid "The [lingocanvas_language_switcher] shortcode in the text."
 msgstr ""
 
 #: src/Admin/HelpTabs.php
@@ -1758,14 +1758,6 @@ msgstr ""
 
 #: lingocanvas.php
 msgid "LingoCanvas requires PHP %1$s or newer. The server runs PHP %2$s, so the plugin is disabled."
-msgstr ""
-
-#: lingocanvas.php
-msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is network-activated. LingoCanvas must be network-activated by a network administrator (Network Admin → Plugins) to take over; activating it on a single site does not switch the old plugin off."
-msgstr ""
-
-#: lingocanvas.php
-msgid "LingoCanvas is paused because the previous version of this plugin (WP Multilang Press) is still active. Deactivate WP Multilang Press: LingoCanvas will continue with the same translations and settings. Do not delete the old plugin until LingoCanvas is active."
 msgstr ""
 
 #: src/Admin/StringTranslationPage.php

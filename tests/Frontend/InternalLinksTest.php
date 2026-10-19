@@ -2,21 +2,21 @@
 /**
  * Тесты локализации ссылок в готовом HTML.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\InternalLinks;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Frontend\InternalLinks;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 /**
  * Проверяет ссылки, написанные в шаблоне темы буквальным `<a href>` —
@@ -26,9 +26,9 @@ use WpMlp\Settings\Settings;
 final class InternalLinksTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),
@@ -43,7 +43,7 @@ final class InternalLinksTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 		unset( $_SERVER['REQUEST_URI'] );
 	}
 

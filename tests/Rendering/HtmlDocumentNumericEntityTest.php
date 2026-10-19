@@ -2,16 +2,16 @@
 /**
  * Тесты кодирования не-ASCII в числовые сущности (путь libxml без обязательного mbstring).
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\HtmlDocument;
 
 #[CoversClass( HtmlDocument::class )]
 final class HtmlDocumentNumericEntityTest extends TestCase {

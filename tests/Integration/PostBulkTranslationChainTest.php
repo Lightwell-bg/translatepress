@@ -2,24 +2,24 @@
 /**
  * Интеграционный тест цепочки «Перевести весь материал с ИИ».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Integration;
+namespace LingoCanvas\Tests\Integration;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\PostContentExtractor;
-use WpMlp\Storage\PostTranslationSnapshot;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Support\ShortcodeGuard;
-use WpMlp\Translation\BatchChunker;
-use WpMlp\Translation\BulkTranslationMode;
-use WpMlp\Translation\PostCommitValidator;
-use WpMlp\Translation\PostOccurrenceRows;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\PostContentExtractor;
+use LingoCanvas\Storage\PostTranslationSnapshot;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Support\ShortcodeGuard;
+use LingoCanvas\Translation\BatchChunker;
+use LingoCanvas\Translation\BulkTranslationMode;
+use LingoCanvas\Translation\PostCommitValidator;
+use LingoCanvas\Translation\PostOccurrenceRows;
 
 /**
  * `PostTranslationController` сам не тестируется юнит-тестами (как и
@@ -334,7 +334,7 @@ final class PostBulkTranslationChainTest extends TestCase {
 	/**
 	 * Жалоба 09.08.2026: «Не удалось сохранить: проверка пакета не прошла
 	 * (foreign_segment:...)». Причина — общий абзац (один и тот же source_id
-	 * в mlp_sources — источник строк общий на весь сайт) встречается в ДВУХ
+	 * в wp_lingocanvas_sources — источник строк общий на весь сайт) встречается в ДВУХ
 	 * РАЗНЫХ записях. До фикса occurrence-строка каждой записи собиралась
 	 * без учёта object_id, и `INSERT ... ON DUPLICATE KEY UPDATE` (в
 	 * occurrences уникальный индекс — ровно uniq_hash, см. Schema.php) тихо

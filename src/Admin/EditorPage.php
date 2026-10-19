@@ -2,30 +2,30 @@
 /**
  * Экран визуального редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\Rendering\EditorContext;
-use WpMlp\Rest\BlocksController;
-use WpMlp\Rest\EditorPagesController;
-use WpMlp\Rest\PostTranslationController;
-use WpMlp\Rest\TranslationsController;
-use WpMlp\Translation\BulkTranslationMode;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Support\Assets;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\Rendering\EditorContext;
+use LingoCanvas\Rest\BlocksController;
+use LingoCanvas\Rest\EditorPagesController;
+use LingoCanvas\Rest\PostTranslationController;
+use LingoCanvas\Rest\TranslationsController;
+use LingoCanvas\Translation\BulkTranslationMode;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Support\Assets;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
+use LingoCanvas\Translation\ProviderFactory;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
  * превью сам их не делает.
  *
  * Это НЕ изоляция происхождения — same-origin iframe без атрибута `sandbox`
- * технически видит DOM родителя целиком, включая `wpMlpEditor.nonce`, точно
+ * технически видит DOM родителя целиком, включая `lingocanvasEditor.nonce`, точно
  * так же, как обычный `<script>` на странице. Единственная граница — что мы
  * туда сами не выводим. Поэтому editor.js ограничивает, куда клик по ссылке в
  * превью может увести этот привилегированный iframe (см. `homeUrl` ниже):
@@ -47,7 +47,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class EditorPage implements Hookable {
 
-	public const MENU_SLUG  = 'wp-mlp-editor';
+	public const MENU_SLUG  = 'lingocanvas-editor';
 	public const CAPABILITY = 'manage_options';
 
 	/**
@@ -118,7 +118,7 @@ final class EditorPage implements Hookable {
 
 		$bar->add_node(
 			array(
-				'id'    => 'wp-mlp-editor',
+				'id'    => 'lingocanvas-editor',
 				'title' => __( 'Translate page', 'lingocanvas' ),
 				'href'  => $this->editorUrl( $this->currentRelativePath() ),
 			)
@@ -135,8 +135,8 @@ final class EditorPage implements Hookable {
 			return;
 		}
 
-		wp_enqueue_style( 'wp-mlp-editor', Assets::url( 'assets/editor.css' ), array(), Assets::version( 'assets/editor.css' ) );
-		wp_enqueue_script( 'wp-mlp-editor', Assets::url( 'assets/editor.js' ), array(), Assets::version( 'assets/editor.js' ), true );
+		wp_enqueue_style( 'lingocanvas-editor', Assets::url( 'assets/editor.css' ), array(), Assets::version( 'assets/editor.css' ) );
+		wp_enqueue_script( 'lingocanvas-editor', Assets::url( 'assets/editor.js' ), array(), Assets::version( 'assets/editor.js' ), true );
 
 		// Переключатель «Показывать эту страницу на …» использует общий со списком записей скрипт.
 		if ( null !== $this->visibility && $this->settings->isManualPostVisibility() ) {
@@ -147,8 +147,8 @@ final class EditorPage implements Hookable {
 		$postId    = $this->resolvePostId( $selection['path'] );
 
 		wp_localize_script(
-			'wp-mlp-editor',
-			'wpMlpEditor',
+			'lingocanvas-editor',
+			'lingocanvasEditor',
 			array(
 				'sources'      => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/sources/' ) ),
 				'saveRoot'     => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
@@ -164,7 +164,7 @@ final class EditorPage implements Hookable {
 				 * Граница, за которую превью не должно уводить: клик по
 				 * ссылке в предпросмотре переносит этот же iframe (см.
 				 * editor.js, обработчик 'navigate'), а он получает тот же
-				 * `nonce` через wpMlpEditor и ничем от родителя не отделён —
+				 * `nonce` через lingocanvasEditor и ничем от родителя не отделён —
 				 * без sandbox-атрибута same-origin iframe видит DOM родителя
 				 * целиком. Ссылка на корень домена, где рядом с блогом живёт
 				 * другое приложение (частый случай на этом сайте, см.
@@ -227,7 +227,7 @@ final class EditorPage implements Hookable {
 	}
 
 	/**
-	 * Превращает адрес страницы в путь для `mlp_path`. Чистая функция.
+	 * Превращает адрес страницы в путь для `lingocanvas_path`. Чистая функция.
 	 *
 	 * Клик по ссылке внутри предпросмотра присылает адрес целиком, а
 	 * редактору нужен путь без базового пути установки и без языкового
@@ -249,13 +249,13 @@ final class EditorPage implements Hookable {
 	public static function pathFromUrl( string $url, string $basePath, array $slugs, string $homeHost ): string {
 		$parts = wp_parse_url( $url );
 
-		if ( ! is_array( $parts ) || isset( $parts['scheme'] ) && ! in_array( strtolower( (string) $parts['scheme'] ), array( 'http', 'https' ), true ) ) {
+		if ( ! is_array( $parts ) || ( isset( $parts['scheme'] ) && ! in_array( strtolower( (string) $parts['scheme'] ), array( 'http', 'https' ), true ) ) ) {
 			return '/';
 		}
 
 		$host = isset( $parts['host'] ) ? strtolower( (string) $parts['host'] ) : '';
 
-		if ( '' !== $host && '' !== $homeHost && $host !== strtolower( $homeHost ) ) {
+		if ( '' !== $host && '' !== $homeHost && strtolower( $homeHost ) !== $host ) {
 			return '/';
 		}
 
@@ -286,7 +286,7 @@ final class EditorPage implements Hookable {
 	}
 
 	/**
-	 * Разбирает `mlp_locale`/`mlp_path` из адресной строки с тем же
+	 * Разбирает `lingocanvas_locale`/`lingocanvas_path` из адресной строки с тем же
 	 * фолбэком, что и раньше был только в render(): нужен и enqueue() —
 	 * там решается, какую запись резолвить в postId.
 	 *
@@ -296,22 +296,22 @@ final class EditorPage implements Hookable {
 		$secondary = $this->settings->secondary();
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- параметры только выбирают, что показать.
-		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
-		$path   = isset( $_GET['mlp_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_path'] ) ) : '/';
+		$locale = isset( $_GET['lingocanvas_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_locale'] ) ) ) : '';
+		$path   = isset( $_GET['lingocanvas_path'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_path'] ) ) : '/';
 
 		// Вставленный адрес или путь с языковым префиксом приводим к виду «без префикса»: единственное место правила.
 		$path = $this->link->normalizeInput( $path );
 
 		/*
 		 * Переход по ссылке внутри предпросмотра: адрес приходит целиком и
-		 * перекрывает `mlp_path`. Страница редактора при этом загружается
+		 * перекрывает `lingocanvas_path`. Страница редактора при этом загружается
 		 * заново целиком — иначе `postId` и список строк остались бы от
 		 * предыдущей страницы, и «Перевести весь материал» ушло бы не в ту
 		 * запись, молча.
 		 */
-		if ( isset( $_GET['mlp_url'] ) ) {
+		if ( isset( $_GET['lingocanvas_url'] ) ) {
 			$path = self::pathFromUrl(
-				sanitize_text_field( wp_unslash( (string) $_GET['mlp_url'] ) ),
+				sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_url'] ) ),
 				LanguageResolver::basePath(),
 				$this->urls->knownSlugs(),
 				UrlConverter::homeHost()
@@ -335,7 +335,7 @@ final class EditorPage implements Hookable {
 	 * что попало на странице). Не запись — 0, кнопка массового перевода в
 	 * разметке просто не появится (см. render()).
 	 *
-	 * @param string $path Путь без языкового префикса, как в mlp_path.
+	 * @param string $path Путь без языкового префикса, как в lingocanvas_path.
 	 */
 	private function resolvePostId( string $path ): int {
 		$url = $this->urls->absolute( $path, $this->settings->defaultLanguage() );
@@ -377,7 +377,7 @@ final class EditorPage implements Hookable {
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
 
 				<label for="mlp-editor-locale"><?php esc_html_e( 'Language:', 'lingocanvas' ); ?></label>
-				<select name="mlp_locale" id="mlp-editor-locale">
+				<select name="lingocanvas_locale" id="mlp-editor-locale">
 					<?php foreach ( $secondary as $language ) : ?>
 						<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $locale ); ?>>
 							<?php echo esc_html( sprintf( '%s (%s)', $language->label, $language->locale ) ); ?>
@@ -386,7 +386,7 @@ final class EditorPage implements Hookable {
 				</select>
 
 				<label for="mlp-editor-path"><?php esc_html_e( 'Page:', 'lingocanvas' ); ?></label>
-				<input type="text" name="mlp_path" id="mlp-editor-path" class="regular-text"
+				<input type="text" name="lingocanvas_path" id="mlp-editor-path" class="regular-text"
 					value="<?php echo esc_attr( $path ); ?>" placeholder="/about/" autocomplete="off">
 
 				<?php submit_button( __( 'Open', 'lingocanvas' ), 'secondary', '', false ); ?>
@@ -429,11 +429,11 @@ final class EditorPage implements Hookable {
 								<fieldset>
 									<legend><?php esc_html_e( 'What to translate?', 'lingocanvas' ); ?></legend>
 									<label>
-										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::EMPTY ); ?>" checked>
+										<input type="radio" name="lingocanvas-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::EMPTY ); ?>" checked>
 										<?php esc_html_e( 'Empty segments only', 'lingocanvas' ); ?>
 									</label>
 									<label>
-										<input type="radio" name="mlp-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::ALL ); ?>">
+										<input type="radio" name="lingocanvas-bulk-mode" value="<?php echo esc_attr( BulkTranslationMode::ALL ); ?>">
 										<?php esc_html_e( 'Retranslate the whole post', 'lingocanvas' ); ?>
 									</label>
 								</fieldset>

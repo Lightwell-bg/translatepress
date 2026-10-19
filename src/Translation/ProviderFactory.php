@@ -2,15 +2,15 @@
 /**
  * Сборка провайдера перевода из настроек.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Translation;
+namespace LingoCanvas\Translation;
 
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Env;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Env;
 
 /**
  * Единственное место, где решается, откуда берутся доступы к OpenAI.
@@ -34,10 +34,10 @@ final class ProviderFactory {
 	/** Источник ключа: настройки в базе данных. */
 	public const SOURCE_DATABASE = 'database';
 
-	/** Источник ключа: защищённый файл wp-content/wp-mlp.env.php. */
+	/** Источник ключа: защищённый файл wp-content/lingocanvas.env.php. */
 	public const SOURCE_CONTENT_ENV = 'content_env';
 
-	/** Источник ключа: файл wp-mlp.env выше корня WordPress. */
+	/** Источник ключа: файл lingocanvas.env выше корня WordPress. */
 	public const SOURCE_PARENT_ENV = 'parent_env';
 
 	/** Источник ключа: файл .env в папке плагина (удаляется при замене плагина). */
@@ -50,13 +50,13 @@ final class ProviderFactory {
 	public const SOURCE_NONE = 'none';
 
 	/** Константа wp-config.php с ключом. */
-	public const CONST_API_KEY = 'WP_MLP_OPENAI_API_KEY';
+	public const CONST_API_KEY = 'LINGOCANVAS_OPENAI_API_KEY';
 
 	/** Константа wp-config.php с моделью. */
-	public const CONST_MODEL = 'WP_MLP_OPENAI_MODEL';
+	public const CONST_MODEL = 'LINGOCANVAS_OPENAI_MODEL';
 
 	/** Константа wp-config.php с адресом API. */
-	public const CONST_BASE_URL = 'WP_MLP_OPENAI_BASE_URL';
+	public const CONST_BASE_URL = 'LINGOCANVAS_OPENAI_BASE_URL';
 
 	/**
 	 * Поиск констант: имя => непустая строка или null.
@@ -69,62 +69,14 @@ final class ProviderFactory {
 	 * Путь к защищённому файлу окружения в wp-content (или null без WP_CONTENT_DIR).
 	 */
 	public static function contentEnvPath(): ?string {
-		return defined( 'WP_CONTENT_DIR' ) ? rtrim( (string) WP_CONTENT_DIR, '/\\' ) . '/wp-mlp.env.php' : null;
+		return defined( 'WP_CONTENT_DIR' ) ? rtrim( (string) WP_CONTENT_DIR, '/\\' ) . '/lingocanvas.env.php' : null;
 	}
 
 	/**
 	 * Путь к файлу окружения выше корня WordPress (или null без ABSPATH).
 	 */
 	public static function parentEnvPath(): ?string {
-		return defined( 'ABSPATH' ) ? dirname( rtrim( (string) ABSPATH, '/\\' ) ) . '/wp-mlp.env' : null;
-	}
-
-	/**
-	 * Путь к `.env` в папке прежнего плагина (wp-mlp/), если она отличается от текущей.
-	 *
-	 * Нужен, чтобы AI-перевод не пропал сразу после перехода на LingoCanvas.
-	 * Источник такого ключа считается «файл в папке плагина» (SOURCE_PLUGIN_ENV):
-	 * он исчезнет вместе со старой папкой.
-	 */
-	public static function legacyPluginEnvPath(): ?string {
-		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
-			return null;
-		}
-
-		$legacy = rtrim( (string) WP_PLUGIN_DIR, '/\\' ) . '/' . self::legacyPluginDir() . '/.env';
-
-		if ( defined( 'LINGOCANVAS_DIR' ) && self::normalizePath( $legacy ) === self::normalizePath( LINGOCANVAS_DIR . '.env' ) ) {
-			return null;
-		}
-
-		return $legacy;
-	}
-
-	/**
-	 * Имя папки прежнего плагина: из опции `lingocanvas_legacy_dir` (её пишет
-	 * активация LingoCanvas) или `wp-mlp` по умолчанию.
-	 *
-	 * Значение из опции проверяется: оно попадает в путь к файлу.
-	 */
-	public static function legacyPluginDir(): string {
-		if ( function_exists( 'get_option' ) ) {
-			$stored = get_option( 'lingocanvas_legacy_dir', '' );
-
-			if ( is_string( $stored ) && self::isSafeDirName( $stored ) ) {
-				return $stored;
-			}
-		}
-
-		return 'wp-mlp';
-	}
-
-	/**
-	 * Допустимое имя папки плагина: буквы, цифры, точка, дефис, подчёркивание; не `.` и не `..`.
-	 *
-	 * @param string $name Имя папки.
-	 */
-	public static function isSafeDirName( string $name ): bool {
-		return 1 === preg_match( '/^[A-Za-z0-9._-]+$/D', $name ) && '.' !== $name && '..' !== $name;
+		return defined( 'ABSPATH' ) ? dirname( rtrim( (string) ABSPATH, '/\\' ) ) . '/lingocanvas.env' : null;
 	}
 
 	/**
@@ -313,15 +265,6 @@ final class ProviderFactory {
 		$provider = $this->isReady()
 			? new OpenAiProvider( $this->apiKey(), $this->model(), rtrim( $this->baseUrl(), '/' ) )
 			: new ManualProvider();
-
-		/**
-		 * Прежнее имя фильтра `lingocanvas_translation_provider`.
-		 *
-		 * @since 0.3.13 Заменён на `lingocanvas_translation_provider`.
-		 *
-		 * @param ProviderInterface $provider Провайдер, выбранный плагином.
-		 */
-		$provider = apply_filters_deprecated( 'mlp_translation_provider', array( $provider ), '0.3.13', 'lingocanvas_translation_provider' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- deprecated alias kept for backward compatibility
 
 		/**
 		 * Позволяет подменить провайдера перевода своим.

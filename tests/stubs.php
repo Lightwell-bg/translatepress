@@ -6,7 +6,7 @@
  * которые вызывает тестируемая чистая логика: перевод строк, санитизация
  * и разбор URL. Поведение упрощённое, но совпадающее по смыслу.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
@@ -139,7 +139,13 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 	 * @param string $url Адрес.
 	 */
 	function esc_url_raw( string $url ): string {
-		$url = trim( $url );
+		$url = str_replace( ' ', '%20', trim( $url ) );
+		// Как в ядре: недопустимые символы (`<`, `"`, `>` и т. п.) вырезаются, %XX и байты UTF-8 остаются.
+		$url = (string) preg_replace( '|[^a-z0-9-~+_.?#=!&;,/:%@$\|*\'()\[\]\\x80-\\xff]|i', '', $url );
+
+		if ( '' !== $url && '/' === $url[0] ) {
+			return $url;
+		}
 
 		return 1 === preg_match( '#^https?://#i', $url ) ? $url : '';
 	}
@@ -181,7 +187,7 @@ if ( ! function_exists( 'wp_kses_bad_protocol' ) ) {
  * @param bool        $reset Если true, журнал очищается перед возвратом.
  * @return list<string>
  */
-function wp_mlp_test_actions( ?string $tag = null, bool $reset = false ): array {
+function lingocanvas_test_actions( ?string $tag = null, bool $reset = false ): array {
 	static $fired = array();
 
 	if ( $reset ) {
@@ -203,7 +209,7 @@ if ( ! function_exists( 'do_action' ) ) {
 	function do_action( string $tag, ...$args ): void {
 		unset( $args );
 
-		wp_mlp_test_actions( $tag );
+		lingocanvas_test_actions( $tag );
 	}
 }
 
@@ -221,7 +227,7 @@ if ( ! function_exists( 'has_action' ) ) {
 	}
 }
 
-if ( ! function_exists( 'wp_mlp_test_filter' ) ) {
+if ( ! function_exists( 'lingocanvas_test_filter' ) ) {
 	/**
 	 * Подменяет обработчик фильтра на время теста.
 	 *
@@ -233,7 +239,7 @@ if ( ! function_exists( 'wp_mlp_test_filter' ) ) {
 	 * @param callable|null $callback Обработчик, либо null — снять.
 	 * @return array<string, callable>
 	 */
-	function wp_mlp_test_filter( string $tag = '', ?callable $callback = null ): array {
+	function lingocanvas_test_filter( string $tag = '', ?callable $callback = null ): array {
 		static $filters = array();
 
 		if ( '' === $tag ) {
@@ -259,7 +265,7 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	 * @param mixed  ...$args Остальные аргументы фильтра.
 	 */
 	function apply_filters( string $tag, $value, ...$args ) {
-		$filters = wp_mlp_test_filter();
+		$filters = lingocanvas_test_filter();
 
 		if ( ! isset( $filters[ $tag ] ) ) {
 			return $value;
@@ -339,6 +345,10 @@ if ( ! function_exists( 'wp_unslash' ) ) {
 	 * @param mixed $value Значение.
 	 */
 	function wp_unslash( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( 'wp_unslash', $value );
+		}
+
 		return is_string( $value ) ? stripslashes( $value ) : $value;
 	}
 }
@@ -378,14 +388,33 @@ if ( ! function_exists( 'trailingslashit' ) ) {
  * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
  * @return array<string, mixed>
  */
-function wp_mlp_test_options( ?array $reset = null ): array {
+function lingocanvas_test_options( ?array $reset = null, bool $keepAutoload = false ): array {
 	static $options = array();
 
 	if ( null !== $reset ) {
 		$options = $reset;
+
+		// Признаки автозагрузки живут рядом с опциями: сброс опций сбрасывает и их
+		// (кроме записи одной опции изнутри заглушек и двойника базы).
+		if ( ! $keepAutoload ) {
+			$GLOBALS['lingocanvas_test_autoload'] = array();
+		}
 	}
 
 	return $options;
+}
+
+/**
+ * Приводит аргумент $autoload к значению столбца `autoload`.
+ *
+ * @param mixed $autoload true/false/'yes'/'no'/null.
+ */
+function lingocanvas_test_autoload_value( $autoload ): string {
+	if ( false === $autoload || 'no' === $autoload || 'off' === $autoload ) {
+		return 'no';
+	}
+
+	return 'yes';
 }
 
 if ( ! function_exists( 'get_option' ) ) {
@@ -395,7 +424,7 @@ if ( ! function_exists( 'get_option' ) ) {
 	 * @return mixed
 	 */
 	function get_option( string $name, $default = false ) {
-		$options = wp_mlp_test_options();
+		$options = lingocanvas_test_options();
 
 		return array_key_exists( $name, $options ) ? $options[ $name ] : $default;
 	}
@@ -412,7 +441,7 @@ if ( ! function_exists( 'get_option' ) ) {
  * @param array<string, bool>|null $reset Если передан массив, контекст им заменяется.
  * @return array<string, bool>
  */
-function wp_mlp_test_request( ?array $reset = null ): array {
+function lingocanvas_test_request( ?array $reset = null ): array {
 	static $context = array();
 
 	if ( null !== $reset ) {
@@ -424,19 +453,19 @@ function wp_mlp_test_request( ?array $reset = null ): array {
 
 if ( ! function_exists( 'is_admin' ) ) {
 	function is_admin(): bool {
-		return (bool) ( wp_mlp_test_request()['is_admin'] ?? false );
+		return (bool) ( lingocanvas_test_request()['is_admin'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'wp_doing_ajax' ) ) {
 	function wp_doing_ajax(): bool {
-		return (bool) ( wp_mlp_test_request()['ajax'] ?? false );
+		return (bool) ( lingocanvas_test_request()['ajax'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'wp_doing_cron' ) ) {
 	function wp_doing_cron(): bool {
-		return (bool) ( wp_mlp_test_request()['cron'] ?? false );
+		return (bool) ( lingocanvas_test_request()['cron'] ?? false );
 	}
 }
 
@@ -448,7 +477,7 @@ if ( ! function_exists( 'get_available_languages' ) ) {
 	 * @return list<string>
 	 */
 	function get_available_languages(): array {
-		return (array) ( wp_mlp_test_request()['languages'] ?? array() );
+		return (array) ( lingocanvas_test_request()['languages'] ?? array() );
 	}
 }
 
@@ -457,11 +486,15 @@ if ( ! function_exists( 'update_option' ) ) {
 	 * @param string $name  Ключ.
 	 * @param mixed  $value Значение.
 	 */
-	function update_option( string $name, $value ): bool {
-		$options          = wp_mlp_test_options();
+	function update_option( string $name, $value, $autoload = null ): bool {
+		$options          = lingocanvas_test_options();
 		$options[ $name ] = $value;
 
-		wp_mlp_test_options( $options );
+		lingocanvas_test_options( $options, true );
+
+		if ( null !== $autoload ) {
+			$GLOBALS['lingocanvas_test_autoload'][ $name ] = lingocanvas_test_autoload_value( $autoload );
+		}
 
 		return true;
 	}
@@ -475,7 +508,7 @@ if ( ! function_exists( 'add_option' ) ) {
 	 * @param mixed  $value Значение.
 	 */
 	function add_option( string $name, $value = '', string $deprecated = '', $autoload = 'yes' ): bool {
-		$options = wp_mlp_test_options();
+		$options = lingocanvas_test_options();
 
 		if ( array_key_exists( $name, $options ) ) {
 			return false;
@@ -483,7 +516,9 @@ if ( ! function_exists( 'add_option' ) ) {
 
 		$options[ $name ] = $value;
 
-		wp_mlp_test_options( $options );
+		lingocanvas_test_options( $options, true );
+
+		$GLOBALS['lingocanvas_test_autoload'][ $name ] = lingocanvas_test_autoload_value( $autoload );
 
 		return true;
 	}
@@ -494,15 +529,16 @@ if ( ! function_exists( 'delete_option' ) ) {
 	 * @param string $name Ключ.
 	 */
 	function delete_option( string $name ): bool {
-		$options = wp_mlp_test_options();
+		$options = lingocanvas_test_options();
 
 		if ( ! array_key_exists( $name, $options ) ) {
 			return false;
 		}
 
 		unset( $options[ $name ] );
+		unset( $GLOBALS['lingocanvas_test_autoload'][ $name ] );
 
-		wp_mlp_test_options( $options );
+		lingocanvas_test_options( $options, true );
 
 		return true;
 	}
@@ -577,7 +613,7 @@ if ( ! function_exists( 'wpautop' ) ) {
  * @param array<int, array<string, mixed>>|null $reset Если передан массив, хранилище им заменяется.
  * @return array<int, array<string, mixed>>
  */
-function wp_mlp_test_postmeta( ?array $reset = null ): array {
+function lingocanvas_test_postmeta( ?array $reset = null ): array {
 	static $meta = array();
 
 	if ( null !== $reset ) {
@@ -595,7 +631,7 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 	 * @return mixed
 	 */
 	function get_post_meta( int $postId, string $key = '', bool $single = false ) {
-		$store = wp_mlp_test_postmeta();
+		$store = lingocanvas_test_postmeta();
 		$value = $store[ $postId ][ $key ] ?? ( $single ? '' : array() );
 
 		return $single ? $value : array( $value );
@@ -604,13 +640,13 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 
 if ( ! function_exists( 'wp_upload_dir' ) ) {
 	/**
-	 * Каталог загрузок. Тест подменяет его через wp_mlp_test_uploads(),
+	 * Каталог загрузок. Тест подменяет его через lingocanvas_test_uploads(),
 	 * чтобы проверять поиск файла флага на настоящей файловой системе.
 	 *
 	 * @return array{basedir: string, baseurl: string}
 	 */
 	function wp_upload_dir(): array {
-		$dir = wp_mlp_test_uploads();
+		$dir = lingocanvas_test_uploads();
 
 		return array(
 			'basedir' => $dir,
@@ -619,20 +655,20 @@ if ( ! function_exists( 'wp_upload_dir' ) ) {
 	}
 }
 
-if ( ! function_exists( 'wp_mlp_test_uploads' ) ) {
+if ( ! function_exists( 'lingocanvas_test_uploads' ) ) {
 	/**
 	 * Каталог, который стаб wp_upload_dir() выдаёт за папку загрузок.
 	 *
 	 * @param string|null $set Новое значение, либо null — только прочитать.
 	 */
-	function wp_mlp_test_uploads( ?string $set = null ): string {
+	function lingocanvas_test_uploads( ?string $set = null ): string {
 		static $dir = '';
 
 		if ( null !== $set ) {
 			$dir = $set;
 		}
 
-		return '' !== $dir ? $dir : sys_get_temp_dir() . '/wp-mlp-uploads';
+		return '' !== $dir ? $dir : sys_get_temp_dir() . '/lingocanvas-uploads';
 	}
 }
 
@@ -691,10 +727,10 @@ if ( ! function_exists( 'update_post_meta' ) ) {
 	 * @param mixed  $value  Значение.
 	 */
 	function update_post_meta( int $postId, string $key, $value ): bool {
-		$store                    = wp_mlp_test_postmeta();
+		$store                    = lingocanvas_test_postmeta();
 		$store[ $postId ][ $key ] = $value;
 
-		wp_mlp_test_postmeta( $store );
+		lingocanvas_test_postmeta( $store );
 
 		return true;
 	}
@@ -706,10 +742,10 @@ if ( ! function_exists( 'delete_post_meta' ) ) {
 	 * @param string $key    Ключ метаполя.
 	 */
 	function delete_post_meta( int $postId, string $key ): bool {
-		$store = wp_mlp_test_postmeta();
+		$store = lingocanvas_test_postmeta();
 		unset( $store[ $postId ][ $key ] );
 
-		wp_mlp_test_postmeta( $store );
+		lingocanvas_test_postmeta( $store );
 
 		return true;
 	}
@@ -724,7 +760,7 @@ if ( ! function_exists( 'update_meta_cache' ) ) {
 	 * @return array<int, mixed>
 	 */
 	function update_meta_cache( string $type, array $ids ): array {
-		$GLOBALS['wp_mlp_test_meta_primed'][] = array( $type, $ids );
+		$GLOBALS['lingocanvas_test_meta_primed'][] = array( $type, $ids );
 
 		return array();
 	}
@@ -733,24 +769,24 @@ if ( ! function_exists( 'update_meta_cache' ) ) {
 if ( ! function_exists( 'did_action' ) ) {
 	/**
 	 * Все хуки считаются уже отработавшими, пока тест не скажет обратное
-	 * через `wp_mlp_test_wp()['did_action'][ $tag ]`.
+	 * через `lingocanvas_test_wp()['did_action'][ $tag ]`.
 	 *
 	 * @param string $tag Имя хука.
 	 */
 	function did_action( string $tag ): int {
-		return (int) ( wp_mlp_test_wp()['did_action'][ $tag ] ?? 1 );
+		return (int) ( lingocanvas_test_wp()['did_action'][ $tag ] ?? 1 );
 	}
 }
 
 if ( ! function_exists( 'get_posts' ) ) {
 	/**
-	 * Результат задаёт тест: `wp_mlp_test_wp()['get_posts']` (список id или колбэк).
+	 * Результат задаёт тест: `lingocanvas_test_wp()['get_posts']` (список id или колбэк).
 	 *
 	 * @param array<string, mixed> $args Параметры.
 	 * @return list<int>
 	 */
 	function get_posts( array $args = array() ): array {
-		$result = wp_mlp_test_wp()['get_posts'] ?? array();
+		$result = lingocanvas_test_wp()['get_posts'] ?? array();
 
 		return is_callable( $result ) ? (array) $result( $args ) : (array) $result;
 	}
@@ -784,58 +820,58 @@ if ( ! function_exists( 'wp_verify_nonce' ) ) {
 
 if ( ! function_exists( 'is_404' ) ) {
 	function is_404(): bool {
-		return (bool) ( wp_mlp_test_wp()['is_404'] ?? false );
+		return (bool) ( lingocanvas_test_wp()['is_404'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'is_feed' ) ) {
 	function is_feed(): bool {
-		return (bool) ( wp_mlp_test_wp()['is_feed'] ?? false );
+		return (bool) ( lingocanvas_test_wp()['is_feed'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'is_preview' ) ) {
 	function is_preview(): bool {
-		return (bool) ( wp_mlp_test_wp()['is_preview'] ?? false );
+		return (bool) ( lingocanvas_test_wp()['is_preview'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'is_singular' ) ) {
 	/**
-	 * Одиночная ли страница: тест задаёт `wp_mlp_test_wp()['is_singular']`.
+	 * Одиночная ли страница: тест задаёт `lingocanvas_test_wp()['is_singular']`.
 	 */
 	function is_singular(): bool {
-		return (bool) ( wp_mlp_test_wp()['is_singular'] ?? false );
+		return (bool) ( lingocanvas_test_wp()['is_singular'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'get_queried_object' ) ) {
 	/**
-	 * Объект запроса: тест задаёт `wp_mlp_test_wp()['queried_object']` (WP_Post, WP_Term и т. п.).
+	 * Объект запроса: тест задаёт `lingocanvas_test_wp()['queried_object']` (WP_Post, WP_Term и т. п.).
 	 *
 	 * @return object|null
 	 */
 	function get_queried_object() {
-		return wp_mlp_test_wp()['queried_object'] ?? null;
+		return lingocanvas_test_wp()['queried_object'] ?? null;
 	}
 }
 
 if ( ! function_exists( 'is_search' ) ) {
 	function is_search(): bool {
-		return (bool) ( wp_mlp_test_wp()['is_search'] ?? false );
+		return (bool) ( lingocanvas_test_wp()['is_search'] ?? false );
 	}
 }
 
 if ( ! function_exists( 'register_rest_route' ) ) {
 	/**
-	 * Запоминает маршруты: `$GLOBALS['wp_mlp_test_routes'][ namespace . route ] = args`.
+	 * Запоминает маршруты: `$GLOBALS['lingocanvas_test_routes'][ namespace . route ] = args`.
 	 *
 	 * @param string               $namespace Пространство имён.
 	 * @param string               $route     Маршрут.
 	 * @param array<string, mixed> $args      Параметры.
 	 */
 	function register_rest_route( string $namespace, string $route, array $args = array() ): bool {
-		$GLOBALS['wp_mlp_test_routes'][ $namespace . $route ] = $args;
+		$GLOBALS['lingocanvas_test_routes'][ $namespace . $route ] = $args;
 
 		return true;
 	}
@@ -897,7 +933,7 @@ if ( ! class_exists( 'WP_Query' ) ) {
 		 */
 		public function __construct( array $args = array() ) {
 			self::$calls[] = $args;
-			$callback      = wp_mlp_test_wp()['query'] ?? null;
+			$callback      = lingocanvas_test_wp()['query'] ?? null;
 			$this->posts   = is_callable( $callback ) ? (array) $callback( $args ) : array();
 		}
 	}
@@ -951,7 +987,7 @@ if ( ! class_exists( 'WP_REST_Response' ) ) {
  * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
  * @return array<string, mixed>
  */
-function wp_mlp_test_wp( ?array $reset = null ): array {
+function lingocanvas_test_wp( ?array $reset = null ): array {
 	static $store = array();
 
 	if ( null !== $reset ) {
@@ -970,7 +1006,7 @@ if ( ! function_exists( 'get_post' ) ) {
 			return $post;
 		}
 
-		return wp_mlp_test_wp()['posts'][ (int) $post ] ?? null;
+		return lingocanvas_test_wp()['posts'][ (int) $post ] ?? null;
 	}
 }
 
@@ -985,7 +1021,7 @@ if ( ! function_exists( 'get_permalink' ) ) {
 			return false;
 		}
 
-		return wp_mlp_test_wp()['permalinks'][ $post->ID ] ?? 'https://example.test/' . $post->post_name . '/';
+		return lingocanvas_test_wp()['permalinks'][ $post->ID ] ?? 'https://example.test/' . $post->post_name . '/';
 	}
 }
 
@@ -994,7 +1030,7 @@ if ( ! function_exists( 'get_post_type_object' ) ) {
 	 * @param string $type Тип записи.
 	 */
 	function get_post_type_object( string $type ): ?object {
-		$types = wp_mlp_test_wp()['types'] ?? array(
+		$types = lingocanvas_test_wp()['types'] ?? array(
 			'post'       => array( 'Запись', true ),
 			'page'       => array( 'Страница', true ),
 			'attachment' => array( 'Медиафайл', true ),
@@ -1020,7 +1056,7 @@ if ( ! function_exists( 'get_post_types' ) ) {
 	function get_post_types( array $args = array() ): array {
 		unset( $args );
 
-		$types = wp_mlp_test_wp()['types'] ?? array(
+		$types = lingocanvas_test_wp()['types'] ?? array(
 			'post'       => array( 'Запись', true ),
 			'page'       => array( 'Страница', true ),
 			'attachment' => array( 'Медиафайл', true ),
@@ -1055,7 +1091,7 @@ if ( ! function_exists( 'url_to_postid' ) ) {
 	 * @param string $url Адрес.
 	 */
 	function url_to_postid( string $url ): int {
-		return (int) ( wp_mlp_test_wp()['url_to_id'][ $url ] ?? 0 );
+		return (int) ( lingocanvas_test_wp()['url_to_id'][ $url ] ?? 0 );
 	}
 }
 
@@ -1064,7 +1100,7 @@ if ( ! function_exists( 'current_user_can' ) ) {
 	 * @param string $cap Право.
 	 */
 	function current_user_can( string $cap, ...$args ): bool {
-		$caps = wp_mlp_test_wp()['caps'] ?? array();
+		$caps = lingocanvas_test_wp()['caps'] ?? array();
 
 		// Право на конкретный объект: сначала ключ вида `edit_post:15`, затем общий.
 		if ( isset( $args[0] ) && array_key_exists( $cap . ':' . $args[0], $caps ) ) {
@@ -1163,7 +1199,7 @@ if ( ! class_exists( 'WP_Error' ) ) {
  * @param array<string, mixed>|null $reset Если передан массив, хранилище им заменяется.
  * @return array<string, mixed>
  */
-function wp_mlp_test_http( ?array $reset = null ): array {
+function lingocanvas_test_http( ?array $reset = null ): array {
 	static $store = array(
 		'calls'      => array(),
 		'transients' => array(),
@@ -1188,10 +1224,10 @@ function wp_mlp_test_http( ?array $reset = null ): array {
  * @param string $key   Ключ.
  * @param mixed  $value Значение.
  */
-function wp_mlp_test_http_set( string $key, $value ): void {
-	$store         = wp_mlp_test_http();
+function lingocanvas_test_http_set( string $key, $value ): void {
+	$store         = lingocanvas_test_http();
 	$store[ $key ] = $value;
-	wp_mlp_test_http( $store );
+	lingocanvas_test_http( $store );
 }
 
 if ( ! function_exists( 'is_wp_error' ) ) {
@@ -1210,11 +1246,11 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 	 * @return mixed
 	 */
 	function wp_remote_get( string $url, array $args = array() ) {
-		$calls   = wp_mlp_test_http()['calls'];
+		$calls   = lingocanvas_test_http()['calls'];
 		$calls[] = array( $url, $args );
-		wp_mlp_test_http_set( 'calls', $calls );
+		lingocanvas_test_http_set( 'calls', $calls );
 
-		$response = wp_mlp_test_http()['response'] ?? null;
+		$response = lingocanvas_test_http()['response'] ?? null;
 
 		return is_callable( $response ) ? $response( $url, $args ) : $response;
 	}
@@ -1244,7 +1280,7 @@ if ( ! function_exists( 'get_transient' ) ) {
 	 * @return mixed
 	 */
 	function get_transient( string $name ) {
-		return wp_mlp_test_http()['transients'][ $name ] ?? false;
+		return lingocanvas_test_http()['transients'][ $name ] ?? false;
 	}
 }
 
@@ -1255,11 +1291,194 @@ if ( ! function_exists( 'set_transient' ) ) {
 	 * @param int    $ttl   Время жизни, секунд.
 	 */
 	function set_transient( string $name, $value, int $ttl = 0 ): bool {
-		$transients          = wp_mlp_test_http()['transients'];
+		$transients          = lingocanvas_test_http()['transients'];
 		$transients[ $name ] = $value;
-		wp_mlp_test_http_set( 'transients', $transients );
-		wp_mlp_test_http_set( 'transient_ttl', $ttl );
+		lingocanvas_test_http_set( 'transients', $transients );
+		lingocanvas_test_http_set( 'transient_ttl', $ttl );
 
 		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_using_ext_object_cache' ) ) {
+	function wp_using_ext_object_cache(): bool {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'get_filesystem_method' ) ) {
+	/**
+	 * Не «direct»: переносить папки в тестах не нужно.
+	 */
+	function get_filesystem_method(): string {
+		return 'ftpext';
+	}
+}
+
+if ( ! function_exists( 'WP_Filesystem' ) ) {
+	function WP_Filesystem(): bool { // phpcs:ignore
+		return false;
+	}
+}
+
+if ( ! defined( 'ARRAY_A' ) ) {
+	define( 'ARRAY_A', 'ARRAY_A' );
+}
+
+if ( ! function_exists( 'wp_cache_delete' ) ) {
+	/**
+	 * Объектного кэша в юнит-тестах нет: удалять нечего.
+	 *
+	 * @param string $key   Ключ.
+	 * @param string $group Группа.
+	 */
+	function wp_cache_delete( $key, $group = '' ): bool {
+		unset( $key, $group );
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_mkdir_p' ) ) {
+	/**
+	 * Создаёт каталог со всеми родителями (как ядро: true, если каталог уже есть).
+	 *
+	 * @param string $target Путь.
+	 */
+	function wp_mkdir_p( string $target ): bool {
+		return is_dir( $target ) || mkdir( $target, 0777, true );
+	}
+}
+
+if ( ! function_exists( 'wp_delete_file' ) ) {
+	/**
+	 * @param string $file Путь к файлу.
+	 */
+	function wp_delete_file( string $file ): void {
+		if ( is_file( $file ) ) {
+			unlink( $file );
+		}
+	}
+}
+
+if ( ! function_exists( 'is_multisite' ) ) {
+	function is_multisite(): bool {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_die' ) ) {
+	/**
+	 * В WordPress прерывает запрос; в тестах бросает исключение с текстом сообщения.
+	 *
+	 * @param string               $message Сообщение.
+	 * @param string               $title   Заголовок.
+	 * @param array<string, mixed> $args    Параметры (`response`).
+	 */
+	function wp_die( $message = '', $title = '', $args = array() ): void {
+		unset( $title );
+
+		throw new \RuntimeException( 'wp_die:' . (int) ( $args['response'] ?? 0 ) . ':' . (string) $message ); // phpcs:ignore
+	}
+}
+
+if ( ! function_exists( 'size_format' ) ) {
+	/**
+	 * @param int $bytes Байты.
+	 */
+	function size_format( $bytes ): string {
+		return (string) $bytes . ' B';
+	}
+}
+
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+	/**
+	 * Как ядро: теги и процентные октеты вырезаются, переводы строк остаются.
+	 *
+	 * @param string $text Строка.
+	 */
+	function sanitize_textarea_field( string $text ): string {
+		$text = wp_strip_all_tags( $text );
+		$text = (string) preg_replace( '/%[a-f0-9]{2}/i', '', $text );
+
+		return trim( (string) preg_replace( '/[ \t]+/', ' ', $text ) );
+	}
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+	/**
+	 * @param string $key Ключ.
+	 */
+	function sanitize_key( $key ): string {
+		return (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) );
+	}
+}
+
+if ( ! function_exists( 'map_deep' ) ) {
+	/**
+	 * @param mixed    $value    Значение или массив.
+	 * @param callable $callback Функция для скаляров.
+	 * @return mixed
+	 */
+	function map_deep( $value, $callback ) {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $key => $item ) {
+				$value[ $key ] = map_deep( $item, $callback );
+			}
+
+			return $value;
+		}
+
+		return is_scalar( $value ) ? $callback( $value ) : $value;
+	}
+}
+
+if ( ! function_exists( 'sanitize_title' ) ) {
+	/**
+	 * Упрощённо, как ядро для латиницы: нижний регистр, всё лишнее в дефис, процентные октеты сохраняются.
+	 *
+	 * @param string $title Заголовок.
+	 */
+	function sanitize_title( $title ): string {
+		$title = strtolower( strip_tags( (string) $title ) );
+		$title = (string) preg_replace_callback( '/[^\x20-\x7e]/', static fn( array $m ): string => '%' . bin2hex( $m[0] ), $title );
+		$title = (string) preg_replace( '/[^%a-z0-9_\-]+/', '-', $title );
+
+		return trim( (string) preg_replace( '/-+/', '-', $title ), '-' );
+	}
+}
+
+if ( ! function_exists( 'get_current_screen' ) ) {
+	/**
+	 * Экран админки из `$GLOBALS['lingocanvas_test_screen']` (идентификатор) или null.
+	 */
+	function get_current_screen(): ?object {
+		$id = $GLOBALS['lingocanvas_test_screen'] ?? null;
+
+		return null === $id ? null : (object) array( 'id' => (string) $id );
+	}
+}
+
+if ( ! function_exists( 'rest_get_server' ) ) {
+	/**
+	 * Сервер REST: объект с get_routes(), заданный тестом в `$GLOBALS['lingocanvas_test_rest_routes']`
+	 * (маршрут => список обработчиков, как у WP_REST_Server::get_routes()).
+	 */
+	function rest_get_server(): object {
+		return new class() {
+			/**
+			 * @param string $namespace Пространство имён.
+			 * @return array<string, mixed>
+			 */
+			public function get_routes( string $namespace = '' ): array {
+				$routes = (array) ( $GLOBALS['lingocanvas_test_rest_routes'] ?? array() );
+
+				return array_filter(
+					$routes,
+					static fn( string $route ): bool => '' === $namespace || str_starts_with( ltrim( $route, '/' ), $namespace ),
+					ARRAY_FILTER_USE_KEY
+				);
+			}
+		};
 	}
 }

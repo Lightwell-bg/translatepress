@@ -2,14 +2,14 @@
 /**
  * Куски gettext-строки, какими они окажутся в готовом HTML.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
-use WpMlp\Support\Text;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * Разбирает переведённую строку на фрагменты, которые реально станут
  * отдельными текстовыми узлами страницы.
  *
- * Нужен затем, чтобы {@see \WpMlp\Rendering\Extractor} не завёл строку
+ * Нужен затем, чтобы {@see \LingoCanvas\Rendering\Extractor} не завёл строку
  * интерфейса второй раз, уже как контент. Сравнение целиком тут не
  * работает, и это не мелочь, а самый обычный случай в WordPress:
  *

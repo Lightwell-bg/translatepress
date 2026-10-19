@@ -6,7 +6,7 @@
  * (нормализация строк, хеши, разбор URL, извлечение узлов из DOM).
  * Всё, что зависит от $wpdb и хуков, проверяется вручную на реальном сайте.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
@@ -18,7 +18,7 @@ if ( is_readable( __DIR__ . '/../vendor/autoload.php' ) ) {
 	// можно запускать и phar-архивом.
 	spl_autoload_register(
 		static function ( string $class ): void {
-			foreach ( array( 'WpMlp\\Tests\\' => __DIR__, 'WpMlp\\' => __DIR__ . '/../src' ) as $prefix => $base ) {
+			foreach ( array( 'LingoCanvas\\Tests\\' => __DIR__, 'LingoCanvas\\' => __DIR__ . '/../src' ) as $prefix => $base ) {
 				if ( ! str_starts_with( $class, $prefix ) ) {
 					continue;
 				}

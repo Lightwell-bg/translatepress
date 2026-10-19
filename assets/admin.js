@@ -7,7 +7,7 @@
 ( function () {
 	'use strict';
 
-	var settings = window.wpMlpAdmin;
+	var settings = window.lingocanvasAdmin;
 
 	/*
 	 * Раньше здесь был молчаливый return. Если данные не долетели до скрипта
@@ -18,7 +18,7 @@
 	if ( ! settings || ! settings.root ) {
 		if ( window.console ) {
 			window.console.error(
-				'[wp-mlp] Скрипт загружен, но данные wpMlpAdmin отсутствуют — кнопки работать не будут.'
+				'[lingocanvas] Скрипт загружен, но данные lingocanvasAdmin отсутствуют — кнопки работать не будут.'
 			);
 		}
 
@@ -26,7 +26,7 @@
 	}
 
 	if ( window.console ) {
-		window.console.info( '[wp-mlp] admin.js готов, REST: ' + settings.root );
+		window.console.info( '[lingocanvas] admin.js готов, REST: ' + settings.root );
 	}
 
 	/**
@@ -220,9 +220,9 @@
 		}
 
 		// Массовое удаление необратимо, поэтому спрашиваем до отправки формы.
-		var confirm_button = event.target.closest( '[data-mlp-confirm]' );
+		var confirm_button = event.target.closest( '[data-lingocanvas-confirm]' );
 
-		if ( confirm_button && ! window.confirm( confirm_button.getAttribute( 'data-mlp-confirm' ) ) ) {
+		if ( confirm_button && ! window.confirm( confirm_button.getAttribute( 'data-lingocanvas-confirm' ) ) ) {
 			event.preventDefault();
 		}
 	} );
@@ -239,7 +239,7 @@
 		var wrap = document.getElementById( 'mlp-scope-picker' );
 		var input = document.getElementById( 'mlp-scope-search' );
 		var list = document.getElementById( 'mlp-scope-list' );
-		var objectOption = select ? select.querySelector( 'option[data-mlp-object]' ) : null;
+		var objectOption = select ? select.querySelector( 'option[data-lingocanvas-object]' ) : null;
 
 		if ( ! select || ! wrap || ! input || ! list || ! objectOption || ! settings.pagesRoot ) {
 			return;

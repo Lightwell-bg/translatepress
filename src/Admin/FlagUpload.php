@@ -2,18 +2,18 @@
 /**
  * Загрузка картинки флага из админки.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
 use DOMAttr;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
-use WpMlp\Frontend\Flags;
+use LingoCanvas\Frontend\Flags;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -231,32 +231,21 @@ final class FlagUpload {
 			return false;
 		}
 
+		// Каталог создаётся при первой загрузке, если его ещё нет.
 		$directory = Flags::directoryPath();
 
 		if ( ! wp_mkdir_p( $directory ) ) {
 			return false;
 		}
 
-		global $wp_filesystem;
-
-		if ( ! function_exists( 'WP_Filesystem' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-		}
-
-		$path = $directory . '/' . $name;
-
-		if ( 'direct' === get_filesystem_method( array(), dirname( $path ) ) && WP_Filesystem() && is_object( $wp_filesystem ) ) {
-			return (bool) $wp_filesystem->put_contents( $path, $svg, FS_CHMOD_FILE );
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- uploads dir, non-direct FS method needs credentials we do not have in a REST/admin-post request
-		return false !== file_put_contents( $path, $svg );
+		return self::write( $directory . '/' . $name, $svg );
 	}
 
 	/**
 	 * Удаляет флаг языка.
 	 *
 	 * @param string $locale Код языка.
+	 * @return bool Удалён ли файл.
 	 */
 	public static function remove( string $locale ): bool {
 		$name = Flags::fileName( $locale );
@@ -274,5 +263,26 @@ final class FlagUpload {
 		wp_delete_file( $path );
 
 		return ! is_file( $path );
+	}
+
+	/**
+	 * Записывает файл в uploads (через WP_Filesystem в режиме direct, иначе напрямую).
+	 *
+	 * @param string $path    Полный путь.
+	 * @param string $content Содержимое.
+	 */
+	private static function write( string $path, string $content ): bool {
+		global $wp_filesystem;
+
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		if ( 'direct' === get_filesystem_method( array(), dirname( $path ) ) && WP_Filesystem() && is_object( $wp_filesystem ) ) {
+			return (bool) $wp_filesystem->put_contents( $path, $content, FS_CHMOD_FILE );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- uploads dir, non-direct FS method needs credentials we do not have in a REST/admin-post request
+		return false !== file_put_contents( $path, $content );
 	}
 }

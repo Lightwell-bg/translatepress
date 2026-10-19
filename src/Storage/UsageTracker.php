@@ -2,12 +2,12 @@
 /**
  * Дневной бюджет символов на машинный перевод.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,14 +15,19 @@ defined( 'ABSPATH' ) || exit;
  * Считает символы, отправленные в переводчик за сегодня (ТЗ 9.3: «лимит
  * символов/слов в день»).
  *
- * Один счётчик на день в `wp_options`, а не отдельная таблица `wp_mlp_usage`
+ * Один счётчик на день в `wp_options`, а не отдельная таблица `wp_lingocanvas_usage`
  * из раздела 6.5 ТЗ: при ручном запуске перевода (кнопкой, а не очередью)
  * объём данных не оправдывает отдельную таблицу. Если появится очередь —
  * это первое, что стоит заменить.
  */
 final class UsageTracker {
 
-	private const OPTION_PREFIX = 'mlp_usage_';
+	/**
+	 * Префикс имени опции-счётчика.
+	 */
+	public static function optionPrefix(): string {
+		return 'lingocanvas_usage_';
+	}
 
 	/**
 	 * Сколько символов уже потрачено сегодня.
@@ -64,7 +69,7 @@ final class UsageTracker {
 	 * @param string $date Дата в формате `Y-m-d`.
 	 */
 	public static function optionKey( string $date ): string {
-		return self::OPTION_PREFIX . $date;
+		return self::optionPrefix() . $date;
 	}
 
 	/**

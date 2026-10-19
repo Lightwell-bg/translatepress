@@ -2,20 +2,20 @@
 /**
  * Доступ к таблице мест использования строк.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\Support\Hash;
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Чтение и запись `wp_mlp_occurrences` (ТЗ 6.3).
+ * Чтение и запись `wp_lingocanvas_occurrences` (ТЗ 6.3).
  *
  * На Этапе 1 таблица нужна для ответа на вопрос «где встретилась строка»:
  * это помогает переводчику и понадобится очистке устаревших данных.

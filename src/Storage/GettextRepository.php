@@ -2,16 +2,16 @@
 /**
  * Доступ к gettext-части словаря.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\I18n\GettextKey;
-use WpMlp\Support\Hash;
-use WpMlp\Support\Locale;
+use LingoCanvas\I18n\GettextKey;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -31,7 +31,7 @@ final class GettextRepository implements GettextStore {
 	/**
 	 * Группа объектного кэша.
 	 */
-	private const CACHE_GROUP = 'mlp_gettext';
+	private const CACHE_GROUP = 'lingocanvas_gettext';
 
 	/**
 	 * Сколько строк максимум уходит в один INSERT.

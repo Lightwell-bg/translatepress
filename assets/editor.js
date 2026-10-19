@@ -7,12 +7,12 @@
 ( function () {
 	'use strict';
 
-	var settings = window.wpMlpEditor;
+	var settings = window.lingocanvasEditor;
 	var root = document.querySelector( '.wp-mlp-editor' );
 
 	if ( ! settings || ! root ) {
 		if ( window.console ) {
-			window.console.error( '[wp-mlp] Редактор: данные wpMlpEditor или разметка панели не найдены.' );
+			window.console.error( '[lingocanvas] Редактор: данные lingocanvasEditor или разметка панели не найдены.' );
 		}
 
 		return;
@@ -94,7 +94,7 @@
 	function toPreview( data ) {
 		if ( frame && frame.contentWindow ) {
 			frame.contentWindow.postMessage(
-				Object.assign( { source: 'wp-mlp-editor', channel: settings.channel }, data ),
+				Object.assign( { source: 'lingocanvas-editor', channel: settings.channel }, data ),
 				window.location.origin
 			);
 		}
@@ -661,7 +661,7 @@
 			return;
 		}
 
-		var modeInput = bulkPanel.querySelector( 'input[name="mlp-bulk-mode"]:checked' );
+		var modeInput = bulkPanel.querySelector( 'input[name="lingocanvas-bulk-mode"]:checked' );
 		var mode      = modeInput ? modeInput.value : settings.modeEmpty;
 
 		bulkBusy = true;
@@ -819,7 +819,7 @@
 			return;
 		}
 
-		if ( 'wp-mlp-preview' !== event.data.source ) {
+		if ( 'lingocanvas-preview' !== event.data.source ) {
 			return;
 		}
 
@@ -838,7 +838,7 @@
 			 * родителе (см. EditorPage.php). Пустить его по чужому адресу
 			 * значило бы отдать этот nonce коду, который мы не писали и не
 			 * проверяли. Ссылка за пределами установки открывается в новой
-			 * вкладке — обычным окном браузера, без доступа к wpMlpEditor.
+			 * вкладке — обычным окном браузера, без доступа к lingocanvasEditor.
 			 */
 			if ( ! withinInstall( event.data.url ) ) {
 				window.open( event.data.url, '_blank', 'noopener,noreferrer' );
@@ -861,7 +861,7 @@
 			 */
 			var next = new URL( window.location.href );
 
-			next.searchParams.set( 'mlp_url', event.data.url );
+			next.searchParams.set( 'lingocanvas_url', event.data.url );
 			window.location.href = next.href;
 
 			return;
@@ -933,14 +933,14 @@
 /**
  * Выбор страницы в шапке редактора: combobox с поиском по названию.
  *
- * Без JS форма работает как раньше: обычное поле `mlp_path` с путём. С JS
+ * Без JS форма работает как раньше: обычное поле `lingocanvas_path` с путём. С JS
  * оригинальное поле становится скрытым и хранит путь, а видимое поле — только
  * строка поиска. Данные сервера выводятся исключительно через textContent.
  */
 ( function () {
 	'use strict';
 
-	var settings = window.wpMlpEditor;
+	var settings = window.lingocanvasEditor;
 	var pathField = document.getElementById( 'mlp-editor-path' );
 	var localeField = document.getElementById( 'mlp-editor-locale' );
 	var form = pathField ? pathField.form : null;

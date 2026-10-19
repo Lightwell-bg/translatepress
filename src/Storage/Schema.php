@@ -2,12 +2,12 @@
 /**
  * Таблицы плагина и их миграции.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -24,8 +24,6 @@ final class Schema {
 	 */
 	public const VERSION = 2;
 
-	public const OPTION_VERSION = 'mlp_db_version';
-
 	/**
 	 * Суффиксы таблиц — единственный допустимый источник имён.
 	 *
@@ -36,7 +34,23 @@ final class Schema {
 	public const TABLES = array( 'sources', 'translations', 'occurrences', 'routes' );
 
 	/**
-	 * Полное имя таблицы.
+	 * Префикс имён, под которыми плагин хранит данные (опции, таблицы, мета).
+	 */
+	public const PREFIX = 'lingocanvas_';
+
+	/**
+	 * Имя опции с версией схемы: `lingocanvas_db_version`.
+	 */
+	public static function versionOption(): string {
+		return self::PREFIX . 'db_version';
+	}
+
+	/**
+	 * Полное имя таблицы: `{prefix}lingocanvas_<name>`.
+	 *
+	 * Имя таблицы нельзя подставить через prepare() как значение, поэтому оно
+	 * собирается только из префикса $wpdb, константы PREFIX и имени из allowlist
+	 * (раздел 13 ТЗ).
 	 *
 	 * @param string $name Один из self::TABLES.
 	 *
@@ -49,54 +63,60 @@ final class Schema {
 			throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown table "%s".', $name ) ) );
 		}
 
-		return $wpdb->prefix . 'mlp_' . $name;
+		return $wpdb->prefix . self::PREFIX . $name;
 	}
 
 	/**
 	 * Создаёт или обновляет таблицы, если версия схемы изменилась.
+	 *
+	 * Вызывается на admin_init: схема могла отстать, если плагин обновили
+	 * копированием файлов. Будущие изменения схемы — увеличить VERSION и
+	 * поправить CREATE TABLE в statements(): dbDelta приведёт таблицы к новому виду.
 	 */
 	public static function maybeUpgrade(): void {
-		if ( (int) get_option( self::OPTION_VERSION, 0 ) !== self::VERSION ) {
+		if ( (int) get_option( self::versionOption(), 0 ) !== self::VERSION ) {
 			self::install();
 		}
-
-		// Разовая чистка мусора прошлых версий: у неё своя опция, не версия схемы.
-		StaleStringsCleanup::maybeRun();
-
-		// Разовая починка object_type/object_id у старых мест использования строк.
-		OccurrenceObjectTypeMigration::maybeRun();
 	}
 
 	/**
-	 * Применяет схему.
+	 * Создаёт или дополняет таблицы через dbDelta и запоминает версию схемы.
+	 *
+	 * Версия сохраняется только если все таблицы реально существуют: иначе
+	 * (например, нет привилегии CREATE) maybeUpgrade() повторит попытку
+	 * на следующем запросе в админке.
+	 *
+	 * @return bool true, если все таблицы на месте и версия сохранена.
 	 */
-	public static function install(): void {
+	public static function install(): bool {
 		global $wpdb;
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$charset = $wpdb->get_charset_collate();
 
-		foreach ( self::statements( $charset ) as $sql ) {
+		$statements = self::statements( $charset );
+
+		foreach ( $statements as $sql ) {
 			dbDelta( $sql );
 		}
 
-		update_option( self::OPTION_VERSION, self::VERSION );
-	}
-
-	/**
-	 * Удаляет все таблицы плагина. Вызывается только из uninstall.php.
-	 */
-	public static function drop(): void {
-		global $wpdb;
-
-		foreach ( self::TABLES as $name ) {
-			$table = self::table( $name );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- удаление собственных таблиц плагина при деинсталляции, кэшировать нечего.
-			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		/*
+		 * Версию пишем, только если все таблицы на месте: иначе (например, без
+		 * права CREATE) maybeUpgrade() повторит установку при следующем заходе.
+		 * maybe_create_table() — функция ядра: проверяет наличие таблицы и при
+		 * отсутствии ещё раз пробует её создать. Порядок statements() совпадает
+		 * с self::TABLES.
+		 */
+		foreach ( self::TABLES as $index => $name ) {
+			if ( ! maybe_create_table( self::table( $name ), $statements[ $index ] ) ) {
+				return false;
+			}
 		}
 
-		delete_option( self::OPTION_VERSION );
+		update_option( self::versionOption(), self::VERSION );
+
+		return true;
 	}
 
 	/**

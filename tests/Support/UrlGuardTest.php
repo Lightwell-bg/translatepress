@@ -2,20 +2,20 @@
 /**
  * Тесты проверки протокола адреса и её применения при сохранении и подстановке.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use DOMDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\UrlGuard;
-use WpMlp\Translation\PostCommitValidator;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\UrlGuard;
+use LingoCanvas\Translation\PostCommitValidator;
 
 #[CoversClass( UrlGuard::class )]
 #[CoversClass( Segment::class )]

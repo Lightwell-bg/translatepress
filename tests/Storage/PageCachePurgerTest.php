@@ -2,16 +2,16 @@
 /**
  * Тесты сброса кэша страниц сторонних плагинов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\PageCachePurger;
+use LingoCanvas\Storage\PageCachePurger;
 
 /**
  * Ни один кэширующий плагин в тестовом окружении не установлен — все ветки
@@ -29,24 +29,18 @@ final class PageCachePurgerTest extends TestCase {
 	}
 
 	public function testFiresExtensionHookForCachesWithoutBuiltInSupport(): void {
-		wp_mlp_test_actions( null, true );
+		lingocanvas_test_actions( null, true );
 
 		PageCachePurger::purgeAll();
 
-		$this->assertContains( 'lingocanvas_purge_page_cache', wp_mlp_test_actions() );
+		$this->assertContains( 'lingocanvas_purge_page_cache', lingocanvas_test_actions() );
 	}
 
-	public function testStillFiresDeprecatedHookNameAfterTheNewOne(): void {
-		wp_mlp_test_actions( null, true );
+	public function testDoesNotFireTheRemovedLegacyHookName(): void {
+		lingocanvas_test_actions( null, true );
 
 		PageCachePurger::purgeAll();
 
-		$fired = wp_mlp_test_actions();
-
-		$this->assertContains( 'mlp_purge_page_cache', $fired );
-		$this->assertLessThan(
-			array_search( 'mlp_purge_page_cache', $fired, true ),
-			array_search( 'lingocanvas_purge_page_cache', $fired, true )
-		);
+		$this->assertSame( array( 'lingocanvas_purge_page_cache' ), array_values( array_filter( lingocanvas_test_actions(), static fn( string $name ): bool => str_contains( $name, 'purge_page_cache' ) ) ) );
 	}
 }

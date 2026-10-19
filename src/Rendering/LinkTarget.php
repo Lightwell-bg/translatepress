@@ -2,19 +2,19 @@
 /**
  * Какие адреса ссылок имеет смысл переводить.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Решает, стоит ли заводить `href` как отдельную строку словаря.
  *
- * Своя проверка, а не общая {@see \WpMlp\Support\Text::isTranslatable()}:
+ * Своя проверка, а не общая {@see \LingoCanvas\Support\Text::isTranslatable()}:
  * та написана про прозу и на адресах отвечает как придётся. Она,
  * например, отвергает `https://site.ru/x/` как «похожее на URL», но
  * пропускает `/blog/x/` — то есть одна и та же ссылка попадала бы в
@@ -101,7 +101,7 @@ final class LinkTarget {
 	 * Text::normalize() с прозой) нельзя — любой изменённый символ ведёт уже
 	 * на другую страницу.
 	 *
-	 * Параметры редактора (`mlp_editor`, `mlp_nonce`, `mlp_channel`) убираются
+	 * Параметры редактора (`lingocanvas_editor`, `lingocanvas_nonce`, `lingocanvas_channel`) убираются
 	 * потому, что страница в iframe предпросмотра получает их от самой темы:
 	 * `paginate_links()` и подобные функции переносят текущий query-string в
 	 * каждую ссылку, и без этого в словарь попадал бы одноразовый адрес с

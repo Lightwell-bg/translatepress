@@ -2,12 +2,12 @@
 /**
  * Статусы перевода.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 

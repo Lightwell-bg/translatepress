@@ -2,12 +2,12 @@
 /**
  * Защита шорткодов от порчи машинным переводом.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Support;
+namespace LingoCanvas\Support;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -2,22 +2,22 @@
 /**
  * Тесты слепка переведённых строк записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Storage;
+namespace LingoCanvas\Tests\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Storage\PostTranslationSnapshot;
+use LingoCanvas\Storage\PostTranslationSnapshot;
 
 #[CoversClass( PostTranslationSnapshot::class )]
 final class PostTranslationSnapshotTest extends TestCase {
 
 	protected function tearDown(): void {
-		wp_mlp_test_postmeta( array() );
+		lingocanvas_test_postmeta( array() );
 	}
 
 	public function testHashesForUnknownPostIsEmpty(): void {

@@ -6,7 +6,7 @@
  * Writes /out/page-<name>.html and /out/page-<name>.json (status, Location).
  */
 
-$mlp_page = (string) ( $GLOBALS['MLP_SMOKE_PAGE'] ?? 'page' );
+$lingocanvas_page = (string) ( $GLOBALS['MLP_SMOKE_PAGE'] ?? 'page' );
 
 $_SERVER['REQUEST_METHOD'] = 'GET';
 $_SERVER['HTTP_HOST']      = is_readable( '/out/site-host.txt' ) ? trim( (string) file_get_contents( '/out/site-host.txt' ) ) : ( $_SERVER['HTTP_HOST'] ?? 'localhost' );
@@ -15,15 +15,15 @@ $_POST                     = array();
 $_COOKIE                   = array();
 
 ob_start(
-	static function ( string $html ) use ( $mlp_page ): string {
-		file_put_contents( '/out/page-' . $mlp_page . '.html', $html );
+	static function ( string $html ) use ( $lingocanvas_page ): string {
+		file_put_contents( '/out/page-' . $lingocanvas_page . '.html', $html );
 
 		return '';
 	}
 );
 
 register_shutdown_function(
-	static function () use ( $mlp_page ): void {
+	static function () use ( $lingocanvas_page ): void {
 		$location = '';
 		$ctype    = '';
 
@@ -37,7 +37,7 @@ register_shutdown_function(
 		}
 
 		file_put_contents(
-			'/out/page-' . $mlp_page . '.json',
+			'/out/page-' . $lingocanvas_page . '.json',
 			json_encode( // phpcs:ignore
 				array(
 					'status'       => (int) http_response_code(),

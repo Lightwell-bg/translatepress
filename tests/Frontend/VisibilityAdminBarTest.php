@@ -2,22 +2,22 @@
 /**
  * Тесты плашки «Показано / Скрыто на DE» в админ-панели сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\VisibilityAdminBar;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Frontend\VisibilityAdminBar;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 /**
  * Админ-панель, которая только запоминает добавленные узлы.
@@ -40,8 +40,8 @@ final class VisibilityAdminBarTest extends TestCase {
 
 	protected function setUp(): void {
 		$GLOBALS['wpdb'] = new FakeWpdb();
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_request( array() );
 		$_GET                   = array();
 		$_SERVER['REQUEST_URI'] = '/en/about/';
 
@@ -52,17 +52,17 @@ final class VisibilityAdminBarTest extends TestCase {
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'], $_SERVER['REQUEST_URI'] );
 		$_GET = array();
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_request( array() );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -79,7 +79,7 @@ final class VisibilityAdminBarTest extends TestCase {
 	 * @param array<string, mixed> $extra Дополнительные ключи хранилища (caps, admin_bar).
 	 */
 	private function world( array $extra = array() ): void {
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array_merge(
 				array(
 					'posts' => array(
@@ -174,7 +174,7 @@ final class VisibilityAdminBarTest extends TestCase {
 	}
 
 	public function testNothingInAdminScreens(): void {
-		wp_mlp_test_request( array( 'is_admin' => true ) );
+		lingocanvas_test_request( array( 'is_admin' => true ) );
 
 		$this->assertNull( $this->bar()->context() );
 	}

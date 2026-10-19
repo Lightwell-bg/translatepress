@@ -2,17 +2,17 @@
 /**
  * Тесты разбора фильтра области поиска строк.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\StringTranslationPage;
-use WpMlp\Storage\SourceRepository;
+use LingoCanvas\Admin\StringTranslationPage;
+use LingoCanvas\Storage\SourceRepository;
 
 #[CoversClass( StringTranslationPage::class )]
 final class ScopeFilterTest extends TestCase {
@@ -94,7 +94,7 @@ final class ScopeFilterTest extends TestCase {
 		return array(
 			array( 'nonsense' ),
 			array( 'SEO' ),
-			array( 'text; DROP TABLE wp_mlp_sources' ),
+			array( 'text; DROP TABLE wp_lingocanvas_sources' ),
 		);
 	}
 

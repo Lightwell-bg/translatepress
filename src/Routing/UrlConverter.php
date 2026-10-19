@@ -2,16 +2,16 @@
 /**
  * Построение языковых URL.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Routing;
+namespace LingoCanvas\Routing;
 
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -128,8 +128,8 @@ final class UrlConverter implements Hookable {
 	public function switchUrlFor( Language $language ): string {
 		$url = $this->canonicalUrlFor( $language );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение экранируется при выводе esc_url().
-		$query = isset( $_SERVER['QUERY_STRING'] ) ? wp_unslash( (string) $_SERVER['QUERY_STRING'] ) : '';
+		// Ведущий «/» заставляет esc_url_raw() пропустить проверку протокола; %XX сохраняются.
+		$query = isset( $_SERVER['QUERY_STRING'] ) ? substr( esc_url_raw( '/?' . wp_unslash( (string) $_SERVER['QUERY_STRING'] ) ), 2 ) : '';
 
 		return '' !== $query ? $url . '?' . $query : $url;
 	}
@@ -278,7 +278,7 @@ final class UrlConverter implements Hookable {
 		 * вызывающие сверяют хост сами; здесь защита перестаёт зависеть
 		 * от их дисциплины.
 		 */
-		if ( '' !== $host && '' !== $homeHost && $host !== strtolower( $homeHost ) ) {
+		if ( '' !== $host && '' !== $homeHost && strtolower( $homeHost ) !== $host ) {
 			return true;
 		}
 

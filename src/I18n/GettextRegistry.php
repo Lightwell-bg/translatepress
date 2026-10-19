@@ -2,18 +2,18 @@
 /**
  * Перевод строк темы и плагинов через gettext-фильтры WordPress.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\GettextStore;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Text;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\GettextStore;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -69,7 +69,7 @@ final class GettextRegistry implements Hookable {
 	/**
 	 * Нормализованный текст => домен, из которого он пришёл.
 	 *
-	 * Нужны {@see \WpMlp\Rendering\Extractor}: строку, обслуженную здесь,
+	 * Нужны {@see \LingoCanvas\Rendering\Extractor}: строку, обслуженную здесь,
 	 * он обязан пропустить, иначе одна и та же фраза попадёт в словарь
 	 * дважды — как `gettext` и как обычный `text` — и переводить её
 	 * придётся в двух разных местах.

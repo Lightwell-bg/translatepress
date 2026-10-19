@@ -2,14 +2,14 @@
 /**
  * Контракт пост-обработчика DOM.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rendering;
+namespace LingoCanvas\Rendering;
 
-use WpMlp\Settings\Language;
+use LingoCanvas\Settings\Language;
 
 defined( 'ABSPATH' ) || exit;
 

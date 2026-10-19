@@ -2,12 +2,12 @@
 /**
  * Чтение переменных окружения из .env-файлов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Support;
+namespace LingoCanvas\Support;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -128,7 +128,7 @@ final class Env {
 	 * пустую страницу, а не секреты. Файл без такой строки не используется —
 	 * он запоминается, чтобы страница настроек могла предупредить владельца.
 	 *
-	 * @param string $path Путь к файлу `wp-mlp.env.php`.
+	 * @param string $path Путь к файлу `lingocanvas.env.php`.
 	 */
 	public static function loadGuarded( string $path ): void {
 		if ( isset( self::$loaded[ $path ] ) ) {
@@ -162,7 +162,7 @@ final class Env {
 	}
 
 	/**
-	 * Файлы `wp-mlp.env.php`, пропущенные из-за отсутствия защитной строки.
+	 * Файлы `lingocanvas.env.php`, пропущенные из-за отсутствия защитной строки.
 	 *
 	 * @return list<string>
 	 */
@@ -215,7 +215,7 @@ final class Env {
 		foreach ( preg_split( '/\R/', $contents ) ?: array() as $line ) {
 			$line = trim( $line );
 
-			// Строки `<?php …` — защитная шапка файла wp-mlp.env.php, не данные.
+			// Строки `<?php …` — защитная шапка файла lingocanvas.env.php, не данные.
 			if ( '' === $line || str_starts_with( $line, '#' ) || str_starts_with( $line, '<?php' ) ) {
 				continue;
 			}

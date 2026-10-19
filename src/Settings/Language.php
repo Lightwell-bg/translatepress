@@ -2,14 +2,14 @@
 /**
  * Описание одного языка сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Settings;
+namespace LingoCanvas\Settings;
 
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 

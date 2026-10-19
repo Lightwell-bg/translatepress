@@ -3,24 +3,24 @@
  * Тесты ручного показа записей на языках в списке записей: переключатели,
  * массовые действия, фильтр.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Admin\PostListLanguages;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Admin\PostListLanguages;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 /**
  * Главный запрос списка без БД: get()/set() над массивом переменных.
@@ -62,29 +62,29 @@ final class PostListVisibilityTest extends TestCase {
 
 	protected function setUp(): void {
 		$GLOBALS['wpdb'] = new FakeWpdb();
-		unset( $GLOBALS['wp_query'], $GLOBALS['wp_mlp_test_meta_primed'] );
+		unset( $GLOBALS['wp_query'], $GLOBALS['lingocanvas_test_meta_primed'] );
 		$GLOBALS['pagenow'] = 'edit.php';
 		$_GET               = array();
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_request( array( 'is_admin' => true ) );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_request( array( 'is_admin' => true ) );
 		$this->configure( Settings::POSTS_MANUAL );
 		$this->posts( array( 1, 2, 3 ) );
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['wpdb'], $GLOBALS['wp_query'], $GLOBALS['pagenow'], $GLOBALS['wp_mlp_test_meta_primed'] );
+		unset( $GLOBALS['wpdb'], $GLOBALS['wp_query'], $GLOBALS['pagenow'], $GLOBALS['lingocanvas_test_meta_primed'] );
 		$_GET = array();
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_request( array() );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -116,7 +116,7 @@ final class PostListVisibilityTest extends TestCase {
 			);
 		}
 
-		wp_mlp_test_wp( array( 'posts' => $posts, 'caps' => $caps ) );
+		lingocanvas_test_wp( array( 'posts' => $posts, 'caps' => $caps ) );
 		$GLOBALS['wp_query'] = (object) array( 'posts' => array_values( $posts ) );
 	}
 
@@ -180,7 +180,7 @@ final class PostListVisibilityTest extends TestCase {
 		$method = new \ReflectionMethod( PostListLanguages::class, 'toggleHtml' );
 		$html   = (string) $method->invoke(
 			$this->service(),
-			wp_mlp_test_wp()['posts'][1],
+			lingocanvas_test_wp()['posts'][1],
 			( new Settings() )->secondary()['en']
 		);
 
@@ -193,7 +193,7 @@ final class PostListVisibilityTest extends TestCase {
 
 		$base = 'https://example.test/wp-admin/edit.php';
 
-		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'mlp_show_en', array( 1 ) ) );
+		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'lingocanvas_show_en', array( 1 ) ) );
 		$this->assertFalse( $this->visibility()->isVisible( 1, 'en' ) );
 	}
 
@@ -204,8 +204,8 @@ final class PostListVisibilityTest extends TestCase {
 			$this->cell( $service, $id );
 		}
 
-		$this->assertCount( 1, $GLOBALS['wp_mlp_test_meta_primed'] );
-		$this->assertSame( array( 'post', array( 1, 2, 3 ) ), $GLOBALS['wp_mlp_test_meta_primed'][0] );
+		$this->assertCount( 1, $GLOBALS['lingocanvas_test_meta_primed'] );
+		$this->assertSame( array( 'post', array( 1, 2, 3 ) ), $GLOBALS['lingocanvas_test_meta_primed'][0] );
 	}
 
 	// --- Массовые действия -----------------------------------------------------
@@ -214,54 +214,54 @@ final class PostListVisibilityTest extends TestCase {
 		$actions = $this->service()->addBulkActions( array( 'trash' => 'В корзину' ) );
 
 		$this->assertSame(
-			array( 'trash', 'mlp_show_en', 'mlp_hide_en', 'mlp_show_de', 'mlp_hide_de' ),
+			array( 'trash', 'lingocanvas_show_en', 'lingocanvas_hide_en', 'lingocanvas_show_de', 'lingocanvas_hide_de' ),
 			array_keys( $actions )
 		);
-		$this->assertSame( 'Show on language: English', $actions['mlp_show_en'] );
-		$this->assertSame( 'Hide on language: Deutsch', $actions['mlp_hide_de'] );
+		$this->assertSame( 'Show on language: English', $actions['lingocanvas_show_en'] );
+		$this->assertSame( 'Hide on language: Deutsch', $actions['lingocanvas_hide_de'] );
 
 		$this->configure( Settings::POSTS_ALL );
 		$this->assertSame( array( 'trash' => 'В корзину' ), $this->service()->addBulkActions( array( 'trash' => 'В корзину' ) ) );
 	}
 
 	public function testBulkShowSetsFlagsAndReportsCounts(): void {
-		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php?post_type=page', 'mlp_show_en', array( 1, 2, 3 ) );
+		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php?post_type=page', 'lingocanvas_show_en', array( 1, 2, 3 ) );
 
 		$this->assertTrue( $this->visibility()->isVisible( 1, 'en' ) );
 		$this->assertTrue( $this->visibility()->isVisible( 3, 'en' ) );
 		$this->assertFalse( $this->visibility()->isVisible( 1, 'de' ) );
-		$this->assertStringContainsString( 'mlp_vis_done=3', $url );
-		$this->assertStringContainsString( 'mlp_vis_locale=en', $url );
-		$this->assertStringContainsString( 'mlp_vis_state=1', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_done=3', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_locale=en', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_state=1', $url );
 	}
 
 	public function testBulkHideRemovesFlags(): void {
 		$this->visibility()->setMany( array( 1, 2 ), 'de', true );
 
-		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php', 'mlp_hide_de', array( 1, 2 ) );
+		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php', 'lingocanvas_hide_de', array( 1, 2 ) );
 
 		$this->assertFalse( $this->visibility()->isVisible( 1, 'de' ) );
-		$this->assertStringContainsString( 'mlp_vis_state=0', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_state=0', $url );
 	}
 
 	public function testBulkChecksEditRightPerPost(): void {
 		$this->posts( array( 1, 2, 3 ), array( 'edit_post:2' => false ) );
 
-		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php', 'mlp_show_en', array( 1, 2, 3 ) );
+		$url = $this->service()->handleBulkAction( 'https://example.test/wp-admin/edit.php', 'lingocanvas_show_en', array( 1, 2, 3 ) );
 
 		$this->assertTrue( $this->visibility()->isVisible( 1, 'en' ) );
 		$this->assertFalse( $this->visibility()->isVisible( 2, 'en' ), 'Чужую запись менять нельзя.' );
 		$this->assertTrue( $this->visibility()->isVisible( 3, 'en' ) );
-		$this->assertStringContainsString( 'mlp_vis_done=2', $url );
-		$this->assertStringContainsString( 'mlp_vis_skipped=1', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_done=2', $url );
+		$this->assertStringContainsString( 'lingocanvas_vis_skipped=1', $url );
 	}
 
 	public function testBulkIgnoresDefaultAndUnknownLanguagesAndForeignActions(): void {
 		$service = $this->service();
 		$base    = 'https://example.test/wp-admin/edit.php';
 
-		$this->assertSame( $base, $service->handleBulkAction( $base, 'mlp_show_ru', array( 1 ) ), 'Язык по умолчанию.' );
-		$this->assertSame( $base, $service->handleBulkAction( $base, 'mlp_show_xx', array( 1 ) ), 'Неизвестный язык.' );
+		$this->assertSame( $base, $service->handleBulkAction( $base, 'lingocanvas_show_ru', array( 1 ) ), 'Язык по умолчанию.' );
+		$this->assertSame( $base, $service->handleBulkAction( $base, 'lingocanvas_show_xx', array( 1 ) ), 'Неизвестный язык.' );
 		$this->assertSame( $base, $service->handleBulkAction( $base, 'trash', array( 1 ) ), 'Чужое действие.' );
 		$this->assertFalse( $this->visibility()->isVisible( 1, 'ru' ) );
 	}
@@ -270,11 +270,11 @@ final class PostListVisibilityTest extends TestCase {
 		$base = 'https://example.test/wp-admin/edit.php';
 
 		$this->configure( Settings::POSTS_ALL );
-		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'mlp_show_en', array( 1 ) ) );
+		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'lingocanvas_show_en', array( 1 ) ) );
 
 		$this->configure( Settings::POSTS_MANUAL );
 		$this->posts( array( 1 ), array( 'manage_options' => false ) );
-		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'mlp_show_en', array( 1 ) ) );
+		$this->assertSame( $base, $this->service()->handleBulkAction( $base, 'lingocanvas_show_en', array( 1 ) ) );
 		$this->assertFalse( $this->visibility()->isVisible( 1, 'en' ) );
 	}
 
@@ -344,7 +344,7 @@ final class PostListVisibilityTest extends TestCase {
 
 		$this->service()->filterByVisibility( $query );
 
-		$this->assertSame( array( array( 'key' => '_mlp_visible_en', 'compare' => 'EXISTS' ) ), $query->vars['meta_query'] );
+		$this->assertSame( array( array( 'key' => '_lingocanvas_visible_en', 'compare' => 'EXISTS' ) ), $query->vars['meta_query'] );
 	}
 
 	public function testHiddenFilterAddsNotExistsMetaQuery(): void {
@@ -353,7 +353,7 @@ final class PostListVisibilityTest extends TestCase {
 
 		$this->service()->filterByVisibility( $query );
 
-		$this->assertSame( array( array( 'key' => '_mlp_visible_de', 'compare' => 'NOT EXISTS' ) ), $query->vars['meta_query'] );
+		$this->assertSame( array( array( 'key' => '_lingocanvas_visible_de', 'compare' => 'NOT EXISTS' ) ), $query->vars['meta_query'] );
 	}
 
 	public function testFilterKeepsForeignMetaQueryNested(): void {
@@ -364,7 +364,7 @@ final class PostListVisibilityTest extends TestCase {
 		$this->service()->filterByVisibility( $query );
 
 		$this->assertSame(
-			array( 'relation' => 'AND', $foreign, array( 'key' => '_mlp_visible_en', 'compare' => 'EXISTS' ) ),
+			array( 'relation' => 'AND', $foreign, array( 'key' => '_lingocanvas_visible_en', 'compare' => 'EXISTS' ) ),
 			$query->vars['meta_query']
 		);
 	}

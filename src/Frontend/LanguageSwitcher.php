@@ -2,23 +2,23 @@
 /**
  * Переключатель языков.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Settings\SwitcherDisplay;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Settings\SwitcherDisplay;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Шорткод `[mlp_language_switcher]` и одноимённый виджет.
+ * Шорткод `[lingocanvas_language_switcher]` и одноимённый виджет.
  *
  * Ссылки ведут на ту же страницу на другом языке, вместе со строкой запроса:
  * с результатов поиска посетитель должен попасть на тот же поиск, а не на
@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class LanguageSwitcher implements Hookable {
 
-	public const SHORTCODE = 'mlp_language_switcher';
+	public const SHORTCODE = 'lingocanvas_language_switcher';
 
 	/**
 	 * @param Settings         $settings Настройки плагина.
@@ -126,9 +126,9 @@ final class LanguageSwitcher implements Hookable {
 	 * нажал «English» и остался на русском. Вместо этого ведём на главную
 	 * нужного языка.
 	 *
-	 * @param \WpMlp\Settings\Language $language Целевой язык.
+	 * @param \LingoCanvas\Settings\Language $language Целевой язык.
 	 */
-	private function urlFor( \WpMlp\Settings\Language $language ): string {
+	private function urlFor( \LingoCanvas\Settings\Language $language ): string {
 		if ( null !== $this->pageLanguages && $this->pageLanguages->isHiddenOn( $language ) ) {
 			return $this->urls->homeFor( $language );
 		}

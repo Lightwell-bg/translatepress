@@ -2,23 +2,23 @@
 /**
  * Тесты карты сайта при ручном показе записей на языках.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\Sitemap;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\PostLanguageVisibility;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Tests\Doubles\FakeWpdb;
+use LingoCanvas\Frontend\Sitemap;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\PostLanguageVisibility;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Tests\Doubles\FakeWpdb;
 
 #[CoversClass( Sitemap::class )]
 final class SitemapVisibilityTest extends TestCase {
@@ -29,14 +29,14 @@ final class SitemapVisibilityTest extends TestCase {
 		$this->db        = new FakeWpdb();
 		$GLOBALS['wpdb'] = $this->db;
 
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_request( array() );
-		unset( $GLOBALS['wp_mlp_test_meta_primed'] );
-		$_SERVER['REQUEST_URI'] = '/wp-mlp-sitemap.xml';
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_request( array() );
+		unset( $GLOBALS['lingocanvas_test_meta_primed'] );
+		$_SERVER['REQUEST_URI'] = '/lingocanvas-sitemap.xml';
 
 		$this->configure( Settings::POSTS_MANUAL );
 
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array(
 				'posts'     => array(
 					10 => new \WP_Post( array( 'ID' => 10, 'post_type' => 'page', 'post_name' => 'about' ) ),
@@ -48,17 +48,17 @@ final class SitemapVisibilityTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $GLOBALS['wpdb'], $GLOBALS['wp_mlp_test_meta_primed'], $_SERVER['REQUEST_URI'] );
-		wp_mlp_test_options( array() );
-		wp_mlp_test_postmeta( array() );
-		wp_mlp_test_wp( array() );
+		unset( $GLOBALS['wpdb'], $GLOBALS['lingocanvas_test_meta_primed'], $_SERVER['REQUEST_URI'] );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_postmeta( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function configure( string $mode ): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale'          => 'ru',
 					'untranslated_posts_mode' => $mode,
 					'languages'               => array(
@@ -151,7 +151,7 @@ final class SitemapVisibilityTest extends TestCase {
 	}
 
 	public function testStaticFrontPageFollowsItsOwnFlag(): void {
-		wp_mlp_test_options( wp_mlp_test_options() + array( 'page_on_front' => 10 ) );
+		lingocanvas_test_options( lingocanvas_test_options() + array( 'page_on_front' => 10 ) );
 
 		$this->assertNotContains( 'https://example.test/en/', $this->locs() );
 
@@ -163,7 +163,7 @@ final class SitemapVisibilityTest extends TestCase {
 	public function testMetaOfAllPostsIsPrimedInOneCall(): void {
 		$this->locs();
 
-		$calls = array_filter( $GLOBALS['wp_mlp_test_meta_primed'], static fn( array $c ): bool => 'post' === $c[0] );
+		$calls = array_filter( $GLOBALS['lingocanvas_test_meta_primed'], static fn( array $c ): bool => 'post' === $c[0] );
 
 		$this->assertCount( 1, $calls, 'Метаполя всех записей прогреваются разом, не по одной.' );
 		$this->assertSame( array( 11, 10 ), array_values( $calls )[0][1] );

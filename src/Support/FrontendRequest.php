@@ -2,12 +2,12 @@
 /**
  * Признак «это обычная публичная отрисовка страницы».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Support;
+namespace LingoCanvas\Support;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
  * его задаёт.
  *
  * Вынесено в общее место не ради красоты, а потому что расхождение здесь
- * даёт противоречивую страницу. Подмена локали ({@see \WpMlp\I18n\LocaleSwitcher})
- * и перехват HTML ({@see \WpMlp\Rendering\OutputBuffer}) переводят РАЗНЫЕ
+ * даёт противоречивую страницу. Подмена локали ({@see \LingoCanvas\I18n\LocaleSwitcher})
+ * и перехват HTML ({@see \LingoCanvas\Rendering\OutputBuffer}) переводят РАЗНЫЕ
  * половины одной и той же страницы: первая — строки темы и плагинов через
  * gettext, второй — весь остальной текст через DOM. Если они разойдутся в
  * условиях, посетитель получит полупереведённую страницу: кнопка
@@ -64,10 +64,7 @@ final class FrontendRequest {
 	 * Запрос только читает: GET или HEAD.
 	 */
 	private static function isReadMethod(): bool {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение сравнивается со списком.
-		$method = isset( $_SERVER['REQUEST_METHOD'] )
-			? strtoupper( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) )
-			: 'GET';
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
 
 		return in_array( $method, array( 'GET', 'HEAD' ), true );
 	}

@@ -2,20 +2,20 @@
 /**
  * Доступ к таблице переводов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
-use WpMlp\Support\Hash;
-use WpMlp\Support\Locale;
+use LingoCanvas\Support\Hash;
+use LingoCanvas\Support\Locale;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Чтение и запись `wp_mlp_translations`.
+ * Чтение и запись `wp_lingocanvas_translations`.
  */
 final class TranslationRepository {
 

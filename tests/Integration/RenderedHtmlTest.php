@@ -2,27 +2,27 @@
 /**
  * Интеграционный тест: итоговый HTML на всех языках сайта.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Integration;
+namespace LingoCanvas\Tests\Integration;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\InternalLinks;
-use WpMlp\Frontend\SeoMeta;
-use WpMlp\Frontend\SeoTags;
-use WpMlp\Rendering\DocumentFilter;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Rendering\SegmentDeduplicator;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Frontend\InternalLinks;
+use LingoCanvas\Frontend\SeoMeta;
+use LingoCanvas\Frontend\SeoTags;
+use LingoCanvas\Rendering\DocumentFilter;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Rendering\SegmentDeduplicator;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
 
 /**
  * Юнит-тесты остальных классов проверяют каждый фильтр по отдельности.
@@ -40,7 +40,7 @@ final class RenderedHtmlTest extends TestCase {
 	private const HOME = 'https://site.example/blog';
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
+		lingocanvas_test_options( array() );
 		unset( $_SERVER['REQUEST_URI'] );
 	}
 
@@ -52,9 +52,9 @@ final class RenderedHtmlTest extends TestCase {
 	 * @return array{settings: Settings, resolver: LanguageResolver, urls: UrlConverter, target: Language}
 	 */
 	private function requestFor( string $slug ): array {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'status' => 'published' ),

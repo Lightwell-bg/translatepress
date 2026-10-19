@@ -2,12 +2,12 @@
 /**
  * Каталог языков для выбора в таблице «Языки сайта».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
 /**
  * Список языков, которые можно добавить на сайт одним выбором.

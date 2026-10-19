@@ -2,17 +2,17 @@
 /**
  * Хранилище gettext-части словаря.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * То, что {@see \WpMlp\I18n\GettextRegistry} требует от хранилища.
+ * То, что {@see \LingoCanvas\I18n\GettextRegistry} требует от хранилища.
  *
  * Интерфейс введён ради тестируемости самой важной части контура —
  * порядка «наше переопределение → языковой пакет → оригинал» и правила

@@ -2,20 +2,28 @@
 /**
  * Тесты поиска файла флага для языка.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Frontend;
+namespace LingoCanvas\Tests\Frontend;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Frontend\Flags;
+use LingoCanvas\Frontend\Flags;
 
 #[CoversClass( Flags::class )]
 final class FlagsTest extends TestCase {
+
+	protected function setUp(): void {
+		lingocanvas_test_options( array() );
+	}
+
+	protected function tearDown(): void {
+		lingocanvas_test_options( array() );
+	}
 
 	/**
 	 * Имя файла собирается из кода языка, который приходит из настроек.
@@ -68,12 +76,12 @@ final class FlagsTest extends TestCase {
 	 * запасной вариант (emoji или код) не сработал бы вовсе.
 	 */
 	public function testUrlOnlyWhenTheFileIsThere(): void {
-		$uploads = sys_get_temp_dir() . '/wp-mlp-flags-test-' . uniqid();
+		$uploads = sys_get_temp_dir() . '/lingocanvas-flags-test-' . uniqid();
 
 		mkdir( $uploads . '/' . Flags::DIRECTORY, 0777, true );
 		file_put_contents( $uploads . '/' . Flags::DIRECTORY . '/bg.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>' );
 
-		wp_mlp_test_uploads( $uploads );
+		lingocanvas_test_uploads( $uploads );
 
 		$this->assertStringEndsWith( '/' . Flags::DIRECTORY . '/bg.svg', Flags::url( 'bg' ) );
 
@@ -86,7 +94,7 @@ final class FlagsTest extends TestCase {
 		unlink( $uploads . '/' . Flags::DIRECTORY . '/bg.svg' );
 		rmdir( $uploads . '/' . Flags::DIRECTORY );
 		rmdir( $uploads );
-		wp_mlp_test_uploads( sys_get_temp_dir() . '/wp-mlp-uploads' );
+		lingocanvas_test_uploads( sys_get_temp_dir() . '/lingocanvas-uploads' );
 	}
 
 	/**

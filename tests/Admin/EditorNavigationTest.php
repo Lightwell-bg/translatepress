@@ -2,17 +2,17 @@
 /**
  * Тесты перехода по ссылке внутри предпросмотра редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorPage;
+use LingoCanvas\Admin\EditorPage;
 
 #[CoversClass( EditorPage::class )]
 final class EditorNavigationTest extends TestCase {
@@ -23,12 +23,12 @@ final class EditorNavigationTest extends TestCase {
 	/**
 	 * Клик по ссылке в предпросмотре присылает адрес целиком, а редактору
 	 * нужен путь без базового пути установки и без языкового префикса —
-	 * ровно тот, что лежит в `mlp_path`. Разбирает адрес сервер: своя
+	 * ровно тот, что лежит в `lingocanvas_path`. Разбирает адрес сервер: своя
 	 * реализация этого правила в JS разошлась бы с серверной ровно так
 	 * же, как уже расходились между собой три копии проверки хоста.
 	 *
 	 * @param string $url      Адрес, по которому щёлкнули в предпросмотре.
-	 * @param string $expected Путь, который должен попасть в mlp_path.
+	 * @param string $expected Путь, который должен попасть в lingocanvas_path.
 	 */
 	#[DataProvider( 'urls' )]
 	public function testUrlBecomesEditorPath( string $url, string $expected ): void {
@@ -61,7 +61,7 @@ final class EditorNavigationTest extends TestCase {
 			array( 'https://centerai.eu/blog/en/topics/ai-agents/', '/topics/ai-agents/' ),
 
 			/*
-			 * Хвост запроса и якорь до `mlp_path` доходить не должны: это
+			 * Хвост запроса и якорь до `lingocanvas_path` доходить не должны: это
 			 * адрес страницы, а не конкретного места на ней.
 			 */
 			array( 'https://centerai.eu/blog/en/post/?utm_source=x', '/post/' ),

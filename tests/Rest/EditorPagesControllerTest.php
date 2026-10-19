@@ -2,20 +2,20 @@
 /**
  * Тесты REST-поиска страниц для визуального редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rest;
+namespace LingoCanvas\Tests\Rest;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Rest\EditorPagesController;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Rest\EditorPagesController;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( EditorPagesController::class )]
 final class EditorPagesControllerTest extends TestCase {
@@ -24,10 +24,10 @@ final class EditorPagesControllerTest extends TestCase {
 	private array $posts = array();
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский', 'status' => 'published' ),
@@ -37,13 +37,13 @@ final class EditorPagesControllerTest extends TestCase {
 			)
 		);
 		$this->posts = array();
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_wp( array() );
 		\WP_Query::$calls = array();
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function controller(): EditorPagesController {
@@ -71,7 +71,7 @@ final class EditorPagesControllerTest extends TestCase {
 	 * @param array<string, mixed> $extra Дополнительные ключи хранилища.
 	 */
 	private function sync( array $extra = array() ): void {
-		wp_mlp_test_wp(
+		lingocanvas_test_wp(
 			array_merge(
 				array(
 					'posts' => $this->posts,
@@ -116,7 +116,7 @@ final class EditorPagesControllerTest extends TestCase {
 		$this->addPost( 1, 'Первая', 'first' );
 		$this->addPost( 7, 'Домашняя', '', 'page' );
 		$this->sync();
-		wp_mlp_test_options( array_merge( wp_mlp_test_options(), array( 'show_on_front' => 'page', 'page_on_front' => 7 ) ) );
+		lingocanvas_test_options( array_merge( lingocanvas_test_options(), array( 'show_on_front' => 'page', 'page_on_front' => 7 ) ) );
 
 		$items = $this->search( '' );
 

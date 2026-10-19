@@ -2,24 +2,24 @@
 /**
  * REST-поиск страниц для выбора в визуальном редакторе.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Rest;
+namespace LingoCanvas\Rest;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Hookable;
-use WpMlp\Routing\UrlConverter;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Routing\UrlConverter;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `GET /wp-json/mlp/v1/editor/pages?search=…`.
+ * `GET /wp-json/lingocanvas/v1/editor/pages?search=…`.
  *
  * Отдаёт до 20 элементов `{id, title, type_label, path, edit_url?}` для
  * выпадающего списка выбора страницы. Заголовки уходят простым текстом, без
@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class EditorPagesController implements Hookable {
 
-	public const NAMESPACE  = 'mlp/v1';
+	public const NAMESPACE  = 'lingocanvas/v1';
 	public const CAPABILITY = 'manage_options';
 	public const LIMIT      = 20;
 	public const MAX_QUERY  = 200;

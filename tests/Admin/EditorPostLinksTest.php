@@ -2,29 +2,29 @@
 /**
  * Тесты ссылок на редактор в списках записей и метабоксе.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Admin\EditorPostLinks;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Admin\EditorPostLinks;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 #[CoversClass( EditorPostLinks::class )]
 final class EditorPostLinksTest extends TestCase {
 
 	protected function setUp(): void {
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => array(
 						'ru' => array( 'locale' => 'ru', 'slug' => 'ru', 'label' => 'Русский', 'status' => 'published' ),
@@ -33,12 +33,12 @@ final class EditorPostLinksTest extends TestCase {
 				),
 			)
 		);
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	protected function tearDown(): void {
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	private function links(): EditorPostLinks {
@@ -59,7 +59,7 @@ final class EditorPostLinksTest extends TestCase {
 			)
 		);
 
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'posts' => array( 4 => $post ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'posts' => array( 4 => $post ) ) ) );
 
 		return $post;
 	}
@@ -67,22 +67,22 @@ final class EditorPostLinksTest extends TestCase {
 	public function testRowActionAddedForPublishedPost(): void {
 		$actions = $this->links()->rowActions( array( 'edit' => '<a>e</a>' ), $this->post() );
 
-		$this->assertArrayHasKey( 'mlp_translate', $actions );
-		$this->assertStringContainsString( 'mlp_path=%2Fabout%2F', $actions['mlp_translate'] );
-		$this->assertStringContainsString( 'Translate', $actions['mlp_translate'] );
+		$this->assertArrayHasKey( 'lingocanvas_translate', $actions );
+		$this->assertStringContainsString( 'lingocanvas_path=%2Fabout%2F', $actions['lingocanvas_translate'] );
+		$this->assertStringContainsString( 'Translate', $actions['lingocanvas_translate'] );
 	}
 
 	public function testRowActionSkippedForDraft(): void {
 		$actions = $this->links()->rowActions( array( 'edit' => '<a>e</a>' ), $this->post( 'draft' ) );
 
-		$this->assertArrayNotHasKey( 'mlp_translate', $actions );
+		$this->assertArrayNotHasKey( 'lingocanvas_translate', $actions );
 	}
 
 	public function testRowActionSkippedWithoutCapability(): void {
 		$post = $this->post();
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 
-		$this->assertArrayNotHasKey( 'mlp_translate', $this->links()->rowActions( array(), $post ) );
+		$this->assertArrayNotHasKey( 'lingocanvas_translate', $this->links()->rowActions( array(), $post ) );
 	}
 
 	public function testMetaBoxEscapesLanguageLabel(): void {
@@ -92,7 +92,7 @@ final class EditorPostLinksTest extends TestCase {
 
 		$this->assertStringNotContainsString( '<script>', $html );
 		$this->assertStringContainsString( '&lt;script&gt;', $html );
-		$this->assertStringContainsString( 'mlp_locale=en', $html );
+		$this->assertStringContainsString( 'lingocanvas_locale=en', $html );
 	}
 
 	public function testMetaBoxNotesUnpublishedPost(): void {
@@ -106,7 +106,7 @@ final class EditorPostLinksTest extends TestCase {
 
 	public function testMetaBoxEmptyWithoutCapability(): void {
 		$post = $this->post();
-		wp_mlp_test_wp( array_merge( wp_mlp_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
+		lingocanvas_test_wp( array_merge( lingocanvas_test_wp(), array( 'caps' => array( 'manage_options' => false ) ) ) );
 
 		ob_start();
 		$this->links()->renderMetaBox( $post );

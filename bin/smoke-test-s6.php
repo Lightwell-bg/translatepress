@@ -13,11 +13,12 @@
  *   check2 -> front end after the override, debug.log scan
  */
 
-use WpMlp\Admin\InterfaceStringsScreen;
-use WpMlp\Admin\StringTranslationPage;
-use WpMlp\Plugin;
-use WpMlp\Storage\GettextRepository;
-use WpMlp\Storage\Schema;
+use LingoCanvas\Admin\InterfaceStringsScreen;
+use LingoCanvas\Admin\StringTranslationPage;
+use LingoCanvas\Plugin;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\GettextRepository;
+use LingoCanvas\Storage\Schema;
 
 require __DIR__ . '/smoke-test-lib.php';
 
@@ -28,7 +29,7 @@ const MLP_S6_DOMAIN = 'lingocanvas-smoke-domain';
  *
  * @param array<string,string> $entries msgid (with "ctx\4" prefix / "\0plural") => msgstr (forms joined by "\0"); '' is the header.
  */
-function mlp_s6_mo( array $entries ): string {
+function lingocanvas_s6_mo( array $entries ): string {
 	ksort( $entries, SORT_STRING );
 
 	$n      = count( $entries );
@@ -64,9 +65,9 @@ function mlp_s6_mo( array $entries ): string {
  * @param list<array<string,mixed>> $items
  * @return array<int,string>
  */
-function mlp_s6_official( array $items, string $locale = 'ru' ): array {
+function lingocanvas_s6_official( array $items, string $locale = 'ru' ): array {
 	$screen   = Plugin::container()->get( InterfaceStringsScreen::class );
-	$language = Plugin::container()->get( \WpMlp\Settings\Settings::class )->get( $locale );
+	$language = Plugin::container()->get( \LingoCanvas\Settings\Settings::class )->get( $locale );
 	$method   = new ReflectionMethod( $screen, 'officialTranslations' );
 	$method->setAccessible( true );
 
@@ -76,15 +77,15 @@ function mlp_s6_official( array $items, string $locale = 'ru' ): array {
 /**
  * HTML of the string-translation page, Interface tab, language ru.
  */
-function mlp_s6_tab_html(): string {
+function lingocanvas_s6_tab_html(): string {
 	// A real admin request has these loaded (submit_button() etc.).
 	require_once ABSPATH . 'wp-admin/includes/template.php';
 	require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-	$_GET['page']       = 'wp-mlp-strings';
-	$_GET['mlp_tab']    = 'interface';
-	$_GET['mlp_locale'] = 'ru';
-	$_GET['mlp_domain'] = MLP_S6_DOMAIN;
+	$_GET['page']       = 'lingocanvas-strings';
+	$_GET['lingocanvas_tab']    = 'interface';
+	$_GET['lingocanvas_locale'] = 'ru';
+	$_GET['lingocanvas_domain'] = MLP_S6_DOMAIN;
 
 	ob_start();
 	Plugin::container()->get( StringTranslationPage::class )->render();
@@ -100,23 +101,23 @@ $phase = $GLOBALS['MLP_SMOKE_PHASE'] ?? '';
 // ===== setup ===============================================================
 if ( 'setup' === $phase ) {
 	@unlink( MLP_SMOKE_FILE ); // phpcs:ignore
-	$GLOBALS['mlp_smoke'] = array(
+	$GLOBALS['lingocanvas_smoke'] = array(
 		'checks'    => array(),
 		'details'   => array(),
 		'log_lines' => array(),
 	);
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_setup',
 		static function (): void {
 			global $wp_version;
 
-			$GLOBALS['mlp_smoke']['details']['wp_version']  = $wp_version;
-			$GLOBALS['mlp_smoke']['details']['php_version'] = PHP_VERSION;
+			$GLOBALS['lingocanvas_smoke']['details']['wp_version']  = $wp_version;
+			$GLOBALS['lingocanvas_smoke']['details']['php_version'] = PHP_VERSION;
 
 			// ru_RU becomes an installed WordPress locale (switch_to_locale() needs it in get_available_languages()).
 			@mkdir( WP_LANG_DIR . '/plugins', 0777, true ); // phpcs:ignore
-			file_put_contents( WP_LANG_DIR . '/ru_RU.mo', mlp_s6_mo( array( '' => "Content-Type: text/plain; charset=UTF-8\nLanguage: ru_RU\n" ) ) ); // phpcs:ignore
+			file_put_contents( WP_LANG_DIR . '/ru_RU.mo', lingocanvas_s6_mo( array( '' => "Content-Type: text/plain; charset=UTF-8\nLanguage: ru_RU\n" ) ) ); // phpcs:ignore
 
 			// The fixture plugin and its Russian translation (3 plural forms).
 			@mkdir( WP_PLUGIN_DIR . '/' . MLP_S6_DOMAIN, 0777, true ); // phpcs:ignore
@@ -124,7 +125,7 @@ if ( 'setup' === $phase ) {
 
 			$header = "Content-Type: text/plain; charset=UTF-8\nLanguage: ru_RU\n"
 				. "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n";
-			$mo     = mlp_s6_mo(
+			$mo     = lingocanvas_s6_mo(
 				array(
 					''                                   => $header,
 					'Smoke singular'                     => 'Дымовая строка',
@@ -137,11 +138,11 @@ if ( 'setup' === $phase ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			$res = activate_plugin( MLP_S6_DOMAIN . '/' . MLP_S6_DOMAIN . '.php' );
 
-			mlp_smoke_check( 's6_fixture_plugin_active', ! is_wp_error( $res ) && is_plugin_active( MLP_S6_DOMAIN . '/' . MLP_S6_DOMAIN . '.php' ), is_wp_error( $res ) ? $res->get_error_message() : 'WP ' . $wp_version . ' PHP ' . PHP_VERSION );
+			lingocanvas_smoke_check( 's6_fixture_plugin_active', ! is_wp_error( $res ) && is_plugin_active( MLP_S6_DOMAIN . '/' . MLP_S6_DOMAIN . '.php' ), is_wp_error( $res ) ? $res->get_error_message() : 'WP ' . $wp_version . ' PHP ' . PHP_VERSION );
 
 			// English default language, Russian secondary (wp_locale ru_RU); strings are collected from visitors too.
 			update_option(
-				'mlp_settings',
+				Settings::optionName(),
 				array(
 					'default_locale'         => 'en',
 					'languages'              => array(
@@ -183,39 +184,39 @@ if ( 'setup' === $phase ) {
 
 // ===== check1 ==============================================================
 if ( 'check1' === $phase ) {
-	mlp_smoke_check( 's6_ru_locale_installed', in_array( 'ru_RU', get_available_languages(), true ), implode( ',', get_available_languages() ) );
+	lingocanvas_smoke_check( 's6_ru_locale_installed', in_array( 'ru_RU', get_available_languages(), true ), implode( ',', get_available_languages() ) );
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_first_render',
 		static function () use ( $wpdb ): void {
-			$r = mlp_smoke_page( 'ru_front' );
+			$r = lingocanvas_smoke_page( 'ru_front' );
 
 			if ( null === $r ) {
-				mlp_smoke_check( 's6_ru_front_rendered', false, 'render produced no result' );
+				lingocanvas_smoke_check( 's6_ru_front_rendered', false, 'render produced no result' );
 
 				return;
 			}
 
 			$b = $r['body'];
-			mlp_smoke_check( 's6_ru_front_rendered', 200 === $r['status'] && str_contains( $b, 'smoke-domain' ), 'status=' . $r['status'] . ' location=' . $r['location'] . ' bytes=' . strlen( $b ) );
+			lingocanvas_smoke_check( 's6_ru_front_rendered', 200 === $r['status'] && str_contains( $b, 'smoke-domain' ), 'status=' . $r['status'] . ' location=' . $r['location'] . ' bytes=' . strlen( $b ) );
 
 			// The front end in ru uses the official Russian files of the fixture domain.
-			mlp_smoke_check( 's6_front_singular_official', str_contains( $b, '[Дымовая строка]' ) );
-			mlp_smoke_check( 's6_front_ctx_official', str_contains( $b, '[Контекстная строка]' ) );
-			mlp_smoke_check( 's6_front_plural_official', str_contains( $b, '[1 дымовой элемент]' ) && str_contains( $b, '[2 дымовых элемента]' ) && str_contains( $b, '[5 дымовых элементов]' ), 'plural forms 1/2/5 in ru' );
+			lingocanvas_smoke_check( 's6_front_singular_official', str_contains( $b, '[Дымовая строка]' ) );
+			lingocanvas_smoke_check( 's6_front_ctx_official', str_contains( $b, '[Контекстная строка]' ) );
+			lingocanvas_smoke_check( 's6_front_plural_official', str_contains( $b, '[1 дымовой элемент]' ) && str_contains( $b, '[2 дымовых элемента]' ) && str_contains( $b, '[5 дымовых элементов]' ), 'plural forms 1/2/5 in ru' );
 
 			// The visitor render discovered the untranslated string (and only that one of the fixture domain).
 			$t    = Schema::table( 'sources' );
 			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT source_text, gettext_context, plural_key FROM %i WHERE domain = %s', $t, MLP_S6_DOMAIN ), ARRAY_A ); // phpcs:ignore
 			$txt  = array_column( $rows, 'source_text' );
-			mlp_smoke_check( 's6_untranslated_discovered', in_array( 'Smoke untranslated', $txt, true ), wp_json_encode( $rows, JSON_UNESCAPED_UNICODE ) );
-			mlp_smoke_check( 's6_translated_not_discovered', ! in_array( 'Smoke singular', $txt, true ) && ! in_array( 'Smoke ctx', $txt, true ), 'official strings are not written to the dictionary' );
+			lingocanvas_smoke_check( 's6_untranslated_discovered', in_array( 'Smoke untranslated', $txt, true ), wp_json_encode( $rows, JSON_UNESCAPED_UNICODE ) );
+			lingocanvas_smoke_check( 's6_translated_not_discovered', ! in_array( 'Smoke singular', $txt, true ) && ! in_array( 'Smoke ctx', $txt, true ), 'official strings are not written to the dictionary' );
 		}
 	);
 
 	$ids = array();
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_rows',
 		static function () use ( $wpdb, &$ids ): void {
 			// Rows as if the language pack had been installed AFTER the strings were collected.
@@ -269,33 +270,33 @@ if ( 'check1' === $phase ) {
 				$ids[ $key ] = (int) $row['id'];
 			}
 
-			$GLOBALS['mlp_smoke']['details']['s6_ids'] = $ids;
-			mlp_smoke_check( 's6_rows_inserted', 7 === count( $ids ), 'rows=' . count( $ids ) . ' keys=' . implode( ' ; ', array_keys( $ids ) ) );
+			$GLOBALS['lingocanvas_smoke']['details']['s6_ids'] = $ids;
+			lingocanvas_smoke_check( 's6_rows_inserted', 7 === count( $ids ), 'rows=' . count( $ids ) . ' keys=' . implode( ' ; ', array_keys( $ids ) ) );
 		}
 	);
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_official_lookup',
 		static function () use ( $wpdb, &$ids ): void {
 			$t     = Schema::table( 'sources' );
 			$items = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, source_text, domain, gettext_context, plural_key FROM %i WHERE domain = %s', $t, MLP_S6_DOMAIN ), ARRAY_A ); // phpcs:ignore
-			$off   = mlp_s6_official( $items );
+			$off   = lingocanvas_s6_official( $items );
 
 			$get = static fn( string $key ): ?string => isset( $ids[ $key ] ) ? ( $off[ $ids[ $key ] ] ?? null ) : null;
 
-			$GLOBALS['mlp_smoke']['details']['s6_official'] = $off;
+			$GLOBALS['lingocanvas_smoke']['details']['s6_official'] = $off;
 
 			$singular = $get( 'Smoke singular||' );
-			mlp_smoke_check( 's6_official_singular', 'Дымовая строка' === $singular, 'got ' . var_export( $singular, true ) );
+			lingocanvas_smoke_check( 's6_official_singular', 'Дымовая строка' === $singular, 'got ' . var_export( $singular, true ) );
 
 			$ctx = $get( 'Smoke ctx|smoke-context|' );
-			mlp_smoke_check( 's6_official_context', 'Контекстная строка' === $ctx, 'got ' . var_export( $ctx, true ) );
+			lingocanvas_smoke_check( 's6_official_context', 'Контекстная строка' === $ctx, 'got ' . var_export( $ctx, true ) );
 
 			$noctx = $get( 'Smoke ctx||' );
-			mlp_smoke_check( 's6_official_same_msgid_without_context_has_none', null === $noctx, 'got ' . var_export( $noctx, true ) );
+			lingocanvas_smoke_check( 's6_official_same_msgid_without_context_has_none', null === $noctx, 'got ' . var_export( $noctx, true ) );
 
 			$p0 = $get( '%d smoke item||0' );
-			mlp_smoke_check( 's6_official_plural_key_0', '%d дымовой элемент' === $p0, 'got ' . var_export( $p0, true ) );
+			lingocanvas_smoke_check( 's6_official_plural_key_0', '%d дымовой элемент' === $p0, 'got ' . var_export( $p0, true ) );
 
 			// Which number the documented sample uses depends on the WP version (select_plural_form() exists up to 6.4).
 			$switched = switch_to_locale( 'ru_RU' );
@@ -306,49 +307,49 @@ if ( 'check1' === $phase ) {
 			}
 
 			$p1 = $get( '%d smoke item||1' );
-			mlp_smoke_check( 's6_official_plural_key_1', '%d дымовых элемента' === $p1, 'got ' . var_export( $p1, true ) . '; sample number 2; translations object ' . get_class( $obj ) . ' select_plural_form=' . ( $has_spf ? 'yes' : 'no' ) );
+			lingocanvas_smoke_check( 's6_official_plural_key_1', '%d дымовых элемента' === $p1, 'got ' . var_export( $p1, true ) . '; sample number 2; translations object ' . get_class( $obj ) . ' select_plural_form=' . ( $has_spf ? 'yes' : 'no' ) );
 
 			$p2 = $get( '%d smoke item||2' );
 
 			if ( $has_spf ) {
-				mlp_smoke_check( 's6_official_plural_key_2', '%d дымовых элементов' === $p2, 'got ' . var_export( $p2, true ) . ' (Russian rule, sample 5)' );
+				lingocanvas_smoke_check( 's6_official_plural_key_2', '%d дымовых элементов' === $p2, 'got ' . var_export( $p2, true ) . ' (Russian rule, sample 5)' );
 			} else {
-				mlp_smoke_check( 's6_official_plural_key_2_english_rule', null === $p2, 'got ' . var_export( $p2, true ) . ' (no select_plural_form on this WP: only keys 0 and 1 are reachable)' );
+				lingocanvas_smoke_check( 's6_official_plural_key_2_english_rule', null === $p2, 'got ' . var_export( $p2, true ) . ' (no select_plural_form on this WP: only keys 0 and 1 are reachable)' );
 			}
 
 			$un = $get( 'Smoke untranslated||' );
-			mlp_smoke_check( 's6_official_untranslated_none', null === $un, 'got ' . var_export( $un, true ) );
+			lingocanvas_smoke_check( 's6_official_untranslated_none', null === $un, 'got ' . var_export( $un, true ) );
 		}
 	);
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_tab_html',
 		static function (): void {
 			// English admin UI.
-			$en = mlp_s6_tab_html();
-			mlp_smoke_check( 's6_tab_en_renders', str_contains( $en, 'Official translation' ) && str_contains( $en, 'String translation' ), 'bytes=' . strlen( $en ) );
-			mlp_smoke_check( 's6_tab_en_official_shown', str_contains( $en, 'Дымовая строка' ) && str_contains( $en, 'Контекстная строка' ) && str_contains( $en, '%d дымовой элемент' ), 'official column in the en UI' );
+			$en = lingocanvas_s6_tab_html();
+			lingocanvas_smoke_check( 's6_tab_en_renders', str_contains( $en, 'Official translation' ) && str_contains( $en, 'String translation' ), 'bytes=' . strlen( $en ) );
+			lingocanvas_smoke_check( 's6_tab_en_official_shown', str_contains( $en, 'Дымовая строка' ) && str_contains( $en, 'Контекстная строка' ) && str_contains( $en, '%d дымовой элемент' ), 'official column in the en UI' );
 		}
 	);
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_override',
 		static function () use ( &$ids ): void {
 			$id  = (int) ( $ids['Smoke singular||'] ?? 0 );
-			$req = new WP_REST_Request( 'PUT', '/mlp/v1/translations/' . $id . '/ru' );
+			$req = new WP_REST_Request( 'PUT', '/lingocanvas/v1/translations/' . $id . '/ru' );
 			$req->set_param( 'translated_text', 'Моя дымовая строка' );
 			$res = rest_do_request( $req );
 
-			mlp_smoke_check( 's6_override_saved', 200 === $res->get_status(), 'status=' . $res->get_status() . ' ' . wp_json_encode( $res->get_data(), JSON_UNESCAPED_UNICODE ) );
+			lingocanvas_smoke_check( 's6_override_saved', 200 === $res->get_status(), 'status=' . $res->get_status() . ' ' . wp_json_encode( $res->get_data(), JSON_UNESCAPED_UNICODE ) );
 
 			global $wpdb;
 			$t     = Schema::table( 'sources' );
 			$items = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, source_text, domain, gettext_context, plural_key FROM %i WHERE id = %d', $t, $id ), ARRAY_A ); // phpcs:ignore
-			$off   = mlp_s6_official( $items );
-			mlp_smoke_check( 's6_official_ignores_override', 'Дымовая строка' === ( $off[ $id ] ?? null ), 'got ' . var_export( $off[ $id ] ?? null, true ) );
+			$off   = lingocanvas_s6_official( $items );
+			lingocanvas_smoke_check( 's6_official_ignores_override', 'Дымовая строка' === ( $off[ $id ] ?? null ), 'got ' . var_export( $off[ $id ] ?? null, true ) );
 
-			$html = mlp_s6_tab_html();
-			mlp_smoke_check( 's6_tab_shows_both', str_contains( $html, 'Дымовая строка' ) && str_contains( $html, 'Моя дымовая строка' ), 'official column and own override side by side' );
+			$html = lingocanvas_s6_tab_html();
+			lingocanvas_smoke_check( 's6_tab_shows_both', str_contains( $html, 'Дымовая строка' ) && str_contains( $html, 'Моя дымовая строка' ), 'official column and own override side by side' );
 		}
 	);
 }
@@ -357,7 +358,7 @@ if ( 'check1' === $phase ) {
 // A separate request that behaves like an admin whose own UI language is ru_RU (the target
 // language equals the current locale, so switch_to_locale() is a no-op).
 if ( 'check_ru' === $phase ) {
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_tab_ru',
 		static function (): void {
 			add_filter(
@@ -368,10 +369,10 @@ if ( 'check_ru' === $phase ) {
 			unload_textdomain( 'lingocanvas', true );
 			Plugin::loadTextdomain();
 
-			$ru = mlp_s6_tab_html();
-			mlp_smoke_check( 's6_tab_ru_renders', str_contains( $ru, 'Официальный перевод' ) && str_contains( $ru, 'Перевод строк' ), 'bytes=' . strlen( $ru ) );
-			mlp_smoke_check( 's6_tab_ru_no_english_header', ! str_contains( $ru, '>Official translation<' ) );
-			mlp_smoke_check(
+			$ru = lingocanvas_s6_tab_html();
+			lingocanvas_smoke_check( 's6_tab_ru_renders', str_contains( $ru, 'Официальный перевод' ) && str_contains( $ru, 'Перевод строк' ), 'bytes=' . strlen( $ru ) );
+			lingocanvas_smoke_check( 's6_tab_ru_no_english_header', ! str_contains( $ru, '>Official translation<' ) );
+			lingocanvas_smoke_check(
 				's6_tab_ru_official_shown',
 				str_contains( $ru, 'Контекстная строка' ) && str_contains( $ru, '%d дымовой элемент' ) && str_contains( $ru, 'Моя дымовая строка' ),
 				'ru admin UI: official column shows the pack strings (singular col shows the override in the textarea)'
@@ -382,29 +383,29 @@ if ( 'check_ru' === $phase ) {
 
 // ===== check2 ==============================================================
 if ( 'check2' === $phase ) {
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_front_override',
 		static function (): void {
-			$r = mlp_smoke_page( 'ru_front_after' );
+			$r = lingocanvas_smoke_page( 'ru_front_after' );
 
 			if ( null === $r ) {
-				mlp_smoke_check( 's6_front_after_rendered', false, 'render produced no result' );
+				lingocanvas_smoke_check( 's6_front_after_rendered', false, 'render produced no result' );
 
 				return;
 			}
 
 			$b = $r['body'];
-			mlp_smoke_check( 's6_front_after_rendered', 200 === $r['status'], 'status=' . $r['status'] . ' location=' . $r['location'] );
-			mlp_smoke_check( 's6_front_shows_override', str_contains( $b, '[Моя дымовая строка]' ) && ! str_contains( $b, '[Дымовая строка]' ), 'front end in ru shows the user override' );
-			mlp_smoke_check( 's6_front_other_official_intact', str_contains( $b, '[Контекстная строка]' ) && str_contains( $b, '[5 дымовых элементов]' ) );
+			lingocanvas_smoke_check( 's6_front_after_rendered', 200 === $r['status'], 'status=' . $r['status'] . ' location=' . $r['location'] );
+			lingocanvas_smoke_check( 's6_front_shows_override', str_contains( $b, '[Моя дымовая строка]' ) && ! str_contains( $b, '[Дымовая строка]' ), 'front end in ru shows the user override' );
+			lingocanvas_smoke_check( 's6_front_other_official_intact', str_contains( $b, '[Контекстная строка]' ) && str_contains( $b, '[5 дымовых элементов]' ) );
 		}
 	);
 
-	mlp_smoke_step(
+	lingocanvas_smoke_step(
 		's6_debug_log',
 		static function (): void {
-			$bad = mlp_smoke_log_bad();
-			mlp_smoke_check( 's6_no_php_notices_in_debug_log', array() === $bad, array() === $bad ? 'clean' : implode( ' || ', array_map( static fn( $l ) => substr( $l, 0, 250 ), array_slice( $bad, 0, 5 ) ) ) );
+			$bad = lingocanvas_smoke_log_bad();
+			lingocanvas_smoke_check( 's6_no_php_notices_in_debug_log', array() === $bad, array() === $bad ? 'clean' : implode( ' || ', array_map( static fn( $l ) => substr( $l, 0, 250 ), array_slice( $bad, 0, 5 ) ) ) );
 		}
 	);
 }

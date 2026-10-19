@@ -2,14 +2,14 @@
 /**
  * Канонические редиректы языковых URL.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Routing;
+namespace LingoCanvas\Routing;
 
-use WpMlp\Support\Hookable;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -76,16 +76,15 @@ final class CanonicalRedirect implements Hookable {
 
 		$targetPath = (string) ( wp_parse_url( $url, PHP_URL_PATH ) ?? '' );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- значение только сравнивается.
-		$requestUri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '';
+		$requestUri  = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
 		$currentPath = (string) ( wp_parse_url( $requestUri, PHP_URL_PATH ) ?? '' );
 
 		if ( rawurldecode( $targetPath ) === rawurldecode( $currentPath ) ) {
 			return '';
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wp_safe_redirect() экранирует адрес.
-		$query = isset( $_SERVER['QUERY_STRING'] ) ? wp_unslash( (string) $_SERVER['QUERY_STRING'] ) : '';
+		// Ведущий «/» заставляет esc_url_raw() пропустить проверку протокола; %XX сохраняются.
+		$query = isset( $_SERVER['QUERY_STRING'] ) ? substr( esc_url_raw( '/?' . wp_unslash( (string) $_SERVER['QUERY_STRING'] ) ), 2 ) : '';
 
 		return '' !== $query ? $url . '?' . $query : $url;
 	}

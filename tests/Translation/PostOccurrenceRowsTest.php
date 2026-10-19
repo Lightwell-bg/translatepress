@@ -2,18 +2,18 @@
 /**
  * Тесты построения occurrence-строк массового перевода записи.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Translation;
+namespace LingoCanvas\Tests\Translation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\PostSegment;
-use WpMlp\Rendering\Segment;
-use WpMlp\Translation\PostOccurrenceRows;
+use LingoCanvas\Rendering\PostSegment;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Translation\PostOccurrenceRows;
 
 #[CoversClass( PostOccurrenceRows::class )]
 final class PostOccurrenceRowsTest extends TestCase {

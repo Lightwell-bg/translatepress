@@ -2,12 +2,12 @@
 /**
  * Тесты компилятора переводов bin/i18n-compile.php.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\I18n;
+namespace LingoCanvas\Tests\I18n;
 
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ final class I18nCompileTest extends TestCase {
 	private string $dir = '';
 
 	protected function setUp(): void {
-		$this->dir = sys_get_temp_dir() . '/wp-mlp-i18n-' . bin2hex( random_bytes( 4 ) );
+		$this->dir = sys_get_temp_dir() . '/lingocanvas-i18n-' . bin2hex( random_bytes( 4 ) );
 		mkdir( $this->dir );
 	}
 
@@ -93,7 +93,7 @@ PO;
 	}
 
 	public function test_mo_round_trip(): void {
-		$r = wp_mlp_i18n_process( $this->writePo( $this->fixture() ), false );
+		$r = lingocanvas_i18n_process( $this->writePo( $this->fixture() ), false );
 		$this->assertSame( array(), $r['errors'] );
 		$mo = $this->readMo( (string) file_get_contents( $this->dir . '/lingocanvas-ru_RU.mo' ) );
 
@@ -114,7 +114,7 @@ PO;
 	}
 
 	public function test_l10n_php_returns_expected_array(): void {
-		wp_mlp_i18n_process( $this->writePo( $this->fixture() ), false );
+		lingocanvas_i18n_process( $this->writePo( $this->fixture() ), false );
 		$data = include $this->dir . '/lingocanvas-ru_RU.l10n.php';
 
 		$this->assertIsArray( $data );
@@ -145,7 +145,7 @@ msgstr "Привет"
 msgid "Count %1$d of %2$d"
 msgstr "Счёт %1$d из %2$d"
 PO;
-		$r = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$r = lingocanvas_i18n_process( $this->writePo( $po ), false );
 		$this->assertCount( 1, $r['errors'] );
 		$this->assertStringContainsString( 'Hello %s', $r['errors'][0] );
 	}
@@ -159,7 +159,7 @@ msgstr ""
 msgid "Hello %s"
 msgstr "Привет %s %s"
 PO;
-		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$r  = lingocanvas_i18n_process( $this->writePo( $po ), false );
 		$this->assertCount( 1, $r['errors'] );
 		$this->assertStringContainsString( 'Hello %s', $r['errors'][0] );
 	}
@@ -173,7 +173,7 @@ msgstr ""
 msgid "Count %1$d of %2$s"
 msgstr "Из %2$s счёт %1$d"
 PO;
-		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$r  = lingocanvas_i18n_process( $this->writePo( $po ), false );
 		$this->assertSame( array(), $r['errors'] );
 	}
 
@@ -186,7 +186,7 @@ msgstr ""
 msgid "Count %1$d of %2$s"
 msgstr "Из %2$d счёт %1$d"
 PO;
-		$r  = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$r  = lingocanvas_i18n_process( $this->writePo( $po ), false );
 		$this->assertCount( 1, $r['errors'] );
 	}
 
@@ -198,15 +198,15 @@ msgstr "Б"
 msgid "A"
 msgstr "В"
 PO;
-		$r = wp_mlp_i18n_process( $this->writePo( $po ), false );
+		$r = lingocanvas_i18n_process( $this->writePo( $po ), false );
 		$this->assertCount( 1, $r['errors'] );
 	}
 
 	public function test_pot_generation(): void {
-		$r = wp_mlp_i18n_process( $this->writePo( $this->fixture() ), true );
+		$r = lingocanvas_i18n_process( $this->writePo( $this->fixture() ), true );
 		$this->assertSame( array( $this->dir . '/lingocanvas.pot' ), $r['written'] );
 		$pot    = (string) file_get_contents( $this->dir . '/lingocanvas.pot' );
-		$parsed = wp_mlp_i18n_parse_po( $pot );
+		$parsed = lingocanvas_i18n_parse_po( $pot );
 
 		$this->assertSame( 'LingoCanvas', $parsed['header']['Project-Id-Version'] );
 		$this->assertSame( 'lingocanvas', $parsed['header']['X-Domain'] );

@@ -2,20 +2,20 @@
 /**
  * Тесты колонки «Языки» и фильтра «Перевод» в списках записей.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Admin;
+namespace LingoCanvas\Tests\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Admin\EditorLink;
-use WpMlp\Admin\PostListLanguages;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Admin\EditorLink;
+use LingoCanvas\Admin\PostListLanguages;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Settings;
 
 if ( ! defined( 'ARRAY_A' ) ) {
 	define( 'ARRAY_A', 'ARRAY_A' );
@@ -92,17 +92,17 @@ final class PostListLanguagesTest extends TestCase {
 		$GLOBALS['wpdb'] = $this->db;
 		unset( $GLOBALS['wp_query'], $GLOBALS['pagenow'] );
 		$_GET = array();
-		wp_mlp_test_request( array( 'is_admin' => true ) );
+		lingocanvas_test_request( array( 'is_admin' => true ) );
 		$this->configure( true );
-		wp_mlp_test_wp( array() );
+		lingocanvas_test_wp( array() );
 	}
 
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'], $GLOBALS['wp_query'], $GLOBALS['pagenow'] );
 		$_GET = array();
-		wp_mlp_test_options( array() );
-		wp_mlp_test_wp( array() );
-		wp_mlp_test_request( array() );
+		lingocanvas_test_options( array() );
+		lingocanvas_test_wp( array() );
+		lingocanvas_test_request( array() );
 	}
 
 	private function configure( bool $withSecondary ): void {
@@ -115,10 +115,10 @@ final class PostListLanguagesTest extends TestCase {
 			$languages['de'] = array( 'locale' => 'de', 'slug' => 'de', 'label' => 'Deutsch', 'status' => 'draft' );
 		}
 
-		wp_mlp_test_options(
+		lingocanvas_test_options(
 			array(
 				'home'           => 'https://example.test',
-				Settings::OPTION => array(
+				Settings::optionName() => array(
 					'default_locale' => 'ru',
 					'languages'      => $languages,
 				),
@@ -151,7 +151,7 @@ final class PostListLanguagesTest extends TestCase {
 			);
 		}
 
-		wp_mlp_test_wp( array( 'posts' => $posts ) );
+		lingocanvas_test_wp( array( 'posts' => $posts ) );
 		$GLOBALS['wp_query'] = (object) array( 'posts' => array_values( $posts ) );
 	}
 
@@ -174,7 +174,7 @@ final class PostListLanguagesTest extends TestCase {
 	public function testColumnNotAddedForAttachmentOrWithoutCapability(): void {
 		$this->assertArrayNotHasKey( PostListLanguages::COLUMN, $this->service()->addColumn( array( 'title' => 'T' ), 'attachment' ) );
 
-		wp_mlp_test_wp( array( 'caps' => array( 'manage_options' => false ) ) );
+		lingocanvas_test_wp( array( 'caps' => array( 'manage_options' => false ) ) );
 		$this->assertArrayNotHasKey( PostListLanguages::COLUMN, $this->service()->addColumn( array( 'title' => 'T' ), 'page' ) );
 	}
 
@@ -245,11 +245,11 @@ final class PostListLanguagesTest extends TestCase {
 
 		$html = $this->cell( $this->service(), 1 );
 
-		$this->assertStringContainsString( 'mlp_locale=en', $html );
-		$this->assertStringContainsString( 'mlp_locale=de', $html );
-		$this->assertStringContainsString( 'mlp_path=%2Fp1%2F', $html );
-		$this->assertStringContainsString( 'page=wp-mlp-strings', $html );
-		$this->assertMatchesRegularExpression( '/mlp_scope=object(%3A|:)1/', $html );
+		$this->assertStringContainsString( 'lingocanvas_locale=en', $html );
+		$this->assertStringContainsString( 'lingocanvas_locale=de', $html );
+		$this->assertStringContainsString( 'lingocanvas_path=%2Fp1%2F', $html );
+		$this->assertStringContainsString( 'page=lingocanvas-strings', $html );
+		$this->assertMatchesRegularExpression( '/lingocanvas_scope=object(%3A|:)1/', $html );
 	}
 
 	public function testLanguageLabelEscaped(): void {
@@ -313,8 +313,8 @@ final class PostListLanguagesTest extends TestCase {
 		$html = $this->cell( $this->service(), 1 );
 
 		// Редактор — ровно одна ссылка (en); у черновика de есть только ссылка на строки.
-		$this->assertSame( 1, substr_count( $html, 'mlp_path=' ) );
-		$this->assertStringContainsString( 'mlp_locale=de', $html );
+		$this->assertSame( 1, substr_count( $html, 'lingocanvas_path=' ) );
+		$this->assertStringContainsString( 'lingocanvas_locale=de', $html );
 		$this->assertStringContainsString( '(draft)', $html );
 	}
 
@@ -327,7 +327,7 @@ final class PostListLanguagesTest extends TestCase {
 
 		$this->assertSame( 1, substr_count( $html, 'SEO: ' ) );
 		$this->assertStringContainsString( 'SEO: 2', $html );
-		$this->assertStringContainsString( 'mlp_tab=seo', $html );
+		$this->assertStringContainsString( 'lingocanvas_tab=seo', $html );
 		$this->assertStringContainsString( 'seo_0', $this->db->queries[0] );
 		$this->assertStringContainsString( "ss.kind = 'seo'", $this->db->queries[0] );
 		$this->assertStringContainsString( "sc.attribute_name = 'content'", $this->db->queries[0] );
@@ -348,12 +348,12 @@ final class PostListLanguagesTest extends TestCase {
 	}
 
 	public function testOccurrencesSchemaHasObjectIdKey(): void {
-		$method = new \ReflectionMethod( \WpMlp\Storage\Schema::class, 'statements' );
+		$method = new \ReflectionMethod( \LingoCanvas\Storage\Schema::class, 'statements' );
 		$sql = implode( "\n", $method->invoke( null, '' ) );
 
 		$this->assertStringContainsString( 'KEY object_id (object_id)', $sql );
 		$this->assertStringContainsString( 'KEY source_object (source_id,object_id)', $sql );
-		$this->assertGreaterThanOrEqual( 2, \WpMlp\Storage\Schema::VERSION );
+		$this->assertGreaterThanOrEqual( 2, \LingoCanvas\Storage\Schema::VERSION );
 	}
 
 	public function testFilterOnlyOnEditScreen(): void {
@@ -372,7 +372,7 @@ final class PostListLanguagesTest extends TestCase {
 		$this->service()->renderFilter( 'page', 'top' );
 		$html = (string) ob_get_clean();
 
-		$this->assertStringContainsString( 'name="mlp_untranslated"', $html );
+		$this->assertStringContainsString( 'name="lingocanvas_untranslated"', $html );
 		$this->assertStringContainsString( 'value="en"', $html );
 		$this->assertStringContainsString( 'value="de" selected="selected"', $html );
 		$this->assertStringNotContainsString( 'value="ru"', $html );

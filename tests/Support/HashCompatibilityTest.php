@@ -2,20 +2,20 @@
 /**
  * Защита идентичности строк словаря от случайного изменения формулы.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Support;
+namespace LingoCanvas\Tests\Support;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\BlockSanitizer;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
-use WpMlp\Support\Hash;
+use LingoCanvas\Rendering\BlockSanitizer;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Support\Hash;
 
 /**
  * `uniq_hash` — это ЕДИНСТВЕННОЕ, что связывает накопленный перевод с его

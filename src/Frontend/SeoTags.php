@@ -2,20 +2,20 @@
 /**
  * Базовые SEO-теги языковых страниц.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Frontend;
+namespace LingoCanvas\Frontend;
 
-use WpMlp\Rendering\DocumentFilter;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Routing\LanguageResolver;
-use WpMlp\Routing\UrlConverter;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Support\Hookable;
+use LingoCanvas\Rendering\DocumentFilter;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Routing\LanguageResolver;
+use LingoCanvas\Routing\UrlConverter;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Support\Hookable;
 
 defined( 'ABSPATH' ) || exit;
 

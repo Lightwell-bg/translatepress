@@ -8,7 +8,7 @@
 ( function () {
 	'use strict';
 
-	var config = window.mlpAdminBarVisibility;
+	var config = window.lingocanvasAdminBarVisibility;
 
 	if ( ! config || ! config.url || ! config.nodeId ) {
 		return;

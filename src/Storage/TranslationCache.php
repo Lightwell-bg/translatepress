@@ -2,12 +2,12 @@
 /**
  * Объектный кэш переводов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Storage;
+namespace LingoCanvas\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -25,15 +25,20 @@ defined( 'ABSPATH' ) || exit;
  */
 final class TranslationCache {
 
-	public const GROUP = 'mlp_translations';
+	public const GROUP = 'lingocanvas_translations';
 
-	public const OPTION_VERSION = 'mlp_cache_version';
+	/**
+	 * Имя опции с версией кэша.
+	 */
+	public static function versionOption(): string {
+		return 'lingocanvas_cache_version';
+	}
 
 	/**
 	 * Отсутствие перевода тоже кэшируется — иначе каждая непереведённая
 	 * строка ходила бы в БД на каждый показ страницы.
 	 */
-	private const MISS = '__mlp_miss__';
+	private const MISS = '__lingocanvas_miss__';
 
 	/**
 	 * Время жизни записи.
@@ -117,7 +122,7 @@ final class TranslationCache {
 	public function flush(): void {
 		$version = $this->currentVersion() + 1;
 
-		update_option( self::OPTION_VERSION, $version, true );
+		update_option( self::versionOption(), $version, true );
 		$this->version = $version;
 
 		PageCachePurger::purgeAll();
@@ -149,7 +154,7 @@ final class TranslationCache {
 	 */
 	private function currentVersion(): int {
 		if ( null === $this->version ) {
-			$this->version = max( 1, (int) get_option( self::OPTION_VERSION, 1 ) );
+			$this->version = max( 1, (int) get_option( self::versionOption(), 1 ) );
 		}
 
 		return $this->version;

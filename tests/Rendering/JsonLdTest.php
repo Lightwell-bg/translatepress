@@ -2,24 +2,24 @@
 /**
  * Тесты перевода структурированных данных.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\JsonLdDocument;
-use WpMlp\Rendering\JsonLdRules;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\JsonLdDocument;
+use LingoCanvas\Rendering\JsonLdRules;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( JsonLdRules::class )]
 #[CoversClass( JsonLdDocument::class )]
-#[CoversClass( \WpMlp\Rendering\JsonLdField::class )]
+#[CoversClass( \LingoCanvas\Rendering\JsonLdField::class )]
 final class JsonLdTest extends TestCase {
 
 	/**

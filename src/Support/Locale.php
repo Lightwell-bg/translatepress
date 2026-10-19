@@ -2,12 +2,12 @@
 /**
  * Валидация и нормализация языковых кодов и URL-слагов.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Support;
+namespace LingoCanvas\Support;
 
 defined( 'ABSPATH' ) || exit;
 

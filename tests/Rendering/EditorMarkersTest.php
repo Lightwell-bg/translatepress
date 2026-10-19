@@ -2,19 +2,19 @@
 /**
  * Тесты расстановки маркеров для визуального редактора.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Tests\Rendering;
+namespace LingoCanvas\Tests\Rendering;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use WpMlp\Rendering\EditorMarkers;
-use WpMlp\Rendering\Extractor;
-use WpMlp\Rendering\HtmlDocument;
-use WpMlp\Rendering\Segment;
+use LingoCanvas\Rendering\EditorMarkers;
+use LingoCanvas\Rendering\Extractor;
+use LingoCanvas\Rendering\HtmlDocument;
+use LingoCanvas\Rendering\Segment;
 
 #[CoversClass( EditorMarkers::class )]
 final class EditorMarkersTest extends TestCase {
@@ -50,8 +50,8 @@ final class EditorMarkersTest extends TestCase {
 	public function testSingleChildParentIsMarkedWithoutWrapper(): void {
 		$html = $this->marked( '<!DOCTYPE html><html><body><p>Привет</p></body></html>' );
 
-		$this->assertStringContainsString( 'data-mlp-source-id="100"', $html );
-		$this->assertStringContainsString( 'data-mlp-kind="text"', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id="100"', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-kind="text"', $html );
 		$this->assertStringNotContainsString( 'mlp-marker', $html );
 	}
 
@@ -68,8 +68,8 @@ final class EditorMarkersTest extends TestCase {
 			'<!DOCTYPE html><html><body><img src="a.png" alt="Кот" title="Подсказка"></body></html>'
 		);
 
-		$this->assertStringContainsString( 'data-mlp-source-id-alt=', $html );
-		$this->assertStringContainsString( 'data-mlp-source-id-title=', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id-alt=', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id-title=', $html );
 	}
 
 	/**
@@ -95,7 +95,7 @@ final class EditorMarkersTest extends TestCase {
 		);
 
 		// Ячейка — единственный ребёнок, её помечаем атрибутом.
-		$this->assertStringContainsString( 'data-mlp-source-id=', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id=', $html );
 		$this->assertStringNotContainsString( '<tr><span', $html );
 	}
 
@@ -136,8 +136,8 @@ final class EditorMarkersTest extends TestCase {
 
 		$html = $document->html();
 
-		$this->assertStringContainsString( 'data-mlp-source-id="7"', $html );
-		$this->assertStringContainsString( 'data-mlp-kind="html_block"', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id="7"', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-kind="html_block"', $html );
 	}
 
 	/**
@@ -155,7 +155,7 @@ final class EditorMarkersTest extends TestCase {
 
 		( new EditorMarkers() )->markGettext( $document, array( 'Reply' => 'default' ) );
 
-		$this->assertStringContainsString( 'data-mlp-gettext="default"', $document->html() );
+		$this->assertStringContainsString( 'data-lingocanvas-gettext="default"', $document->html() );
 	}
 
 	/**
@@ -178,8 +178,8 @@ final class EditorMarkersTest extends TestCase {
 
 		$html = $document->html();
 
-		$this->assertStringContainsString( 'data-mlp-source-id="42"', $html );
-		$this->assertStringNotContainsString( 'data-mlp-gettext', $html );
+		$this->assertStringContainsString( 'data-lingocanvas-source-id="42"', $html );
+		$this->assertStringNotContainsString( 'data-lingocanvas-gettext', $html );
 	}
 
 	public function testEmptyServedListMarksNothing(): void {
@@ -191,6 +191,6 @@ final class EditorMarkersTest extends TestCase {
 
 		( new EditorMarkers() )->markGettext( $document, array() );
 
-		$this->assertStringNotContainsString( 'data-mlp-gettext', $document->html() );
+		$this->assertStringNotContainsString( 'data-lingocanvas-gettext', $document->html() );
 	}
 }

@@ -2,29 +2,29 @@
 /**
  * Админ-страница «Перевод строк».
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Admin;
+namespace LingoCanvas\Admin;
 
-use WpMlp\I18n\GettextKey;
-use WpMlp\Rendering\Segment;
-use WpMlp\Rest\EditorPagesController;
-use WpMlp\Rest\TranslationsController;
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
-use WpMlp\Storage\GettextRepository;
-use WpMlp\Storage\OccurrenceRepository;
-use WpMlp\Storage\SourceRepository;
-use WpMlp\Storage\TranslationCache;
-use WpMlp\Storage\TranslationRepository;
-use WpMlp\Storage\TranslationStatus;
-use WpMlp\Support\Assets;
-use WpMlp\Support\Hookable;
-use WpMlp\Support\Locale;
-use WpMlp\Translation\ProviderFactory;
+use LingoCanvas\I18n\GettextKey;
+use LingoCanvas\Rendering\Segment;
+use LingoCanvas\Rest\EditorPagesController;
+use LingoCanvas\Rest\TranslationsController;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
+use LingoCanvas\Storage\GettextRepository;
+use LingoCanvas\Storage\OccurrenceRepository;
+use LingoCanvas\Storage\SourceRepository;
+use LingoCanvas\Storage\TranslationCache;
+use LingoCanvas\Storage\TranslationRepository;
+use LingoCanvas\Storage\TranslationStatus;
+use LingoCanvas\Support\Assets;
+use LingoCanvas\Support\Hookable;
+use LingoCanvas\Support\Locale;
+use LingoCanvas\Translation\ProviderFactory;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -36,14 +36,14 @@ defined( 'ABSPATH' ) || exit;
  */
 final class StringTranslationPage implements Hookable {
 
-	public const MENU_SLUG   = 'wp-mlp-strings';
+	public const MENU_SLUG   = 'lingocanvas-strings';
 	public const CAPABILITY  = 'manage_options';
-	public const ACTION_PURGE = 'mlp_purge_translations';
+	public const ACTION_PURGE = 'lingocanvas_purge_translations';
 
 	/**
 	 * Чистка собранных строк интерфейса без перевода.
 	 */
-	public const ACTION_CLEAN_GETTEXT = 'mlp_clean_gettext';
+	public const ACTION_CLEAN_GETTEXT = 'lingocanvas_clean_gettext';
 
 	/**
 	 * Вкладка «Контент» — тексты сайта: записи, страницы, меню, виджеты.
@@ -113,7 +113,7 @@ final class StringTranslationPage implements Hookable {
 		check_admin_referer( self::ACTION_PURGE );
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
-		$locale   = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
+		$locale   = isset( $_POST['lingocanvas_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['lingocanvas_locale'] ) ) ) : '';
 		$language = $this->settings->get( $locale );
 
 		if ( null === $language || $language->isDefault ) {
@@ -127,8 +127,8 @@ final class StringTranslationPage implements Hookable {
 			add_query_arg(
 				array(
 					'page'        => self::MENU_SLUG,
-					'mlp_locale'  => $language->locale,
-					'mlp-purged'  => (string) $deleted,
+					'lingocanvas_locale'  => $language->locale,
+					'lingocanvas-purged'  => (string) $deleted,
 				),
 				admin_url( 'admin.php' )
 			)
@@ -152,8 +152,8 @@ final class StringTranslationPage implements Hookable {
 		check_admin_referer( self::ACTION_CLEAN_GETTEXT );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce проверен выше.
-		$locale = isset( $_POST['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['mlp_locale'] ) ) ) : '';
-		$tab    = self::parseTab( isset( $_POST['mlp_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['mlp_tab'] ) ) : '' );
+		$locale = isset( $_POST['lingocanvas_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_POST['lingocanvas_locale'] ) ) ) : '';
+		$tab    = self::parseTab( isset( $_POST['lingocanvas_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['lingocanvas_tab'] ) ) : '' );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		/*
@@ -173,9 +173,9 @@ final class StringTranslationPage implements Hookable {
 			add_query_arg(
 				array(
 					'page'        => self::MENU_SLUG,
-					'mlp_tab'     => $tab,
-					'mlp_locale'  => $locale,
-					'mlp-cleaned' => (string) $deleted,
+					'lingocanvas_tab'     => $tab,
+					'lingocanvas_locale'  => $locale,
+					'lingocanvas-cleaned' => (string) $deleted,
 				),
 				admin_url( 'admin.php' )
 			)
@@ -236,12 +236,12 @@ final class StringTranslationPage implements Hookable {
 			return;
 		}
 
-		wp_enqueue_style( 'wp-mlp-admin', Assets::url( 'assets/admin.css' ), array(), Assets::version( 'assets/admin.css' ) );
-		wp_enqueue_script( 'wp-mlp-admin', Assets::url( 'assets/admin.js' ), array(), Assets::version( 'assets/admin.js' ), true );
+		wp_enqueue_style( 'lingocanvas-admin', Assets::url( 'assets/admin.css' ), array(), Assets::version( 'assets/admin.css' ) );
+		wp_enqueue_script( 'lingocanvas-admin', Assets::url( 'assets/admin.js' ), array(), Assets::version( 'assets/admin.js' ), true );
 
 		wp_localize_script(
-			'wp-mlp-admin',
-			'wpMlpAdmin',
+			'lingocanvas-admin',
+			'lingocanvasAdmin',
 			array(
 				'root'  => esc_url_raw( rest_url( TranslationsController::NAMESPACE . '/translations/' ) ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
@@ -428,12 +428,12 @@ final class StringTranslationPage implements Hookable {
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
 			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_CLEAN_GETTEXT ); ?>">
-			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $locale ); ?>">
-			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
+			<input type="hidden" name="lingocanvas_locale" value="<?php echo esc_attr( $locale ); ?>">
+			<input type="hidden" name="lingocanvas_tab" value="<?php echo esc_attr( $tab ); ?>">
 			<?php wp_nonce_field( self::ACTION_CLEAN_GETTEXT ); ?>
 
 			<button type="submit" class="button" <?php disabled( 0 === $count ); ?>
-				data-mlp-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of strings */ __( 'Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again.', 'lingocanvas' ), number_format_i18n( $count ) ) ); ?>">
+				data-lingocanvas-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of strings */ __( 'Delete %s strings without a translation? Translations will not be affected; the strings will come back if you open these pages again.', 'lingocanvas' ), number_format_i18n( $count ) ) ); ?>">
 				<?php echo esc_html( sprintf( /* translators: %s: number of strings */ __( 'Delete strings without a translation (%s)', 'lingocanvas' ), number_format_i18n( $count ) ) ); ?>
 			</button>
 			<span class="description">
@@ -454,11 +454,11 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function renderCleanNotice(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение счётчика из URL.
-		if ( ! isset( $_GET['mlp-cleaned'] ) ) {
+		if ( ! isset( $_GET['lingocanvas-cleaned'] ) ) {
 			return;
 		}
 
-		$deleted = absint( wp_unslash( $_GET['mlp-cleaned'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
+		$deleted = absint( wp_unslash( $_GET['lingocanvas-cleaned'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
 
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
@@ -495,8 +495,8 @@ final class StringTranslationPage implements Hookable {
 					add_query_arg(
 						array(
 							'page'       => self::MENU_SLUG,
-							'mlp_tab'    => $tab,
-							'mlp_locale' => $locale,
+							'lingocanvas_tab'    => $tab,
+							'lingocanvas_locale' => $locale,
 						),
 						admin_url( 'admin.php' )
 					)
@@ -514,7 +514,7 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function rawTab(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- значение проходит через allowlist.
-		return isset( $_GET['mlp_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_tab'] ) ) : '';
+		return isset( $_GET['lingocanvas_tab'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_tab'] ) ) : '';
 	}
 
 	/**
@@ -621,10 +621,10 @@ final class StringTranslationPage implements Hookable {
 		?>
 		<form method="get" class="wp-mlp-filters">
 			<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
-			<input type="hidden" name="mlp_tab" value="<?php echo esc_attr( $tab ); ?>">
+			<input type="hidden" name="lingocanvas_tab" value="<?php echo esc_attr( $tab ); ?>">
 
 			<label for="mlp-locale" class="screen-reader-text"><?php esc_html_e( 'Language', 'lingocanvas' ); ?></label>
-			<select name="mlp_locale" id="mlp-locale">
+			<select name="lingocanvas_locale" id="mlp-locale">
 				<?php foreach ( $secondary as $language ) : ?>
 					<option value="<?php echo esc_attr( $language->locale ); ?>" <?php selected( $language->locale, $filters['locale'] ); ?>>
 						<?php echo esc_html( sprintf( '%s (%s)', $language->label, $language->locale ) ); ?>
@@ -633,7 +633,7 @@ final class StringTranslationPage implements Hookable {
 			</select>
 
 			<label for="mlp-status" class="screen-reader-text"><?php esc_html_e( 'Status', 'lingocanvas' ); ?></label>
-			<select name="mlp_status" id="mlp-status">
+			<select name="lingocanvas_status" id="mlp-status">
 				<option value=""><?php esc_html_e( 'All statuses', 'lingocanvas' ); ?></option>
 				<?php foreach ( TranslationStatus::all() as $status ) : ?>
 					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $status, $filters['status'] ); ?>>
@@ -653,7 +653,7 @@ final class StringTranslationPage implements Hookable {
 			<?php if ( self::TAB_SEO !== $tab && self::TAB_LINKS !== $tab ) : ?>
 				<?php /* На SEO/GEO и «Ссылках» выбирать нечего: вкладка сама и есть тип. */ ?>
 				<label for="mlp-type" class="screen-reader-text"><?php esc_html_e( 'String type', 'lingocanvas' ); ?></label>
-				<select name="mlp_type" id="mlp-type">
+				<select name="lingocanvas_type" id="mlp-type">
 					<option value=""><?php esc_html_e( 'All content', 'lingocanvas' ); ?></option>
 					<option value="<?php echo esc_attr( SourceRepository::TYPE_TEXT ); ?>" <?php selected( SourceRepository::TYPE_TEXT, $filters['type'] ); ?>>
 						<?php esc_html_e( 'Text', 'lingocanvas' ); ?>
@@ -687,11 +687,11 @@ final class StringTranslationPage implements Hookable {
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-mlp-purge">
 			<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_PURGE ); ?>">
-			<input type="hidden" name="mlp_locale" value="<?php echo esc_attr( $filters['locale'] ); ?>">
+			<input type="hidden" name="lingocanvas_locale" value="<?php echo esc_attr( $filters['locale'] ); ?>">
 			<?php wp_nonce_field( self::ACTION_PURGE ); ?>
 
 			<button type="submit" class="button button-link-delete"
-				data-mlp-confirm="<?php echo esc_attr( $this->purgeConfirmation( $secondary, $filters['locale'] ) ); ?>">
+				data-lingocanvas-confirm="<?php echo esc_attr( $this->purgeConfirmation( $secondary, $filters['locale'] ) ); ?>">
 				<?php
 				printf(
 					/* translators: %s: language code */
@@ -771,11 +771,11 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function renderPurgeNotice(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- только чтение счётчика из URL.
-		if ( ! isset( $_GET['mlp-purged'] ) ) {
+		if ( ! isset( $_GET['lingocanvas-purged'] ) ) {
 			return;
 		}
 
-		$deleted = absint( wp_unslash( $_GET['mlp-purged'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
+		$deleted = absint( wp_unslash( $_GET['lingocanvas-purged'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag
 
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
@@ -888,12 +888,12 @@ final class StringTranslationPage implements Hookable {
 		return add_query_arg(
 			array(
 				'page'       => self::MENU_SLUG,
-				'mlp_tab'    => self::parseTab( $this->rawTab() ),
-				'mlp_locale' => $filters['locale'],
-				'mlp_status' => $filters['status'],
-				'mlp_scope'  => self::scopeValue( $filters ),
-				'mlp_type'   => $filters['type'],
-				'mlp_domain' => $filters['domain'] ?? '',
+				'lingocanvas_tab'    => self::parseTab( $this->rawTab() ),
+				'lingocanvas_locale' => $filters['locale'],
+				'lingocanvas_status' => $filters['status'],
+				'lingocanvas_scope'  => self::scopeValue( $filters ),
+				'lingocanvas_type'   => $filters['type'],
+				'lingocanvas_domain' => $filters['domain'] ?? '',
 				's'          => $filters['search'],
 				'paged'      => (string) max( 1, $page ),
 			),
@@ -921,9 +921,9 @@ final class StringTranslationPage implements Hookable {
 	 * Разметка фильтра «Где встречается»: список из трёх пунктов и поле поиска записи.
 	 *
 	 * Записи в список не выводятся (на сайте их могут быть тысячи): запись
-	 * ищется через REST `mlp/v1/editor/pages`, а выбранная записывается в
+	 * ищется через REST `lingocanvas/v1/editor/pages`, а выбранная записывается в
 	 * значение пункта «Отдельная запись…» скриптом admin.js. Так форма
-	 * отправляет один-единственный `mlp_scope`, а без JS «Весь сайт» и
+	 * отправляет один-единственный `lingocanvas_scope`, а без JS «Весь сайт» и
 	 * «Общие элементы» работают как раньше. Чистая функция.
 	 *
 	 * @param string $scope    Название области (`SourceRepository::SCOPE_*`).
@@ -936,11 +936,11 @@ final class StringTranslationPage implements Hookable {
 		$selected    = static fn( bool $on ): string => $on ? ' selected="selected"' : '';
 
 		$html  = '<label for="mlp-scope" class="screen-reader-text">' . esc_html__( 'Where it appears', 'lingocanvas' ) . '</label>';
-		$html .= '<select name="mlp_scope" id="mlp-scope">';
+		$html .= '<select name="lingocanvas_scope" id="mlp-scope">';
 		$html .= '<option value=""' . $selected( ! $isObject && SourceRepository::SCOPE_GLOBAL !== $scope ) . '>' . esc_html__( 'Whole site', 'lingocanvas' ) . '</option>';
 		$html .= '<option value="' . esc_attr( SourceRepository::SCOPE_GLOBAL ) . '"' . $selected( SourceRepository::SCOPE_GLOBAL === $scope ) . '>'
 			. esc_html__( 'Shared elements (menu, header, footer)', 'lingocanvas' ) . '</option>';
-		$html .= '<option value="' . esc_attr( $objectValue ) . '" data-mlp-object="1"' . $selected( $isObject ) . '>'
+		$html .= '<option value="' . esc_attr( $objectValue ) . '" data-lingocanvas-object="1"' . $selected( $isObject ) . '>'
 			. esc_html__( 'A specific post…', 'lingocanvas' ) . '</option>';
 		$html .= '</select>';
 
@@ -978,12 +978,12 @@ final class StringTranslationPage implements Hookable {
 	private function renderHiddenFilters( array $filters ): void {
 		$fields = array(
 			'page'       => self::MENU_SLUG,
-			'mlp_tab'    => self::parseTab( $this->rawTab() ),
-			'mlp_locale' => $filters['locale'],
-			'mlp_status' => $filters['status'],
-			'mlp_scope'  => self::scopeValue( $filters ),
-			'mlp_type'   => $filters['type'],
-			'mlp_domain' => $filters['domain'] ?? '',
+			'lingocanvas_tab'    => self::parseTab( $this->rawTab() ),
+			'lingocanvas_locale' => $filters['locale'],
+			'lingocanvas_status' => $filters['status'],
+			'lingocanvas_scope'  => self::scopeValue( $filters ),
+			'lingocanvas_type'   => $filters['type'],
+			'lingocanvas_domain' => $filters['domain'] ?? '',
 			's'          => $filters['search'],
 		);
 
@@ -1004,12 +1004,12 @@ final class StringTranslationPage implements Hookable {
 	 */
 	private function readFilters( array $secondary ): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- фильтры только читают данные.
-		$locale = isset( $_GET['mlp_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['mlp_locale'] ) ) ) : '';
-		$status = isset( $_GET['mlp_status'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_status'] ) ) : '';
+		$locale = isset( $_GET['lingocanvas_locale'] ) ? Locale::normalize( sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_locale'] ) ) ) : '';
+		$status = isset( $_GET['lingocanvas_status'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_status'] ) ) : '';
 		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['s'] ) ) : '';
-		$scope  = isset( $_GET['mlp_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_scope'] ) ) : '';
-		$type   = isset( $_GET['mlp_type'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_type'] ) ) : '';
-		$domain = isset( $_GET['mlp_domain'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['mlp_domain'] ) ) : '';
+		$scope  = isset( $_GET['lingocanvas_scope'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_scope'] ) ) : '';
+		$type   = isset( $_GET['lingocanvas_type'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_type'] ) ) : '';
+		$domain = isset( $_GET['lingocanvas_domain'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['lingocanvas_domain'] ) ) : '';
 		$page   = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 

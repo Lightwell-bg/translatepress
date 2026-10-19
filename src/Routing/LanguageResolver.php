@@ -2,15 +2,15 @@
 /**
  * Определение языка текущего запроса по URL.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\Routing;
+namespace LingoCanvas\Routing;
 
-use WpMlp\Settings\Language;
-use WpMlp\Settings\Settings;
+use LingoCanvas\Settings\Language;
+use LingoCanvas\Settings\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -142,8 +142,7 @@ final class LanguageResolver {
 	 * Путь текущего запроса относительно базового пути установки.
 	 */
 	public static function currentPath(): string {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- сравнивается только первый сегмент, по allowlist.
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
 
 		return self::relativePath( $uri, self::basePath() );
 	}

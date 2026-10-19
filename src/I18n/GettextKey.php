@@ -2,14 +2,14 @@
 /**
  * Идентичность gettext-строки.
  *
- * @package WpMlp
+ * @package LingoCanvas
  */
 
 declare(strict_types=1);
 
-namespace WpMlp\I18n;
+namespace LingoCanvas\I18n;
 
-use WpMlp\Support\Hash;
+use LingoCanvas\Support\Hash;
 
 defined( 'ABSPATH' ) || exit;
 
