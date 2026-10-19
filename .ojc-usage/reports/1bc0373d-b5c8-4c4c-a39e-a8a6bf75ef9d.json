@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "run_id": "1bc0373d-b5c8-4c4c-a39e-a8a6bf75ef9d",
+  "session_id": "7073d8d0-9bf9-4249-a423-ec2c8734c824",
+  "started_at": 1792358962797,
+  "ended_at": 1792358991573,
+  "duration_seconds": 28.776,
+  "status": "background_pending",
+  "tokens": {
+    "requests": 4,
+    "by_model": [
+      {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "requests": 2,
+        "input_tokens": 4,
+        "output_tokens": 1114,
+        "cache_read_input_tokens": 610795,
+        "cache_creation_input_tokens": 1843
+      },
+      {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "requests": 2,
+        "input_tokens": 4,
+        "output_tokens": 201,
+        "cache_read_input_tokens": 274343,
+        "cache_creation_input_tokens": 1079
+      }
+    ],
+    "input_tokens": 8,
+    "output_tokens": 1315,
+    "cache_read_input_tokens": 885138,
+    "cache_creation_input_tokens": 2922,
+    "total_tokens": 889383
+  },
+  "limits": {
+    "five_hour": {
+      "before": null,
+      "after": null,
+      "delta_percentage_points": null,
+      "reason": "statusline callback not observed",
+      "before_observed_at": null,
+      "after_observed_at": null
+    },
+    "seven_day": {
+      "before": null,
+      "after": null,
+      "delta_percentage_points": null,
+      "reason": "statusline callback not observed",
+      "before_observed_at": null,
+      "after_observed_at": null
+    }
+  },
+  "limit_sample_delay_seconds": 0,
+  "session_tokens": {
+    "requests": 795,
+    "by_model": [
+      {
+        "model": "claude-opus-5-5",
+        "origin": "main",
+        "requests": 83,
+        "input_tokens": 166,
+        "output_tokens": 117136,
+        "cache_read_input_tokens": 17598366,
+        "cache_creation_input_tokens": 505644
+      },
+      {
+        "model": "<synthetic>",
+        "origin": "main",
+        "requests": 1,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      },
+      {
+        "model": "claude-sonnet-5-5",
+        "origin": "subagent",
+        "requests": 710,
+        "input_tokens": 1420,
+        "output_tokens": 65755,
+        "cache_read_input_tokens": 155548941,
+        "cache_creation_input_tokens": 3906882
+      },
+      {
+        "model": "<synthetic>",
+        "origin": "subagent",
+        "requests": 1,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0
+      }
+    ],
+    "input_tokens": 1586,
+    "output_tokens": 182891,
+    "cache_read_input_tokens": 173147307,
+    "cache_creation_input_tokens": 4412526,
+    "total_tokens": 177744310
+  },
+  "session_observed_through": 1792358991573,
+  "notes": [
+    "Observed transcript usage, not an authoritative bill. Missing/late records and unsupported subagent layouts may undercount.",
+    "Limit changes cover the entire account interval, may be cached/rounded, and cannot isolate concurrent sessions.",
+    "No statusline samples for this session. In VS Code/desktop/SDK mode use /usage; automatic limit snapshots need an interactive terminal statusline.",
+    "Background work was still running at Stop."
+  ],
+  "transcript_files_observed": 10
+}
