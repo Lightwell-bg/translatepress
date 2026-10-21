@@ -325,7 +325,7 @@ final class PostListVisibilityTest extends TestCase {
 
 		$this->assertStringContainsString( 'value="hidden:en"', $html );
 		$this->assertStringContainsString( 'value="shown:en"', $html );
-		$this->assertStringContainsString( 'value="hidden:de" selected="selected"', $html );
+		$this->assertStringContainsString( "value=\"hidden:de\" selected='selected'", $html );
 		$this->assertStringContainsString( 'Hidden on Deutsch', $html );
 		$this->assertStringContainsString( 'Shown on English', $html );
 		// Прежний фильтр по переводу остаётся.

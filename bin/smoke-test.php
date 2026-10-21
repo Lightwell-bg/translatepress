@@ -439,6 +439,149 @@ if ( 'extra' === $phase ) {
 		}
 	);
 
+	// (d2) wp_kses at the admin echo sites: the real builder output must pass through real wp_kses
+	// with the AllowedHtml list unchanged (every tag and attribute kept), and the pages must render
+	// the expected controls. Runs in manual visibility mode (toggles exist only there).
+	lingocanvas_smoke_step(
+		'x_kses_identity',
+		static function () use ( $post_id ): void {
+			require_once ABSPATH . 'wp-admin/includes/admin.php';
+
+			/**
+			 * Multiset of "tag|sorted attributes" of every element in an HTML fragment.
+			 *
+			 * @return list<string>
+			 */
+			$sig = static function ( string $html ): array {
+				$doc  = new DOMDocument();
+				$prev = libxml_use_internal_errors( true );
+				$doc->loadHTML( '<?xml encoding="utf-8"?><body>' . $html . '</body>' );
+				libxml_clear_errors();
+				libxml_use_internal_errors( $prev );
+				$out = array();
+
+				foreach ( $doc->getElementsByTagName( '*' ) as $el ) {
+					if ( in_array( $el->nodeName, array( 'html', 'body' ), true ) ) {
+						continue;
+					}
+
+					$attrs = array();
+
+					foreach ( $el->attributes as $a ) {
+						$attrs[] = $a->name . '=' . $a->value;
+					}
+
+					sort( $attrs );
+					$out[] = $el->nodeName . '|' . implode( '&', $attrs );
+				}
+
+				sort( $out );
+
+				return $out;
+			};
+
+			$identity = static function ( string $name, string $html, array $allowed ) use ( $sig ): void {
+				$kept = wp_kses( $html, $allowed );
+				$a    = $sig( $html );
+				$b    = $sig( $kept );
+				lingocanvas_smoke_check(
+					'x_kses_identity_' . $name,
+					array() !== $a && $a === $b,
+					array() === $a ? 'builder produced no elements' : ( $a === $b ? count( $a ) . ' elements kept' : 'LOST: ' . implode( ' ; ', array_diff( $a, $b ) ) . ' | ADDED: ' . implode( ' ; ', array_diff( $b, $a ) ) )
+				);
+			};
+
+			$c = Plugin::container();
+
+			// Manual mode for the duration of this step.
+			$orig                          = (array) get_option( Settings::optionName(), array() );
+			$manual                        = $orig;
+			$manual['untranslated_posts_mode'] = 'manual';
+			update_option( Settings::optionName(), $manual );
+			$c->get( Settings::class )->reset();
+
+			try {
+				$ctx = LingoCanvas\Admin\AllowedHtml::class;
+
+				// VisibilityAssets::toggleHtml: checked + disabled, unchecked, checked.
+				$identity( 'toggle_checked_disabled', LingoCanvas\Admin\VisibilityAssets::toggleHtml( 7, 'en', true, 'on site', 'No permission "x" <b>' ), $ctx::visibilityToggle() );
+				$identity( 'toggle_unchecked', LingoCanvas\Admin\VisibilityAssets::toggleHtml( 7, 'en', false, 'on site' ), $ctx::visibilityToggle() );
+				$identity( 'toggle_checked', LingoCanvas\Admin\VisibilityAssets::toggleHtml( 7, 'en', true, 'on site' ), $ctx::visibilityToggle() );
+
+				// SettingsPage::keyStatusHtml (source in smoke: constant from the mu-plugin).
+				$settings_page = $c->get( SettingsPage::class );
+				$identity( 'key_status', $settings_page->keyStatusHtml(), $ctx::keyStatus() );
+
+				// StringTranslationPage::scopeControlHtml.
+				$obj = LingoCanvas\Admin\StringTranslationPage::scopeControlHtml( 'object', $post_id, 'Smoke "post" <i>' );
+				$identity( 'scope_object', $obj, $ctx::scopeControl() );
+				lingocanvas_smoke_check( 'x_kses_scope_object_ul_hidden_picker_visible', 1 === preg_match( '/<ul [^>]*\bhidden\b/', wp_kses( $obj, $ctx::scopeControl() ) ) && 1 !== preg_match( '/<span [^>]*id="mlp-scope-picker"[^>]*\bhidden\b/', wp_kses( $obj, $ctx::scopeControl() ) ), '' );
+				$glob = LingoCanvas\Admin\StringTranslationPage::scopeControlHtml( 'global', 0, '' );
+				$identity( 'scope_global', $glob, $ctx::scopeControl() );
+				lingocanvas_smoke_check( 'x_kses_scope_global_picker_hidden', 1 === preg_match( '/<span [^>]*id="mlp-scope-picker"[^>]*\bhidden\b/', wp_kses( $glob, $ctx::scopeControl() ) ), '' );
+
+				// PostListLanguages::cellHtml (private -> Reflection) for the smoke post and an attachment-like draft.
+				$list = $c->get( LingoCanvas\Admin\PostListLanguages::class );
+				$ref  = new ReflectionMethod( $list, 'cellHtml' );
+				$ref->setAccessible( true );
+				$cell = (string) $ref->invoke( $list, get_post( $post_id ) );
+				$identity( 'post_list_cell', $cell, $ctx::postListCell() );
+				lingocanvas_smoke_check( 'x_kses_post_list_cell_has_toggle', str_contains( $cell, 'mlp-vis-toggle' ) && str_contains( $cell, 'data-post-id="' . $post_id . '"' ) && str_contains( $cell, 'data-locale="en"' ), 'bytes=' . strlen( $cell ) );
+
+				// The same through the real column callback (echo site).
+				ob_start();
+				$list->renderColumn( LingoCanvas\Admin\PostListLanguages::COLUMN, $post_id );
+				$col = (string) ob_get_clean();
+				lingocanvas_smoke_check( 'x_kses_post_list_column_render', str_contains( $col, 'mlp-vis-toggle' ) && str_contains( $col, 'data-post-id="' . $post_id . '"' ) && str_contains( $col, 'data-locale="en"' ), 'bytes=' . strlen( $col ) );
+
+				// EditorPage::visibilityBlock (private -> Reflection).
+				$editor = $c->get( LingoCanvas\Admin\EditorPage::class );
+				$ref    = new ReflectionMethod( $editor, 'visibilityBlock' );
+				$ref->setAccessible( true );
+				$block = (string) $ref->invoke( $editor, $post_id, $c->get( Settings::class )->secondary()['en'] );
+				$identity( 'editor_visibility_block', $block, $ctx::editorVisibilityBlock() );
+
+				// Full admin pages as admin.
+				$_GET['page'] = 'x'; // phpcs:ignore
+				$render = static function ( object $page ): string {
+					$errors = array();
+					set_error_handler( // phpcs:ignore
+						static function ( int $no, string $str, string $file, int $line ) use ( &$errors ): bool {
+							$errors[] = $no . ': ' . $str . ' @ ' . basename( $file ) . ':' . $line;
+
+							return true;
+						}
+					);
+					ob_start();
+					$page->render();
+					$html = (string) ob_get_clean();
+					restore_error_handler();
+
+					return $html . ( $errors ? '<!--ERRORS ' . implode( ' | ', $errors ) . '-->' : '' );
+				};
+
+				set_current_screen( 'toplevel_page_' . SettingsPage::MENU_SLUG );
+				$html = $render( $settings_page );
+				lingocanvas_smoke_check( 'x_kses_page_settings', str_contains( $html, 'id="mlp-openai-key"' ) && 1 === preg_match( '/id="mlp-openai-key"[^>]*\breadonly\b/', $html ) && 1 === preg_match( '/id="mlp-openai-model"[^>]*\breadonly\b|\breadonly\b[^>]*value="smoke-model"/s', $html ) && str_contains( $html, 'class="description"' ) && ! str_contains( $html, '<!--ERRORS' ), 'bytes=' . strlen( $html ) . ( preg_match( '/<!--ERRORS[^>]*-->/', $html, $m ) ? ' ' . $m[0] : '' ) );
+
+				$_GET['lingocanvas_scope']  = 'object:' . $post_id; // phpcs:ignore
+				$_GET['lingocanvas_locale'] = 'en'; // phpcs:ignore
+				$strings                    = $c->get( LingoCanvas\Admin\StringTranslationPage::class );
+				$html                       = $render( $strings );
+				lingocanvas_smoke_check( 'x_kses_page_strings', str_contains( $html, 'id="mlp-scope-search"' ) && str_contains( $html, 'id="mlp-scope-picker"' ) && str_contains( $html, 'data-lingocanvas-object="1"' ) && str_contains( $html, 'name="lingocanvas_scope"' ) && ! str_contains( $html, '<!--ERRORS' ), 'bytes=' . strlen( $html ) . ( preg_match( '/<!--ERRORS[^>]*-->/', $html, $m ) ? ' ' . $m[0] : '' ) );
+				unset( $_GET['lingocanvas_scope'] );
+
+				$_GET['lingocanvas_path'] = '/smoke-post/'; // phpcs:ignore
+				$html                     = $render( $editor );
+				lingocanvas_smoke_check( 'x_kses_page_editor', 1 === preg_match( '/class="wp-mlp-editor"[^>]*data-locale="en"[^>]*data-post-id="' . $post_id . '"/', $html ) && str_contains( $html, 'mlp-vis-toggle' ) && str_contains( $html, 'id="mlp-editor-source"' ) && 1 === preg_match( '/<textarea id="mlp-editor-source"[^>]*\breadonly\b/', $html ) && ! str_contains( $html, '<!--ERRORS' ), 'bytes=' . strlen( $html ) . ( preg_match( '/<!--ERRORS[^>]*-->/', $html, $m ) ? ' ' . $m[0] : '' ) );
+			} finally {
+				update_option( Settings::optionName(), $orig );
+				$c->get( Settings::class )->reset();
+				unset( $_GET['lingocanvas_path'], $_GET['lingocanvas_locale'], $_GET['page'] );
+			}
+		}
+	);
+
 	// (e) AI translation through the mocked endpoint.
 	lingocanvas_smoke_step(
 		'x_ai',
@@ -517,6 +660,82 @@ if ( 'extra' === $phase ) {
 
 // ===== check2 ==============================================================
 if ( 'check2' === $phase ) {
+	// Output buffering (WordPress.org review): the /en/ page must come out translated whichever buffer
+	// does the work: the core 6.9+ template enhancement buffer, the plugin's own fallback buffer
+	// (WordPress < 6.9 or core buffer disabled by another plugin), a template that leaves an ob_start()
+	// open, or one that calls exit. Fixture: mu-plugin lingocanvas-smoke-buffer.php (set per render).
+	lingocanvas_smoke_step(
+		'b_output_buffer',
+		static function (): void {
+			$base      = lingocanvas_smoke_page( 'en_post_after' );
+			$xyz_known = null !== $base && str_contains( $base['body'], 'Smoke paragraph translated XYZ.' );
+			$core_wp   = null;
+
+			foreach ( array( 'buf_trace', 'buf_core_off', 'buf_open', 'buf_exit', 'buf_late' ) as $name ) {
+				$r = lingocanvas_smoke_page( $name );
+
+				if ( null === $r ) {
+					lingocanvas_smoke_check( 'b_' . $name . '_translated', false, 'render produced no result' );
+					continue;
+				}
+
+				// The prefixed internal link is produced only by the page translation (the buffer).
+				$linked = str_contains( $r['body'], 'href="/en/about-smoke/"' );
+				$xyz    = ! $xyz_known || str_contains( $r['body'], 'Smoke paragraph translated XYZ.' );
+				$seo    = 1 === preg_match( '/<link\s+rel=["\']canonical["\'][^>]*\/en\/smoke-post/i', $r['body'] ) && (int) preg_match_all( '/<link[^>]+hreflang=/i', $r['body'] ) >= 2;
+				lingocanvas_smoke_check(
+					'b_' . $name . '_translated',
+					200 === $r['status'] && str_contains( $r['body'], '</html>' ) && $linked && $xyz && $seo,
+					'status=' . $r['status'] . ' link_prefixed=' . var_export( $linked, true ) . ' translation=' . var_export( $xyz, true ) . ' seo=' . var_export( $seo, true ) . ' bytes=' . strlen( $r['body'] )
+				);
+			}
+
+			// Which buffer worked, from the handler list recorded at wp_footer.
+			foreach ( array( 'buf_trace', 'buf_core_off', 'buf_open', 'buf_late' ) as $name ) {
+				$file = '/out/buffer-' . $name . '.json';
+				$t    = is_readable( $file ) ? json_decode( (string) file_get_contents( $file ), true ) : null;
+
+				if ( ! is_array( $t ) ) {
+					lingocanvas_smoke_check( 'b_' . $name . '_trace', false, 'no wp_footer trace recorded' );
+					continue;
+				}
+
+				$handlers = (array) ( $t['handlers'] ?? array() );
+				$own      = in_array( 'LingoCanvas\Rendering\OutputBuffer::handleBuffer', $handlers, true );
+				$core     = in_array( 'wp_finalize_template_enhancement_output_buffer', $handlers, true );
+				$core_wp  = version_compare( (string) ( $t['wp_version'] ?? '0' ), '6.9', '>=' );
+
+				$tpl     = (string) ( $t['template'] ?? '' );
+				$wrapper = str_contains( $tpl, 'template-buffer.php' );
+
+				if ( 'buf_core_off' === $name ) {
+					// Core buffer disabled by another plugin: the fallback wrapper and the own buffer, on every version.
+					$ok   = $own && ! $core && $wrapper;
+					$note = 'wp=' . $t['wp_version'] . ' core_buffer=' . var_export( $core, true ) . ' own_buffer=' . var_export( $own, true ) . ' template_is_wrapper=' . var_export( $wrapper, true );
+				} else {
+					// WordPress 6.9+: the core buffer only, the global $template is never the plugin wrapper.
+					// Before 6.9: the wrapper and the own buffer only. Also with a template that leaves a buffer open
+					// and with another plugin replacing the template at PHP_INT_MAX.
+					$ok   = $core_wp ? ( $core && ! $own && ! $wrapper && '' !== $tpl ) : ( $own && ! $core && $wrapper );
+					$note = 'wp=' . $t['wp_version'] . ' core_buffer=' . var_export( $core, true ) . ' own_buffer=' . var_export( $own, true ) . ' template_is_wrapper=' . var_export( $wrapper, true ) . ' template=' . basename( $tpl ) . ' core_started=' . ( $t['core_started'] ?? '?' );
+
+					if ( 'buf_trace' === $name && $core_wp ) {
+						// The theme's own template (a classic theme file, or core template-canvas.php of a block theme),
+						// not a fixture file and not the wrapper.
+						$ok = $ok && ! str_contains( $tpl, 'lingocanvas-smoke-template' ) && ( str_contains( $tpl, '/themes/' ) || 'template-canvas.php' === basename( $tpl ) );
+					}
+
+					if ( 'buf_late' === $name && $core_wp ) {
+						// The late template of the other plugin is the one rendered, and the page is translated anyway.
+						$ok = $ok && str_contains( $tpl, 'lingocanvas-smoke-template-late' );
+					}
+				}
+
+				lingocanvas_smoke_check( 'b_' . $name . '_buffer_choice', $ok, $note );
+			}
+		}
+	);
+
 	// Lookup of the translated source and its rendering. Playground runs WordPress on SQLite,
 	// whose compatibility layer cannot compare a BINARY column with UNHEX(): the plugin's
 	// lookup then finds nothing although the HEX() form works. That is a limitation of the

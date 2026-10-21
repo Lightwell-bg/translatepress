@@ -668,7 +668,7 @@ final class SettingsPage implements Hookable {
 							<?php $this->renderOpenAiKeyStatus(); ?>
 							<input type="password" name="openai_api_key" id="mlp-openai-key"
 								class="regular-text" autocomplete="off"
-								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_API_KEY ) ? 'readonly' : ''; ?>
+								<?php wp_readonly( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_API_KEY ) ); ?>
 								placeholder="<?php echo esc_attr( $this->settings->openAiApiKey() !== '' ? __( '••••••••  (leave empty to keep unchanged)', 'lingocanvas' ) : 'sk-...' ); ?>">
 							<?php if ( $this->settings->openAiApiKey() !== '' ) : ?>
 								<label>
@@ -703,9 +703,9 @@ final class SettingsPage implements Hookable {
 							$modelLocked = $this->providers->isOverriddenByConstant( ProviderFactory::CONST_MODEL );
 							$hasKey      = '' !== trim( $this->providers->apiKey() );
 							?>
-							<div class="mlp-model-field" data-enhance="<?php echo ( $hasKey && ! $modelLocked ) ? '1' : '0'; ?>">
+							<div class="mlp-model-field" data-enhance="<?php echo esc_attr( ( $hasKey && ! $modelLocked ) ? '1' : '0' ); ?>">
 								<input type="text" name="openai_model" id="mlp-openai-model" class="regular-text"
-									<?php echo $modelLocked ? 'readonly' : ''; ?>
+									<?php wp_readonly( $modelLocked ); ?>
 									value="<?php echo esc_attr( $this->settings->openAiModel() ); ?>" placeholder="gpt-4o-mini">
 							</div>
 							<?php if ( ! $hasKey && ! $modelLocked ) : ?>
@@ -725,7 +725,7 @@ final class SettingsPage implements Hookable {
 						<th scope="row"><label for="mlp-openai-base"><?php esc_html_e( 'API address', 'lingocanvas' ); ?></label></th>
 						<td>
 							<input type="text" name="openai_base_url" id="mlp-openai-base" class="regular-text"
-								<?php echo $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ? 'readonly' : ''; ?>
+								<?php wp_readonly( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ); ?>
 								value="<?php echo esc_attr( $this->settings->openAiBaseUrlExplicit() ); ?>"
 								placeholder="<?php echo esc_attr( Settings::DEFAULT_OPENAI_BASE_URL ); ?>">
 							<?php if ( $this->providers->isOverriddenByConstant( ProviderFactory::CONST_BASE_URL ) ) : ?>
@@ -768,7 +768,7 @@ final class SettingsPage implements Hookable {
 	 * Показывает, откуда взят ключ, — без самого ключа.
 	 */
 	private function renderOpenAiKeyStatus(): void {
-		echo $this->keyStatusHtml(); // phpcs:ignore WordPress.Security.EscapeOutput -- собрано из esc_html.
+		echo wp_kses( $this->keyStatusHtml(), AllowedHtml::keyStatus() );
 	}
 
 	/**
@@ -894,11 +894,12 @@ final class SettingsPage implements Hookable {
 		 * Атрибуты против автозаполнения: менеджер паролей принимал поле
 		 * локали за поле логина и подставлял в него «admin».
 		 */
-		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- $noFill: константа без данных пользователя.
-		$noFill = 'autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"';
-
 		?>
-		<tr<?php echo 'blank' === $mode ? ' class="mlp-row-blank"' : ''; ?>>
+		<?php if ( 'blank' === $mode ) : ?>
+		<tr class="mlp-row-blank">
+		<?php else : ?>
+		<tr>
+		<?php endif; ?>
 			<td class="mlp-order-column">
 				<?php if ( null !== $language || $isTemplate ) : ?>
 					<?php
@@ -931,19 +932,19 @@ final class SettingsPage implements Hookable {
 				<input type="text" name="<?php echo esc_attr( $name . '[locale]' ); ?>"
 					value="<?php echo esc_attr( $language->locale ?? '' ); ?>"
 					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. de', 'lingocanvas' ) : '' ); ?>"
-					size="10" pattern="[A-Za-z-]{2,20}" <?php echo $noFill; ?>>
+					size="10" pattern="[A-Za-z-]{2,20}" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other">
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[slug]' ); ?>"
 					value="<?php echo esc_attr( $language->slug ?? '' ); ?>"
 					placeholder="<?php echo esc_attr( null === $language ? __( 'same as code', 'lingocanvas' ) : '' ); ?>"
-					size="10" <?php echo $noFill; ?>>
+					size="10" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other">
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[label]' ); ?>"
 					value="<?php echo esc_attr( $language->label ?? '' ); ?>"
 					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. Deutsch', 'lingocanvas' ) : '' ); ?>"
-					<?php echo $noFill; ?>>
+					autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other">
 			</td>
 			<td class="mlp-flag-cell">
 				<?php $flagUrl = null !== $language ? Flags::url( $language->locale ) : ''; ?>
@@ -973,14 +974,14 @@ final class SettingsPage implements Hookable {
 
 				<input type="text" name="<?php echo esc_attr( $name . '[flag]' ); ?>"
 					value="<?php echo esc_attr( $language->flag ?? '' ); ?>"
-					size="4" maxlength="16" <?php echo $noFill; ?>
+					size="4" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"
 					title="<?php esc_attr_e( 'Fallback: an emoji flag. Shown if no image is uploaded. Windows does not render emoji flags; letters are shown there instead.', 'lingocanvas' ); ?>">
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $name . '[wp_locale]' ); ?>"
 					value="<?php echo esc_attr( $language->wpLocale ?? '' ); ?>"
 					placeholder="<?php echo esc_attr( null === $language ? __( 'e.g. de_DE', 'lingocanvas' ) : '' ); ?>"
-					size="10" <?php echo $noFill; ?>
+					size="10" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"
 					title="<?php esc_attr_e( 'WordPress locale: core, the theme and plugins look up their translations under this name', 'lingocanvas' ); ?>">
 				<?php if ( $isTemplate ) : ?>
 					<p class="description"><?php esc_html_e( 'The language pack will be offered after saving', 'lingocanvas' ); ?></p>
@@ -1090,7 +1091,7 @@ final class SettingsPage implements Hookable {
 
 			printf(
 				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
-				$installed ? 'success' : 'error',
+				esc_attr( $installed ? 'success' : 'error' ),
 				esc_html(
 					$installed
 						? __( 'Language pack installed.', 'lingocanvas' )

@@ -133,7 +133,8 @@ final class LanguageCatalogTest extends TestCase {
 		$this->assertStringContainsString( 'mlp-language-picker-list', $source );
 		$this->assertStringContainsString( "renderRow( \$index++, null, 'blank' )", $source );
 		// Все текстовые поля таблицы получают атрибуты против автозаполнения.
-		$this->assertSame( 5, substr_count( $source, '<?php echo $noFill; ?>' ) );
+		$this->assertSame( 5, substr_count( $source, 'autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"' ) );
+		$this->assertStringNotContainsString( 'noFill', $source );
 		$this->assertStringContainsString( 'autocomplete="off"', $source );
 		$this->assertStringContainsString( 'data-lpignore="true"', $source );
 		$this->assertStringContainsString( 'data-1p-ignore', $source );

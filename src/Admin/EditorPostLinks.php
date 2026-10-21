@@ -243,7 +243,7 @@ final class EditorPostLinks implements Hookable {
 				'<li><label><input type="checkbox" name="%1$s[%2$s]" value="1"%3$s> %4$s</label></li>',
 				esc_attr( self::FIELD ),
 				esc_attr( $language->locale ),
-				$this->visibility->isVisible( (int) $post->ID, $language->locale ) ? ' checked="checked"' : '',
+				checked( $this->visibility->isVisible( (int) $post->ID, $language->locale ), true, false ),
 				esc_html( $language->label )
 			);
 		}

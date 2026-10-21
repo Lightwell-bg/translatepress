@@ -4,7 +4,7 @@ Tags: multilingual, translation, translate, language switcher, hreflang
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.4.3
+Stable tag: 0.4.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -158,7 +158,15 @@ Multisite has not been fully tested. The plugin is activated and configured per 
 
 PHP 8.1 or newer. On PHP 8.4+ the built-in HTML5 parser is used; on 8.1 to 8.3 the plugin falls back to libxml, which works but is less accurate on non-standard markup.
 
+= Which output is translated? =
+
+LingoCanvas translates every page that WordPress renders through a theme template: content, menus, widgets, header, footer and SEO tags (title, meta description, canonical, hreflang). Output that another plugin or theme prints and ends itself before WordPress loads the template (for example a custom page printed on `template_redirect` followed by `exit`) bypasses the template and is not translated.
+
 == Changelog ==
+
+= 0.4.4 =
+* Page translation now uses the WordPress 6.9+ template enhancement output buffer, with a template wrapper fallback on WordPress 6.4 to 6.8.
+* Admin output is escaped with wp_kses allowlists.
 
 = 0.4.3 =
 * First public release.

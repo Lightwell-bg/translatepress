@@ -416,7 +416,7 @@ final class PostListLanguages implements Hookable {
 			return;
 		}
 
-		echo $this->cellHtml( $post ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- экранируется внутри.
+		echo wp_kses( $this->cellHtml( $post ), AllowedHtml::postListCell() );
 	}
 
 	/**
@@ -441,7 +441,7 @@ final class PostListLanguages implements Hookable {
 			printf(
 				'<option value="%s"%s>%s</option>',
 				esc_attr( $language->locale ),
-				$current === $language->locale ? ' selected="selected"' : '',
+				selected( $current, $language->locale, false ),
 				esc_html( sprintf( /* translators: %s: language name. */ __( 'Not fully translated: %s', 'lingocanvas' ), $language->label ) )
 			);
 		}
@@ -455,7 +455,7 @@ final class PostListLanguages implements Hookable {
 					printf(
 						'<option value="%s"%s>%s</option>',
 						esc_attr( $value ),
-						$currentV === $value ? ' selected="selected"' : '',
+						selected( $currentV, $value, false ),
 						esc_html( sprintf( $format, $language->label ) )
 					);
 				}

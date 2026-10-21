@@ -415,7 +415,7 @@ final class EditorPage implements Hookable {
 
 			<div class="wp-mlp-editor" data-locale="<?php echo esc_attr( $locale ); ?>" data-post-id="<?php echo esc_attr( (string) $postId ); ?>">
 				<div class="wp-mlp-editor__panel" id="mlp-editor-panel">
-					<?php echo $this->visibilityBlock( $postId, $secondary[ $locale ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- экранируется внутри. ?>
+					<?php echo wp_kses( $this->visibilityBlock( $postId, $secondary[ $locale ] ), AllowedHtml::editorVisibilityBlock() ); ?>
 					<?php if ( $postId > 0 && $this->providers->isReady() ) : ?>
 						<div class="wp-mlp-editor__bulk">
 							<button type="button" class="button button-hero" id="mlp-editor-bulk-open">

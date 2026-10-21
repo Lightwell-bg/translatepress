@@ -18,7 +18,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php @mkdir('/wordpress/wp-content/mu-plugins', 0777, true); copy('/out/lingocanvas-smoke-mock.php', '/wordpress/wp-content/mu-plugins/lingocanvas-smoke-mock.php');"
+      "code": "<?php @mkdir('/wordpress/wp-content/mu-plugins', 0777, true); foreach ( glob('/out/lingocanvas-smoke-*.php') as $f ) { copy($f, '/wordpress/wp-content/mu-plugins/' . basename($f)); }"
     },
     {
       "step": "activatePlugin",
@@ -51,6 +51,26 @@
     {
       "step": "runPHP",
       "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_PAGE']='en_post_after'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_BUFFER_MODE']='trace'; $GLOBALS['MLP_SMOKE_PAGE']='buf_trace'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_BUFFER_MODE']='core_off'; $GLOBALS['MLP_SMOKE_PAGE']='buf_core_off'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_BUFFER_MODE']='open_buffer'; $GLOBALS['MLP_SMOKE_PAGE']='buf_open'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_BUFFER_MODE']='exit'; $GLOBALS['MLP_SMOKE_PAGE']='buf_exit'; require '/out/smoke-test-render.php';"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php $_SERVER['REQUEST_URI']='/en/smoke-post/'; $GLOBALS['MLP_SMOKE_BUFFER_MODE']='late_template'; $GLOBALS['MLP_SMOKE_PAGE']='buf_late'; require '/out/smoke-test-render.php';"
     },
     {
       "step": "runPHP",

@@ -113,7 +113,7 @@ final class PostVisibilityMetaBoxTest extends TestCase {
 
 		$this->assertStringContainsString( 'Show on the site', $html );
 		$this->assertStringContainsString( 'name="lingocanvas_visible[en]" value="1">', $html );
-		$this->assertStringContainsString( 'name="lingocanvas_visible[de]" value="1" checked="checked">', $html );
+		$this->assertStringContainsString( "name=\"lingocanvas_visible[de]\" value=\"1\" checked='checked'>", $html );
 		$this->assertStringNotContainsString( 'lingocanvas_visible[ru]', $html );
 		$this->assertStringContainsString( 'name="lingocanvas_post_visibility_nonce"', $html );
 	}

@@ -374,7 +374,7 @@ final class PostListLanguagesTest extends TestCase {
 
 		$this->assertStringContainsString( 'name="lingocanvas_untranslated"', $html );
 		$this->assertStringContainsString( 'value="en"', $html );
-		$this->assertStringContainsString( 'value="de" selected="selected"', $html );
+		$this->assertStringContainsString( "value=\"de\" selected='selected'", $html );
 		$this->assertStringNotContainsString( 'value="ru"', $html );
 		$this->assertStringContainsString( '&lt;b&gt;English', $html );
 	}

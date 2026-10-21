@@ -134,6 +134,59 @@ if ( ! function_exists( 'wp_kses' ) ) {
 	}
 }
 
+if ( ! function_exists( '__checked_selected_helper' ) ) {
+	/**
+	 * Как в ядре: сравнение строк, результат — готовый атрибут вида ` name='name'`.
+	 *
+	 * @param mixed  $helper  Значение.
+	 * @param mixed  $current Текущее значение.
+	 * @param bool   $display Выводить ли результат сразу.
+	 * @param string $type    Имя атрибута.
+	 */
+	function __checked_selected_helper( $helper, $current, bool $display, string $type ): string { // phpcs:ignore
+		$result = (string) $helper === (string) $current ? " $type='$type'" : '';
+
+		if ( $display ) {
+			echo $result; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+
+		return $result;
+	}
+}
+
+if ( ! function_exists( 'selected' ) ) {
+	/**
+	 * @param mixed $selected Выбранное значение.
+	 * @param mixed $current  Значение пункта.
+	 * @param bool  $display  Выводить ли результат.
+	 */
+	function selected( $selected, $current = true, bool $display = true ): string {
+		return __checked_selected_helper( $selected, $current, $display, 'selected' );
+	}
+}
+
+if ( ! function_exists( 'checked' ) ) {
+	/**
+	 * @param mixed $checked Отмеченное значение.
+	 * @param mixed $current Значение чекбокса.
+	 * @param bool  $display Выводить ли результат.
+	 */
+	function checked( $checked, $current = true, bool $display = true ): string {
+		return __checked_selected_helper( $checked, $current, $display, 'checked' );
+	}
+}
+
+if ( ! function_exists( 'wp_readonly' ) ) {
+	/**
+	 * @param mixed $readonly_value Значение.
+	 * @param mixed $current        Сравниваемое значение.
+	 * @param bool  $display        Выводить ли результат.
+	 */
+	function wp_readonly( $readonly_value, $current = true, bool $display = true ): string {
+		return __checked_selected_helper( $readonly_value, $current, $display, 'readonly' );
+	}
+}
+
 if ( ! function_exists( 'esc_url_raw' ) ) {
 	/**
 	 * @param string $url Адрес.
@@ -216,14 +269,17 @@ if ( ! function_exists( 'do_action' ) ) {
 if ( ! function_exists( 'has_action' ) ) {
 	/**
 	 * Без реальной системы хуков считаем, что ничего не подписано —
-	 * тесты сами решают, вызывать ли соответствующие функции-заглушки.
+	 * тесты сами решают, вызывать ли соответствующие функции-заглушки:
+	 * `lingocanvas_test_wp()['has_action'][ $tag ]` = true включает подписку.
 	 *
-	 * @param string $tag Имя хука.
+	 * @param string        $tag      Имя хука.
+	 * @param callable|bool $callback Обработчик.
+	 * @return int|false
 	 */
-	function has_action( string $tag ) {
-		unset( $tag );
+	function has_action( string $tag, $callback = false ) {
+		unset( $callback );
 
-		return false;
+		return ( lingocanvas_test_wp()['has_action'][ $tag ] ?? false ) ? 10 : false;
 	}
 }
 
@@ -320,7 +376,10 @@ if ( ! function_exists( 'add_action' ) ) {
 	 * @param int    $args     Число аргументов.
 	 */
 	function add_action( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
-		unset( $tag, $callback, $priority, $args );
+		unset( $args );
+
+		// Подписки записываются для тестов, которые проверяют сам факт add_action().
+		$GLOBALS['lingocanvas_test_added_actions'][ $tag ][] = array( $callback, $priority );
 
 		return true;
 	}
@@ -334,9 +393,33 @@ if ( ! function_exists( 'add_filter' ) ) {
 	 * @param int    $args     Число аргументов.
 	 */
 	function add_filter( string $tag, $callback, int $priority = 10, int $args = 1 ): bool {
-		unset( $tag, $callback, $priority, $args );
+		unset( $args );
+
+		// Подписки записываются для тестов, которые проверяют сам факт add_filter().
+		$GLOBALS['lingocanvas_test_filters'][ $tag ][] = array( $callback, $priority );
 
 		return true;
+	}
+}
+
+if ( ! function_exists( 'has_filter' ) ) {
+	/**
+	 * Результат задаёт тест: `lingocanvas_test_wp()['has_filter'][ $tag ]` (по умолчанию фильтра нет).
+	 *
+	 * @param string        $tag      Имя фильтра.
+	 * @param callable|bool $callback Обработчик.
+	 * @return int|false
+	 */
+	function has_filter( string $tag, $callback = false ) {
+		unset( $callback );
+
+		return ( lingocanvas_test_wp()['has_filter'][ $tag ] ?? false ) ? 10 : false;
+	}
+}
+
+if ( ! function_exists( 'is_robots' ) ) {
+	function is_robots(): bool {
+		return (bool) ( lingocanvas_test_wp()['is_robots'] ?? false );
 	}
 }
 

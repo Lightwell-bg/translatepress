@@ -501,7 +501,7 @@ final class StringTranslationPage implements Hookable {
 						admin_url( 'admin.php' )
 					)
 				),
-				$tab === $current ? ' nav-tab-active' : '',
+				esc_attr( $tab === $current ? ' nav-tab-active' : '' ),
 				esc_html( $label )
 			);
 		}
@@ -647,7 +647,7 @@ final class StringTranslationPage implements Hookable {
 				? trim( wp_strip_all_tags( (string) get_the_title( $filters['object_id'] ) ) )
 				: '';
 			// Разметка собрана и экранирована внутри scopeControlHtml().
-			echo self::scopeControlHtml( $filters['scope'], $filters['object_id'], $scopeTitle ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo wp_kses( self::scopeControlHtml( $filters['scope'], $filters['object_id'], $scopeTitle ), AllowedHtml::scopeControl() );
 			?>
 
 			<?php if ( self::TAB_SEO !== $tab && self::TAB_LINKS !== $tab ) : ?>
@@ -807,7 +807,7 @@ final class StringTranslationPage implements Hookable {
 
 		?>
 		<div class="tablenav <?php echo esc_attr( $position ); ?>">
-			<div class="tablenav-pages<?php echo $pages < 2 ? ' one-page' : ''; ?>">
+			<div class="tablenav-pages<?php echo esc_attr( $pages < 2 ? ' one-page' : '' ); ?>">
 				<span class="displaying-num">
 					<?php
 					printf(
