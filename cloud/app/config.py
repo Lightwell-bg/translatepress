@@ -58,12 +58,30 @@ class PlanConfig:
 
 
 @dataclass(frozen=True)
+class BillingConfig:
+    success_url: str
+    cancel_url: str
+    portal_return_url: str
+    claim_ttl_hours: int
+    claim_max_failed_attempts: int
+    pair_code_ttl_minutes: int
+    max_active_pair_codes: int
+    pack_valid_months: int
+    signups_per_ip_per_hour: int
+    consent_terms: bool
+    automatic_tax: bool
+    webhook_max_body_bytes: int
+    unmatched_retention_days: int
+
+
+@dataclass(frozen=True)
 class AppConfig:
     deepseek: DeepSeekConfig
     pricing: PricingConfig
     limits: LimitsConfig
     plans: dict[str, PlanConfig]
     packs: dict[str, int]
+    billing: BillingConfig
 
 
 def _parse_windows(raw: str) -> tuple[tuple[time, time], ...]:
@@ -77,8 +95,21 @@ def _parse_windows(raw: str) -> tuple[tuple[time, time], ...]:
     return tuple(windows)
 
 
+def _load_billing(section: configparser.SectionProxy) -> BillingConfig:
+    values: dict[str, object] = {}
+    for name, field_ in BillingConfig.__dataclass_fields__.items():
+        if field_.type in ("bool", bool):
+            values[name] = section.getboolean(name)
+        elif field_.type in ("int", int):
+            values[name] = int(section[name])
+        else:
+            values[name] = section[name].strip()
+    return BillingConfig(**values)  # type: ignore[arg-type]
+
+
 def load_config(path: str | Path) -> AppConfig:
-    parser = configparser.ConfigParser(inline_comment_prefixes=None)
+    # interpolation=None: URLs may legitimately contain "%".
+    parser = configparser.ConfigParser(inline_comment_prefixes=None, interpolation=None)
     with open(path, encoding="utf-8") as fh:
         parser.read_file(fh)
     d, p, lim = parser["deepseek"], parser["pricing"], parser["limits"]
@@ -108,6 +139,7 @@ def load_config(path: str | Path) -> AppConfig:
         ),
         plans=plans,
         packs={name: int(v) for name, v in parser["packs"].items()},
+        billing=_load_billing(parser["billing"]),
     )
 
 
@@ -120,6 +152,13 @@ class Settings(BaseSettings):
     provider: Literal["deepseek", "mock"] = "mock"
     daily_spend_limit_usd: Decimal = Decimal("5")
     config_ini: Path = Field(default=ROOT / "config.ini")
+    # Stripe billing; empty secret key or webhook secret switches billing off.
+    stripe_secret_key: SecretStr = SecretStr("")
+    stripe_webhook_secret: SecretStr = SecretStr("")
+    stripe_price_starter: str = ""
+    stripe_price_pack_250k: str = ""
+    stripe_portal_configuration: str = ""
+    stripe_livemode: bool = False
 
     @field_validator("token_pepper")
     @classmethod
@@ -131,6 +170,10 @@ class Settings(BaseSettings):
     @cached_property
     def cfg(self) -> AppConfig:
         return load_config(self.config_ini)
+
+    @property
+    def billing_enabled(self) -> bool:
+        return bool(self.stripe_secret_key.get_secret_value() and self.stripe_webhook_secret.get_secret_value())
 
     @property
     def daily_spend_limit_micro_usd(self) -> int:

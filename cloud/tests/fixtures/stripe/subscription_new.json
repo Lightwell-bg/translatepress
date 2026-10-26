@@ -1,0 +1,14 @@
+{
+  "id": "sub_new",
+  "object": "subscription",
+  "customer": {"id": "cus_new", "object": "customer"},
+  "status": "trialing",
+  "cancel_at_period_end": false,
+  "metadata": {"lc_app": "lingocanvas", "lc_claim_id": "lcc_claim_abc"},
+  "items": {
+    "object": "list",
+    "data": [
+      {"id": "si_2", "price": {"id": "price_starter_x"}, "current_period_start": 1760000000, "current_period_end": 1762592000}
+    ]
+  }
+}

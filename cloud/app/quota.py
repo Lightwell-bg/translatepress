@@ -170,7 +170,8 @@ async def _spendable_buckets(s: AsyncSession, account_id: int, now: datetime) ->
 
 
 def _available(b: QuotaBucket) -> int:
-    return b.granted - b.used - b.reserved
+    # revoke_pending is already promised back (refund while reserved): not spendable.
+    return b.granted - b.used - b.reserved - b.revoke_pending
 
 
 def _ledger(s: AsyncSession, account_id: int, kind: str, chars: int, *, bucket_id=None, reservation_id=None, note=None, now=None) -> None:
@@ -233,7 +234,7 @@ async def reserve(
     - released (failed earlier): reserved again as a retry (capped).
     """
     account = await _lock_account(s, account_id)
-    if account.status != "active":
+    if account.status != "active" or account.dispute_hold:
         raise AccountSuspended("account is suspended")
 
     existing = (
@@ -384,6 +385,16 @@ async def settle(
             _ledger(s, account_id, "commit", take, bucket_id=bucket.id, reservation_id=reservation_id, now=now)
         if give_back:
             _ledger(s, account_id, "release", give_back, bucket_id=bucket.id, reservation_id=reservation_id, now=now)
+            # A refund that arrived while these characters were reserved is
+            # applied now that they come back, instead of becoming spendable.
+            apply = min(bucket.revoke_pending, give_back)
+            if apply:
+                bucket.granted -= apply
+                bucket.revoke_pending -= apply
+                _ledger(s, account_id, "revoke", apply, bucket_id=bucket.id, note="deferred revoke", now=now)
+        # What is still reserved can no longer cover a larger pending revoke
+        # (the rest was legitimately spent before the refund).
+        bucket.revoke_pending = min(bucket.revoke_pending, bucket.reserved)
         # Items describe the current attempt only; a later retry allocates afresh.
         await s.delete(item)
 
@@ -493,7 +504,12 @@ async def revoke_unused(
 ) -> int:
     """Take back unused characters (refunds). ``None`` = everything unused, and close the bucket.
 
-    Never goes below what is already used or reserved; returns what was revoked.
+    Never goes below what is already used. Characters that are free now are
+    revoked immediately; the part sitting in reservations becomes
+    ``revoke_pending`` and is revoked by settle() when those reservations are
+    released (if they are charged instead, they were legitimately spent).
+    Returns what was revoked immediately; the obligation is now registered in
+    full either way.
     """
     await _lock_account(s, account_id)
     bucket = (
@@ -503,11 +519,16 @@ async def revoke_unused(
             .with_for_update()
         )
     ).scalar_one()
-    available = max(0, _available(bucket))
-    take = available if chars is None else max(0, min(chars, available))
-    bucket.granted -= take
+    free = max(0, _available(bucket))
     if chars is None:
+        # Closing the bucket makes reserved characters unspendable after release anyway.
+        take = free
         bucket.revoked_at = now
+    else:
+        want = max(0, chars)
+        take = min(want, free)
+        bucket.revoke_pending = min(bucket.reserved, bucket.revoke_pending + (want - take))
+    bucket.granted -= take
     if take:
         _ledger(s, account_id, "revoke", take, bucket_id=bucket.id, note=note, now=now)
     await s.flush()

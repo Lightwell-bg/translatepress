@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app import quota
+from app.api.billing import WEBHOOK_PATH
+from app.api.billing import router as billing_router
 from app.api.routes import router
+from app.billing.events import BillingCatalog, EventProcessor
+from app.billing.gateway import StripeGateway
 from app.config import Settings
 from app.db import make_engine, make_sessionmaker
 from app.errors import error_response, install_handlers
@@ -27,9 +31,11 @@ log = logging.getLogger("lingocanvas")
 class BodySizeLimitMiddleware:
     """Rejects bodies over ``max_bytes`` with 413 (Content-Length and streamed size)."""
 
-    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+    def __init__(self, app: ASGIApp, max_bytes: int, path_limits: dict[str, int] | None = None) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        # Paths with their own limit (the Stripe webhook): the global limit does not apply to them.
+        self.path_limits = path_limits or {}
 
     @staticmethod
     def _too_large_response() -> "object":
@@ -40,10 +46,11 @@ class BodySizeLimitMiddleware:
             await self.app(scope, receive, send)
             return
 
+        max_bytes = self.path_limits.get(scope.get("path", ""), self.max_bytes)
         declared = dict(scope["headers"]).get(b"content-length")
         if declared is not None:
             try:
-                if int(declared) > self.max_bytes:
+                if int(declared) > max_bytes:
                     await self._too_large_response()(scope, receive, send)
                     return
             except ValueError:
@@ -59,7 +66,7 @@ class BodySizeLimitMiddleware:
             if message["type"] == "http.disconnect":
                 break
             total += len(message.get("body", b""))
-            if total > self.max_bytes:
+            if total > max_bytes:
                 await self._too_large_response()(scope, receive, send)
                 return
             if not message.get("more_body", False):
@@ -76,7 +83,25 @@ class BodySizeLimitMiddleware:
         await self.app(scope, replaying_receive, send)
 
 
-def create_app(settings: Settings | None = None, provider: TranslationProvider | None = None) -> FastAPI:
+def build_catalog(settings: Settings) -> BillingCatalog:
+    """Stripe Price ids (from .env) -> plans and packs (characters from config.ini)."""
+    cfg = settings.cfg
+    plan_by_price = {settings.stripe_price_starter: "starter"} if settings.stripe_price_starter else {}
+    pack_by_price = {settings.stripe_price_pack_250k: "pack_250k"} if settings.stripe_price_pack_250k else {}
+    return BillingCatalog(
+        plan_by_price=plan_by_price,
+        pack_by_price=pack_by_price,
+        plan_chars={name: plan.chars_per_month for name, plan in cfg.plans.items()},
+        pack_chars=dict(cfg.packs),
+        pack_valid_months=cfg.billing.pack_valid_months,
+    )
+
+
+def create_app(
+    settings: Settings | None = None,
+    provider: TranslationProvider | None = None,
+    gateway: StripeGateway | None = None,
+) -> FastAPI:
     settings = settings or Settings()  # type: ignore[call-arg]
     cfg = settings.cfg
     engine: AsyncEngine = make_engine(settings)
@@ -119,9 +144,26 @@ def create_app(settings: Settings | None = None, provider: TranslationProvider |
         ),
     )
 
+    billing_enabled = settings.billing_enabled
+    catalog = build_catalog(settings)
+    processor: EventProcessor | None = None
+    if billing_enabled:
+        if gateway is None:
+            from app.billing.stripe_gateway import API_VERSION, StripeSdkGateway
+
+            gateway = StripeSdkGateway(
+                settings.stripe_secret_key.get_secret_value(),
+                API_VERSION,
+                settings.stripe_portal_configuration or None,
+                list(catalog.plan_by_price),
+            )
+        processor = EventProcessor(sessionmaker, gateway, catalog)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        task = asyncio.create_task(sweeper_loop(sessionmaker, limits.sweeper_interval_seconds))
+        task = asyncio.create_task(
+            sweeper_loop(sessionmaker, limits.sweeper_interval_seconds, cfg.billing.unmatched_retention_days)
+        )
         try:
             yield
         finally:
@@ -141,9 +183,18 @@ def create_app(settings: Settings | None = None, provider: TranslationProvider |
     app.state.sessionmaker = sessionmaker
     app.state.provider = provider
     app.state.service = service
+    app.state.billing_enabled = billing_enabled
+    app.state.catalog = catalog
+    app.state.gateway = gateway
+    app.state.processor = processor
     install_handlers(app)
     app.include_router(router)
-    app.add_middleware(BodySizeLimitMiddleware, max_bytes=limits.max_body_bytes)
+    app.include_router(billing_router)
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        max_bytes=limits.max_body_bytes,
+        path_limits={WEBHOOK_PATH: cfg.billing.webhook_max_body_bytes},
+    )
     return app
 
 

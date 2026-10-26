@@ -1,0 +1,11 @@
+{
+  "id": "sub_old",
+  "object": "subscription",
+  "customer": "cus_old",
+  "status": "active",
+  "cancel_at_period_end": true,
+  "current_period_start": 1760000000,
+  "current_period_end": 1762592000,
+  "metadata": {"lc_app": "lingocanvas", "lc_account_id": "7"},
+  "items": {"object": "list", "data": [{"id": "si_1", "price": {"id": "price_starter_x"}}]}
+}

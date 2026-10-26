@@ -18,6 +18,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -48,6 +49,16 @@ class Account(Base):
     plan: Mapped[str | None] = mapped_column(String(20), nullable=True)
     # Filled by the Stripe stage; unique so one customer maps to one account.
     stripe_customer_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    # Open/lost card disputes block paid usage independently of ``status``
+    # (which stays the administrator's switch). Recomputed from ``disputes``.
+    dispute_hold: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    # The Starter Checkout Session handed out and not yet finished. Under the
+    # account row lock a repeated "subscribe" request returns the same URL
+    # instead of creating a second session (two paid subscriptions otherwise).
+    # Stripe sessions live 24 h; the URL is a Stripe-hosted page, not a secret of ours.
+    pending_checkout_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    pending_checkout_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    pending_checkout_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (CheckConstraint("status IN ('active','suspended')", name="ck_accounts_status"),)
@@ -86,6 +97,8 @@ class QuotaBucket(Base):
     granted: Mapped[int] = mapped_column(BigInteger)
     used: Mapped[int] = mapped_column(BigInteger, server_default="0")
     reserved: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    # Refunded characters still inside reservations; revoked when they are released.
+    revoke_pending: Mapped[int] = mapped_column(BigInteger, server_default="0")
     valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -95,6 +108,7 @@ class QuotaBucket(Base):
         CheckConstraint("kind IN ('monthly','pack')", name="ck_buckets_kind"),
         CheckConstraint("granted >= 0 AND used >= 0 AND reserved >= 0", name="ck_buckets_non_negative"),
         CheckConstraint("used + reserved <= granted", name="ck_buckets_not_overspent"),
+        CheckConstraint("revoke_pending >= 0 AND revoke_pending <= reserved", name="ck_buckets_revoke_pending"),
     )
 
 
@@ -191,4 +205,156 @@ class UsageLog(Base):
     latency_ms: Mapped[int] = mapped_column(Integer, server_default="0")
     # ok | partial | replay | provider_error | timeout | bad_output | rate_limited
     outcome: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+# --- billing (Stripe) -------------------------------------------------------
+#
+# The Stripe account is shared with another product (Vira). Every object we
+# create carries metadata lc_app=lingocanvas, and every webhook object is
+# matched against these tables first: anything we did not create is ignored.
+
+
+class StripeEvent(Base):
+    """Webhook idempotency: one row per Stripe event id we have seen."""
+
+    __tablename__ = "stripe_events"
+
+    event_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    type: Mapped[str] = mapped_column(String(100))
+    # processed | ignored (not ours / not relevant)
+    status: Mapped[str] = mapped_column(String(20))
+    stripe_created: Mapped[int] = mapped_column(BigInteger)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CheckoutClaim(Base):
+    """A paid sign-up waiting for its WordPress site to pick up the token.
+
+    The site generates a random claim secret, sends only its SHA-256 to us when
+    it starts checkout, and later proves possession of the secret to receive
+    the site token. The token therefore never travels through a browser URL.
+    """
+
+    __tablename__ = "checkout_claims"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # opaque public id
+    secret_hash: Mapped[bytes] = mapped_column(LargeBinary(32))
+    plan: Mapped[str] = mapped_column(String(20))
+    site_name: Mapped[str] = mapped_column(String(255))
+    stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    # Customer created by the backend (metadata lc_app) before the Checkout Session.
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=True)
+    # open -> paid -> consumed; open -> expired
+    status: Mapped[str] = mapped_column(String(10), server_default="open")
+    failed_attempts: Mapped[int] = mapped_column(Integer, server_default="0")
+    # HMAC(TOKEN_PEPPER, client IP): sign-up rate limit without storing the address.
+    client_ip_hash: Mapped[bytes | None] = mapped_column(LargeBinary(32), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("status IN ('open','paid','consumed','expired')", name="ck_claims_status"),
+        Index("ix_checkout_claims_ip_created", "client_ip_hash", "created_at"),
+    )
+
+
+class PairCode(Base):
+    """One-time code to connect one more site to an existing account."""
+
+    __tablename__ = "pair_codes"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"), index=True)
+    code_hash: Mapped[bytes] = mapped_column(LargeBinary(32), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Subscription(Base):
+    """Mirror of a Stripe subscription; always refreshed from the live object."""
+
+    __tablename__ = "subscriptions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"), index=True)
+    stripe_subscription_id: Mapped[str] = mapped_column(String(255), unique=True)
+    plan: Mapped[str] = mapped_column(String(20))
+    # Stripe status: incomplete, active, past_due, canceled, unpaid, ...
+    status: Mapped[str] = mapped_column(String(30))
+    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Payment(Base):
+    """One paid Stripe object that granted quota (an invoice or a pack payment)."""
+
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"), index=True)
+    # subscription | pack
+    kind: Mapped[str] = mapped_column(String(20))
+    stripe_invoice_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    stripe_charge_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    bucket_id: Mapped[int | None] = mapped_column(ForeignKey("quota_buckets.id", ondelete="RESTRICT"), nullable=True)
+    amount_cents: Mapped[int] = mapped_column(BigInteger)
+    currency: Mapped[str] = mapped_column(String(3))
+    granted_chars: Mapped[int] = mapped_column(BigInteger)
+    # Cumulative, monotonic: refunds are applied as deltas against these.
+    refunded_cents: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    revoked_chars: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    disputed: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('subscription','pack')", name="ck_payments_kind"),
+        CheckConstraint("amount_cents > 0", name="ck_payments_paid"),
+        CheckConstraint(
+            "refunded_cents >= 0 AND refunded_cents <= amount_cents AND revoked_chars >= 0 "
+            "AND revoked_chars <= granted_chars",
+            name="ck_payments_refunds",
+        ),
+    )
+
+
+class Dispute(Base):
+    """One Stripe dispute; terminal states never regress (stale events are ignored)."""
+
+    __tablename__ = "disputes"
+
+    stripe_dispute_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    payment_id: Mapped[int] = mapped_column(ForeignKey("payments.id", ondelete="RESTRICT"), index=True)
+    status: Mapped[str] = mapped_column(String(40))
+    # won | lost | warning_closed: final, later "created/updated" events change nothing.
+    terminal: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class UnmatchedChargeEvent(Base):
+    """Refund/dispute facts for charges we could not match (yet).
+
+    A refund or dispute can be processed before the payment it belongs to
+    (e.g. our invoice.paid was delayed by retries). Only ids and amounts are
+    kept — no customer data — and they are applied when the payment appears.
+    Rows of the other product on the shared account simply never match and
+    are pruned after ``unmatched_retention_days``.
+    """
+
+    __tablename__ = "unmatched_charge_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    stripe_event_id: Mapped[str] = mapped_column(String(255), unique=True)
+    # refund | dispute
+    kind: Mapped[str] = mapped_column(String(10))
+    charge_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    amount_refunded: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    dispute_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    dispute_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)

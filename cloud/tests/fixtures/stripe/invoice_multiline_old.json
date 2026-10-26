@@ -1,0 +1,21 @@
+{
+  "id": "in_multi_old",
+  "object": "invoice",
+  "customer": "cus_old",
+  "subscription": "sub_old",
+  "payment_intent": "pi_old",
+  "status": "paid",
+  "billing_reason": "subscription_update",
+  "amount_paid": 900,
+  "currency": "eur",
+  "subscription_details": {"metadata": {"lc_app": "lingocanvas", "lc_account_id": "7"}},
+  "lines": {
+    "object": "list",
+    "data": [
+      {"id": "il_credit", "type": "subscription", "proration": true, "price": {"id": "price_starter_x"}, "period": {"start": 1700000000, "end": 1700000100}},
+      {"id": "il_item", "type": "invoiceitem", "proration": false, "price": {"id": "price_starter_x"}, "period": {"start": 1710000000, "end": 1710000100}},
+      {"id": "il_other_product", "type": "subscription", "proration": false, "price": {"id": "price_other_product"}, "period": {"start": 1720000000, "end": 1720000100}},
+      {"id": "il_plan", "type": "subscription", "proration": false, "price": {"id": "price_starter_x"}, "period": {"start": 1760000000, "end": 1762592000}}
+    ]
+  }
+}

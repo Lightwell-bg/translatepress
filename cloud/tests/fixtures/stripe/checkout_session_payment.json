@@ -1,0 +1,15 @@
+{
+  "id": "cs_pack_1",
+  "object": "checkout.session",
+  "mode": "payment",
+  "status": "complete",
+  "payment_status": "unpaid",
+  "customer": "cus_old",
+  "customer_details": {"email": "buyer@example.com"},
+  "payment_intent": "pi_pack_1",
+  "subscription": null,
+  "amount_total": 700,
+  "currency": "eur",
+  "created": 1760000500,
+  "metadata": {"lc_app": "lingocanvas", "lc_account_id": "7", "lc_price_id": "price_pack_x"}
+}

@@ -33,7 +33,10 @@ from app.security import issue_token
 ROOT = Path(__file__).resolve().parent.parent
 PEPPER = "test-pepper-" + "x" * 40
 
-TABLES = "usage_log, ledger, reservation_items, reservations, quota_buckets, sites, accounts"
+TABLES = (
+    "stripe_events, unmatched_charge_events, disputes, payments, subscriptions, pair_codes, checkout_claims, "
+    "usage_log, ledger, reservation_items, reservations, quota_buckets, sites, accounts"
+)
 
 
 @pytest.fixture(scope="session")
@@ -200,13 +203,18 @@ async def make_client(database_url: str, tmp_path):
         provider=None,
         daily_spend_limit_usd: float | int = 5,
         deepseek_api_key: str = "",
+        billing: dict | None = None,
+        gateway=None,
+        stripe: dict | None = None,
     ):
-        parser = configparser.ConfigParser(inline_comment_prefixes=None)
+        parser = configparser.ConfigParser(inline_comment_prefixes=None, interpolation=None)
         parser.read(ROOT / "config.ini", encoding="utf-8")
         for key, value in (limits or {}).items():
             parser["limits"][key] = str(value)
         for key, value in (pricing or {}).items():
             parser["pricing"][key] = str(value)
+        for key, value in (billing or {}).items():
+            parser["billing"][key] = str(value)
         path = tmp_path / f"config{len(created)}.ini"
         with open(path, "w", encoding="utf-8") as fh:
             parser.write(fh)
@@ -218,8 +226,9 @@ async def make_client(database_url: str, tmp_path):
             deepseek_api_key=deepseek_api_key,
             config_ini=path,
             _env_file=None,
+            **(stripe or {}),
         )
-        application = create_app(st, provider if provider is not None else MockProvider())
+        application = create_app(st, provider if provider is not None else MockProvider(), gateway)
         transport = httpx.ASGITransport(app=application, raise_app_exceptions=False)
         http = httpx.AsyncClient(transport=transport, base_url="http://test")
         created.append((application, http))
@@ -233,3 +242,14 @@ async def make_client(database_url: str, tmp_path):
 
 def auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def bill(make_client, sessionmaker, make_site):
+    """App with billing enabled and a counting fake Stripe gateway."""
+    from tests.billing_env import BillingEnv
+    from tests.billing_fakes import STRIPE_SETTINGS, FakeGateway
+
+    gw = FakeGateway()
+    client, application = await make_client(gateway=gw, stripe=STRIPE_SETTINGS)
+    return BillingEnv(client, application, gw, sessionmaker, make_site)

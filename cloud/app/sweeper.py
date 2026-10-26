@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import quota
+from app.billing import events
 
 log = logging.getLogger("lingocanvas.sweeper")
 
@@ -33,7 +34,20 @@ async def sweep_once(sessionmaker: async_sessionmaker[AsyncSession], now: dateti
     return released
 
 
-async def sweeper_loop(sessionmaker: async_sessionmaker[AsyncSession], interval_seconds: float) -> None:
+async def prune_once(
+    sessionmaker: async_sessionmaker[AsyncSession], retention_days: int, now: datetime | None = None
+) -> int:
+    """Delete parked refund/dispute facts that never matched a payment (own transaction)."""
+    now = now or datetime.now(timezone.utc)
+    async with sessionmaker() as s, s.begin():
+        return await events.prune_parked(s, now, retention_days)
+
+
+async def sweeper_loop(
+    sessionmaker: async_sessionmaker[AsyncSession],
+    interval_seconds: float,
+    unmatched_retention_days: int | None = None,
+) -> None:
     while True:
         try:
             await sweep_once(sessionmaker)
@@ -41,4 +55,11 @@ async def sweeper_loop(sessionmaker: async_sessionmaker[AsyncSession], interval_
             raise
         except Exception:
             log.exception("sweeper iteration failed")
+        if unmatched_retention_days is not None:
+            try:
+                await prune_once(sessionmaker, unmatched_retention_days)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("pruning of parked charge events failed")
         await asyncio.sleep(interval_seconds)

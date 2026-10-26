@@ -54,7 +54,7 @@ async def current_site(request: Request) -> SiteIdentity:
         row = (await s.execute(select_site(digest))).first()
         if row is None or row.revoked_at is not None:
             raise _unauthorized()
-        if row.status != "active":
+        if row.status != "active" or row.dispute_hold:
             raise ApiError(403, "account_suspended", "This account is suspended.")
         # At most one write per minute per site.
         await s.execute(
@@ -75,6 +75,7 @@ def select_site(digest: bytes):
             Site.account_id,
             Site.revoked_at,
             Account.status,
+            Account.dispute_hold,
         )
         .join(Account, Account.id == Site.account_id)
         .where(Site.token_hash == digest)

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app import quota
 from app.config import Settings
 from app.db import make_engine, make_sessionmaker
-from app.models import Account, LedgerEntry, QuotaBucket, Reservation, Site, UsageLog
+from app.models import Account, LedgerEntry, Payment, QuotaBucket, Reservation, Site, Subscription, UsageLog
 from app.security import issue_token
 from app.sweeper import sweep_once
 
@@ -229,6 +229,47 @@ async def spend(sm: SM, settings: Settings, args: argparse.Namespace) -> None:
     print(f"total cost_usd={sum((r[2] or 0) for r in rows) / 1_000_000:.6f}")
 
 
+async def billing_status(sm: SM, settings: Settings, args: argparse.Namespace) -> None:
+    """Subscription, payments and buckets of one account. Ids and numbers only, no secrets."""
+    now = _now()
+    async with sm() as s:
+        acc = (await s.execute(select(Account).where(Account.id == args.account))).scalar_one_or_none()
+        if acc is None:
+            raise SystemExit("account not found")
+        print(
+            f"account id={acc.id} status={acc.status} plan={acc.plan} "
+            f"stripe_customer={'yes' if acc.stripe_customer_id else 'no'}"
+        )
+        subs = (
+            await s.execute(select(Subscription).where(Subscription.account_id == acc.id).order_by(Subscription.id))
+        ).scalars()
+        print("subscriptions:")
+        for sub in subs:
+            print(
+                f"  id={sub.id} plan={sub.plan} status={sub.status} period_end={sub.current_period_end} "
+                f"cancel_at_period_end={sub.cancel_at_period_end}"
+            )
+        payments = (
+            await s.execute(select(Payment).where(Payment.account_id == acc.id).order_by(Payment.id))
+        ).scalars()
+        print("payments:")
+        for p in payments:
+            print(
+                f"  id={p.id} kind={p.kind} bucket={p.bucket_id} amount={p.amount_cents}{p.currency} "
+                f"granted={p.granted_chars} refunded={p.refunded_cents} revoked={p.revoked_chars} disputed={p.disputed}"
+            )
+        buckets = (
+            await s.execute(select(QuotaBucket).where(QuotaBucket.account_id == acc.id).order_by(QuotaBucket.id))
+        ).scalars()
+        print("buckets:")
+        for b in buckets:
+            state = "revoked" if b.revoked_at else ("expired" if b.expires_at and b.expires_at <= now else "live")
+            print(
+                f"  id={b.id} kind={b.kind} granted={b.granted} used={b.used} reserved={b.reserved} "
+                f"valid_from={b.valid_from} expires_at={b.expires_at} {state}"
+            )
+
+
 async def sweep(sm: SM, settings: Settings, args: argparse.Namespace) -> None:
     print(f"released {await sweep_once(sm)} reservation(s)")
 
@@ -279,6 +320,10 @@ def build_parser() -> argparse.ArgumentParser:
     c = sub.add_parser("spend")
     c.add_argument("--days", type=int, default=7)
     c.set_defaults(func=spend)
+
+    c = sub.add_parser("billing-status")
+    c.add_argument("--account", type=int, required=True)
+    c.set_defaults(func=billing_status)
 
     c = sub.add_parser("sweep")
     c.set_defaults(func=sweep)

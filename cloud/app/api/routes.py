@@ -9,9 +9,17 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select, text
 
 from app import quota
-from app.api.schemas import AccountInfo, AccountOut, QuotaOut, SitesInfo, TranslateBody, TranslateOut
+from app.api.schemas import (
+    AccountInfo,
+    AccountOut,
+    QuotaOut,
+    SitesInfo,
+    SubscriptionOut,
+    TranslateBody,
+    TranslateOut,
+)
 from app.errors import ApiError
-from app.models import Account, Reservation, Site
+from app.models import Account, Reservation, Site, Subscription
 from app.security import current_site
 from app.translate_service import SiteIdentity, TranslateRequest, count_chars
 
@@ -102,12 +110,29 @@ async def account(request: Request, site: SiteIdentity = Depends(current_site)) 
             )
         ).scalar_one()
         summary = await quota.summary(s, acc.id, now)
+        sub = (
+            await s.execute(
+                select(Subscription)
+                .where(Subscription.account_id == acc.id)
+                .order_by(Subscription.updated_at.desc(), Subscription.id.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
     plan = state.settings.cfg.plans.get(acc.plan) if acc.plan else None
     return AccountOut(
         account=AccountInfo(id=acc.id, name=acc.name, plan=acc.plan, status=acc.status),
         sites=SitesInfo(used=used, max=plan.max_sites if plan else None),
         quota=_quota_out(summary),
         billed_chars_this_month=int(billed),
+        subscription=(
+            SubscriptionOut(
+                status=sub.status,
+                current_period_end=sub.current_period_end,
+                cancel_at_period_end=sub.cancel_at_period_end,
+            )
+            if sub is not None
+            else None
+        ),
     )
 
 

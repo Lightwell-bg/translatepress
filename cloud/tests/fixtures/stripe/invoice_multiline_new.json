@@ -1,0 +1,45 @@
+{
+  "id": "in_multi_new",
+  "object": "invoice",
+  "customer": "cus_new",
+  "status": "paid",
+  "billing_reason": "subscription_update",
+  "amount_paid": 900,
+  "currency": "eur",
+  "parent": {
+    "type": "subscription_details",
+    "subscription_details": {
+      "subscription": "sub_new",
+      "metadata": {"lc_app": "lingocanvas", "lc_account_id": "7"}
+    }
+  },
+  "lines": {
+    "object": "list",
+    "data": [
+      {
+        "id": "il_credit",
+        "pricing": {"type": "price_details", "price_details": {"price": "price_starter_x"}},
+        "parent": {"type": "subscription_item_details", "subscription_item_details": {"proration": true, "subscription": "sub_new"}},
+        "period": {"start": 1700000000, "end": 1700000100}
+      },
+      {
+        "id": "il_invoice_item",
+        "pricing": {"type": "price_details", "price_details": {"price": "price_starter_x"}},
+        "parent": {"type": "invoice_item_details", "invoice_item_details": {"proration": false}},
+        "period": {"start": 1710000000, "end": 1710000100}
+      },
+      {
+        "id": "il_other_product",
+        "pricing": {"type": "price_details", "price_details": {"price": "price_other_product"}},
+        "parent": {"type": "subscription_item_details", "subscription_item_details": {"proration": false, "subscription": "sub_new"}},
+        "period": {"start": 1720000000, "end": 1720000100}
+      },
+      {
+        "id": "il_plan",
+        "pricing": {"type": "price_details", "price_details": {"price": "price_starter_x"}},
+        "parent": {"type": "subscription_item_details", "subscription_item_details": {"proration": false, "subscription": "sub_new"}},
+        "period": {"start": 1760000000, "end": 1762592000}
+      }
+    ]
+  }
+}

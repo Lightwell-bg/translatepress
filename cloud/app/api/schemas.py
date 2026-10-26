@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -71,8 +72,94 @@ class SitesInfo(BaseModel):
     max: int | None
 
 
+class SubscriptionOut(BaseModel):
+    status: str
+    current_period_end: datetime | None
+    cancel_at_period_end: bool
+
+
 class AccountOut(BaseModel):
     account: AccountInfo
     sites: SitesInfo
     quota: QuotaOut
     billed_chars_this_month: int
+    subscription: SubscriptionOut | None = None
+
+
+# --- billing ---------------------------------------------------------------
+
+SHA256_HEX_PATTERN = r"^[0-9a-fA-F]{64}$"
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+
+class SignupBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    plan: Literal["starter"]
+    site_name: str = Field(min_length=1, max_length=255)
+    claim_secret_sha256: str = Field(pattern=SHA256_HEX_PATTERN)
+    email: str | None = Field(default=None, max_length=320, pattern=EMAIL_PATTERN)
+
+    @field_validator("site_name")
+    @classmethod
+    def _site_name_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("site_name must not be blank")
+        return value
+
+
+class SignupOut(BaseModel):
+    claim_id: str
+    checkout_url: str
+    expires_at: datetime
+
+
+class ClaimBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    claim_id: str = Field(min_length=1, max_length=64)
+    claim_secret: str = Field(min_length=1, max_length=200)
+
+
+class ClaimOut(BaseModel):
+    token: str
+    site_id: int
+    account_id: int
+
+
+class CheckoutBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    product: Literal["pack_250k", "starter"]
+
+
+class CheckoutOut(BaseModel):
+    checkout_url: str
+
+
+class PortalOut(BaseModel):
+    url: str
+
+
+class PairCodeOut(BaseModel):
+    code: str
+    expires_at: datetime
+
+
+class PairBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    code: str = Field(min_length=1, max_length=100)
+    site_name: str = Field(min_length=1, max_length=255)
+
+    @field_validator("site_name")
+    @classmethod
+    def _site_name_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("site_name must not be blank")
+        return value
+
+
+class PairOut(BaseModel):
+    token: str
+    site_id: int
