@@ -168,6 +168,8 @@ no invented placeholders, and end with a verification command.
 
 ## Project rules
 
+- Never create a new folder/project in a location the owner did not name — ask first, every time (approval of the work is not approval of the location). The LingoCanvas Cloud backend lives in `cloud/` inside this repo and must never get into the plugin ZIP.
+
 <!-- Project-specific rules belong here and survive template updates. -->
 
 - Never write the PHP close tag `?>` inside a `//` or `#` comment (it ends PHP mode mid-comment and dumps the rest of the file into the page — this took the live site down in 0.3.2). Use `/* */` or don't spell the tag; `tests/NoCloseTagInCommentsTest.php` guards it.

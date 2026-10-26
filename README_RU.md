@@ -568,6 +568,10 @@ bash bin/smoke-test.sh     # настоящий WordPress 6.x + PHP 8.3 с WP_DE
 winget install PHP.PHP.8.4
 ```
 
+## Backend LingoCanvas Cloud (cloud/)
+
+В папке `cloud/` лежит backend будущего платного провайдера перевода «LingoCanvas Cloud» (FastAPI + PostgreSQL, работает по квотам символов). Он хранится в этом репозитории только для удобства и никогда не входит в ZIP плагина. Статус: MVP этапа 3, не развёрнут. Подробности: [cloud/README_RU.md](cloud/README_RU.md).
+
 ## Внешние сервисы
 
 | Сервис | Зачем | Где взять ключ | Куда вставить |

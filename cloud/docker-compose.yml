@@ -1,0 +1,60 @@
+# LingoCanvas Cloud on a VPS: a SEPARATE Compose project with its OWN database.
+# FUTURE use, not run yet. Needs a .env next to this file (see .env.example).
+# The API is published on 127.0.0.1:8077 only; put a reverse proxy with HTTPS in front of it.
+
+name: lingocanvas-cloud
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lingocanvas
+      POSTGRES_DB: lingocanvas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingocanvas -d lingocanvas"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # no "ports": the database is reachable only from this Compose network
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingocanvas:${POSTGRES_PASSWORD}@db:5432/lingocanvas
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingocanvas:${POSTGRES_PASSWORD}@db:5432/lingocanvas
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+    ports:
+      - "127.0.0.1:8077:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  db_data:

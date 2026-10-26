@@ -568,6 +568,10 @@ If PHP is not installed locally:
 winget install PHP.PHP.8.4
 ```
 
+## LingoCanvas Cloud backend (cloud/)
+
+The `cloud/` folder holds the backend of the future paid "LingoCanvas Cloud" translation provider (FastAPI + PostgreSQL, quota-based). It lives in this repository for convenience only and is never part of the plugin ZIP. Status: stage 3 MVP, not deployed. See [cloud/README.md](cloud/README.md).
+
 ## External services
 
 | Service | Why | Where to get a key | Where to enter it |

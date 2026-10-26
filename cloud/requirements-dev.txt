@@ -1,0 +1,4 @@
+-r requirements.txt
+pgserver==0.1.4
+pytest==9.1.1
+pytest-asyncio==1.4.1
