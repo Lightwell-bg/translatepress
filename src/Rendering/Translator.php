@@ -94,7 +94,9 @@ final class Translator {
 			 * («Ответить») оказалась бы и в «Интерфейсе», и в «Контенте», и
 			 * переводить её пришлось бы дважды, в двух разных экранах.
 			 */
-			$this->gettext->servedTexts()
+			$this->gettext->servedTexts(),
+			// Числовые шаблоны («%d minutes» → «13 minutes»), которые точным совпадением не поймать.
+			$this->gettext->servedPatterns()
 		);
 
 		if ( array() === $segments ) {

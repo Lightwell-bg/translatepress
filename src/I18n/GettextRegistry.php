@@ -83,6 +83,19 @@ final class GettextRegistry implements Hookable {
 	private array $served = array();
 
 	/**
+	 * Предел числа запоминаемых шаблонов за запрос: каждый сегмент страницы
+	 * проверяется по всем, и стоимость должна быть ограничена.
+	 */
+	private const MAX_PATTERNS = 500;
+
+	/**
+	 * Скомпилированные выражения числовых шаблонов (ключ — само выражение).
+	 *
+	 * @var array<string, true>
+	 */
+	private array $servedPatterns = array();
+
+	/**
 	 * Запись на `shutdown` уже запланирована.
 	 */
 	private bool $flushScheduled = false;
@@ -201,6 +214,18 @@ final class GettextRegistry implements Hookable {
 	 */
 	public function servedTexts(): array {
 		return $this->served;
+	}
+
+	/**
+	 * Регулярные выражения числовых шаблонов, отданных контуром на странице.
+	 *
+	 * Дополняют {@see self::servedTexts()}: «13 minutes» из `_n()` точным
+	 * совпадением не поймать (см. {@see GettextFragments::numericPattern()}).
+	 *
+	 * @return list<string>
+	 */
+	public function servedPatterns(): array {
+		return array_keys( $this->servedPatterns );
 	}
 
 	/**
@@ -433,6 +458,15 @@ final class GettextRegistry implements Hookable {
 
 		foreach ( GettextFragments::of( $text ) as $fragment ) {
 			$this->served[ $fragment ] = $domain;
+		}
+
+		// Шаблон с числом («%d minutes») в DOM превращается в «13 minutes».
+		if ( count( $this->servedPatterns ) < self::MAX_PATTERNS && str_contains( $text, '%' ) ) {
+			$pattern = GettextFragments::numericPattern( $text );
+
+			if ( null !== $pattern ) {
+				$this->servedPatterns[ $pattern ] = true;
+			}
 		}
 	}
 

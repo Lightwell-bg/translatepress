@@ -204,6 +204,9 @@ final class Extractor {
 	 * @param array<string, true> $skipTexts   Нормализованные тексты, которые уже
 	 *                                         обслужил gettext-контур: их нельзя
 	 *                                         заводить второй раз (см. skips()).
+	 * @param list<string>        $skipPatterns Регулярные выражения числовых gettext-шаблонов
+	 *                                         («%d minutes» → «13 minutes»), см.
+	 *                                         GettextFragments::numericPattern().
 	 * @return list<Segment>
 	 */
 	public function extract(
@@ -211,7 +214,8 @@ final class Extractor {
 		string $locale,
 		array $blockHashes = array(),
 		bool $markBlockCandidates = false,
-		array $skipTexts = array()
+		array $skipTexts = array(),
+		array $skipPatterns = array()
 	): array {
 		$root = $document->root();
 
@@ -228,7 +232,7 @@ final class Extractor {
 			$node = array_pop( $stack );
 
 			if ( self::NODE_TEXT === $node->nodeType ) {
-				$segment = $this->textSegment( $node, $locale, $contextHash, $skipTexts );
+				$segment = $this->textSegment( $node, $locale, $contextHash, $skipTexts, $skipPatterns );
 
 				if ( null !== $segment ) {
 					$segments[] = $segment;
@@ -245,14 +249,14 @@ final class Extractor {
 				continue;
 			}
 
-			foreach ( $this->attributeSegments( $node, $locale, $contextHash, $skipTexts ) as $segment ) {
+			foreach ( $this->attributeSegments( $node, $locale, $contextHash, $skipTexts, $skipPatterns ) as $segment ) {
 				$segments[] = $segment;
 			}
 
 			if ( in_array( strtolower( (string) $node->nodeName ), self::SKIP_SUBTREE, true ) ) {
 				// `script` пропускается целиком, но структурированные данные
 				// внутри него — это текст для поисковика, а не код.
-				foreach ( $this->jsonLdSegments( $node, $locale, $contextHash ) as $segment ) {
+				foreach ( $this->jsonLdSegments( $node, $locale, $contextHash, $skipPatterns ) as $segment ) {
 					$segments[] = $segment;
 				}
 
@@ -298,9 +302,10 @@ final class Extractor {
 	 * @param object $element     Элемент DOM.
 	 * @param string $locale      Исходный язык.
 	 * @param string $contextHash Хеш контекста.
+	 * @param list<string> $skipPatterns Числовые шаблоны gettext (регулярные выражения).
 	 * @return list<Segment>
 	 */
-	private function jsonLdSegments( object $element, string $locale, string $contextHash ): array {
+	private function jsonLdSegments( object $element, string $locale, string $contextHash, array $skipPatterns = array() ): array {
 		if ( 'script' !== strtolower( (string) $element->nodeName ) ) {
 			return array();
 		}
@@ -322,7 +327,12 @@ final class Extractor {
 		foreach ( $json->fields() as $field ) {
 			$normalized = Text::normalize( $field->value );
 
-			if ( ! Text::isTranslatable( $normalized ) ) {
+			if ( ! Text::isTranslatable( $normalized ) || $this->isServed( $normalized, array(), $skipPatterns ) ) {
+				continue;
+			}
+
+			// `caption` картинки в JSON-LD — заголовок вложения, часто имя файла.
+			if ( 'caption' === $field->key() && Text::looksLikeFileName( $normalized ) ) {
 				continue;
 			}
 
@@ -448,8 +458,9 @@ final class Extractor {
 	 * @param string              $locale      Исходный язык.
 	 * @param string              $contextHash Хеш контекста.
 	 * @param array<string, true> $skipTexts   Уже обслуженные gettext-контуром.
+	 * @param list<string>        $skipPatterns Числовые шаблоны gettext (регулярные выражения).
 	 */
-	private function textSegment( object $node, string $locale, string $contextHash, array $skipTexts = array() ): ?Segment {
+	private function textSegment( object $node, string $locale, string $contextHash, array $skipTexts = array(), array $skipPatterns = array() ): ?Segment {
 		$raw = (string) $node->nodeValue;
 
 		if ( '' === trim( $raw ) ) {
@@ -460,7 +471,7 @@ final class Extractor {
 
 		$normalized = Text::normalize( $core );
 
-		if ( ! Text::isTranslatable( $normalized ) || isset( $skipTexts[ $normalized ] ) ) {
+		if ( ! Text::isTranslatable( $normalized ) || $this->isServed( $normalized, $skipTexts, $skipPatterns ) ) {
 			return null;
 		}
 
@@ -474,9 +485,10 @@ final class Extractor {
 	 * @param string              $locale      Исходный язык.
 	 * @param string              $contextHash Хеш контекста.
 	 * @param array<string, true> $skipTexts   Уже обслуженные gettext-контуром.
+	 * @param list<string>        $skipPatterns Числовые шаблоны gettext (регулярные выражения).
 	 * @return list<Segment>
 	 */
-	private function attributeSegments( object $element, string $locale, string $contextHash, array $skipTexts = array() ): array {
+	private function attributeSegments( object $element, string $locale, string $contextHash, array $skipTexts = array(), array $skipPatterns = array() ): array {
 		$segments = array();
 		$isMeta   = 'meta' === strtolower( (string) $element->nodeName );
 
@@ -525,7 +537,12 @@ final class Extractor {
 			 * esc_attr_e(), то есть это ровно такие же gettext-строки, и
 			 * дубль в «Контенте» получился бы точно так же.
 			 */
-			if ( ! Text::isTranslatable( $normalized ) || isset( $skipTexts[ $normalized ] ) ) {
+			if ( ! Text::isTranslatable( $normalized ) || $this->isServed( $normalized, $skipTexts, $skipPatterns ) ) {
+				continue;
+			}
+
+			// Заголовок вложения как alt картинки — имя файла, а не текст для людей.
+			if ( $this->isImageText( $element, $attribute, $isMeta ) && Text::looksLikeFileName( $normalized ) ) {
 				continue;
 			}
 
@@ -571,6 +588,50 @@ final class Extractor {
 		}
 
 		return $segments;
+	}
+
+	/**
+	 * Обслужен ли текст gettext-контуром: точное совпадение либо числовой шаблон.
+	 *
+	 * @param string              $normalized   Нормализованный текст.
+	 * @param array<string, true> $skipTexts    Точные тексты.
+	 * @param list<string>        $skipPatterns Регулярные выражения числовых шаблонов.
+	 */
+	private function isServed( string $normalized, array $skipTexts, array $skipPatterns ): bool {
+		if ( isset( $skipTexts[ $normalized ] ) ) {
+			return true;
+		}
+
+		// Шаблон требует хотя бы одного числа — без цифр регулярки не гоняем.
+		if ( array() === $skipPatterns || 1 !== preg_match( '/[0-9]/', $normalized ) ) {
+			return false;
+		}
+
+		foreach ( $skipPatterns as $pattern ) {
+			// Выражения строит GettextFragments::numericPattern(); ошибка PCRE (false) — «не совпало».
+			if ( 1 === preg_match( $pattern, $normalized ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Описывает ли атрибут картинку: alt/title у `<img>`, og:image:alt и
+	 * twitter:image:alt у `<meta>`.
+	 *
+	 * @param object $element   Элемент DOM.
+	 * @param string $attribute Имя атрибута.
+	 * @param bool   $isMeta    Это тег `<meta>`.
+	 */
+	private function isImageText( object $element, string $attribute, bool $isMeta ): bool {
+		if ( $isMeta ) {
+			return 'content' === $attribute
+				&& in_array( $this->metaKey( $element ), array( 'og:image:alt', 'twitter:image:alt' ), true );
+		}
+
+		return 'img' === strtolower( (string) $element->nodeName ) && in_array( $attribute, array( 'alt', 'title' ), true );
 	}
 
 	/**

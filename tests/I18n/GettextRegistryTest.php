@@ -473,4 +473,23 @@ final class GettextRegistryTest extends TestCase {
 
 		$this->assertArrayHasKey( 'Reply now', $registry->servedTexts() );
 	}
+
+	/**
+	 * Числовые шаблоны («%d minutes») запоминаются как выражения, а
+	 * шаблоны без букв и обычные строки — нет.
+	 */
+	public function testNumericTemplatesAreRecordedAsPatterns(): void {
+		$registry = $this->registry( new InMemoryGettextStore() );
+
+		$registry->filterText( '%d minutes', '%d minutes', 'rank-math' );
+		$registry->filterText( '%s', '%s', 'default' );
+		$registry->filterText( '%1$s – %2$s', '%1$s – %2$s', 'default' );
+		$registry->filterText( 'Reply now', 'Reply now', 'default' );
+
+		$patterns = $registry->servedPatterns();
+
+		$this->assertCount( 1, $patterns );
+		$this->assertSame( 1, preg_match( $patterns[0], '13 minutes' ) );
+		$this->assertSame( 0, preg_match( $patterns[0], 'Meeting at noon' ) );
+	}
 }

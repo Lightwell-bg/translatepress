@@ -64,6 +64,25 @@ final class Text {
 	}
 
 	/**
+	 * Похоже ли значение на имя файла, а не на подпись человеку.
+	 *
+	 * SEO-плагины подставляют заголовок вложения как alt/caption картинки, а он
+	 * часто равен имени файла («Zero-Hallucination_Decision_Engine_Guide»).
+	 * Признак: нет пробелов и есть «_» либо расширение картинки/медиа. Слова
+	 * с одним дефисом («Wi-Fi») именем файла не считаются.
+	 *
+	 * @param string $text Нормализованная строка.
+	 */
+	public static function looksLikeFileName( string $text ): bool {
+		if ( '' === $text || 1 === preg_match( '/\s/u', $text ) ) {
+			return false;
+		}
+
+		return str_contains( $text, '_' )
+			|| 1 === preg_match( '/\.(?:jpe?g|png|gif|webp|avif|svg|bmp|tiff?|ico|heic|mp[34]|mov|webm|pdf)$/i', $text );
+	}
+
+	/**
 	 * Стоит ли отправлять строку в словарь.
 	 *
 	 * Отсеивается всё, что перевод только испортит: числа, адреса, имена

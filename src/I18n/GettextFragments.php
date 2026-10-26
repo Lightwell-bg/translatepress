@@ -88,6 +88,70 @@ final class GettextFragments {
 	}
 
 	/**
+	 * Регулярное выражение для строки с плейсхолдерами, подставленными числами.
+	 *
+	 * Фрагменты ({@see self::of()}) не ловят «13 Minuten», полученное из
+	 * `_n( '%d minute', '%d minutes' )`: узел в DOM содержит число внутри
+	 * фразы. Поэтому для шаблона строится якорное выражение, где каждый
+	 * плейсхолдер — это ЧИСЛО, а буквенная часть дословная. Плейсхолдер не
+	 * заменяется на «что угодно»: иначе «%s at %s» съело бы любой контент.
+	 *
+	 * Null — если шаблон не подходит: плейсхолдеров нет (работает точное
+	 * совпадение), в разметке есть теги, либо в литеральной части нет букв
+	 * («%s», «%1$s – %2$s», «%d»).
+	 *
+	 * @param string $text Переведённая строка в том виде, в каком её вернул gettext.
+	 */
+	public static function numericPattern( string $text ): ?string {
+		if ( 1 === preg_match( '/<[^>]*>/', $text ) ) {
+			return null;
+		}
+
+		$normalized = Text::normalize( $text );
+
+		$count = preg_match_all( self::PLACEHOLDER, $normalized, $matches, PREG_OFFSET_CAPTURE );
+
+		if ( false === $count || 0 === $count ) {
+			return null;
+		}
+
+		$pattern     = '';
+		$literal     = '';
+		$offset      = 0;
+		$placeholder = false;
+
+		foreach ( $matches[0] as $match ) {
+			list( $token, $position ) = $match;
+
+			$chunk    = substr( $normalized, $offset, $position - $offset );
+			$offset   = $position + strlen( $token );
+			$literal .= $chunk;
+			$pattern .= preg_quote( $chunk, '/' );
+
+			if ( '%%' === $token ) {
+				// «%%» — это просто знак процента.
+				$literal .= '%';
+				$pattern .= '%';
+
+				continue;
+			}
+
+			$placeholder = true;
+			$pattern    .= '[0-9]+(?:[.,][0-9]+)*';
+		}
+
+		$tail     = substr( $normalized, $offset );
+		$literal .= $tail;
+		$pattern .= preg_quote( $tail, '/' );
+
+		if ( ! $placeholder || 1 !== preg_match( '/\p{L}/u', $literal ) ) {
+			return null;
+		}
+
+		return '/^' . $pattern . '$/u';
+	}
+
+	/**
 	 * Добавляет кусок, если он вообще похож на переводимый текст.
 	 *
 	 * Через тот же `Text::isTranslatable()`, что и весь остальной словарь:
