@@ -112,3 +112,8 @@
 .lingocanvas-cloud .button-link-delete {
 	color: #b32d2e;
 }
+
+/* Скрывать кнопки Cloud независимо от стилей WordPress. */
+.lingocanvas-cloud [hidden] {
+    display: none !important;
+}
