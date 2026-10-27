@@ -32,7 +32,7 @@ use LingoCanvas\Support\Locale;
 use LingoCanvas\Support\ShortcodeGuard;
 use LingoCanvas\Translation\BatchChunker;
 use LingoCanvas\Translation\BulkTranslationMode;
-use LingoCanvas\Translation\OpenAiProvider;
+use LingoCanvas\Translation\ProviderErrorInterface;
 use LingoCanvas\Translation\PostCommitValidator;
 use LingoCanvas\Translation\PostOccurrenceRows;
 use LingoCanvas\Translation\ProviderInterface;
@@ -388,13 +388,13 @@ final class PostTranslationController implements Hookable {
 		$result = $this->provider->translateBatch( $items, $sourceLocale, $language->locale, $aiContext );
 
 		if ( array() === $result ) {
-			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->maskedLastError() : null;
+			$detail = $this->provider instanceof ProviderErrorInterface ? $this->provider->maskedLastError() : null;
 
 			return new WP_Error(
 				'lingocanvas_translate_failed',
 				null !== $detail
-					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
-					: __( 'Could not get a translation from OpenAI.', 'lingocanvas' ),
+					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from the AI provider: %s', 'lingocanvas' ), $detail )
+					: __( 'Could not get a translation from the AI provider.', 'lingocanvas' ),
 				array( 'status' => 502 )
 			);
 		}

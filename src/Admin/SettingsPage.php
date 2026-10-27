@@ -57,7 +57,8 @@ final class SettingsPage implements Hookable {
 		private readonly Settings $settings,
 		private readonly LanguagePacks $packs,
 		private readonly ProviderFactory $providers,
-		private readonly ?PostLanguageVisibility $visibility = null
+		private readonly ?PostLanguageVisibility $visibility = null,
+		private readonly ?CloudSection $cloud = null
 	) {
 	}
 
@@ -265,6 +266,8 @@ final class SettingsPage implements Hookable {
 		'openai_api_key',
 		'openai_api_key_clear',
 		'openai_model',
+		'provider',
+		'cloud_consent',
 		self::FIELD_DOWNLOAD_PACK,
 	);
 
@@ -662,6 +665,16 @@ final class SettingsPage implements Hookable {
 							<p class="description"><?php esc_html_e( 'Off by default: after the plugin is uninstalled, translations stay in the database and are restored if you reinstall it.', 'lingocanvas' ); ?></p>
 						</td>
 					</tr>
+					<?php if ( null !== $this->cloud ) : ?>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'AI translation provider', 'lingocanvas' ); ?></th>
+						<td><?php echo wp_kses( $this->cloud->providerHtml(), AllowedHtml::cloudSection() ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'LingoCanvas Cloud', 'lingocanvas' ); ?></th>
+						<td><?php echo wp_kses( $this->cloud->cloudHtml(), AllowedHtml::cloudSection() ); ?></td>
+					</tr>
+					<?php endif; ?>
 					<tr>
 						<th scope="row"><label for="mlp-openai-key"><?php esc_html_e( 'OpenAI key', 'lingocanvas' ); ?></label></th>
 						<td>
@@ -747,6 +760,11 @@ final class SettingsPage implements Hookable {
 
 				<?php submit_button( __( 'Save', 'lingocanvas' ) ); ?>
 			</form>
+			<?php
+			if ( null !== $this->cloud ) {
+				echo wp_kses( $this->cloud->formsHtml(), AllowedHtml::cloudSection() );
+			}
+			?>
 		</div>
 		<?php
 	}
@@ -1078,6 +1096,8 @@ final class SettingsPage implements Hookable {
 	 * Сообщения после сохранения.
 	 */
 	private function renderNotices(): void {
+		$this->cloud?->renderNotice();
+
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- только чтение флагов из URL.
 		if ( isset( $_GET['lingocanvas-updated'] ) ) {
 			printf(

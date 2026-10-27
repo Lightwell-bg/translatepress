@@ -205,7 +205,7 @@ python -c "import hashlib,httpx;s='my-local-test-secret-0123456789abcdef';r=http
 python -c "import httpx;r=httpx.post('http://127.0.0.1:8077/v1/billing/claim',json={'claim_id':'ВАШ_CLAIM_ID','claim_secret':'my-local-test-secret-0123456789abcdef'});print(r.status_code, r.text)"
 ```
 
-6. Что должно появиться: `200` и JSON с `token`, `site_id`, `account_id`. Токен показывается один раз; повторный запрос даст `409 already_claimed`.
+6. Что должно появиться: `200` и JSON с `token`, `site_id`, `account_id`. Если подтвердить получение (`POST /v1/billing/claim/confirm`), повторный запрос даст `409 already_claimed`; без подтверждения в течение 24 часов тот же секрет выдаст новый токен (старый перестанет работать).
 7. Состояние аккаунта (вместо `1` подставьте `account_id`):
 
 ```powershell

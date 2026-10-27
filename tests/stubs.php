@@ -583,6 +583,38 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_enqueue_script' ) ) {
+	/**
+	 * Подключение скрипта: в тестах ничего не делает.
+	 *
+	 * @param mixed ...$args Аргументы WordPress.
+	 */
+	function wp_enqueue_script( ...$args ): void {
+	}
+}
+
+if ( ! function_exists( 'rest_url' ) ) {
+	/**
+	 * Адрес REST-маршрута.
+	 *
+	 * @param string $path Путь.
+	 */
+	function rest_url( string $path = '' ): string {
+		return 'https://example.test/wp-json/' . ltrim( $path, '/' );
+	}
+}
+
+if ( ! function_exists( 'wp_localize_script' ) ) {
+	/**
+	 * Данные для скрипта: в тестах ничего не делает.
+	 *
+	 * @param mixed ...$args Аргументы WordPress.
+	 */
+	function wp_localize_script( ...$args ): bool {
+		return true;
+	}
+}
+
 if ( ! function_exists( 'add_option' ) ) {
 	/**
 	 * Как в WordPress: false, если опция уже существует.
@@ -1357,6 +1389,42 @@ if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_remote_retrieve_header' ) ) {
+	/**
+	 * @param mixed  $response Ответ.
+	 * @param string $header   Имя заголовка (без учёта регистра).
+	 * @return string|string[]
+	 */
+	function wp_remote_retrieve_header( $response, string $header ) {
+		foreach ( (array) ( $response['headers'] ?? array() ) as $name => $value ) {
+			if ( strtolower( (string) $name ) === strtolower( $header ) ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+}
+
+if ( ! function_exists( 'wp_remote_request' ) ) {
+	/**
+	 * Делегирует двойнику HTTP Cloud: тесты не ходят в сеть.
+	 *
+	 * @param string               $url  Адрес.
+	 * @param array<string, mixed> $args Параметры.
+	 * @return mixed
+	 */
+	function wp_remote_request( string $url, array $args = array() ) {
+		return \LingoCanvas\Tests\Doubles\CloudHttp::handle( $url, $args );
+	}
+}
+
+if ( ! function_exists( 'home_url' ) ) {
+	function home_url( string $path = '' ): string {
+		return 'https://site.example.test' . $path;
+	}
+}
+
 if ( ! function_exists( 'get_transient' ) ) {
 	/**
 	 * @param string $name Имя.
@@ -1380,6 +1448,99 @@ if ( ! function_exists( 'set_transient' ) ) {
 		lingocanvas_test_http_set( 'transient_ttl', $ttl );
 
 		return true;
+	}
+}
+
+if ( ! function_exists( 'delete_transient' ) ) {
+	/**
+	 * @param string $name Имя.
+	 */
+	function delete_transient( string $name ): bool {
+		$transients = lingocanvas_test_http()['transients'];
+		unset( $transients[ $name ] );
+		lingocanvas_test_http_set( 'transients', $transients );
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'get_current_user_id' ) ) {
+	function get_current_user_id(): int {
+		return (int) ( lingocanvas_test_wp()['user_id'] ?? 1 );
+	}
+}
+
+if ( ! function_exists( 'is_email' ) ) {
+	/**
+	 * @param string $email Адрес.
+	 * @return string|false
+	 */
+	function is_email( $email ) {
+		return false !== filter_var( $email, FILTER_VALIDATE_EMAIL ) ? $email : false;
+	}
+}
+
+if ( ! function_exists( 'wp_date' ) ) {
+	/**
+	 * Часовой пояс сайта в тестах — UTC.
+	 *
+	 * @param string $format Формат.
+	 * @param int    $ts     Unix-время.
+	 * @return string|false
+	 */
+	function wp_date( string $format, ?int $ts = null ) {
+		return gmdate( $format, $ts ?? time() );
+	}
+}
+
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	/**
+	 * @param float $number Число.
+	 */
+	function number_format_i18n( $number, int $decimals = 0 ): string {
+		return number_format( (float) $number, $decimals, '.', ',' );
+	}
+}
+
+if ( ! function_exists( 'check_admin_referer' ) ) {
+	/**
+	 * Как в WordPress: неверный nonce прерывает запрос (в тестах — исключение wp_die).
+	 *
+	 * @param string $action Действие.
+	 */
+	function check_admin_referer( string $action = '-1', string $arg = '_wpnonce' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce = isset( $_REQUEST[ $arg ] ) ? (string) $_REQUEST[ $arg ] : '';
+
+		if ( false === wp_verify_nonce( $nonce, $action ) ) {
+			wp_die( 'The link you followed has expired.', '', array( 'response' => 403 ) );
+		}
+
+		return 1;
+	}
+}
+
+if ( ! function_exists( 'wp_safe_redirect' ) ) {
+	/**
+	 * Как в WordPress: чужой узел, которого нет среди разрешённых, заменяется адресом админки.
+	 * Вместо `exit` бросает Redirected.
+	 *
+	 * @param string $location Адрес.
+	 */
+	function wp_safe_redirect( string $location, int $status = 302 ): bool {
+		unset( $status );
+
+		$allowed = array( 'example.test' );
+
+		foreach ( $GLOBALS['lingocanvas_test_filters']['allowed_redirect_hosts'] ?? array() as $entry ) {
+			$allowed = (array) $entry[0]( $allowed, '' );
+		}
+
+		$host     = strtolower( (string) wp_parse_url( $location, PHP_URL_HOST ) );
+		$final    = ( '' === $host || in_array( $host, $allowed, true ) ) ? $location : admin_url();
+		$allowedL = array_values( array_map( 'strval', $allowed ) );
+
+		throw new \LingoCanvas\Tests\Doubles\Redirected( $location, $final, $allowedL );
 	}
 }
 

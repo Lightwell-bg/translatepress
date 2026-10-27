@@ -58,6 +58,18 @@ final class ProviderFactory {
 	/** Константа wp-config.php с адресом API. */
 	public const CONST_BASE_URL = 'LINGOCANVAS_OPENAI_BASE_URL';
 
+	/** Поле «токен Cloud» — сайт не подключён к LingoCanvas Cloud. */
+	public const FIELD_CLOUD_TOKEN = 'cloud_token';
+
+	/** Поле «согласие» — владелец не подтвердил отправку текстов в Cloud. */
+	public const FIELD_CLOUD_CONSENT = 'cloud_consent';
+
+	/** Константа wp-config.php с токеном Cloud. */
+	public const CONST_CLOUD_TOKEN = 'LINGOCANVAS_CLOUD_TOKEN';
+
+	/** Константа wp-config.php с адресом API Cloud. */
+	public const CONST_CLOUD_API_URL = 'LINGOCANVAS_CLOUD_API_URL';
+
 	/**
 	 * Поиск констант: имя => непустая строка или null.
 	 *
@@ -216,6 +228,18 @@ final class ProviderFactory {
 	public function missing(): array {
 		$missing = array();
 
+		if ( $this->isCloudSelected() ) {
+			if ( '' === $this->cloudToken() ) {
+				$missing[] = self::FIELD_CLOUD_TOKEN;
+			}
+
+			if ( $this->settings->cloudConsentAt() <= 0 ) {
+				$missing[] = self::FIELD_CLOUD_CONSENT;
+			}
+
+			return $missing;
+		}
+
 		if ( '' === $this->apiKey() ) {
 			$missing[] = self::FIELD_KEY;
 		}
@@ -233,7 +257,15 @@ final class ProviderFactory {
 	 * @param list<string> $missing Результат missing().
 	 */
 	public static function unavailableMessage( array $missing ): string {
-		$noKey   = in_array( self::FIELD_KEY, $missing, true );
+		if ( in_array( self::FIELD_CLOUD_TOKEN, $missing, true ) ) {
+			return __( 'LingoCanvas Cloud is not connected: connect this site in the plugin settings.', 'lingocanvas' );
+		}
+
+		if ( in_array( self::FIELD_CLOUD_CONSENT, $missing, true ) ) {
+			return __( 'LingoCanvas Cloud is not enabled: confirm sending texts to the service in the plugin settings.', 'lingocanvas' );
+		}
+
+		$noKey   =in_array( self::FIELD_KEY, $missing, true );
 		$noModel = in_array( self::FIELD_MODEL, $missing, true );
 
 		if ( $noKey && $noModel ) {
@@ -262,9 +294,15 @@ final class ProviderFactory {
 	 * Создаёт провайдера: настоящий при полной настройке, иначе заглушку.
 	 */
 	public function create(): ProviderInterface {
-		$provider = $this->isReady()
-			? new OpenAiProvider( $this->apiKey(), $this->model(), rtrim( $this->baseUrl(), '/' ) )
-			: new ManualProvider();
+		if ( $this->isCloudSelected() ) {
+			$provider = $this->isReady()
+				? new CenterAiCloudProvider( $this->cloudClient() )
+				: new ManualProvider();
+		} else {
+			$provider = $this->isReady()
+				? new OpenAiProvider( $this->apiKey(), $this->model(), rtrim( $this->baseUrl(), '/' ) )
+				: new ManualProvider();
+		}
 
 		/**
 		 * Позволяет подменить провайдера перевода своим.
@@ -274,6 +312,51 @@ final class ProviderFactory {
 		 * @param ProviderInterface $provider Провайдер, выбранный плагином.
 		 */
 		return apply_filters( 'lingocanvas_translation_provider', $provider );
+	}
+
+	/**
+	 * Выбран ли в настройках провайдер LingoCanvas Cloud.
+	 */
+	public function isCloudSelected(): bool {
+		return Settings::PROVIDER_CLOUD === $this->settings->provider();
+	}
+
+	/**
+	 * Токен Cloud: константа wp-config.php, затем настройки в БД. Наружу (HTML/JS) не выводится.
+	 */
+	public function cloudToken(): string {
+		return $this->constant( self::CONST_CLOUD_TOKEN ) ?? $this->settings->cloudToken();
+	}
+
+	/**
+	 * Адрес API Cloud: допустимая константа wp-config.php, затем настройки, затем значение по умолчанию.
+	 */
+	public function cloudApiUrl(): string {
+		$constant = $this->constant( self::CONST_CLOUD_API_URL );
+
+		if ( null !== $constant ) {
+			$valid = Settings::sanitizeCloudApiUrl( $constant );
+
+			if ( '' !== $valid ) {
+				return $valid;
+			}
+		}
+
+		return $this->settings->cloudApiUrl();
+	}
+
+	/**
+	 * Подключён ли сайт к Cloud и дано ли согласие (токен есть и согласие > 0).
+	 */
+	public function isCloudConnected(): bool {
+		return '' !== $this->cloudToken() && $this->settings->cloudConsentAt() > 0;
+	}
+
+	/**
+	 * Клиент API Cloud с текущим адресом и токеном.
+	 */
+	public function cloudClient(): CloudClient {
+		return new CloudClient( $this->cloudApiUrl(), $this->cloudToken(), $this->settings );
 	}
 
 	/**

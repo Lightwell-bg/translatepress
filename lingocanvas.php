@@ -3,7 +3,7 @@
  * Plugin Name:       LingoCanvas
  * Plugin URI:        https://github.com/Lightwell-bg/translatepress
  * Description:       Multilingual websites without duplicate posts: one WordPress post, a URL per language, string translations stored in dedicated tables, optional AI translation via OpenAI.
- * Version:           0.4.5
+ * Version:           0.5.3
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            CenterAI
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const LINGOCANVAS_VERSION = '0.4.5';
+const LINGOCANVAS_VERSION = '0.5.3';
 const LINGOCANVAS_MIN_PHP = '8.1';
 
 define( 'LINGOCANVAS_FILE', __FILE__ );

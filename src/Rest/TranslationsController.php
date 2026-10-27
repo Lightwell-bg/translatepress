@@ -24,7 +24,7 @@ use LingoCanvas\Support\Hash;
 use LingoCanvas\Support\Hookable;
 use LingoCanvas\Support\Locale;
 use LingoCanvas\Support\UrlGuard;
-use LingoCanvas\Translation\OpenAiProvider;
+use LingoCanvas\Translation\ProviderErrorInterface;
 use LingoCanvas\Translation\ProviderFactory;
 use LingoCanvas\Translation\ProviderInterface;
 use LingoCanvas\Translation\TranslationContext;
@@ -298,13 +298,13 @@ final class TranslationsController implements Hookable {
 		$text   = $result[ $hash ] ?? null;
 
 		if ( ! is_string( $text ) || '' === trim( $text ) ) {
-			$detail = $this->provider instanceof OpenAiProvider ? $this->provider->maskedLastError() : null;
+			$detail = $this->provider instanceof ProviderErrorInterface ? $this->provider->maskedLastError() : null;
 
 			return new WP_Error(
 				'lingocanvas_suggest_failed',
 				null !== $detail
-					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from OpenAI: %s', 'lingocanvas' ), $detail )
-					: __( 'Could not get a translation from OpenAI.', 'lingocanvas' ),
+					? sprintf( /* translators: %s: reason returned by the provider. */ __( 'Could not get a translation from the AI provider: %s', 'lingocanvas' ), $detail )
+					: __( 'Could not get a translation from the AI provider.', 'lingocanvas' ),
 				array( 'status' => 502 )
 			);
 		}

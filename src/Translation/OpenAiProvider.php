@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * читает `Env` сам, чтобы его можно было протестировать без реального
  * окружения и чтобы ключ проходил только через одну точку входа.
  */
-final class OpenAiProvider implements ProviderInterface {
+final class OpenAiProvider implements ProviderInterface, ProviderErrorInterface {
 
 	/**
 	 * Таймаут одной попытки. Вызывается синхронно по клику в админке —
@@ -73,8 +73,7 @@ final class OpenAiProvider implements ProviderInterface {
 	/**
 	 * Причина, по которой последний вызов `translateBatch()` не вернул перевод.
 	 *
-	 * Не входит в `ProviderInterface`: это диагностика конкретно для OpenAI,
-	 * а не часть контракта, обязательного для любого провайдера.
+	 * Не входит в `ProviderInterface`: диагностика вынесена в `ProviderErrorInterface`.
 	 */
 	public function lastError(): ?string {
 		return $this->lastError;
@@ -86,6 +85,13 @@ final class OpenAiProvider implements ProviderInterface {
 	 */
 	public function maskedLastError(): ?string {
 		return self::maskKey( $this->lastError, $this->apiKey );
+	}
+
+	/**
+	 * У OpenAI-совместимых шлюзов нет единого машинного кода ошибки.
+	 */
+	public function lastErrorCode(): ?string {
+		return null;
 	}
 
 	/**

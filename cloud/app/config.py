@@ -64,6 +64,7 @@ class BillingConfig:
     portal_return_url: str
     claim_ttl_hours: int
     claim_max_failed_attempts: int
+    claim_recovery_hours: int
     pair_code_ttl_minutes: int
     max_active_pair_codes: int
     pack_valid_months: int

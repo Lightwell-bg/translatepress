@@ -27,6 +27,7 @@ from app.api.schemas import (
     CheckoutBody,
     CheckoutOut,
     ClaimBody,
+    ClaimConfirmBody,
     PairBody,
     PairCodeOut,
     PairOut,
@@ -38,7 +39,7 @@ from app.billing.events import new_claim_id
 from app.billing.gateway import APP_TAG
 from app.errors import ApiError, error_response
 from app.models import Account, CheckoutClaim, PairCode, Site, Subscription
-from app.security import current_site, hash_token, issue_token
+from app.security import _bearer, _unauthorized, current_site, hash_token, issue_token
 from app.translate_service import SiteIdentity
 
 log = logging.getLogger("lingocanvas.billing.api")
@@ -206,8 +207,35 @@ async def claim(body: ClaimBody, request: Request) -> JSONResponse:
             if not hmac.compare_digest(digest, bytes(row.secret_hash)):
                 row.failed_attempts += 1  # committed: the transaction ends normally
                 error = _claim_not_found()
-            elif row.status == "consumed":
+            elif row.status == "confirmed":
                 error = ApiError(409, "already_claimed", "This claim was already picked up.")
+            elif row.status == "consumed":
+                # The response may have been lost: within the recovery window the same secret
+                # rotates the token of the SAME site (the old token stops working at once).
+                if row.recovery_until is None or now >= row.recovery_until or row.site_id is None:
+                    error = ApiError(409, "already_claimed", "This claim was already picked up.")
+                else:
+                    site = (
+                        await s.execute(select(Site).where(Site.id == row.site_id).with_for_update())
+                    ).scalar_one_or_none()
+                    if site is None:
+                        error = ApiError(409, "already_claimed", "This claim was already picked up.")
+                    elif site.revoked_at is not None:
+                        error = ApiError(409, "site_revoked", "This site was disconnected.")
+                    else:
+                        account = (
+                            await s.execute(select(Account).where(Account.id == site.account_id).with_for_update())
+                        ).scalar_one()
+                        if account.status != "active" or account.dispute_hold:
+                            error = ApiError(403, "account_suspended", "This account is suspended.")
+                        else:
+                            token, prefix, token_hash = issue_token(settings.token_pepper.get_secret_value())
+                            site.token_prefix = prefix
+                            site.token_hash = token_hash
+                            result = {
+                                "token": token, "site_id": site.id, "account_id": account.id, "recovered": True,
+                            }
+                            log.info("claim token rotated claim=%s site=%s", row.id, site.id)
             elif row.status == "expired" or (row.status == "open" and row.expires_at <= now):
                 error = ApiError(410, "claim_expired", "This claim has expired.")
             elif row.status == "open" or row.account_id is None:
@@ -230,10 +258,40 @@ async def claim(body: ClaimBody, request: Request) -> JSONResponse:
                     s.add(site)
                     await s.flush()
                     row.status = "consumed"
-                    result = {"token": token, "site_id": site.id, "account_id": account.id}
+                    row.site_id = site.id
+                    row.consumed_at = now
+                    row.recovery_until = now + timedelta(hours=bcfg.claim_recovery_hours)
+                    result = {"token": token, "site_id": site.id, "account_id": account.id, "recovered": False}
     if error is not None:
         raise error
     return JSONResponse(result, status_code=status)
+
+
+@router.post("/v1/billing/claim/confirm", dependencies=[Depends(require_billing)])
+async def claim_confirm(body: ClaimConfirmBody, request: Request, site: SiteIdentity = Depends(current_site)) -> JSONResponse:
+    """The site confirms it stored the token: the claim can no longer be used to rotate it."""
+    state = request.app.state
+    digest = hash_token(_bearer(request), state.settings.token_pepper.get_secret_value())
+    stale_token = False
+    found = False
+    async with state.sessionmaker() as s, s.begin():
+        row = (
+            await s.execute(select(CheckoutClaim).where(CheckoutClaim.id == body.claim_id).with_for_update())
+        ).scalar_one_or_none()
+        if row is not None and row.site_id == site.site_id and row.status in ("consumed", "confirmed"):
+            current = (await s.execute(select(Site.token_hash).where(Site.id == site.site_id))).scalar_one()
+            if not hmac.compare_digest(bytes(current), digest):
+                stale_token = True  # rotated by a parallel pickup after authentication
+            else:
+                found = True
+                if row.status == "consumed":
+                    row.status = "confirmed"
+                    row.recovery_until = None
+    if stale_token:
+        raise _unauthorized()
+    if not found:
+        raise _claim_not_found()
+    return JSONResponse({"status": "confirmed"})
 
 
 # --- checkout / portal (site auth) ----------------------------------------------------

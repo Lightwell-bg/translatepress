@@ -125,6 +125,13 @@ class ClaimOut(BaseModel):
     token: str
     site_id: int
     account_id: int
+    recovered: bool
+
+
+class ClaimConfirmBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    claim_id: str = Field(min_length=1, max_length=64)
 
 
 class CheckoutBody(BaseModel):

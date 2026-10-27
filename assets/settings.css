@@ -90,3 +90,25 @@
 .mlp-row-remove {
 	color: #b32d2e;
 }
+
+/* Раздел LingoCanvas Cloud. */
+.lingocanvas-cloud {
+	max-width: 760px;
+}
+
+.lingocanvas-cloud .lingocanvas-cloud-fields {
+	margin: 0.5em 0 1em;
+}
+
+.lingocanvas-cloud .lingocanvas-cloud-pending .spinner {
+	float: none;
+	margin: 0 4px 0 0;
+}
+
+.lingocanvas-cloud .lingocanvas-cloud-buttons .button {
+	margin-right: 4px;
+}
+
+.lingocanvas-cloud .button-link-delete {
+	color: #b32d2e;
+}

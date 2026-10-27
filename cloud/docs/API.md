@@ -146,7 +146,7 @@ All billing endpoints answer `503 billing_disabled` while the service has no Str
 1. The plugin generates a random **claim secret** (at least 32 random characters) and keeps it locally.
 2. `POST /v1/billing/signup` with its SHA-256. Open `checkout_url` in the customer's browser.
 3. After payment Stripe sends the customer to the `success_url` (`.../thanks/?claim=<claim_id>`; the URL contains the claim id only, never a secret or a token).
-4. The plugin polls `POST /v1/billing/claim` every 3-5 seconds (for at most `expires_at`) until it gets `200` with the site token. The token is returned **once**: store it immediately.
+4. The plugin polls `POST /v1/billing/claim` every 3-5 seconds (for at most `expires_at`) until it gets `200` with the site token. Store it immediately, then call `POST /v1/billing/claim/confirm` with the new token. Until the site confirms (or `claim_recovery_hours`, default 24, pass) the same secret can fetch the token again: if the `200` response was lost, repeat the claim.
 
 ### POST /v1/billing/signup (no authentication)
 
@@ -166,13 +166,20 @@ Before the Checkout Session the backend creates the Stripe Customer itself (idem
 
 | HTTP | `code` / body | Meaning | What to do |
 |---|---|---|---|
-| 200 | `{ "token", "site_id", "account_id" }` | paid; the site token is shown once | store the token |
+| 200 | `{ "token", "site_id", "account_id", "recovered" }` | paid; the site token. `recovered: false` on the first pickup. `recovered: true` when the claim was already picked up but not yet confirmed and the window (`claim_recovery_hours`, 24 h from the first pickup) is still open: the token of the SAME site is **rotated** (a new token is issued, the previous one stops working at once; no new site, no quota/subscription change) | store the token, then call `claim/confirm` |
 | 202 | `{ "status": "pending" }` | not paid yet (or the webhook has not arrived). The claim becomes ready **only after the first paid invoice** has granted quota: creating the subscription or completing the checkout is not enough, and a 0 EUR (trial / 100 % coupon) or non-EUR invoice grants nothing and leaves the claim pending | poll again in 3-5 s |
-| 403 | `account_suspended` | the account is switched off by the administrator or has an open or lost card dispute (dispute hold) | contact support; poll nothing |
+| 403 | `account_suspended` | the account is switched off by the administrator or has an open or lost card dispute (dispute hold); also stops a recovery rotation | contact support; poll nothing |
 | 404 | `claim_not_found` | unknown id **or** wrong secret (identical body). After `claim_max_failed_attempts` wrong secrets the claim is locked and answers 404 even to the right secret | stop; start a new sign-up |
-| 409 | `already_claimed` | the token was already collected | do not retry; use the stored token |
+| 409 | `already_claimed` | the pickup was confirmed, or the recovery window is over (also for pickups made before recovery existed) | do not retry; use the stored token |
+| 409 | `site_revoked` | the picked-up site was disconnected; a revoked site is never revived | start a new sign-up |
 | 409 | `site_limit_reached` | the plan's site limit is full | revoke an unused site, then poll again |
 | 410 | `claim_expired` | not paid within `claim_ttl_hours`, or the checkout expired | start a new sign-up |
+
+Recovery rules: every request needs the right claim secret (a wrong one counts towards the lockout and never rotates anything). Rotation is serialised per claim, so parallel requests end with exactly one working token (the last issued). Status flow: `open` -> `paid` -> `consumed` -> `confirmed`.
+
+### POST /v1/billing/claim/confirm (site token)
+
+`{ "claim_id": "lcc_claim_..." }` with `Authorization: Bearer <the token just received>`. The site calls it after it has stored the token; this closes the recovery window for good. `200 { "status": "confirmed" }` (repeating it is fine). `404 claim_not_found` for an unknown claim or a claim of another site (same body). `401 invalid_token` if the token was rotated in the meantime by a parallel claim (claim again, then confirm with the new token). `503 billing_disabled` without Stripe configuration. The claim secret is never sent to this endpoint.
 
 ### POST /v1/billing/checkout (site token)
 
@@ -212,7 +219,7 @@ No authentication. `200 {"status":"ok","db":"ok"}`; `503 {"status":"error","db":
 
 ## Billing constants (`config.ini`, section `[billing]`)
 
-`success_url`, `cancel_url`, `portal_return_url`, `claim_ttl_hours` (24), `claim_max_failed_attempts` (10), `pair_code_ttl_minutes` (10), `max_active_pair_codes` (5), `pack_valid_months` (12), `signups_per_ip_per_hour` (10), `consent_terms` (false), `automatic_tax` (false), `webhook_max_body_bytes` (1048576), `unmatched_retention_days` (90).
+`success_url`, `cancel_url`, `portal_return_url`, `claim_ttl_hours` (24), `claim_max_failed_attempts` (10), `claim_recovery_hours` (24), `pair_code_ttl_minutes` (10), `max_active_pair_codes` (5), `pack_valid_months` (12), `signups_per_ip_per_hour` (10), `consent_terms` (false), `automatic_tax` (false), `webhook_max_body_bytes` (1048576), `unmatched_retention_days` (90).
 
 ## Limits (from `config.ini`, section `[limits]`)
 

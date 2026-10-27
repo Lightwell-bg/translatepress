@@ -512,6 +512,12 @@ if ( 'extra' === $phase ) {
 				$settings_page = $c->get( SettingsPage::class );
 				$identity( 'key_status', $settings_page->keyStatusHtml(), $ctx::keyStatus() );
 
+				// LingoCanvas Cloud section (not connected: sign-up state) through real wp_kses.
+				$cloud_section = $c->get( LingoCanvas\Admin\CloudSection::class );
+				$identity( 'cloud_provider', $cloud_section->providerHtml(), $ctx::cloudSection() );
+				$identity( 'cloud_block', $cloud_section->cloudHtml(), $ctx::cloudSection() );
+				$identity( 'cloud_forms', $cloud_section->formsHtml(), $ctx::cloudSection() );
+
 				// StringTranslationPage::scopeControlHtml.
 				$obj = LingoCanvas\Admin\StringTranslationPage::scopeControlHtml( 'object', $post_id, 'Smoke "post" <i>' );
 				$identity( 'scope_object', $obj, $ctx::scopeControl() );
@@ -563,6 +569,7 @@ if ( 'extra' === $phase ) {
 				set_current_screen( 'toplevel_page_' . SettingsPage::MENU_SLUG );
 				$html = $render( $settings_page );
 				lingocanvas_smoke_check( 'x_kses_page_settings', str_contains( $html, 'id="mlp-openai-key"' ) && 1 === preg_match( '/id="mlp-openai-key"[^>]*\breadonly\b/', $html ) && 1 === preg_match( '/id="mlp-openai-model"[^>]*\breadonly\b|\breadonly\b[^>]*value="smoke-model"/s', $html ) && str_contains( $html, 'class="description"' ) && ! str_contains( $html, '<!--ERRORS' ), 'bytes=' . strlen( $html ) . ( preg_match( '/<!--ERRORS[^>]*-->/', $html, $m ) ? ' ' . $m[0] : '' ) );
+				lingocanvas_smoke_check( 'x_kses_page_settings_cloud', str_contains( $html, 'id="lingocanvas-cloud"' ) && str_contains( $html, 'name="provider"' ) && str_contains( $html, 'id="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'form="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'centerai.eu/lingocanvas/terms/' ), 'bytes=' . strlen( $html ) );
 
 				$_GET['lingocanvas_scope']  = 'object:' . $post_id; // phpcs:ignore
 				$_GET['lingocanvas_locale'] = 'en'; // phpcs:ignore
@@ -838,6 +845,58 @@ if ( 'check2' === $phase ) {
 			lingocanvas_smoke_check( 'g_context_translation', 'ключ OpenAI' === $ctx, 'got=' . $ctx );
 			remove_filter( 'locale', $force );
 			remove_filter( 'plugin_locale', $force );
+		}
+	);
+
+	// (g2) LingoCanvas Cloud claim lock: the real private methods against the real options table
+	// (atomic UPDATE ... WHERE option_value = old, conditional DELETE, option cache flushing).
+	lingocanvas_smoke_step(
+		'k_claim_lock',
+		static function (): void {
+			$client  = ( new ReflectionClass( LingoCanvas\Translation\CloudClient::class ) )->newInstanceWithoutConstructor();
+			$acquire = new ReflectionMethod( $client, 'acquireClaimLock' );
+			$release = new ReflectionMethod( $client, 'releaseClaimLock' );
+			$acquire->setAccessible( true );
+			$release->setAccessible( true );
+			$opt = LingoCanvas\Translation\CloudClient::CLAIM_LOCK_OPTION;
+
+			delete_option( $opt );
+
+			// (1) free lock is acquired and stores owner|expiry.
+			$owner = $acquire->invoke( $client );
+			$parts = is_string( $owner ) ? explode( '|', $owner ) : array();
+			lingocanvas_smoke_check( 'k_acquire_free_lock', is_string( $owner ) && 2 === count( $parts ) && (int) $parts[1] > time() && get_option( $opt ) === $owner, 'owner=' . var_export( $owner, true ) );
+
+			// (2) a fresh lock cannot be acquired again.
+			lingocanvas_smoke_check( 'k_second_acquire_fails_on_fresh_lock', null === $acquire->invoke( $client ) && get_option( $opt ) === $owner, '' );
+
+			// (4a) release by a foreign owner leaves the lock.
+			$release->invoke( $client, 'foreign|' . ( time() + 100 ) );
+			lingocanvas_smoke_check( 'k_foreign_release_keeps_lock', get_option( $opt ) === $owner, '' );
+
+			// (4b) release by the owner removes it; get_option reflects the DB (cache flushed).
+			$release->invoke( $client, (string) $owner );
+			lingocanvas_smoke_check( 'k_owner_release_removes_lock', false === get_option( $opt, false ), 'get_option=' . var_export( get_option( $opt, false ), true ) );
+
+			// (3) stale lock: takeover by the atomic UPDATE; of two sequential attempts on the same old value only one wins.
+			$stale = 'deadbeefdeadbeef|' . ( time() - 100 );
+			update_option( $opt, $stale, false );
+			$first = $acquire->invoke( $client );
+			lingocanvas_smoke_check( 'k_stale_takeover_first_wins', is_string( $first ) && $first !== $stale, 'first=' . var_export( $first, true ) );
+			lingocanvas_smoke_check( 'k_takeover_get_option_reflects_db', is_string( $first ) && get_option( $opt ) === $first, 'get_option=' . var_export( get_option( $opt ), true ) );
+
+			// The second contender still holds the old stale value: replay the same UPDATE it would run.
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$rows = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET option_value = %s WHERE option_name = %s AND option_value = %s', $wpdb->options, 'second|' . ( time() + 100 ), $opt, $stale ) );
+			wp_cache_delete( $opt, 'options' );
+			wp_cache_delete( 'alloptions', 'options' );
+			lingocanvas_smoke_check( 'k_stale_takeover_second_loses', 0 === (int) $rows && get_option( $opt ) === $first, 'rows_affected=' . var_export( $rows, true ) );
+
+			// Second real attempt on a fresh lock fails too, then cleanup.
+			lingocanvas_smoke_check( 'k_acquire_after_takeover_fails', null === $acquire->invoke( $client ), '' );
+			$release->invoke( $client, (string) $first );
+			lingocanvas_smoke_check( 'k_release_after_takeover_removes', false === get_option( $opt, false ), '' );
 		}
 	);
 

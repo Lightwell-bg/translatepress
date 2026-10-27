@@ -109,6 +109,76 @@ final class AllowedHtml {
 	}
 
 	/**
+	 * Раздел «LingoCanvas Cloud» на странице настроек (CloudSection::providerHtml, cloudHtml, formsHtml).
+	 *
+	 * @return array<string, array<string, bool>>
+	 */
+	public static function cloudSection(): array {
+		return array(
+			'fieldset' => array(),
+			'legend'   => array( 'class' => true ),
+			'div'      => array(
+				'class'                        => true,
+				'id'                           => true,
+				'data-lingocanvas-cloud-status' => true,
+			),
+			'p'        => array(
+				'class'                         => true,
+				'hidden'                        => true,
+				'role'                          => true,
+				'aria-live'                     => true,
+				'data-lingocanvas-field'        => true,
+				'data-lingocanvas-cloud-pack-note' => true,
+			),
+			'br'       => array(),
+			'label'    => array( 'for' => true ),
+			'input'    => array(
+				'type'         => true,
+				'name'         => true,
+				'value'        => true,
+				'id'           => true,
+				'class'        => true,
+				'checked'      => true,
+				'required'     => true,
+				'form'         => true,
+				'autocomplete' => true,
+			),
+			'button'   => array(
+				'type'                              => true,
+				'class'                             => true,
+				'form'                              => true,
+				'hidden'                            => true,
+				'data-lingocanvas-confirm'          => true,
+				'data-lingocanvas-cloud-refresh'    => true,
+				'data-lingocanvas-cloud-pack'       => true,
+				'data-lingocanvas-cloud-resubscribe' => true,
+			),
+			'span'     => array(
+				'class'                  => true,
+				'role'                   => true,
+				'aria-live'              => true,
+				'data-lingocanvas-field' => true,
+			),
+			'ul'       => array(
+				'class'  => true,
+				'hidden' => true,
+			),
+			'li'       => array(),
+			'strong'   => array(),
+			'a'        => array(
+				'href'   => true,
+				'target' => true,
+				'rel'    => true,
+			),
+			'form'     => array(
+				'id'     => true,
+				'method' => true,
+				'action' => true,
+			),
+		);
+	}
+
+	/**
 	 * Выбор области на странице строк (StringTranslationPage::scopeControlHtml).
 	 *
 	 * @return array<string, array<string, bool>>

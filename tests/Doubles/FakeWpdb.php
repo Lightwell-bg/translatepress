@@ -49,6 +49,59 @@ final class FakeWpdb {
 	/** @var array<string, mixed>|null Ответ get_row(). */
 	public ?array $row = null;
 
+	public string $options = 'wp_options';
+
+	/**
+	 * Колбэк, который вызывается перед обработкой каждого query(): им тест вклинивается между шагами
+	 * (имитация гонки). Получает SQL.
+	 *
+	 * @var callable|null
+	 */
+	public $beforeQuery = null;
+
+	/**
+	 * Выполняет условные UPDATE/DELETE опций (замок опроса Cloud) над хранилищем опций тестов.
+	 *
+	 * Понимает ровно два шаблона, которые использует плагин:
+	 * `UPDATE <t> SET option_value = 'new' WHERE option_name = 'n' AND option_value = 'old'` и
+	 * `DELETE FROM <t> WHERE option_name = 'n' AND option_value = 'old'`.
+	 *
+	 * @return int|false Число затронутых строк.
+	 */
+	public function query( string $sql ) {
+		if ( null !== $this->beforeQuery ) {
+			( $this->beforeQuery )( $sql );
+		}
+
+		$this->queries[] = $sql;
+
+		$options = lingocanvas_test_options();
+
+		if ( 1 === preg_match( "/^UPDATE \\S+ SET option_value = '(.*)' WHERE option_name = '(.*)' AND option_value = '(.*)'$/s", $sql, $m ) ) {
+			if ( array_key_exists( $m[2], $options ) && (string) $options[ $m[2] ] === $m[3] ) {
+				$options[ $m[2] ] = $m[1];
+				lingocanvas_test_options( $options, true );
+
+				return 1;
+			}
+
+			return 0;
+		}
+
+		if ( 1 === preg_match( "/^DELETE FROM \\S+ WHERE option_name = '(.*)' AND option_value = '(.*)'$/s", $sql, $m ) ) {
+			if ( array_key_exists( $m[1], $options ) && (string) $options[ $m[1] ] === $m[2] ) {
+				unset( $options[ $m[1] ] );
+				lingocanvas_test_options( $options, true );
+
+				return 1;
+			}
+
+			return 0;
+		}
+
+		return 0;
+	}
+
 	/**
 	 * @param string $sql  Запрос с %s/%d.
 	 * @param mixed  ...$args Параметры (или один массив).

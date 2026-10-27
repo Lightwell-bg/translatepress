@@ -208,6 +208,11 @@ async def test_claim_expired_and_double_pickup(bill):
     await bill.execute("UPDATE checkout_claims SET expires_at = now() - interval '1 minute' WHERE id = :i", i=info["claim_id"])
     ok = await bill.claim(info["claim_id"], info["claim_secret"])
     assert ok.status_code == 200
+    # Once the site confirmed receipt of the token, the pickup is final.
+    confirm = await bill.client.post(
+        "/v1/billing/claim/confirm", json={"claim_id": info["claim_id"]}, headers=auth(ok.json()["token"])
+    )
+    assert confirm.status_code == 200
     second = await bill.claim(info["claim_id"], info["claim_secret"])
     assert second.status_code == 409 and second.json()["error"]["code"] == "already_claimed"
     assert (await bill.scalar("SELECT count(*) AS v FROM sites")) == 1

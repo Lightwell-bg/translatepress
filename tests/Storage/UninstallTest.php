@@ -26,6 +26,12 @@ final class UninstallTest extends TestCase {
 		'lingocanvas_prefix_conflicts',
 		'lingocanvas_pending_activation',
 		'lingocanvas_legacy_dir',
+		'lingocanvas_cloud_ops',
+		'lingocanvas_cloud_ops_lock',
+		'lingocanvas_cloud_claim_archive',
+		'lingocanvas_cloud_claim_unconfirmed',
+		'lingocanvas_cloud_claim_lock',
+		'lingocanvas_cloud_signup_lock',
 	);
 
 	private string $uploads;

@@ -1614,13 +1614,13 @@ msgstr "Дневной лимит символов на перевод исче�
 #: src/Rest/TranslationsController.php
 #: src/Rest/PostTranslationController.php
 #. translators: %s: reason returned by the provider.
-msgid "Could not get a translation from OpenAI: %s"
-msgstr "Не удалось получить перевод от OpenAI: %s"
+msgid "Could not get a translation from the AI provider: %s"
+msgstr "Не удалось получить перевод от ИИ-провайдера: %s"
 
 #: src/Rest/TranslationsController.php
 #: src/Rest/PostTranslationController.php
-msgid "Could not get a translation from OpenAI."
-msgstr "Не удалось получить перевод от OpenAI."
+msgid "Could not get a translation from the AI provider."
+msgstr "Не удалось получить перевод от ИИ-провайдера."
 
 #: src/Rest/TranslationsController.php
 msgid "Could not save the translation."
@@ -1764,3 +1764,365 @@ msgstr "SEO/GEO"
 #: src/Rest/TranslationsController.php
 msgid "The link address uses a protocol that is not allowed (for example javascript: or data:)."
 msgstr "Адрес ссылки использует недопустимый протокол (например, javascript: или data:)."
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "connection to LingoCanvas Cloud"
+msgstr "подключение к LingoCanvas Cloud"
+
+#: src/Admin/StringTranslationPage.php
+msgctxt "mid-sentence"
+msgid "consent to send texts to LingoCanvas Cloud"
+msgstr "согласие на отправку текстов в LingoCanvas Cloud"
+
+#: src/Translation/CloudException.php
+msgid "Your LingoCanvas Cloud characters are used up. Buy an extra pack or wait for the renewal."
+msgstr "Символы LingoCanvas Cloud закончились. Купите дополнительный пакет или дождитесь продления."
+
+#: src/Translation/CloudException.php
+msgid "This site is no longer connected to LingoCanvas Cloud. Connect it again in Settings."
+msgstr "Сайт больше не подключён к LingoCanvas Cloud. Подключите его снова в настройках."
+
+#: src/Translation/CloudException.php
+msgid "Your LingoCanvas Cloud account is suspended. Please contact support."
+msgstr "Аккаунт LingoCanvas Cloud приостановлен. Обратитесь в поддержку."
+
+#: src/Translation/CloudException.php
+msgid "An active LingoCanvas Cloud subscription is required."
+msgstr "Нужна действующая подписка LingoCanvas Cloud."
+
+#: src/Translation/CloudException.php
+msgid "LingoCanvas Cloud is busy, try again in a minute."
+msgstr "LingoCanvas Cloud занят, попробуйте через минуту."
+
+#: src/Translation/CloudException.php
+msgid "LingoCanvas Cloud is temporarily unavailable. Please try again later."
+msgstr "LingoCanvas Cloud временно недоступен. Попробуйте позже."
+
+#: src/Translation/CloudException.php
+msgid "This text is too long for one request."
+msgstr "Этот текст слишком длинный для одного запроса."
+
+#: src/Translation/CloudException.php
+msgid "LingoCanvas Cloud could not process the request."
+msgstr "LingoCanvas Cloud не смог обработать запрос."
+
+#: src/Translation/CloudException.php
+msgid "This site already has an active LingoCanvas Cloud subscription. Use \"Manage subscription\" to change it."
+msgstr "У этого сайта уже есть действующая подписка LingoCanvas Cloud. Изменить её можно через «Управление подпиской»."
+
+#: src/Translation/CloudException.php
+msgid "There is no billing account for this site yet. Subscribe first."
+msgstr "Для этого сайта ещё нет платёжного аккаунта. Сначала оформите подписку."
+
+#: src/Translation/CloudException.php
+msgid "The subscription management page is not available yet. Please contact support."
+msgstr "Страница управления подпиской пока недоступна. Обратитесь в поддержку."
+
+#: src/Translation/CloudException.php
+msgid "Payments are temporarily unavailable. Please try again later."
+msgstr "Оплата временно недоступна. Попробуйте позже."
+
+#: src/Translation/CloudException.php
+msgid "The payment session has expired. Start the subscription again."
+msgstr "Сессия оплаты истекла. Оформите подписку заново."
+
+#: src/Translation/CloudException.php
+msgid "Your LingoCanvas Cloud plan has reached its limit of connected sites."
+msgstr "Ваш тариф LingoCanvas Cloud исчерпал лимит подключённых сайтов."
+
+#: src/Translation/CloudException.php
+msgid "LingoCanvas Cloud returned an unexpected payment address. Please try again later."
+msgstr "LingoCanvas Cloud вернул неожиданный адрес оплаты. Попробуйте позже."
+
+#: src/Translation/ProviderFactory.php
+msgid "LingoCanvas Cloud is not connected: connect this site in the plugin settings."
+msgstr "LingoCanvas Cloud не подключён: подключите сайт в настройках плагина."
+
+#: src/Translation/ProviderFactory.php
+msgid "LingoCanvas Cloud is not enabled: confirm sending texts to the service in the plugin settings."
+msgstr "LingoCanvas Cloud не включён: подтвердите отправку текстов в сервис в настройках плагина."
+
+#: src/Admin/CloudActions.php
+msgid "This site is already connected to LingoCanvas Cloud."
+msgstr "Этот сайт уже подключён к LingoCanvas Cloud."
+
+#: src/Admin/CloudActions.php
+msgid "A payment is already waiting for confirmation. Check it or cancel it first."
+msgstr "Оплата уже ожидает подтверждения. Сначала проверьте её или отмените."
+
+#: src/Admin/CloudActions.php
+msgid "Please confirm that you agree to send texts to LingoCanvas Cloud."
+msgstr "Подтвердите согласие на отправку текстов в LingoCanvas Cloud."
+
+#: src/Admin/CloudActions.php
+msgid "Please enter a valid e-mail address or leave the field empty."
+msgstr "Введите корректный адрес почты или оставьте поле пустым."
+
+#: src/Admin/CloudActions.php
+#: src/Admin/CloudSection.php
+msgid "LingoCanvas Cloud is connected."
+msgstr "LingoCanvas Cloud подключён."
+
+#: src/Admin/CloudActions.php
+msgid "The payment is not confirmed yet."
+msgstr "Оплата пока не подтверждена."
+
+#: src/Admin/CloudActions.php
+msgid "The site token is set in wp-config.php. Remove LINGOCANVAS_CLOUD_TOKEN there to disconnect."
+msgstr "Токен сайта задан в wp-config.php. Чтобы отключить сайт, удалите там LINGOCANVAS_CLOUD_TOKEN."
+
+#: src/Admin/CloudActions.php
+msgid "The site is disconnected from LingoCanvas Cloud. The subscription was not canceled: use \"Manage subscription\" to cancel it."
+msgstr "Сайт отключён от LingoCanvas Cloud. Подписка не отменена: чтобы отменить её, используйте «Управление подпиской»."
+
+#: src/Admin/CloudSection.php
+msgid "Loading status…"
+msgstr "Загрузка состояния…"
+
+#: src/Admin/CloudSection.php
+msgid "Could not load the status."
+msgstr "Не удалось получить состояние."
+
+#: src/Admin/CloudSection.php
+msgid "Checking the payment…"
+msgstr "Проверяем оплату…"
+
+#: src/Admin/CloudSection.php
+msgid "The payment has not been confirmed yet. Use \"Check payment\" later."
+msgstr "Оплата пока не подтверждена. Нажмите «Проверить оплату» позже."
+
+#: src/Admin/CloudSection.php
+msgid "Extra packs can be bought only with an active subscription."
+msgstr "Дополнительные пакеты можно купить только при действующей подписке."
+
+#: src/Admin/SettingsPage.php
+#: src/Admin/CloudSection.php
+msgid "AI translation provider"
+msgstr "Провайдер ИИ-перевода"
+
+#: src/Admin/CloudSection.php
+msgid "Own API key (OpenAI-compatible)"
+msgstr "Свой API-ключ (совместимый с OpenAI)"
+
+#: src/Admin/CloudSection.php
+msgid "LingoCanvas Cloud (paid service by CenterAI)"
+msgstr "LingoCanvas Cloud (платный сервис CenterAI)"
+
+#: src/Admin/SettingsPage.php
+msgid "LingoCanvas Cloud"
+msgstr "LingoCanvas Cloud"
+
+#: src/Admin/CloudSection.php
+msgid "Terms"
+msgstr "Условия использования"
+
+#: src/Admin/CloudSection.php
+msgid "Privacy Policy"
+msgstr "Политика конфиденциальности"
+
+#: src/Admin/CloudSection.php
+#. translators: 1: link "Terms", 2: link "Privacy Policy".
+msgid "The texts you translate, the source and target language, the site name and an optional e-mail address are sent to LingoCanvas Cloud (cloud.centerai.eu, operated by CenterAI). The translation is performed by DeepSeek, whose servers are in China. Read the %1$s and the %2$s. Manual translation and your own API key remain free and work without registration."
+msgstr "Тексты, которые вы переводите, исходный и целевой язык, название сайта и необязательный адрес почты отправляются в LingoCanvas Cloud (cloud.centerai.eu, оператор — CenterAI). Перевод выполняет DeepSeek, серверы которого находятся в Китае. Прочитайте %1$s и %2$s. Ручной перевод и использование собственного API-ключа остаются бесплатными и работают без регистрации."
+
+#: src/Admin/CloudSection.php
+msgid "I agree to send texts for translation to LingoCanvas Cloud"
+msgstr "Я согласен(на) отправлять тексты на перевод в LingoCanvas Cloud"
+
+#: src/Admin/CloudSection.php
+msgid "E-mail (optional)"
+msgstr "Почта (необязательно)"
+
+#: src/Admin/CloudSection.php
+msgid "You will be redirected to Stripe to pay. After the payment, come back to this page: the site connects automatically."
+msgstr "Для оплаты вас перенаправят в Stripe. После оплаты вернитесь на эту страницу: сайт подключится автоматически."
+
+#: src/Admin/CloudSection.php
+msgid "Subscribe — Starter, 9 € / month (100,000 characters)"
+msgstr "Подписаться — Starter, 9 € / месяц (100 000 символов)"
+
+#: src/Admin/CloudSection.php
+msgid "Waiting for payment confirmation…"
+msgstr "Ожидаем подтверждение оплаты…"
+
+#: src/Admin/CloudSection.php
+msgid "Check payment"
+msgstr "Проверить оплату"
+
+#: src/Admin/CloudSection.php
+msgid "This site is connected to LingoCanvas Cloud. The site token is set in wp-config.php."
+msgstr "Сайт подключён к LingoCanvas Cloud. Токен сайта задан в wp-config.php."
+
+#: src/Admin/CloudSection.php
+msgid "This site is connected to LingoCanvas Cloud."
+msgstr "Сайт подключён к LingoCanvas Cloud."
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Plan:"
+msgstr "Тариф:"
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Subscription:"
+msgstr "Подписка:"
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Billing period:"
+msgstr "Расчётный период:"
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Characters left this month:"
+msgstr "Символов осталось в этом месяце:"
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Extra pack characters:"
+msgstr "Символы дополнительных пакетов:"
+
+#: src/Admin/CloudSection.php
+msgctxt "cloud status"
+msgid "Sites:"
+msgstr "Сайты:"
+
+#: src/Admin/CloudSection.php
+msgid "Refresh"
+msgstr "Обновить"
+
+#: src/Admin/CloudSection.php
+msgid "Buy 250,000 characters — 7 €"
+msgstr "Купить 250 000 символов — 7 €"
+
+#: src/Admin/CloudSection.php
+msgid "Subscribe again"
+msgstr "Подписаться снова"
+
+#: src/Admin/CloudSection.php
+msgid "Manage subscription"
+msgstr "Управление подпиской"
+
+#: src/Admin/CloudSection.php
+msgid "To disconnect this site, remove LINGOCANVAS_CLOUD_TOKEN from wp-config.php."
+msgstr "Чтобы отключить сайт, удалите LINGOCANVAS_CLOUD_TOKEN из wp-config.php."
+
+#: src/Admin/CloudSection.php
+msgid "Disconnect this site from LingoCanvas Cloud? Your subscription will NOT be canceled."
+msgstr "Отключить сайт от LingoCanvas Cloud? Подписка НЕ будет отменена."
+
+#: src/Admin/CloudSection.php
+msgid "Disconnect"
+msgstr "Отключить"
+
+#: src/Admin/CloudSection.php
+msgid "Disconnecting only removes the connection from this site: your subscription is NOT canceled and keeps being billed. To cancel it, use \"Manage subscription\". Translations already saved stay in place, and AI translation switches back to your own API key."
+msgstr "Отключение лишь убирает связь с этим сайтом: подписка НЕ отменяется и продолжает оплачиваться. Чтобы отменить её, используйте «Управление подпиской». Сохранённые переводы остаются на месте, а ИИ-перевод возвращается на ваш собственный API-ключ."
+
+#: src/Admin/CloudSection.php
+msgid "The pending payment was canceled on this site."
+msgstr "Ожидающая оплата отменена на этом сайте."
+
+#: src/Admin/CloudStatus.php
+msgid "Extra packs can be used only while the subscription is active."
+msgstr "Дополнительные пакеты можно использовать только при действующей подписке."
+
+#: src/Admin/CloudStatus.php
+msgid "No plan"
+msgstr "Нет тарифа"
+
+#: src/Admin/CloudStatus.php
+msgid "Starter"
+msgstr "Starter"
+
+#: src/Admin/CloudStatus.php
+msgid "No subscription"
+msgstr "Нет подписки"
+
+#: src/Admin/CloudStatus.php
+msgid "Active"
+msgstr "Действует"
+
+#: src/Admin/CloudStatus.php
+msgid "Trial period"
+msgstr "Пробный период"
+
+#: src/Admin/CloudStatus.php
+msgid "Payment overdue"
+msgstr "Платёж просрочен"
+
+#: src/Admin/CloudStatus.php
+msgid "Unpaid"
+msgstr "Не оплачена"
+
+#: src/Admin/CloudStatus.php
+msgid "Canceled"
+msgstr "Отменена"
+
+#: src/Admin/CloudStatus.php
+msgid "Not completed"
+msgstr "Не завершена"
+
+#: src/Admin/CloudStatus.php
+msgid "Paused"
+msgstr "Приостановлена"
+
+#: src/Admin/CloudStatus.php
+msgid "Unknown"
+msgstr "Неизвестно"
+
+#: src/Admin/CloudStatus.php
+#. translators: %s: date.
+msgid "Ended on %s"
+msgstr "Закончилась %s"
+
+#: src/Admin/CloudStatus.php
+#. translators: %s: date.
+msgid "Ends on %s"
+msgstr "Заканчивается %s"
+
+#: src/Admin/CloudStatus.php
+#. translators: %s: date.
+msgid "Renews on %s"
+msgstr "Продлевается %s"
+
+#: src/Admin/CloudStatus.php
+#. translators: 1: number of connected sites, 2: maximum number of sites.
+msgid "%1$s of %2$s"
+msgstr "%1$s из %2$s"
+
+#: src/Translation/CloudException.php
+#. translators: %s: payment claim ID to quote to support.
+msgid "Payment is confirmed, but the connection key was already issued and not received by this site. Contact support and quote this claim ID: %s"
+msgstr "Оплата подтверждена, но ключ подключения уже выдан и не дошёл до этого сайта. Напишите в поддержку и назовите номер заявки: %s"
+
+#: src/Translation/CloudException.php
+#. translators: %d: number of seconds to wait.
+msgid "LingoCanvas Cloud is busy, try again in %d seconds."
+msgstr "LingoCanvas Cloud занят, попробуйте через %d сек."
+
+#: src/Translation/CloudException.php
+msgid "The connection key could not be saved on this site. Check that the database is writable and contact support."
+msgstr "Ключ подключения не удалось сохранить на этом сайте. Проверьте, что база данных доступна для записи, и напишите в поддержку."
+
+#: src/Admin/CloudActions.php
+msgid "Sign-up is already in progress, please wait a few seconds."
+msgstr "Регистрация уже выполняется, подождите несколько секунд."
+
+#: src/Admin/CloudSection.php
+msgid "You canceled a payment on this site. If you had already paid, the confirmation can still be received until the payment session expires."
+msgstr "Вы отменили платёж на этом сайте. Если вы уже заплатили, подтверждение всё ещё можно получить, пока не истекло время платёжной сессии."
+
+#: src/Admin/CloudSection.php
+msgid "Already paid? Check again"
+msgstr "Уже оплатили? Проверить ещё раз"
+
+#: src/Admin/CloudSection.php
+msgid "If you have already paid, do not cancel — the confirmation can take a minute."
+msgstr "Если вы уже заплатили, не отменяйте: подтверждение может прийти в течение минуты."
+
+#: src/Admin/CloudSection.php
+#: src/Rest/CloudController.php
+msgid "Status is not loaded: you have not agreed to send texts to LingoCanvas Cloud. Tick the agreement above and save the settings."
+msgstr "Состояние не загружено: вы не согласились отправлять тексты в LingoCanvas Cloud. Отметьте согласие выше и сохраните настройки."

@@ -50,6 +50,10 @@ async def test_claim_pickup_returns_token_once_and_token_translates(bill):
     assert data["token"].startswith("lcc_") and data["site_id"] > 0
     assert (await bill.one("SELECT name AS v FROM sites"))["v"] == "Мой сайт example.com"
 
+    confirm = await bill.client.post(
+        "/v1/billing/claim/confirm", json={"claim_id": info["claim_id"]}, headers=auth(data["token"])
+    )
+    assert confirm.status_code == 200
     again = await bill.claim(info["claim_id"], info["claim_secret"])
     assert again.status_code == 409 and again.json()["error"]["code"] == "already_claimed"
     assert "token" not in again.text

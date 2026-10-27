@@ -444,6 +444,25 @@ A message like `Failed to get a translation from OpenAI: network error: cURL err
 
 If the error is not a one-off but stable, the translation spoils nothing in any case: the string simply stays a draft with no saved translation, and retrying is safe at any moment.
 
+## Connecting LingoCanvas Cloud (paid AI translation)
+
+LingoCanvas Cloud is an optional paid translation service by CenterAI (translation is performed by DeepSeek, servers in China). It is an alternative to your own OpenAI key: manual translation and the own-key mode stay free and work without registration. Texts being translated (including drafts and private posts), the languages, the site name and the optional e-mail are sent to `cloud.centerai.eu` only after you tick the consent box and select the provider. Terms: <https://centerai.eu/lingocanvas/terms/>, Privacy Policy: <https://centerai.eu/lingocanvas/privacy/>.
+
+1. "Multilingual → Languages". In the row "LingoCanvas Cloud" read the notice, tick "I agree to send texts for translation to LingoCanvas Cloud" (optionally enter an e-mail) and click "Subscribe — Starter, 9 € / month (100,000 characters)".
+2. You are taken to the Stripe payment page (`checkout.stripe.com`). Pay, then come back to the "Languages" page. While the payment is not confirmed the page shows "Waiting for payment confirmation…" and checks it every 5 seconds for up to 10 minutes; "Check payment" checks right now. "Cancel" first checks the payment once more (if it is already confirmed, the site connects), otherwise it moves the pending payment aside on this site until its session expires; if you had already paid, the button "Already paid? Check again" checks it later (do not cancel a payment you have made — the confirmation can take a minute). Clicking "Subscribe" twice, or in two tabs, leads to the same Stripe payment instead of creating a second one. If the response with the connection key is lost on the way, the next check simply fetches the key again (the service re-issues it for 24 hours until the plugin confirms receipt; the plugin retries the confirmation later if it fails). If the 24 hours have passed and the key still did not reach this site, the page shows the claim ID to quote to support; the pending payment is kept. When the payment is confirmed the site connects by itself and the provider switches to LingoCanvas Cloud.
+3. The connected site shows the plan, subscription status, renewal date ("Ends on …" if canceled), characters left this month, extra-pack characters and the number of sites ("Refresh" bypasses the 60-second cache). "Buy 250,000 characters — 7 €" needs a live subscription; "Subscribe again" appears when the subscription is not live; "Manage subscription" opens the Stripe portal (card, cancel, invoices).
+4. The provider radio ("Own API key" / "LingoCanvas Cloud") is saved with the rest of the settings. Un-ticking the consent box and saving stops all requests to Cloud: no account status, no payment polling and no billing buttons (they explain the reason) — even when the site token is set in `wp-config.php`; AI buttons then explain what is missing.
+5. Repeated translation requests: the request ID of every translation request is stored in the database (option `lingocanvas_cloud_ops`, 24 hours, up to 200 entries), so a second click on the same strings after a timeout resends the same ID and the service answers without charging again. If the service asks to wait longer than 10 seconds ("busy"), the plugin stops and tells you after how many seconds to try again.
+
+The site token is stored in the database (option `lingocanvas_settings`) and is never printed to HTML, JS or REST responses. Optional `wp-config.php` constants:
+
+```php
+define( 'LINGOCANVAS_CLOUD_TOKEN', '...' );                          // site token; the page then shows "set in wp-config.php"
+define( 'LINGOCANVAS_CLOUD_API_URL', 'https://cloud.centerai.eu' ); // only for a test/staging service
+```
+
+**Disconnect** removes the token from this site and switches the provider back to your own key. It does NOT cancel the subscription (it keeps being billed): cancel it with "Manage subscription". Saved translations are not touched. To connect an existing subscription to this site again, contact support. A token set by the `LINGOCANVAS_CLOUD_TOKEN` constant can only be removed by deleting the constant.
+
 ## Structure
 
 ```
@@ -494,6 +513,8 @@ All endpoints require the `manage_options` capability and a REST nonce.
 | `GET` | `/wp-json/lingocanvas/v1/posts/{post_id}/summary` | "Translate the whole content": parse the post, create missing strings, return the segment list and chunk boundaries |
 | `POST` | `/wp-json/lingocanvas/v1/posts/{post_id}/chunk` | translate one chunk via AI, saving nothing |
 | `POST` | `/wp-json/lingocanvas/v1/posts/{post_id}/commit` | save the whole list as one atomic operation |
+| `GET` | `/wp-json/lingocanvas/v1/cloud/status[?refresh=1]` | LingoCanvas Cloud account status as display fields only (cached 60 s); never contains the token |
+| `POST` | `/wp-json/lingocanvas/v1/cloud/claim` | one check "is the payment confirmed"; returns only `{status: pending\|connected\|error, message}` |
 
 ### Performance
 
@@ -570,13 +591,14 @@ winget install PHP.PHP.8.4
 
 ## LingoCanvas Cloud backend (cloud/)
 
-The `cloud/` folder holds the backend of the future paid "LingoCanvas Cloud" translation provider (FastAPI + PostgreSQL, quota-based). It lives in this repository for convenience only and is never part of the plugin ZIP. Status: stage 3 MVP, not deployed. See [cloud/README.md](cloud/README.md).
+The `cloud/` folder holds the backend of the paid "LingoCanvas Cloud" translation provider (FastAPI + PostgreSQL, quota-based, Stripe billing); the plugin side is described in "Connecting LingoCanvas Cloud" above. It lives in this repository for convenience only and is never part of the plugin ZIP. Status: not deployed yet. See [cloud/README.md](cloud/README.md).
 
 ## External services
 
 | Service | Why | Where to get a key | Where to enter it |
 |---|---|---|---|
 | OpenAI (optional) | the "Translate with AI" button | <https://platform.openai.com/api-keys> ([docs](https://platform.openai.com/docs)) | "Multilingual → Languages → OpenAI key" (stored in the database), or `LINGOCANVAS_OPENAI_API_KEY` in `wp-config.php` — see "Connecting OpenAI" above |
+| LingoCanvas Cloud (optional, paid) | AI translation without your own key | subscribe on the plugin settings page (Stripe checkout); the site token arrives automatically | "Multilingual → Languages → LingoCanvas Cloud" (stored in the database), or `LINGOCANVAS_CLOUD_TOKEN` in `wp-config.php` — see "Connecting LingoCanvas Cloud" above |
 
 ## License
 

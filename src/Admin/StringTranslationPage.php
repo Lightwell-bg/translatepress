@@ -741,7 +741,12 @@ final class StringTranslationPage implements Hookable {
 		$names = array(
 			ProviderFactory::FIELD_KEY   => _x( 'OpenAI key', 'mid-sentence', 'lingocanvas' ),
 			ProviderFactory::FIELD_MODEL => _x( 'OpenAI model', 'mid-sentence', 'lingocanvas' ),
+			ProviderFactory::FIELD_CLOUD_TOKEN   => _x( 'connection to LingoCanvas Cloud', 'mid-sentence', 'lingocanvas' ),
+			ProviderFactory::FIELD_CLOUD_CONSENT => _x( 'consent to send texts to LingoCanvas Cloud', 'mid-sentence', 'lingocanvas' ),
 		);
+
+		$cloudMissing = array() !== array_intersect( $missing, array( ProviderFactory::FIELD_CLOUD_TOKEN, ProviderFactory::FIELD_CLOUD_CONSENT ) );
+		$settingsUrl  = admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) . ( $cloudMissing ? '#' . CloudSection::ANCHOR : '' );
 
 		$labels = array();
 
@@ -756,7 +761,7 @@ final class StringTranslationPage implements Hookable {
 					/* translators: 1: comma-separated list of missing fields, 2: link to the settings page */
 					__( 'The “Translate with AI” button is not available: missing — %1$s. Fill it in on the %2$s page.', 'lingocanvas' ),
 					'<strong>' . esc_html( implode( ', ', $labels ) ) . '</strong>',
-					'<a href="' . esc_url( admin_url( 'admin.php?page=' . SettingsPage::MENU_SLUG ) ) . '">' . esc_html__( 'Multilingual → Languages', 'lingocanvas' ) . '</a>'
+					'<a href="' . esc_url( $settingsUrl ) . '">' . esc_html__( 'Multilingual → Languages', 'lingocanvas' ) . '</a>'
 				),
 				array(
 					'a'      => array( 'href' => array() ),

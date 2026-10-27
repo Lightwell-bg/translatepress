@@ -44,6 +44,13 @@ if ( ! function_exists( 'lingocanvas_uninstall_service_options' ) ) {
 			'lingocanvas_prefix_conflicts',
 			'lingocanvas_pending_activation',
 			'lingocanvas_legacy_dir',
+			// Служебное состояние Cloud (идентификаторы запросов, замки, архив отменённых заявок с секретами).
+			'lingocanvas_cloud_ops',
+			'lingocanvas_cloud_ops_lock',
+			'lingocanvas_cloud_claim_archive',
+			'lingocanvas_cloud_claim_unconfirmed',
+			'lingocanvas_cloud_claim_lock',
+			'lingocanvas_cloud_signup_lock',
 		) as $option ) {
 			delete_option( $option );
 		}
@@ -98,7 +105,7 @@ if ( ! function_exists( 'lingocanvas_uninstall_options_and_meta' ) ) {
 	function lingocanvas_uninstall_options_and_meta(): void {
 		global $wpdb;
 
-		foreach ( array( 'settings', 'db_version', 'cache_version', 'block_hashes' ) as $suffix ) {
+		foreach ( array( 'settings', 'db_version', 'cache_version', 'block_hashes', 'cloud_claim' ) as $suffix ) {
 			delete_option( 'lingocanvas_' . $suffix );
 		}
 

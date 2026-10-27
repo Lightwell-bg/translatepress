@@ -12,6 +12,9 @@ namespace LingoCanvas;
 // Guard placed before the long import list so direct-access scanners see it near the top.
 defined( 'ABSPATH' ) || exit;
 
+use LingoCanvas\Admin\CloudActions;
+use LingoCanvas\Admin\CloudSection;
+use LingoCanvas\Admin\CloudStatus;
 use LingoCanvas\Admin\EditorLink;
 use LingoCanvas\Admin\EditorPage;
 use LingoCanvas\Admin\EditorPostLinks;
@@ -40,6 +43,7 @@ use LingoCanvas\Rendering\OutputBuffer;
 use LingoCanvas\Rendering\PostContentExtractor;
 use LingoCanvas\Rendering\Translator;
 use LingoCanvas\Rest\BlocksController;
+use LingoCanvas\Rest\CloudController;
 use LingoCanvas\Rest\EditorPagesController;
 use LingoCanvas\Rest\OpenAiModelsController;
 use LingoCanvas\Rest\PostTranslationController;
@@ -398,7 +402,39 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( LanguagePacks::class ),
 				$c->get( ProviderFactory::class ),
-				$c->get( PostLanguageVisibility::class )
+				$c->get( PostLanguageVisibility::class ),
+				$c->get( CloudSection::class )
+			)
+		);
+
+		$c->set(
+			CloudStatus::class,
+			static fn( Container $c ): CloudStatus => new CloudStatus( $c->get( ProviderFactory::class ) )
+		);
+
+		$c->set(
+			CloudActions::class,
+			static fn( Container $c ): CloudActions => new CloudActions(
+				$c->get( ProviderFactory::class ),
+				$c->get( Settings::class ),
+				$c->get( CloudStatus::class )
+			)
+		);
+
+		$c->set(
+			CloudSection::class,
+			static fn( Container $c ): CloudSection => new CloudSection(
+				$c->get( Settings::class ),
+				$c->get( ProviderFactory::class ),
+				$c->get( CloudActions::class )
+			)
+		);
+
+		$c->set(
+			CloudController::class,
+			static fn( Container $c ): CloudController => new CloudController(
+				$c->get( CloudStatus::class ),
+				$c->get( CloudActions::class )
 			)
 		);
 
@@ -548,6 +584,7 @@ final class Plugin {
 			PostTranslationController::class,
 			EditorPagesController::class,
 			OpenAiModelsController::class,
+			CloudController::class,
 			PostVisibilityController::class,
 			// Ссылка «Перевести страницу» живёт в админ-баре на фронтенде.
 			EditorPage::class,
@@ -560,6 +597,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			// Админские сервисы не нужны фронтенду: не создаём их лишний раз.
 			$services[] = SettingsPage::class;
+			$services[] = CloudSection::class;
 			$services[] = HelpTabs::class;
 			$services[] = EditorPostLinks::class;
 			$services[] = PostListLanguages::class;

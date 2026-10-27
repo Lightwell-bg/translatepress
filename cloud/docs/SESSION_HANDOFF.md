@@ -98,6 +98,14 @@ alembic check
 - **Гранты.** `quota.grant` с тем же `source_ref` для другого аккаунта/типа/источника/суммы/дат бросает `GrantConflict` (CLI: понятная ошибка, ненулевой код выхода).
 - Тесты: `tests/test_review_fixes.py` (детерминированные, на `asyncio.Event`), дополнены `test_provider_deepseek.py`, `test_cli.py`.
 
+## Восстановление токена заявки (claim recovery)
+
+Проблема: ответ `POST /v1/billing/claim` с токеном мог потеряться, а повтор давал `409 already_claimed` навсегда. Решение (миграция `0006_claim_recovery`: `checkout_claims.site_id`, `consumed_at`, `recovery_until`, статус `confirmed`):
+- `consumed` + `now < recovery_until` + сайт не отозван + аккаунт не приостановлен: тот же секрет ротирует токен того же сайта (`recovered: true`, старый токен сразу недействителен, новых сайтов/квот нет). Окно `claim_recovery_hours` (config.ini [billing], по умолчанию 24).
+- Новый `POST /v1/billing/claim/confirm` (токен сайта, тело `{claim_id}`): `consumed` -> `confirmed`, `recovery_until = NULL`; идемпотентен; чужая или неизвестная заявка даёт `404 claim_not_found`; токен, ротированный параллельным запросом, даёт `401`.
+- Старые `consumed` строки (`recovery_until IS NULL`) не восстанавливаются: `409 already_claimed`. Отозванный сайт: `409 site_revoked`; hold/приостановка: `403`.
+- Тесты: `tests/test_claim_recovery.py`. Проверено `alembic upgrade/check/downgrade` на временной БД pgserver. Нужно выполнить `alembic upgrade head` на существующей БД.
+
 ## Заметки
 
 - Повтор успешного запроса бесплатен для клиента, но перевод снова запрашивается у модели (тексты не хранятся); повтор учитывается в лимитах частоты и одновременных запросов.

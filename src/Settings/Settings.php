@@ -44,6 +44,21 @@ final class Settings {
 	public const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
 
 	/**
+	 * Провайдер перевода: OpenAI-совместимый API со своим ключом.
+	 */
+	public const PROVIDER_OPENAI = 'openai';
+
+	/**
+	 * Провайдер перевода: LingoCanvas Cloud (CenterAI Cloud).
+	 */
+	public const PROVIDER_CLOUD = 'cloud';
+
+	/**
+	 * Адрес API LingoCanvas Cloud по умолчанию.
+	 */
+	public const DEFAULT_CLOUD_API_URL = 'https://cloud.centerai.eu';
+
+	/**
 	 * Сколько слагов можно исключить из карты сайта вручную.
 	 */
 	public const SITEMAP_SLUGS_MAX = 200;
@@ -102,6 +117,10 @@ final class Settings {
 			'openai_base_url'          => '',
 			'openai_base_url_explicit' => false,
 			'sitemap_excluded_slugs'   => array(),
+			'provider'                 => self::PROVIDER_OPENAI,
+			'cloud_token'              => '',
+			'cloud_api_url'            => self::DEFAULT_CLOUD_API_URL,
+			'cloud_consent_at'         => 0,
 		);
 	}
 
@@ -421,6 +440,91 @@ final class Settings {
 	}
 
 	/**
+	 * Выбранный провайдер перевода: `openai` (по умолчанию) или `cloud`.
+	 */
+	public function provider(): string {
+		return self::sanitizeProvider( (string) ( $this->raw()['provider'] ?? '' ), self::PROVIDER_OPENAI );
+	}
+
+	/**
+	 * Приводит имя провайдера к допустимому. Чистая функция.
+	 *
+	 * @param string $value    Значение из формы или базы.
+	 * @param string $fallback Что вернуть для незнакомого значения.
+	 */
+	public static function sanitizeProvider( string $value, string $fallback ): string {
+		$value = strtolower( trim( $value ) );
+
+		return in_array( $value, array( self::PROVIDER_OPENAI, self::PROVIDER_CLOUD ), true ) ? $value : $fallback;
+	}
+
+	/**
+	 * Токен сайта LingoCanvas Cloud, сохранённый в настройках.
+	 *
+	 * Секрет: никогда не выводится ни в HTML, ни в JS, ни в REST-ответ, ни в лог.
+	 */
+	public function cloudToken(): string {
+		return trim( (string) ( $this->raw()['cloud_token'] ?? '' ) );
+	}
+
+	/**
+	 * Адрес API LingoCanvas Cloud из настроек (допустимый или адрес по умолчанию).
+	 */
+	public function cloudApiUrl(): string {
+		$url = self::sanitizeCloudApiUrl( (string) ( $this->raw()['cloud_api_url'] ?? '' ) );
+
+		return '' !== $url ? $url : self::DEFAULT_CLOUD_API_URL;
+	}
+
+	/**
+	 * Момент явного согласия владельца на отправку текстов в Cloud (0 — нет согласия).
+	 */
+	public function cloudConsentAt(): int {
+		return max( 0, (int) ( $this->raw()['cloud_consent_at'] ?? 0 ) );
+	}
+
+	/**
+	 * Проверяет адрес API Cloud: https, либо http только для локальной разработки.
+	 *
+	 * @param string $url Адрес.
+	 * @return string Адрес без хвостового слеша или пустая строка, если он недопустим.
+	 */
+	public static function sanitizeCloudApiUrl( string $url ): string {
+		$url = trim( $url );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$url   = esc_url_raw( $url );
+		$parts = wp_parse_url( $url );
+
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) || ! empty( $parts['user'] ) || ! empty( $parts['pass'] ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+		$host   = strtolower( (string) $parts['host'] );
+
+		if ( 'https' === $scheme || ( 'http' === $scheme && in_array( $host, array( '127.0.0.1', 'localhost' ), true ) ) ) {
+			return untrailingslashit( $url );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Меняет часть настроек Cloud, не затрагивая остальные ключи.
+	 *
+	 * @param array<string, mixed> $changes Ключи: provider, cloud_token, cloud_api_url, cloud_consent_at.
+	 */
+	public function saveCloud( array $changes ): void {
+		$allowed = array_intersect_key( $changes, array_flip( array( 'provider', 'cloud_token', 'cloud_api_url', 'cloud_consent_at' ) ) );
+
+		$this->save( array_merge( $this->raw(), $allowed ) );
+	}
+
+	/**
 	 * Слаги страниц/записей, исключённых из карты сайта вручную.
 	 *
 	 * Только для того, что нельзя распознать программно: обычная страница,
@@ -571,6 +675,10 @@ final class Settings {
 				// Непустое значение из формы — явный выбор владельца, он бьёт окружение.
 				'openai_base_url_explicit' => '' !== $baseUrl,
 				'sitemap_excluded_slugs'   => $this->sanitizeSitemapExcludedSlugs( $input ),
+				'provider'                 => self::sanitizeProvider( (string) ( $input['provider'] ?? '' ), $this->provider() ),
+				'cloud_token'              => $this->sanitizeCloudToken( $input ),
+				'cloud_api_url'            => $this->sanitizeCloudApiUrlInput( $input ),
+				'cloud_consent_at'         => $this->sanitizeCloudConsent( $input ),
 			),
 			'errors'   => $errors,
 		);
@@ -633,6 +741,61 @@ final class Settings {
 		$submitted = isset( $input['openai_api_key'] ) ? trim( (string) $input['openai_api_key'] ) : '';
 
 		return '' !== $submitted ? $submitted : $this->openAiApiKey();
+	}
+
+	/**
+	 * Токен Cloud из формы: пустое поле — «оставить как есть», стереть можно галочкой.
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 */
+	private function sanitizeCloudToken( array $input ): string {
+		if ( ! empty( $input['cloud_token_clear'] ) ) {
+			return '';
+		}
+
+		$submitted = isset( $input['cloud_token'] ) ? trim( (string) $input['cloud_token'] ) : '';
+
+		if ( '' !== $submitted && 1 === preg_match( '/^[A-Za-z0-9_\-]{8,200}$/D', $submitted ) ) {
+			return $submitted;
+		}
+
+		return $this->cloudToken();
+	}
+
+	/**
+	 * Адрес API Cloud из формы: пустой или недопустимый — адрес по умолчанию (поле не в форме — без изменений).
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 */
+	private function sanitizeCloudApiUrlInput( array $input ): string {
+		if ( ! array_key_exists( 'cloud_api_url', $input ) ) {
+			return $this->cloudApiUrl();
+		}
+
+		$url = self::sanitizeCloudApiUrl( (string) $input['cloud_api_url'] );
+
+		return '' !== $url ? $url : self::DEFAULT_CLOUD_API_URL;
+	}
+
+	/**
+	 * Согласие на отправку текстов в Cloud: галочка ставит время один раз, снятие обнуляет.
+	 *
+	 * Поле `cloud_consent` нет в форме — согласие не меняется.
+	 *
+	 * @param array<string, mixed> $input Сырые данные из $_POST.
+	 */
+	private function sanitizeCloudConsent( array $input ): int {
+		$current = $this->cloudConsentAt();
+
+		if ( ! array_key_exists( 'cloud_consent', $input ) ) {
+			return $current;
+		}
+
+		if ( empty( $input['cloud_consent'] ) ) {
+			return 0;
+		}
+
+		return $current > 0 ? $current : time();
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: multilingual, translation, translate, language switcher, hreflang
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.4.5
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,7 +34,7 @@ The plugin takes the HTML that the theme has already rendered, parses it and rep
 * Per-language visibility: show on a language only the posts you have enabled by hand (switch in the posts list, bulk action, filter, edit screen box, visual editor). A hidden post redirects to the default language.
 * Language switcher: a navigation menu item (dropdown or inline), the [lingocanvas_language_switcher] shortcode and a widget. Show the language name, code, flag or flag with code. Flags are uploaded as SVG files and sanitized.
 * Internal links in hard-coded theme blocks (for example the footer) get the language prefix.
-* Optional AI translation with OpenAI or an OpenAI-compatible service. It runs only when an administrator clicks a button (see "External services" below). Nothing is saved automatically: you review the suggestion and save it yourself. A daily character limit caps the usage.
+* Optional AI translation with OpenAI, an OpenAI-compatible service or the paid LingoCanvas Cloud service. It runs only when an administrator clicks a button (see "External services" below). Nothing is saved automatically: you review the suggestion and save it yourself. A daily character limit caps the usage.
 * Flushes the page cache of common caching plugins when a translation changes. A hook (lingocanvas_purge_page_cache) is available for other caches.
 
 **SEO**
@@ -61,7 +61,7 @@ The admin interface is in English and ships with a Russian translation.
 
 == External services ==
 
-This plugin can connect to an external AI translation service. The feature is optional and is off until an administrator provides an API key.
+This plugin can connect to external AI translation services. The features are optional and are off until an administrator provides an API key or connects the paid LingoCanvas Cloud service.
 
 **OpenAI API (or an OpenAI-compatible endpoint set by the site administrator)**
 
@@ -87,6 +87,34 @@ Service links (OpenAI):
 * API data usage policies: https://openai.com/policies/api-data-usage-policies/
 
 If the administrator sets a custom API address (a proxy, OpenRouter or a self-hosted gateway), the data is sent to that service instead of OpenAI, and the terms and privacy policy of that service apply.
+
+**LingoCanvas Cloud (cloud.centerai.eu, operated by CenterAI)**
+
+What it is used for: an optional paid AI translation service. The administrator can choose it instead of their own OpenAI key in "Multilingual → Languages → AI translation provider". The translation itself is performed by DeepSeek (its servers are in China) through the LingoCanvas Cloud service. Payments are handled by Stripe.
+
+When data is sent (only after the administrator ticks the consent box "I agree to send texts for translation to LingoCanvas Cloud", subscribes or connects the site, and selects LingoCanvas Cloud as the provider):
+
+* When an administrator clicks "Translate with AI" next to a translation field, or "Translate the whole content with AI" for a post or page. For a bulk translation the request is repeated for each chunk of text.
+* When an administrator subscribes (sign-up), checks the payment, buys an extra pack of characters or opens "Manage subscription" on the plugin's settings page.
+* When an administrator opens the settings page of a connected site (or clicks "Refresh") and the consent box is ticked, the plugin asks the service for the account status (plan, remaining characters, renewal date). The result is cached for 60 seconds. While the payment is waiting for confirmation, the settings page checks it every 5 seconds (also only with the consent box ticked).
+
+No request is made without the administrator's consent and action: without the ticked consent box the plugin makes no requests to LingoCanvas Cloud at all (no status, no payment check, no billing buttons). Visitors and search engine crawlers cannot trigger requests. The plugin does not translate anything in the background. The free features (manual translation, your own API key) work without registering with LingoCanvas Cloud.
+
+What data is sent:
+
+* For translation: the text segments being translated (title, excerpt, post content, strings from the page), which may include content of drafts and private posts; the source and target language; the language name; the translation glossary terms. The site token is sent as a Bearer token in the Authorization header.
+* At sign-up: the site name (the host name of your site), the optional e-mail address you enter, and a hash of a random one-time secret that the plugin keeps on your server. The site token itself is issued by the service after payment and stored in the site database; it is never shown on any page.
+* For the account status: only the site token.
+* No visitor data is sent.
+
+Payments are handled by Stripe: the administrator is redirected to checkout.stripe.com (payment) and billing.stripe.com (manage the subscription). The plugin does not see or store card data.
+
+Service links:
+
+* LingoCanvas Cloud Terms: https://centerai.eu/lingocanvas/terms/
+* LingoCanvas Cloud Privacy Policy: https://centerai.eu/lingocanvas/privacy/
+* Stripe Terms: https://stripe.com/legal/ssa
+* Stripe Privacy Policy: https://stripe.com/privacy
 
 **WordPress.org language packs**
 
@@ -128,7 +156,7 @@ No. There is one post and N language URLs. Translations are stored in separate t
 
 = Is anything sent to an external service automatically? =
 
-No. Content is sent to OpenAI (or the compatible service you configured) only when an administrator clicks an AI translation button, and the model list is requested when an administrator opens the settings page with a saved key. Without an API key nothing is sent. See "External services".
+No. Content is sent to OpenAI (or the compatible service you configured) or, if you gave consent and selected it, to LingoCanvas Cloud, only when an administrator clicks an AI translation button. The model list is requested when an administrator opens the settings page with a saved key, and the Cloud account status when the settings page of a connected site is opened. Without an API key or Cloud connection nothing is sent. See "External services".
 
 = Where are translations stored? =
 
@@ -163,6 +191,19 @@ PHP 8.1 or newer. On PHP 8.4+ the built-in HTML5 parser is used; on 8.1 to 8.3 t
 LingoCanvas translates every page that WordPress renders through a theme template: content, menus, widgets, header, footer and SEO tags (title, meta description, canonical, hreflang). Output that another plugin or theme prints and ends itself before WordPress loads the template (for example a custom page printed on `template_redirect` followed by `exit`) bypasses the template and is not translated.
 
 == Changelog ==
+
+= 0.5.3 =
+* LingoCanvas Cloud: the saved payment claim is no longer dropped when your site's local clock passes its expiry while a response was lost; it is kept until the service gives a final answer or the 24-hour recovery window plus a safety margin ends. The payment-check lock now has an owner and is taken over atomically, so two checks can never overwrite each other's key. The receipt state is saved before the key, and a "key already issued" answer after a failed receipt confirmation is reported with the claim ID instead of being treated as success. Expired canceled-payment records are now actually removed.
+
+= 0.5.2 =
+* LingoCanvas Cloud: a lost response during sign-up no longer loses your connection key. The service re-issues the key for 24 hours until the plugin confirms it received it, and the plugin confirms receipt, retries the confirmation later if it fails, and never runs two payment checks at once.
+
+= 0.5.1 =
+* LingoCanvas Cloud hardening: a repeated click on the same translation reuses the saved request ID, so a lost response is never paid twice; a long "busy" answer from the service stops the request with a clear message instead of waiting; a lost connection key is reported with the claim ID and the pending payment is kept; double sign-up clicks lead to the same payment; a canceled payment can still be checked with "Already paid? Check again"; without the consent box the plugin makes no Cloud requests at all (no status, no payment polling, no billing buttons).
+
+= 0.5.0 =
+* New optional AI translation provider: LingoCanvas Cloud (paid service by CenterAI, translation by DeepSeek). Subscribe, check the payment, buy extra characters, manage or disconnect the subscription on the settings page. Needs the administrator's consent; your own OpenAI key keeps working and stays the default.
+* The "could not get a translation" message no longer names OpenAI and shows the provider's own explanation.
 
 = 0.4.5 =
 * String translation no longer collects reading times such as "13 minutes" produced by SEO plugins' own translations, nor image file names used as alt text or captions.

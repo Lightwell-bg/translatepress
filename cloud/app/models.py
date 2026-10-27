@@ -246,8 +246,13 @@ class CheckoutClaim(Base):
     # Customer created by the backend (metadata lc_app) before the Checkout Session.
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=True)
-    # open -> paid -> consumed; open -> expired
+    # open -> paid -> consumed -> confirmed; open -> expired
     status: Mapped[str] = mapped_column(String(10), server_default="open")
+    # The site created by the pickup, when the pickup happened; the token can be re-issued for it
+    # (rotation) until recovery_until unless the site confirmed receipt (status confirmed).
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id", ondelete="RESTRICT"), nullable=True)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    recovery_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     failed_attempts: Mapped[int] = mapped_column(Integer, server_default="0")
     # HMAC(TOKEN_PEPPER, client IP): sign-up rate limit without storing the address.
     client_ip_hash: Mapped[bytes | None] = mapped_column(LargeBinary(32), nullable=True)
@@ -255,7 +260,7 @@ class CheckoutClaim(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        CheckConstraint("status IN ('open','paid','consumed','expired')", name="ck_claims_status"),
+        CheckConstraint("status IN ('open','paid','consumed','confirmed','expired')", name="ck_claims_status"),
         Index("ix_checkout_claims_ip_created", "client_ip_hash", "created_at"),
     )
 
