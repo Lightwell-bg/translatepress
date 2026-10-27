@@ -45,8 +45,8 @@ final class CloudSection implements Hookable {
 	public const ANCHOR = 'lingocanvas-cloud';
 
 	/** Условия и политика конфиденциальности сервиса. */
-	public const TERMS_URL   = 'https://centerai.eu/lingocanvas/terms/';
-	public const PRIVACY_URL = 'https://centerai.eu/lingocanvas/privacy/';
+	public const TERMS_URL   = 'https://centerai.eu/blog/terms/';
+	public const PRIVACY_URL = 'https://centerai.eu/blog/privacy/';
 
 	/**
 	 * @param Settings        $settings  Настройки плагина.

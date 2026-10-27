@@ -750,8 +750,8 @@ final class CloudSectionTest extends TestCase {
 		$this->assertStringNotContainsString( self::TOKEN, $all );
 		$this->assertStringNotContainsString( 'lcc_constant_token_abcdef', $all );
 		$this->assertStringNotContainsString( 'lcc_claim_secret_xyz', $all );
-		$this->assertStringContainsString( 'centerai.eu/lingocanvas/terms/', $all );
-		$this->assertStringContainsString( 'centerai.eu/lingocanvas/privacy/', $all );
+		$this->assertStringContainsString( 'centerai.eu/blog/terms/', $all );
+		$this->assertStringContainsString( 'centerai.eu/blog/privacy/', $all );
 		$this->assertStringContainsString( 'DeepSeek', $all );
 		$this->assertStringContainsString( 'China', $all );
 	}

@@ -569,7 +569,7 @@ if ( 'extra' === $phase ) {
 				set_current_screen( 'toplevel_page_' . SettingsPage::MENU_SLUG );
 				$html = $render( $settings_page );
 				lingocanvas_smoke_check( 'x_kses_page_settings', str_contains( $html, 'id="mlp-openai-key"' ) && 1 === preg_match( '/id="mlp-openai-key"[^>]*\breadonly\b/', $html ) && 1 === preg_match( '/id="mlp-openai-model"[^>]*\breadonly\b|\breadonly\b[^>]*value="smoke-model"/s', $html ) && str_contains( $html, 'class="description"' ) && ! str_contains( $html, '<!--ERRORS' ), 'bytes=' . strlen( $html ) . ( preg_match( '/<!--ERRORS[^>]*-->/', $html, $m ) ? ' ' . $m[0] : '' ) );
-				lingocanvas_smoke_check( 'x_kses_page_settings_cloud', str_contains( $html, 'id="lingocanvas-cloud"' ) && str_contains( $html, 'name="provider"' ) && str_contains( $html, 'id="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'form="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'centerai.eu/lingocanvas/terms/' ), 'bytes=' . strlen( $html ) );
+				lingocanvas_smoke_check( 'x_kses_page_settings_cloud', str_contains( $html, 'id="lingocanvas-cloud"' ) && str_contains( $html, 'name="provider"' ) && str_contains( $html, 'id="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'form="lingocanvas-cloud-form-signup"' ) && str_contains( $html, 'centerai.eu/blog/terms/' ), 'bytes=' . strlen( $html ) );
 
 				$_GET['lingocanvas_scope']  = 'object:' . $post_id; // phpcs:ignore
 				$_GET['lingocanvas_locale'] = 'en'; // phpcs:ignore
