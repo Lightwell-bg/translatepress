@@ -129,6 +129,31 @@ final class GettextNumericPatternTest extends TestCase {
 		$this->assertSame( array( 'Meeting at noon' ), $texts );
 	}
 
+	public function testNumericPatternWithEntityMatchesDecodedText(): void {
+		$this->assertTrue( $this->templateMatches( '%d comments &rarr;', '5 comments →' ) );
+	}
+
+	public function testExtractorSkipsServedTextWithDecodedEntity(): void {
+		$skip = array();
+
+		foreach ( GettextFragments::of( 'Du hast noch kein Menü, bitte erstellen eines hier &rarr;' ) as $fragment ) {
+			$skip[ $fragment ] = true;
+		}
+
+		$document = HtmlDocument::parse(
+			'<!DOCTYPE html><html><body><p>Du hast noch kein Menü, bitte erstellen eines hier &rarr;</p><p>Meeting at noon</p></body></html>'
+		);
+
+		$this->assertNotNull( $document );
+
+		$texts = array_map(
+			static fn( Segment $segment ): string => $segment->text,
+			( new Extractor() )->extract( $document, 'ru', array(), false, $skip )
+		);
+
+		$this->assertSame( array( 'Meeting at noon' ), $texts );
+	}
+
 	public function testExtractorSkipsServedNumericMeta(): void {
 		$html = '<!DOCTYPE html><html><head><meta name="twitter:data2" content="13 Minuten"></head><body></body></html>';
 

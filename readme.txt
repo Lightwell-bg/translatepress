@@ -4,7 +4,7 @@ Tags: multilingual, translation, translate, language switcher, hreflang
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.5.4
+Stable tag: 0.5.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -191,6 +191,9 @@ PHP 8.1 or newer. On PHP 8.4+ the built-in HTML5 parser is used; on 8.1 to 8.3 t
 LingoCanvas translates every page that WordPress renders through a theme template: content, menus, widgets, header, footer and SEO tags (title, meta description, canonical, hreflang). Output that another plugin or theme prints and ends itself before WordPress loads the template (for example a custom page printed on `template_redirect` followed by `exit`) bypasses the template and is not translated.
 
 == Changelog ==
+
+= 0.5.5 =
+* Fixed: theme strings that contain HTML entities (for example "&rarr;" or "&hellip;") printed on a translated page were saved as source strings; they are now recognized as already translated interface text.
 
 = 0.5.3 =
 * LingoCanvas Cloud: the saved payment claim is no longer dropped when your site's local clock passes its expiry while a response was lost; it is kept until the service gives a final answer or the 24-hour recovery window plus a safety margin ends. The payment-check lock now has an owner and is taken over atomically, so two checks can never overwrite each other's key. The receipt state is saved before the key, and a "key already issued" answer after a failed receipt confirmation is reported with the claim ID instead of being treated as success. Expired canceled-payment records are now actually removed.

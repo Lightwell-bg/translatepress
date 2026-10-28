@@ -36,6 +36,9 @@ defined( 'ABSPATH' ) || exit;
  * лежит МЕЖДУ плейсхолдерами и тегами и потому доходит до разметки без
  * изменений.
  *
+ * Куски запоминаются с раскрытыми HTML-сущностями (`&rarr;` → «→»): в DOM
+ * текстовые узлы уже раскрыты, а gettext отдаёт строку как HTML-источник.
+ *
  * Чего этот подход не ловит: кусок, где плейсхолдер стоит внутри той же
  * фразы («Logged in as %s.» → в DOM «Logged in as centerAI.»). Такой узел
  * останется в «Контенте» — неприятно, но безопасно: строка просто
@@ -96,6 +99,9 @@ final class GettextFragments {
 	 * плейсхолдер — это ЧИСЛО, а буквенная часть дословная. Плейсхолдер не
 	 * заменяется на «что угодно»: иначе «%s at %s» съело бы любой контент.
 	 *
+	 * HTML-сущности перед сборкой раскрываются (`%d comments &rarr;` совпадёт
+	 * с узлом DOM «5 comments →»).
+	 *
 	 * Null — если шаблон не подходит: плейсхолдеров нет (работает точное
 	 * совпадение), в разметке есть теги, либо в литеральной части нет букв
 	 * («%s», «%1$s – %2$s», «%d»).
@@ -107,7 +113,7 @@ final class GettextFragments {
 			return null;
 		}
 
-		$normalized = Text::normalize( $text );
+		$normalized = Text::normalize( self::decodeEntities( $text ) );
 
 		$count = preg_match_all( self::PLACEHOLDER, $normalized, $matches, PREG_OFFSET_CAPTURE );
 
@@ -152,6 +158,21 @@ final class GettextFragments {
 	}
 
 	/**
+	 * Раскрывает HTML-сущности (`&rarr;`, `&hellip;`, `&#8217;`, `&amp;`, `&nbsp;`).
+	 *
+	 * Gettext отдаёт строку как HTML-источник, а текстовые узлы DOM, с которыми
+	 * её сравнивает Extractor, уже раскрыты: «hier &rarr;» в разметке — это
+	 * «hier →». Без раскрытия строка темы с сущностью не совпадала и оседала
+	 * в «Строках» как исходная. Вызывается только после отделения тегов:
+	 * иначе `&lt;b&gt;` превратилось бы в ненастоящий тег.
+	 *
+	 * @param string $text Кусок строки без тегов.
+	 */
+	private static function decodeEntities( string $text ): string {
+		return html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
 	 * Добавляет кусок, если он вообще похож на переводимый текст.
 	 *
 	 * Через тот же `Text::isTranslatable()`, что и весь остальной словарь:
@@ -163,7 +184,7 @@ final class GettextFragments {
 	 * @param list<string> $fragments Накопитель результата.
 	 */
 	private static function collect( string $raw, array &$fragments ): void {
-		$normalized = Text::normalize( $raw );
+		$normalized = Text::normalize( self::decodeEntities( $raw ) );
 
 		if ( '' !== $normalized && Text::isTranslatable( $normalized ) ) {
 			$fragments[] = $normalized;

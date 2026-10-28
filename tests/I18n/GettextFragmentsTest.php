@@ -45,6 +45,27 @@ final class GettextFragmentsTest extends TestCase {
 	 * Строка целиком тоже остаётся в наборе: у большинства строк
 	 * плейсхолдеров нет вовсе, и совпадение по целому — основной путь.
 	 */
+	public function testEntityInThemeStringIsDecoded(): void {
+		$this->assertContains(
+			'Du hast noch kein Menü, bitte erstellen eines hier →',
+			GettextFragments::of( 'Du hast noch kein Menü, bitte erstellen eines hier &rarr;' )
+		);
+	}
+
+	public function testOtherEntitiesAreDecoded(): void {
+		$this->assertContains( 'Wait for it…', GettextFragments::of( 'Wait for it&hellip;' ) );
+		$this->assertContains( 'Don’t stop', GettextFragments::of( 'Don&#8217;t stop' ) );
+		$this->assertContains( 'Tom & Jerry', GettextFragments::of( 'Tom &amp; Jerry' ) );
+		$this->assertContains( 'Read more', GettextFragments::of( 'Read&nbsp;&nbsp;more' ) );
+	}
+
+	/**
+	 * Теги отделяются до раскрытия сущностей: `&lt;b&gt;` — это текст, а не тег.
+	 */
+	public function testEncodedTagIsNotTreatedAsTag(): void {
+		$this->assertContains( 'Use <b> for bold', GettextFragments::of( 'Use &lt;b&gt; for bold' ) );
+	}
+
 	public function testPlainStringIsKeptWhole(): void {
 		$this->assertSame( array( 'Add Comment' ), GettextFragments::of( 'Add Comment' ) );
 	}
